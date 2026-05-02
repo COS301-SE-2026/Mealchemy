@@ -1,0 +1,63 @@
+name: Deploy Design Spec
+
+# notes
+# uses sha tags
+# deploys design spec folder to github pages, when folder has changes and is merged to main or dev
+# has worflow dispatch trigure for manual deploy without needing to make comit
+#
+# steps
+#     configure github pages, validates enviroment is ready to receive deploy
+#     bundles design-spec folder into pages artifact, git hub stores temp
+#     deploy artificat to github pages, design spec becomes a live website at
+#      https://cos301-se-2026.github.io/Mealchemy/
+
+
+# Deploys the design-spec/ folder to GitHub Pages.
+# Only triggers when files inside design-spec/ change on main or dev
+#
+#cicd methos: github issues OIDC token, (id-token: write) which authroizes the workflow to push deployment,
+#pages is set to github actions
+
+
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'design-spec/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy-design-spec:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # actions/checkout@v4.1.1
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # actions/configure-pages@v5.0.0
+
+      - name: Upload design-spec folder as Pages artifact
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # actions/upload-pages-artifact@v3.0.1
+        with:
+          path: design-spec/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # actions/deploy-pages@v4.0.5
