@@ -1,0 +1,19 @@
+backend:
+  - changed-files:
+    - any-glob-to-any-file: 'backend/**'
+
+frontend:
+  - changed-files:
+    - any-glob-to-any-file: 'frontend/**'
+
+engine:
+  - changed-files:
+    - any-glob-to-any-file: 'engine/**'
+
+wiki:
+  - changed-files:
+    - any-glob-to-any-file: 'wiki/**'
+
+infrastructure:
+  - changed-files:
+    - any-glob-to-any-file: 'infrastructure/**'
