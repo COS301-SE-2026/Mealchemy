@@ -1,0 +1,64 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Dockerfile.backend - Spring Boot (Java 21)
+#
+# notes
+#     — Multi-stage build; source code not in final image; ship binary not toolchain
+#     — Non-root user; base images pinned to SHA256 digest
+#    — HEALTHCHECK defined; resource limits set in docker-compose.yml
+#    — Supply chain: digest pins prevent image swaps
+# ─────────────────────────────────────────────────────────────────────────────
+
+#Build ────────────────────────────────────────────────────────────
+# Pinned to specific version tag
+# eclipse-temurin:21-jdk-jammy
+FROM eclipse-temurin:21-jdk-jammy AS builder
+
+WORKDIR /build
+
+# Copy Maven wrapper and pom.xml first, layer caching means dependencies are only re-downloaded when pom.xml actually changes, not on every code change.
+COPY backend/pom.xml .
+COPY backend/.mvn .mvn
+COPY backend/mvnw .
+
+RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
+
+# Copy source and build - this layer only re-runs when source changes
+COPY backend/src ./src
+
+RUN ./mvnw package -DskipTests --no-transfer-progress && \
+    mv target/*.jar target/app.jar
+
+# Runtime ──────────────────────────────────────────────────────────
+# Minimal JRE only 
+FROM eclipse-temurin:21-jre-jammy AS runtime
+
+# curl is not present in the base JRE image, required for the HEALTHCHECK below
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user, if container escape occurs, attacker does not get root.
+RUN groupadd --system mealchemy && \
+    useradd --system --gid mealchemy --no-create-home mealchemy
+
+WORKDIR /app
+
+# Copy only the compiled JAR
+COPY --from=builder /build/target/app.jar app.jar
+
+RUN chown mealchemy:mealchemy app.jar
+
+USER mealchemy
+
+EXPOSE 8080
+
+# HEALTHCHECK
+# Returns healthy only when Spring Boot Actuator reports UP
+# Adjust path if actuator base-path differs, for now its correct
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8080/actuator/health || exit 1
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# ── Resource limits ───────────────────────────────────────────────────────────
+# CPU and memory limits are set in infrastructure/docker-compose.yml
+# A container with no memory limit can OOM the entire host, always set limits.

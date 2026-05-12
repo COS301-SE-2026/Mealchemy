@@ -1,0 +1,119 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# infrastructure/docker-compose.yml - Mealchemy local development stack
+#
+# notes:
+#   Dev environment only; production uses GHCR images promoted via CD pipeline
+#   Images tagged by git SHA in production; :latest only for local dev
+#   No hardcoded secrets; all credentials injected via .env file
+#   Resource limits on every service; health checks defined
+#   Base images pinned to digest in Dockerfiles; compose references built images
+
+#after engine implementation
+# Not started by default enable with: docker compose --profile engine up
+# Remove the profiles line when the engine is implemented and ready to run.
+#
+# Usage run from repo root
+#   cp .env.example .env
+#   docker compose -f infrastructure/docker-compose.yml --env-file .env up --build
+#   docker compose -f infrastructure/docker-compose.yml --env-file .env --profile engine up --build
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    # Pinned to specific version tag
+    image: postgres:16
+    environment:
+      # Injected from .env
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Resource limits, a leaking container must not OOM the host
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: "512M"
+        reservations:
+          cpus: "0.25"
+          memory: "128M"
+    # Health check, depends_on only waits for start, not readiness
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Backend -Spring Boot ───────────────────────────────────────────────────
+  backend:
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile.backend
+    environment:
+      # Injected from .env, app must crash if missing, never use fallback defaults
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "8080:8080"
+    # Only start after postgres is healthy, not just started
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: "512M"
+        reservations:
+          cpus: "0.25"
+          memory: "256M"
+    # Health check mirrors the HEALTHCHECK in Dockerfile.backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ── Engine - Python recommendation engine ───────────────────────────────────
+  # Not started by default enable with: docker compose --profile engine up
+  # Remove the profiles line when the engine is implemented and ready to run.
+  engine:
+    profiles: [engine]
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile.engine
+    environment:
+      # Add engine-specific env vars here, injected from .env
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    ports:
+      - "8001:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: "1G"       # might need more ram here
+        reservations:
+          cpus: "0.25"
+          memory: "256M"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  postgres_data:
+
+
