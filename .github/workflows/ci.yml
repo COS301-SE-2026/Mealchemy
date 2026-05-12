@@ -16,26 +16,34 @@ name: CI
 #issue
 #s might encounter with trivvy and docker image failing.  Trivy finding vulnerabilities in eclipse-temurin:21-jre-jammy or python:3.12-slim-bookworm. Might have to update base image tag   *** To be aware of
 
+#act doesnt work with secret scanning/gitleaks and trivvy therefore it is skipped when env.act
+#act exits with failure due to post cashe cleanup, but jobs complete correctly
+
 #to setup cd.yml still 
 
 
 on:
-  pull_request: 
+  pull_request:
+
+env:
+  ACT: ""
 
 jobs:
   # ─────────────────────────────────────────────
   # SECRET SCANNING
-
+#gitleaks and secret scanning does not work in act environment
   secret-scan:
     name: Secret Scanning (gitleaks)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
+        if: ${{ env.ACT != 'true' }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
 
       - name: Run gitleaks
+        if: ${{ env.ACT != 'true' }}
         #got sha tag
         uses: gitleaks/gitleaks-action@44c470ffc35caa8b1eb3e8012ca53c2f9bea4eb5 # v2.3.6
         env:
@@ -58,14 +66,14 @@ jobs:
 
       - name: Set up Java 21
       #got SHA tag  v4.2.1
-        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 
+        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9
         with:
           distribution: temurin
           java-version: '21'
           cache: maven
 
       - name: Run Checkstyle
-        run: mvn checkstyle:check --no-transfer-progress
+        run: ./mvnw checkstyle:check --no-transfer-progress
 
   backend-unit-tests:
     name: Backend — Unit Tests (JUnit)
@@ -81,14 +89,14 @@ jobs:
 
       - name: Set up Java 21
         # got sha tag
-        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 
+        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9
         with:
           distribution: temurin
           java-version: '21'
           cache: maven
 
       - name: Run unit tests
-        run: mvn test --no-transfer-progress -Dtest="*UnitTest" -DfailIfNoTests=true
+        run: ./mvnw test --no-transfer-progress -Dtest="*UnitTest" -DfailIfNoTests=true
 
   backend-integration-tests:
     name: Backend — Integration Tests (JUnit + PostgreSQL)
@@ -121,7 +129,7 @@ jobs:
 
       - name: Set up Java 21
         #sha tag
-        uses:  actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9
+        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9
         with:
           distribution: temurin
           java-version: '21'
@@ -132,7 +140,7 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/mealchemy_test
           SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USER }}
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        run: mvn verify --no-transfer-progress -Dtest="*IntegrationTest" -DfailIfNoTests=true
+        run: ./mvnw verify --no-transfer-progress -Dtest="*IntegrationTest" -DfailIfNoTests=true
 
   # ─────────────────────────────────────────────
   # ENGINE — Python 3.12
@@ -151,7 +159,7 @@ jobs:
 
       - name: Set up Python 3.12
         # sha tag # v5.3.0
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b 
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b
         with:
           python-version: '3.12'
           cache: pip
@@ -201,7 +209,7 @@ jobs:
 
       - name: Set up Python 3.12
         # sha tag
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b 
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b
         with:
           python-version: '3.12'
           cache: pip
@@ -214,7 +222,7 @@ jobs:
         run: pytest tests/ -v --no-header
 
   # ─────────────────────────────────────────────
-  # FRONTEND — Flutter (stable)
+  # FRONTEND - Flutter
 
   frontend-analyze:
     name: Frontend — flutter analyze
@@ -230,9 +238,11 @@ jobs:
  # actions/checkout@v4.1.1
  # subosito/flutter-action@v2.16.0
       - name: Set up Flutter (stable)
-        uses: subosito/flutter-action@44ac965b96f18d999802d4b807e3256d5a3f9fa1 
+        uses: subosito/flutter-action@44ac965b96f18d999802d4b807e3256d5a3f9fa1
         with:
+          flutter-version: '3.x'
           channel: stable
+          architecture: x64
           cache: true
 
       - name: Install dependencies
@@ -257,7 +267,9 @@ jobs:
       - name: Set up Flutter (stable)
         uses: subosito/flutter-action@44ac965b96f18d999802d4b807e3256d5a3f9fa1
         with:
+          flutter-version: '3.x'
           channel: stable
+          architecture: x64
           cache: true
 
       - name: Install dependencies
@@ -293,6 +305,7 @@ jobs:
             .
 
       - name: Run Trivy vulnerability scan
+        if: ${{ env.ACT != 'true' }}
         uses: aquasecurity/trivy-action@7c2007bcb556501da015201bcba5aa14069b74e2 # trivy-action@0.24.0
         with:
           image-ref: ${{ matrix.image }}:${{ github.sha }}
