@@ -1,0 +1,103 @@
+name: Wiki Sync
+
+
+# notes
+#    - for wiki tab
+#    - checks once a day if anyoen edited wiki, keep repos in sync
+#     - this repo only stores a pointer to specific comit in wiki repo
+
+# main use case behind this - propogating design docs to all active branches (eg  updated database everyone has latest instance on branch.)
+
+# steps
+    # automaticaaly everyday at 2, or manually fron gitrhub actions
+    # checkout repo with submodules, whole repo and wiki submodules.
+    # fetch depth 0  means get full git history which is needed to later checkout every branch
+    # next configure git identntiy, 
+    # commiter - github-action[bot] 
+    # next pulls latest wiki changes, compares latest sha before and after
+    # writes change= false or true depedning on change.
+    # if false, workflow stops
+    # if true, pushes updated submodule pointer to all open branches
+    # steps -
+    #         fetches all remote branches and removes any that are deleted 
+    #         builda list of every branche xcept main
+    #         checks out each branch locally, pulls latest comits from that branch, rechecks if pointer for wiki actually changes for that branch
+    #         change - comit message is "chore: sync wiki submodule [skip ci]". comit pushes to that branch
+    #         skip ci tells github not to trigger ci for these comits
+    #         if branch failed to push, logs failure and exits with error, hithub marks as failed.
+
+
+on:
+  schedule:
+    - cron: '0 2 * * *'   # 02:00 UTC every day
+  workflow_dispatch:       # allows manual trigger from GitHub Actions tab
+
+jobs:
+  sync-wiki:
+    name: Update Wiki Submodule
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # required to commit the updated submodule pointer
+
+    steps:
+      - name: Checkout repo with submodules
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # actions/checkout@v4.1.1
+        with:
+          submodules: true
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Pull latest wiki changes
+        id: pull-wiki
+        run: |
+          cd wiki
+          git checkout master
+          OLD=$(git rev-parse HEAD)
+          git pull origin master
+          NEW=$(git rev-parse HEAD)
+          if [ "$OLD" = "$NEW" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push updated submodule pointer to all open branches except main
+        if: steps.pull-wiki.outputs.changed == 'true'
+        run: |
+          git fetch --all --prune
+          FAILED_BRANCHES=""
+
+          for branch in $(git branch -r \
+            | grep -v 'HEAD' \
+            | grep -v 'origin/main' \
+            | sed 's|origin/||'); do
+
+            echo "── Syncing wiki to: $branch"
+            git checkout "$branch"
+            git pull origin "$branch"
+
+            git add wiki
+            #guard: only commit if pointer actually changed — no empty commits
+            if git diff --cached --quiet; then
+              echo "   No wiki change on $branch — skipping"
+            else
+              git commit -m "chore: sync wiki submodule [skip ci]"
+              if git push origin "HEAD:$branch"; then
+                echo "   Pushed to $branch"
+              else
+                echo "   Push failed for $branch (branch may have been deleted)"
+                FAILED_BRANCHES="$FAILED_BRANCHES $branch"
+              fi
+            fi
+          done
+
+          if [ -n "$FAILED_BRANCHES" ]; then
+            echo "The following branches could not be updated:$FAILED_BRANCHES"
+            exit 1
+          fi
+     #git diff guard makes sure empty comits dont happen if no wiki changes

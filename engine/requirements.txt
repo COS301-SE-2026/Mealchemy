@@ -1,0 +1,6 @@
+# Add dependencies here with pinned versions as build the engine.
+# Every package must be pinned exactly: package==x.y.z
+# Example:
+#   pandas==2.2.2
+#   numpy==1.26.4
+#   scikit-learn==1.4.2
