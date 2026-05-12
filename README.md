@@ -40,6 +40,14 @@ docker compose -f infrastructure/docker-compose.yml --env-file .env down
 Backend health check: `http://localhost:8080/actuator/health`
 Engine health check: `http://localhost:8001/health`
 
+### Wiki submodule
+
+After cloning, run:
+```bash
+git submodule update --init
+```
+This fetches the wiki content into the `wiki/` folder. The wiki is kept in sync across all branches automatically by the `wiki-sync` workflow.
+
 ### Running CI locally
 
 Requires [`act`](https://github.com/nektos/act) and Docker Desktop.
