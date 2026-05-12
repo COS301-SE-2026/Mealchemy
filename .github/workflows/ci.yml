@@ -16,8 +16,9 @@ name: CI
 #issue
 #s might encounter with trivvy and docker image failing.  Trivy finding vulnerabilities in eclipse-temurin:21-jre-jammy or python:3.12-slim-bookworm. Might have to update base image tag   *** To be aware of
 
-#act doesnt work with secret scanning/gitleaks and trivvy therefore it is skipped when env.act
-#act exits with failure due to post cashe cleanup, but jobs complete correctly
+#gitleaks runs as CLI tool, no license required
+#trivvy is skipped in act (env.ACT != true)
+#act exits with failure due to post cache cleanup, but jobs complete correctly
 
 #to setup cd.yml still 
 
@@ -31,23 +32,20 @@ env:
 jobs:
   # ─────────────────────────────────────────────
   # SECRET SCANNING
-#gitleaks and secret scanning does not work in act environment
   secret-scan:
     name: Secret Scanning (gitleaks)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        if: ${{ env.ACT != 'true' }}
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
 
-      - name: Run gitleaks
-        if: ${{ env.ACT != 'true' }}
-        #got sha tag
-        uses: gitleaks/gitleaks-action@44c470ffc35caa8b1eb3e8012ca53c2f9bea4eb5 # v2.3.6
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run Gitleaks
+        #CLI tool - no license required, works on org repos and in act
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz | tar -xz gitleaks
+          ./gitleaks detect --source . --redact
 
   # ─────────────────────────────────────────────
   # BACKEND: Spring Boot / Java 21 / Maven
