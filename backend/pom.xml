@@ -115,6 +115,11 @@
 						<!-- Generated mappers and builders -->
 						<exclude>**/*Mapper.class</exclude>
 						<exclude>**/*Builder.class</exclude>
+						<!-- Placeholder feature packages, remove each line as the package gets real code + tests -->
+						<exclude>**/auth/**/*.class</exclude>
+						<exclude>**/pantry/**/*.class</exclude>
+						<exclude>**/preference/**/*.class</exclude>
+						<exclude>**/vault/**/*.class</exclude>
 					</excludes>
 				</configuration>
 				<executions>

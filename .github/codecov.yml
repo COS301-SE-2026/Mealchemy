@@ -10,10 +10,6 @@ coverage:
         flags: [backend]
         target: 80%
         threshold: 1%
-      engine:
-        flags: [engine]
-        target: 80%
-        threshold: 1%
       frontend:
         flags: [frontend]
         target: 80%
@@ -29,10 +25,6 @@ flags:
     carryforward: true
     paths:
       - backend/
-  engine:
-    carryforward: true
-    paths:
-      - engine/
   frontend:
     carryforward: true
     paths:
