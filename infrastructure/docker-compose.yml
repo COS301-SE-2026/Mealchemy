@@ -16,6 +16,7 @@
 #   cp .env.example .env
 #   docker compose -f infrastructure/docker-compose.yml --env-file .env up --build
 #   docker compose -f infrastructure/docker-compose.yml --env-file .env --profile engine up --build
+#   docker compose -f infrastructure/docker-compose.yml --env-file .env --profile tools up --build  (starts pgAdmin at http://localhost:5050)
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:
@@ -91,12 +92,11 @@ services:
       context: ..
       dockerfile: infrastructure/Dockerfile.engine
     environment:
-      # Add engine-specific env vars here, injected from .env
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      BACKEND_URL: http://backend:8080
     ports:
       - "8001:8000"
     depends_on:
-      postgres:
+      backend:
         condition: service_healthy
     deploy:
       resources:
@@ -113,7 +113,35 @@ services:
       retries: 3
       start_period: 20s
 
+  # ── pgAdmin - Database GUI ────────────────────────────────────────────────────
+  # not started by default
+  # Start with: --profile tools
+  # Access at: http://localhost:5050
+  # Connect to Postgres using host=postgres, port=5432, credentials from .env
+  pgadmin:
+    profiles: [tools]
+    image: dpage/pgadmin4:8
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "256M"
+        reservations:
+          cpus: "0.1"
+          memory: "128M"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
 volumes:
   postgres_data:
+  pgadmin_data:
 
 
