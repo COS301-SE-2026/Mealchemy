@@ -1,0 +1,1 @@
+//ThemeData object gets passed into MaterialApp in main.dart. This is how flutter makes it apply globally

@@ -22,6 +22,8 @@ COPY backend/mvnw .
 
 RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
 
+COPY database /database
+
 # Copy source and build - this layer only re-runs when source changes
 COPY backend/src ./src
 

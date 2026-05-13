@@ -12,13 +12,14 @@ name: CI
     #backend integration test, engine tests
     #docker security can, build both docker images and runs Trivy on each: fails on high or critical vulnerabilities
     
-    
-#issue
-#s might encounter with trivvy and docker image failing.  Trivy finding vulnerabilities in eclipse-temurin:21-jre-jammy or python:3.12-slim-bookworm. Might have to update base image tag   *** To be aware of
 
 #gitleaks runs as CLI tool, no license required
-#trivvy is skipped in act (env.ACT != true)
+#trivvy is skipped in act (env.ACT != true) and coverage report.
 #act exits with failure due to post cache cleanup, but jobs complete correctly
+
+#code coverage: engine doesnt have code coverage. 
+#python script for lcov code coverage for flutter, lcov takes too long as has to download all dependencies. Python filter out generated files, writes lcov.info and checks meet threshhold coverage
+#generated files are already automatically excluded from coverage
 
 #to setup cd.yml still 
 
@@ -133,12 +134,24 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Run integration tests
+      # Runs all tests (unit + integration) so JaCoCo gets complete coverage.
+      # Unit tests also run in backend-unit-tests for fast feedback without DB.
+      - name: Run all tests with coverage
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/mealchemy_test
           SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USER }}
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        run: ./mvnw verify --no-transfer-progress -Dtest="*IntegrationTest" -DfailIfNoTests=true
+        run: ./mvnw verify --no-transfer-progress -DfailIfNoTests=true
+
+      #sha is v5.5.4
+      - name: Upload coverage to Codecov
+        if: ${{ env.ACT != 'true' }}
+        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: backend
+          files: backend/target/site/jacoco/jacoco.xml
+          fail_ci_if_error: true
 
   # ─────────────────────────────────────────────
   # ENGINE — Python 3.12
@@ -216,7 +229,7 @@ jobs:
         run: pip install -r requirements.txt pytest
 
       - name: Run Pytest
-        # no-header keeps output clean; no --passWithNoTests, must fail if no tests found
+        # Engine is fully scaffolded; coverage enforcement re-enabled once real code lands.
         run: pytest tests/ -v --no-header
 
   # ─────────────────────────────────────────────
@@ -273,8 +286,65 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Run tests
-        run: flutter test
+      - name: Run tests with coverage
+        run: flutter test --coverage
+
+      #Python filter and threshold check; avoids installing lcov on every run.
+      # Strips *.g.dart and *.freezed.dart records from lcov.info, then enforces 80%.
+      - name: Filter generated files and check coverage threshold
+        shell: python
+        run: |
+          import re, sys
+
+          pattern = re.compile(r'.*\.(g|freezed)\.dart$')
+          path = 'coverage/lcov.info'
+
+          out_lines = []
+          record = []
+          skip = False
+          total = 0
+          covered = 0
+
+          with open(path) as f:
+              for line in f:
+                  if line.startswith('SF:'):
+                      record = [line]
+                      skip = bool(pattern.match(line[3:].strip()))
+                  elif line.startswith('end_of_record'):
+                      record.append(line)
+                      if not skip:
+                          out_lines.extend(record)
+                          for r in record:
+                              if r.startswith('LF:'):
+                                  total += int(r[3:].strip())
+                              elif r.startswith('LH:'):
+                                  covered += int(r[3:].strip())
+                      record = []
+                  else:
+                      record.append(line)
+
+          with open(path, 'w') as f:
+              f.writelines(out_lines)
+
+          if total == 0:
+              print('No lines to measure')
+              sys.exit(1)
+
+          pct = covered / total * 100
+          print(f'Line coverage: {pct:.1f}% ({covered} of {total} lines)')
+          if pct < 80:
+              print(f'Coverage {pct:.1f}% is below the 80% threshold')
+              sys.exit(1)
+             
+#code coverage v5.5.4
+      - name: Upload coverage to Codecov
+        if: ${{ env.ACT != 'true' }}
+        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: frontend
+          files: frontend/coverage/lcov.info
+          fail_ci_if_error: true
 
   # ─────────────────────────────────────────────
   # SECURITY — Docker build + Trivy scan

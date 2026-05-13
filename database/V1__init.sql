@@ -1,0 +1,2 @@
+-- Baseline migration: schema starts empty.
+-- Add tables here as features are implemented.

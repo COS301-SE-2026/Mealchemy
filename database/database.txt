@@ -1,0 +1,37 @@
+Write database migration files in this folder
+----------------------------------------------
+Database: PostgresSQL16
+
+Schema Management: Flyway
+    flyway runs migration files in order on app startup
+    will track history in its own flyway_schema_history
+
+ORM Layer: JPA/Hibernate
+    this maps Java entity classes to DB tables
+    ddl-auto=validate
+        this checks that entities match schema but never changes its (does not automatically update, this setting would need to change in pom.xml)
+
+Dependencies in pom.xml
+    spring-boot-starter-data-jpa (JPA/Hibernate)
+    postgressql (JDBC driver)
+    flyway-core (flyway)
+    flyway-database-postgresql (flyway)
+
+How it works:
+    Maven copies database file into db/migration/ on the class path at build time
+    Dockerfile copies database/ into the build context so it works in Docker too
+    Postgres runs as a Docker container (runtime)
+    Credentials are alwasy from the enviornment varibles
+    Ci spins up a real Postgres container for integrations tests
+
+
+----------------------------------------------
+Naming Conventions for migration file
+
+V(versionNumber)(exactly two underscores)(description).sql 
+examples:
+
+V3__create_users.sql
+V4__add_recipes.sql 
+
+----------------------------------------------
