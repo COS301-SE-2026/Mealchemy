@@ -3,7 +3,10 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 source = ["src"]
-omit = ["*/__init__.py"]
+omit = [
+  "*/__init__.py",
+  "*/main.py",
+]
 
 [tool.coverage.report]
 show_missing = true

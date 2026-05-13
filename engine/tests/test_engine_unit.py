@@ -1,5 +1,7 @@
-"""Placeholder tests — replace with real tests as the engine is built."""
+"""Unit tests for the Mealchemy engine."""
+
+from src.health import get_health_status
 
 
-def test_placeholder() -> None:
-    assert True
+def test_get_health_status_returns_up() -> None:
+    assert get_health_status() == {"status": "UP"}

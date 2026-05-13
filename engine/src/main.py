@@ -5,11 +5,13 @@
 import http.server
 import json
 
+from src.health import get_health_status
+
 
 class HealthHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         if self.path == "/health":
-            body = json.dumps({"status": "UP"}).encode()
+            body = json.dumps(get_health_status()).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
