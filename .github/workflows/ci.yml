@@ -12,12 +12,9 @@ name: CI
     #backend integration test, engine tests
     #docker security can, build both docker images and runs Trivy on each: fails on high or critical vulnerabilities
     
-    
-#issue
-#s might encounter with trivvy and docker image failing.  Trivy finding vulnerabilities in eclipse-temurin:21-jre-jammy or python:3.12-slim-bookworm. Might have to update base image tag   *** To be aware of
 
 #gitleaks runs as CLI tool, no license required
-#trivvy is skipped in act (env.ACT != true)
+#trivvy is skipped in act (env.ACT != true) and coverage report.
 #act exits with failure due to post cache cleanup, but jobs complete correctly
 
 #to setup cd.yml still 
@@ -133,12 +130,24 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Run integration tests
+      # Runs all tests (unit + integration) so JaCoCo gets complete coverage.
+      # Unit tests also run in backend-unit-tests for fast feedback without DB.
+      - name: Run all tests with coverage
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/mealchemy_test
           SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USER }}
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        run: ./mvnw verify --no-transfer-progress -Dtest="*IntegrationTest" -DfailIfNoTests=true
+        run: ./mvnw verify --no-transfer-progress -DfailIfNoTests=true
+
+      #sha is v5.5.4
+      - name: Upload coverage to Codecov
+        if: ${{ env.ACT != 'true' }}
+        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: backend
+          files: backend/target/site/jacoco/jacoco.xml
+          fail_ci_if_error: true
 
   # ─────────────────────────────────────────────
   # ENGINE — Python 3.12
@@ -213,11 +222,21 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest
+        run: pip install -r requirements.txt pytest pytest-cov
 
-      - name: Run Pytest
+      - name: Run Pytest with coverage
         # no-header keeps output clean; no --passWithNoTests, must fail if no tests found
-        run: pytest tests/ -v --no-header
+        # --cov-fail-under enforces 80% threshold at build time
+        run: pytest tests/ -v --no-header --cov=src --cov-report=xml:coverage.xml --cov-fail-under=80
+#sha is v5.5.4
+      - name: Upload coverage to Codecov
+        if: ${{ env.ACT != 'true' }}
+        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: engine
+          files: engine/coverage.xml
+          fail_ci_if_error: true
 
   # ─────────────────────────────────────────────
   # FRONTEND - Flutter
@@ -273,8 +292,29 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Run tests
-        run: flutter test
+      - name: Run tests with coverage
+        run: flutter test --coverage
+
+      - name: Remove generated files from coverage
+        run: |
+          lcov --remove coverage/lcov.info '*.g.dart' '*.freezed.dart' -o coverage/lcov.info
+
+      - name: Check coverage threshold
+        run: |
+          LINES=$(lcov --summary coverage/lcov.info 2>&1 | grep "lines" | grep -oP '[\d.]+(?=%)' | head -1)
+          echo "Line coverage: ${LINES}%"
+          python3 -c "import sys; pct=float('${LINES}'); sys.exit(0 if pct >= 80.0 else 1)" || \
+            { echo "Coverage ${LINES}% is below the 80% threshold"; exit 1; }
+             
+#code coverage v5.5.4
+      - name: Upload coverage to Codecov
+        if: ${{ env.ACT != 'true' }}
+        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: frontend
+          files: frontend/coverage/lcov.info
+          fail_ci_if_error: true
 
   # ─────────────────────────────────────────────
   # SECURITY — Docker build + Trivy scan

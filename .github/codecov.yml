@@ -1,0 +1,50 @@
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+
+  status:
+    # Overall project coverage per service flag
+    project:
+      backend:
+        flags: [backend]
+        target: 80%
+        threshold: 1%
+      engine:
+        flags: [engine]
+        target: 80%
+        threshold: 1%
+      frontend:
+        flags: [frontend]
+        target: 80%
+        threshold: 1%
+    # Changed lines in every PR must also meet 80%
+    patch:
+      default:
+        target: 80%
+        threshold: 1%
+
+flags:
+  backend:
+    carryforward: true
+    paths:
+      - backend/
+  engine:
+    carryforward: true
+    paths:
+      - engine/
+  frontend:
+    carryforward: true
+    paths:
+      - frontend/
+
+# Paths excluded from Codecov measurement
+# JaCoCo and pytest-cov handle their own exclusions at build time;
+# these ensure Codecov does not count them in its own diff analysis.
+ignore:
+  - "**/*.g.dart"
+  - "**/*.freezed.dart"
+  - "**/__init__.py"
+  - "**/MealchemyApplication.java"
+  - "**/*Configuration.java"
+  - "**/*Config.java"
