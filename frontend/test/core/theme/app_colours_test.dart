@@ -5,7 +5,7 @@ import 'package:mealchemy/core/theme/app_colours.dart';
 void main() {
   group('AppColors', () {
     test('primary colour is not transparent', () {
-      expect(AppColors.primary.alpha, 255);
+      expect((AppColors.primary.a * 255.0).round().clamp(0, 255), 255);
     });
 
     test('brand gradient has correct direction', () {
