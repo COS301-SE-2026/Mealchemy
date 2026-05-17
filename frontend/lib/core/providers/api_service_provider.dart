@@ -1,0 +1,1 @@
+//file to expose the class to Riverpod. exposes ApiService insatnce.
