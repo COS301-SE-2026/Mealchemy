@@ -21,7 +21,14 @@ name: CI
 #python script for lcov code coverage for flutter, lcov takes too long as has to download all dependencies. Python filter out generated files, writes lcov.info and checks meet threshhold coverage
 #generated files are already automatically excluded from coverage
 
+
+# --pull forces Docker to grab the latest base image layer instead of
+  # reusing a cached one, so security updates flow through on every build.
+
+#to do
 #to setup cd.yml still 
+#add actions/cashe for docker 
+#fix python mutable tag by adding dependabot
 
 
 on:
@@ -367,7 +374,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build \
+          docker build --pull\
             -f ${{ matrix.dockerfile }} \
             -t ${{ matrix.image }}:${{ github.sha }} \
             .
