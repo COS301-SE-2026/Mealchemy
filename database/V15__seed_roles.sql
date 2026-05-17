@@ -9,21 +9,9 @@ INSERT INTO roles (role_name, permissions)
 VALUES
     (
         'user',
-        '{
-            "can_upload_recipes":        true,
-            "can_manage_own_pantry":     true,
-            "can_manage_own_profile":    true,
-            "can_publish_to_community":  false
-        }'::jsonb
+        '{"can_upload_recipes": true, "can_manage_own_pantry": true, "can_manage_own_profile": true, "can_publish_to_community": false}'::jsonb
     ),
     (
         'admin',
-        '{
-            "can_upload_recipes":             true,
-            "can_manage_own_pantry":          true,
-            "can_manage_own_profile":         true,
-            "can_publish_to_community":       true,
-            "can_delete_community_recipes":   true,
-            "can_manage_users":               true
-        }'::jsonb
+        '{"can_upload_recipes": true, "can_manage_own_pantry": true, "can_manage_own_profile": true, "can_publish_to_community": true, "can_delete_community_recipes": true, "can_manage_users": true}'::jsonb
     );

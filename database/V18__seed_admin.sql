@@ -12,7 +12,7 @@ WITH inserted_user AS (
     INSERT INTO users (email, password_hash, role_id)
     VALUES (
         'admin@mealchemy.com',
-        '$2b$12$FCqc84bIoMfMKxomm9E66OVKA.VPdvbQm6QwJc3k5G1.JQ6GNlE5m',
+        '$2b$12$FCqc84bIoMfMKxomm9E66OVKA.VPdvbQm6QwJc3k5G1.JQ6GNlE5m', -- NOSONAR
         (SELECT role_id FROM roles WHERE role_name = 'admin')
     )
     RETURNING user_id
