@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 
+//select cuisine/flavour cards
 class FlavourProfileCard extends StatelessWidget {
   const FlavourProfileCard({
     super.key,
