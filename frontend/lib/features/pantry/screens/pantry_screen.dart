@@ -46,7 +46,7 @@ class PantryScreen extends StatelessWidget {
         onRouteSelected: (route) => context.go(route),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () => context.go(AppRoutes.addIngredient),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textDark,
         child: const Icon(Icons.add),
