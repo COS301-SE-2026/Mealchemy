@@ -7,62 +7,87 @@ class FlavourProfileCard extends StatelessWidget {
   const FlavourProfileCard({
     super.key,
     required this.label,
-    required this.imageUrl,
+    required this.description,
+    required this.icon,
     this.selected = false,
     this.onTap,
   });
 
   final String label;
-  final String imageUrl;
+  final String description;
+  final IconData icon;
   final bool selected;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final backgroundColor =
+        selected ? AppColors.primary : AppColors.surfaceLight;
+    final foregroundColor =
+        selected ? AppColors.textDark : AppColors.textLight;
+    final mutedColor = selected
+        ? AppColors.textDark.withValues(alpha: 0.78)
+        : AppColors.textMuted;
+
     return Material(
-      color: AppColors.surfaceLight,
+      color: backgroundColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(
+          color: selected ? AppColors.primary : AppColors.divider,
+        ),
+      ),
       child: InkWell(
         onTap: onTap,
-        child: AspectRatio(
-          aspectRatio: 1.55,
-          child: Stack(
-            fit: StackFit.expand,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
             children: [
-              Image.network(imageUrl, fit: BoxFit.cover),
-              if (selected)
-                Container(color: AppColors.primary.withValues(alpha: 0.35)),
-              Positioned(
-                left: 18,
-                bottom: 18,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  color: AppColors.accent,
-                  child: Text(
-                    label.toUpperCase(),
-                    style: AppTextStyles.label.copyWith(
-                      color: AppColors.textLight,
-                      fontSize: 9,
-                    ),
-                  ),
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: selected
+                      ? AppColors.textDark.withValues(alpha: 0.12)
+                      : AppColors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: selected ? AppColors.textDark : AppColors.primary,
+                  size: 24,
                 ),
               ),
-              if (selected)
-                const Positioned(
-                  right: 14,
-                  bottom: 14,
-                  child: CircleAvatar(
-                    radius: 13,
-                    backgroundColor: AppColors.textDark,
-                    child: Icon(
-                      Icons.check,
-                      size: 17,
-                      color: AppColors.primary,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label.toUpperCase(),
+                      style: AppTextStyles.label.copyWith(
+                        color: foregroundColor,
+                        letterSpacing: 0.7,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 6),
+                    Text(
+                      description,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: mutedColor,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
                 ),
+              ),
+              const SizedBox(width: 10),
+              Icon(
+                selected ? Icons.check_circle : Icons.add_circle_outline,
+                color: selected ? AppColors.textDark : AppColors.primary,
+                size: 20,
+              ),
             ],
           ),
         ),
