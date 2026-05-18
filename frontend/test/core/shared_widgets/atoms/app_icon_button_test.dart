@@ -12,13 +12,14 @@ void main() {
   }
 
   group('AppIconButton', () {
+    //Building a primary button and checking if it's icon appers on screen
     testWidgets('renders icon correctly', (tester) async {
       await tester.pumpWidget(buildButton(
         AppIconButton.primary(icon: Icons.favorite, onPressed: () {}),
       ));
       expect(find.byIcon(Icons.favorite), findsOneWidget);
     });
-
+    //Building a secondary button and checking if it's icon appers on screen
     testWidgets('shows spinner when loading', (tester) async {
       await tester.pumpWidget(buildButton(
         AppIconButton.primary(
@@ -30,7 +31,7 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(find.byIcon(Icons.favorite), findsNothing);
     });
-
+    //Building a primary button and checking if it's icon appers on screen and if it is disabled when onPressed is null
     testWidgets('does not fire onTap when loading', (tester) async {
       bool tapped = false;
       await tester.pumpWidget(buildButton(
@@ -43,7 +44,7 @@ void main() {
       await tester.tap(find.byType(GestureDetector));
       expect(tapped, false);
     });
-
+//Building a primary button and checking if it fires onTap when tapped
     testWidgets('fires onPressed when tapped', (tester) async {
       bool tapped = false;
       await tester.pumpWidget(buildButton(
@@ -55,7 +56,7 @@ void main() {
       await tester.tap(find.byType(GestureDetector));
       expect(tapped, true);
     });
-
+//Building a primary button and checking if it is the correct size
     testWidgets('is correct size', (tester) async {
       await tester.pumpWidget(buildButton(
         AppIconButton.primary(
@@ -64,64 +65,68 @@ void main() {
           size: 64,
         ),
       ));
-      final container = tester.widget<Container>(
-        find.byType(Container).first,
+      final renderBox = tester.renderObject<RenderBox>(
+        find.byType(GestureDetector),
       );
-      expect(container.constraints?.maxWidth, 64);
+      expect(renderBox.size.width, 64);
+      expect(renderBox.size.height, 64);
     });
-
+//Building a primary button and checking if it has gradient background
     testWidgets('primary renders with gradient', (tester) async {
       await tester.pumpWidget(buildButton(
         AppIconButton.primary(icon: Icons.favorite, onPressed: () {}),
       ));
       final container = tester.widget<Container>(
-        find.byType(Container).first,
+        find.descendant(
+          of: find.byType(GestureDetector),
+          matching: find.byType(Container),
+        ),
       );
       final decoration = container.decoration as BoxDecoration;
       expect(decoration.gradient, isNotNull);
     });
 
+//Building a ghost button and checking if it has transparent background
     testWidgets('ghost variant has transparent background', (tester) async {
       await tester.pumpWidget(buildButton(
-        AppIconButton.primaryGhost(icon: Icons.favorite, onPressed: () {}),
+        AppIconButton.ghost(icon: Icons.favorite, onPressed: () {}),
       ));
       final container = tester.widget<Container>(
-        find.byType(Container).first,
+        find.descendant(
+          of: find.byType(GestureDetector),
+          matching: find.byType(Container),
+        ),
       );
       final decoration = container.decoration as BoxDecoration;
       expect(decoration.color, Colors.transparent);
     });
 
-    testWidgets('outlined variant has border', (tester) async {
+//Building a ghost button and checking if it has transparent background and correct icon color
+    testWidgets('ghost renders icon correctly', (tester) async {
       await tester.pumpWidget(buildButton(
-        AppIconButton.outlined(icon: Icons.favorite, onPressed: () {}),
-      ));
-      final container = tester.widget<Container>(
-        find.byType(Container).first,
-      );
-      final decoration = container.decoration as BoxDecoration;
-      expect(decoration.border, isNotNull);
-    });
-
-    testWidgets('secondaryGhost renders correctly', (tester) async {
-      await tester.pumpWidget(buildButton(
-        AppIconButton.secondaryGhost(icon: Icons.bookmark, onPressed: () {}),
+        AppIconButton.ghost(icon: Icons.bookmark, onPressed: () {}),
       ));
       expect(find.byIcon(Icons.bookmark), findsOneWidget);
     });
-
-    testWidgets('outlinedSecondary has gold border', (tester) async {
+//Building an outlined button with custom colour and checking if it has correct border colour
+    testWidgets('outlined with custom colour has correct border',
+        (tester) async {
       await tester.pumpWidget(buildButton(
-        AppIconButton.outlinedSecondary(
-          icon: Icons.bookmark,
+        AppIconButton.outlined(
+          icon: Icons.share,
           onPressed: () {},
+          customColor: Colors.red,
         ),
       ));
       final container = tester.widget<Container>(
-        find.byType(Container).first,
+        find.descendant(
+          of: find.byType(GestureDetector),
+          matching: find.byType(Container),
+        ),
       );
       final decoration = container.decoration as BoxDecoration;
-      expect(decoration.border, isNotNull);
+      final border = decoration.border as Border;
+      expect(border.top.color, Colors.red);
     });
   });
 }
