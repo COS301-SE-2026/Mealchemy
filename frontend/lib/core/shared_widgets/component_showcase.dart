@@ -5,7 +5,6 @@ import 'package:mealchemy/core/shared_widgets/atoms/app_button.dart';
 import 'package:mealchemy/core/shared_widgets/atoms/app_card.dart';
 import 'package:mealchemy/core/shared_widgets/atoms/app_icon_button.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
-import 'package:mealchemy/core/theme/app_theme.dart';
 
 
 class ComponentShowcase extends StatelessWidget {
