@@ -3,7 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 
 //  Enums
-enum ButtonVariant { primary, secondary, outlined, outlinedSecondary, text }
+enum ButtonVariant { primary, secondary, outlined, text }
+// primary - solid background, white text
+// secondary - solid accent background, white text
+// outlined - transparent background, colored border and text
+// text - transparent background, colored text
+// Colour can be customized for the outlined and text button variants.
 
 enum ButtonSize { small, medium, large }
 
@@ -15,6 +20,8 @@ class AppButton extends StatelessWidget {
   final bool isLoading;
   final bool isFullWidth;
   final bool isRounded;
+  final Color? customColor;
+  final Color? customBorderColor;
   final IconData? leftIcon;
   final IconData? rightIcon;
 
@@ -27,6 +34,8 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.isFullWidth = false,
     this.isRounded = false,
+    this.customColor,
+    this.customBorderColor,
     this.leftIcon,
     this.rightIcon,
   });
@@ -40,6 +49,8 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.isFullWidth = false,
     this.isRounded = false,
+    this.customColor,
+    this.customBorderColor,
     this.leftIcon,
     this.rightIcon,
   }) : variant = ButtonVariant.primary;
@@ -52,6 +63,8 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.isFullWidth = false,
     this.isRounded = false,
+    this.customColor,
+    this.customBorderColor,
     this.leftIcon,
     this.rightIcon,
   }) : variant = ButtonVariant.secondary;
@@ -64,6 +77,8 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.isFullWidth = false,
     this.isRounded = false,
+    this.customColor,
+    this.customBorderColor,
     this.leftIcon,
     this.rightIcon,
   }) : variant = ButtonVariant.outlined;
@@ -76,21 +91,11 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.isFullWidth = false,
     this.isRounded = false,
+    this.customColor,
+    this.customBorderColor,
     this.leftIcon,
     this.rightIcon,
   }) : variant = ButtonVariant.text;
-
-  const AppButton.outlinedSecondary({
-    super.key,
-    required this.label,
-    required this.onPressed,
-    this.size = ButtonSize.medium,
-    this.isLoading = false,
-    this.isFullWidth = false,
-    this.isRounded = false,
-    this.leftIcon,
-    this.rightIcon,
-  }) : variant = ButtonVariant.outlinedSecondary;
 
   // Size getters
   double get _height {
@@ -204,29 +209,18 @@ class AppButton extends StatelessWidget {
 
       case ButtonVariant.outlined:
         return OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
+          foregroundColor: customColor ?? AppColors.primary,
           minimumSize: Size(isFullWidth ? double.infinity : 0, _height),
           textStyle:
               TextStyle(fontSize: _fontSize, fontWeight: FontWeight.w600),
           padding: padding,
           shape: shape,
-          side: const BorderSide(color: AppColors.primary, width: 1.5),
-        );
-
-      case ButtonVariant.outlinedSecondary:
-        return OutlinedButton.styleFrom(
-          foregroundColor: AppColors.accent,
-          minimumSize: Size(isFullWidth ? double.infinity : 0, _height),
-          textStyle:
-              TextStyle(fontSize: _fontSize, fontWeight: FontWeight.w600),
-          padding: padding,
-          shape: RoundedRectangleBorder(borderRadius: _borderRadius),
-          side: const BorderSide(color: AppColors.accent, width: 1.5),
+          side: BorderSide(color: customBorderColor ?? customColor ?? AppColors.primary, width: 1.5),
         );
 
       case ButtonVariant.text:
         return TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
+          foregroundColor: customColor ?? AppColors.primary,
           minimumSize: Size(isFullWidth ? double.infinity : 0, _height),
           textStyle:
               TextStyle(fontSize: _fontSize, fontWeight: FontWeight.w600),
@@ -278,22 +272,27 @@ class AppButton extends StatelessWidget {
         return SizedBox(
           width: isFullWidth ? double.infinity : null,
           height: _height,
-          child: OutlinedButton(
-            onPressed: isLoading ? null : onPressed,
-            style: _buildStyle(),
-            child: _buildChild(AppColors.primary),
+          child: ClipRRect(
+            borderRadius: _borderRadius,
+            child: OutlinedButton(
+              onPressed: isLoading ? null : onPressed,
+              style: _buildStyle(),
+              child: _buildChild(customColor ?? AppColors.primary),
+            ),
           ),
         );
-      case ButtonVariant.outlinedSecondary:
-
+        
       case ButtonVariant.text:
         return SizedBox(
           width: isFullWidth ? double.infinity : null,
           height: _height,
-          child: TextButton(
-            onPressed: isLoading ? null : onPressed,
-            style: _buildStyle(),
-            child: _buildChild(AppColors.primary),
+          child: ClipRRect(
+            borderRadius: _borderRadius,
+            child: TextButton(
+              onPressed: isLoading ? null : onPressed,
+              style: _buildStyle(),
+              child: _buildChild(customColor ?? AppColors.primary),
+            ),
           ),
         );
     }
