@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 
 enum CardVariant { gradient, light, dark, accent, outlined }
+// gradient - use the linar gradient from the theme, with white text
+// light - white background with subtle shadow, dark text 
+// dark - solid primary background, white text
+// accent - solid accent background, white text
+// outlined - transparent background, colored border and text ( can customize border and text colour )
 
 class AppCard extends StatelessWidget {
   final Widget child;
@@ -9,6 +14,8 @@ class AppCard extends StatelessWidget {
   final EdgeInsets? padding;
   final double? width;
   final double? height;
+  final Color? customColor;
+  final Color? customBorderColor;
   final VoidCallback? onTap;
   final double borderRadius;
   final Gradient? gradient;
@@ -20,6 +27,8 @@ class AppCard extends StatelessWidget {
     this.padding,
     this.width,
     this.height,
+    this.customColor,
+    this.customBorderColor,
     this.onTap,
     this.borderRadius = 16,
     this.gradient,
@@ -33,8 +42,10 @@ class AppCard extends StatelessWidget {
     this.height,
     this.onTap,
     this.borderRadius = 16,
-    this.gradient,
-  }) : variant = CardVariant.light;
+  }) : variant = CardVariant.light,
+        customColor = null,
+        customBorderColor = null,
+        gradient = null;
 
   const AppCard.dark({
     super.key,
@@ -44,8 +55,10 @@ class AppCard extends StatelessWidget {
     this.height,
     this.onTap,
     this.borderRadius = 16,
-    this.gradient,
-  }) : variant = CardVariant.dark;
+  }) : variant = CardVariant.dark,
+        customColor = null,
+        customBorderColor = null,
+        gradient = null;
 
   const AppCard.accent({
     super.key,
@@ -55,8 +68,10 @@ class AppCard extends StatelessWidget {
     this.height,
     this.onTap,
     this.borderRadius = 16,
-    this.gradient,
-  }) : variant = CardVariant.accent;
+  }) : variant = CardVariant.accent,
+        customColor = null,
+        customBorderColor = null,
+        gradient = null;
 
   const AppCard.outlined({
     super.key,
@@ -65,9 +80,11 @@ class AppCard extends StatelessWidget {
     this.width,
     this.height,
     this.onTap,
+    this.customColor,
+    this.customBorderColor,
     this.borderRadius = 16,
-    this.gradient,
-  }) : variant = CardVariant.outlined;
+  }) : variant = CardVariant.outlined,
+        gradient = null;
 
   const AppCard.gradient({
     super.key,
@@ -78,7 +95,9 @@ class AppCard extends StatelessWidget {
     this.onTap,
     this.borderRadius = 16,
     this.gradient,
-  }) : variant = CardVariant.gradient;
+  }) : variant = CardVariant.gradient,
+        customColor = null,
+        customBorderColor = null;
 
   //Variant config
   Color get _backgroundColor {
@@ -99,7 +118,8 @@ class AppCard extends StatelessWidget {
   Border? get _border {
     switch (variant) {
       case CardVariant.outlined:
-        return Border.all(color: AppColors.accent, width: 1.5);
+        return Border.all(
+            color: customBorderColor ?? AppColors.accent, width: 1.5);
       default:
         return null;
     }
@@ -133,7 +153,7 @@ class AppCard extends StatelessWidget {
               ? null
               : _backgroundColor,
           gradient: variant == CardVariant.gradient
-              ? (gradient ?? AppColors.brand) 
+              ? (gradient ?? AppColors.brand)
               : gradient,
           borderRadius: BorderRadius.circular(borderRadius),
           border: _border,

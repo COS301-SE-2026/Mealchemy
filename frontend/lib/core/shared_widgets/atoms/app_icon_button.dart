@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 
-enum IconButtonVariant { primary, secondary, outlined, outlinedSecondary,primaryGhost,secondaryGhost}
+enum IconButtonVariant { primary, secondary, outlined, ghost }
+//primary - solid background, white text
+//secondary - solid accent background, white text
+//outlined - transparent background, colored border and text ( can customize border and text colour )
+//ghost - transparent background, transparent border, colored text (can customize text colour)
 
 class AppIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onPressed;
   final IconButtonVariant variant;
+  final Color? customColor;
+  final Color? customBorderColor;
   final double size;
   final bool isLoading;
 
@@ -15,6 +21,8 @@ class AppIconButton extends StatelessWidget {
     required this.icon,
     required this.onPressed,
     this.variant = IconButtonVariant.primary,
+    this.customColor,
+    this.customBorderColor,
     this.size = 48,
     this.isLoading = false,
   });
@@ -25,7 +33,9 @@ class AppIconButton extends StatelessWidget {
     required this.onPressed,
     this.size = 48,
     this.isLoading = false,
-  }) : variant = IconButtonVariant.primary;
+  })  : variant = IconButtonVariant.primary,
+        customColor = null,
+        customBorderColor = null;
 
   const AppIconButton.secondary({
     super.key,
@@ -33,69 +43,64 @@ class AppIconButton extends StatelessWidget {
     required this.onPressed,
     this.size = 48,
     this.isLoading = false,
-  }) : variant = IconButtonVariant.secondary;
+  })  : variant = IconButtonVariant.secondary,
+        customColor = null,
+        customBorderColor = null;
 
   const AppIconButton.outlined({
     super.key,
     required this.icon,
     required this.onPressed,
+    this.customColor,
+    this.customBorderColor,
     this.size = 48,
     this.isLoading = false,
   }) : variant = IconButtonVariant.outlined;
 
-  const AppIconButton.outlinedSecondary({
+  const AppIconButton.ghost({
     super.key,
     required this.icon,
     required this.onPressed,
+    this.customColor,
     this.size = 48,
     this.isLoading = false,
-  }) : variant = IconButtonVariant.outlinedSecondary;
+  })  : variant = IconButtonVariant.ghost,
+        customBorderColor = null;
 
-  const AppIconButton.primaryGhost({
-    super.key,
-    required this.icon,
-    required this.onPressed,
-    this.size = 48,
-    this.isLoading = false,
-  }) : variant = IconButtonVariant.primaryGhost;
-
-  const AppIconButton.secondaryGhost({
-    super.key,
-    required this.icon,
-    required this.onPressed,
-    this.size = 48,
-    this.isLoading = false,
-  }) : variant = IconButtonVariant.secondaryGhost;
-
-  // Variant config
+  //Variant config
   Color get _backgroundColor {
     switch (variant) {
-      case IconButtonVariant.primary:          return AppColors.primary;
-      case IconButtonVariant.secondary:        return AppColors.accent;
-      case IconButtonVariant.outlined:         return Colors.transparent;
-      case IconButtonVariant.outlinedSecondary: return Colors.transparent;
-      case IconButtonVariant.primaryGhost:     return Colors.transparent;
-      case IconButtonVariant.secondaryGhost:   return Colors.transparent;
+      case IconButtonVariant.primary:
+        return AppColors.primary;
+      case IconButtonVariant.secondary:
+        return AppColors.accent;
+      case IconButtonVariant.outlined:
+        return Colors.transparent;
+      case IconButtonVariant.ghost:
+        return Colors.transparent;
     }
   }
 
   Color get _iconColor {
     switch (variant) {
-      case IconButtonVariant.primary:          return AppColors.textDark;
-      case IconButtonVariant.secondary:        return AppColors.textDark;
-      case IconButtonVariant.outlined:         return AppColors.primary;
-      case IconButtonVariant.outlinedSecondary: return AppColors.accent;
-      case IconButtonVariant.primaryGhost:     return AppColors.primary;
-      case IconButtonVariant.secondaryGhost:   return AppColors.accent;
+      case IconButtonVariant.primary:
+        return AppColors.textDark;
+      case IconButtonVariant.secondary:
+        return AppColors.textDark;
+      case IconButtonVariant.outlined:
+        return customColor ?? AppColors.primary;
+      case IconButtonVariant.ghost:
+        return customColor ?? AppColors.primary;
     }
   }
 
   Border? get _border {
     switch (variant) {
       case IconButtonVariant.outlined:
-        return Border.all(color: AppColors.primary, width: 1.5);
-      case IconButtonVariant.outlinedSecondary:
-        return Border.all(color: AppColors.accent, width: 1.5);
+        return Border.all(
+          color: customBorderColor ?? customColor ?? AppColors.primary,
+          width: 1.5,
+        );
       default:
         return null;
     }
@@ -134,9 +139,7 @@ class AppIconButton extends StatelessWidget {
                 )
               : Icon(
                   icon,
-                  color: onPressed == null
-                      ? AppColors.textMuted
-                      : _iconColor,
+                  color: onPressed == null ? AppColors.textMuted : _iconColor,
                   size: size * 0.45,
                 ),
         ),

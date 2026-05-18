@@ -49,11 +49,11 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.isFullWidth = false,
     this.isRounded = false,
-    this.customColor,
-    this.customBorderColor,
     this.leftIcon,
     this.rightIcon,
-  }) : variant = ButtonVariant.primary;
+  }) : variant = ButtonVariant.primary,
+        customColor = null,
+        customBorderColor = null;
 
   const AppButton.secondary({
     super.key,
@@ -63,11 +63,11 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.isFullWidth = false,
     this.isRounded = false,
-    this.customColor,
-    this.customBorderColor,
     this.leftIcon,
     this.rightIcon,
-  }) : variant = ButtonVariant.secondary;
+  }) : variant = ButtonVariant.secondary,
+        customColor = null,
+        customBorderColor = null;
 
   const AppButton.outlined({
     super.key,
@@ -92,10 +92,10 @@ class AppButton extends StatelessWidget {
     this.isFullWidth = false,
     this.isRounded = false,
     this.customColor,
-    this.customBorderColor,
     this.leftIcon,
     this.rightIcon,
-  }) : variant = ButtonVariant.text;
+  }) : variant = ButtonVariant.text,
+       customBorderColor = null;
 
   // Size getters
   double get _height {
@@ -238,13 +238,16 @@ class AppButton extends StatelessWidget {
         return SizedBox(
           width: isFullWidth ? double.infinity : null,
           height: _height,
-          child: DecoratedBox(
+          child: ClipRRect(   
+            borderRadius: _borderRadius,
+            child: 
+            DecoratedBox(
             decoration: BoxDecoration(
               gradient: onPressed != null ? AppColors.brand : null,
               color: onPressed == null
                   ? AppColors.textMuted.withValues(alpha: 0.3)
                   : null,
-              borderRadius: _borderRadius,
+
             ),
             child: ElevatedButton(
               onPressed: isLoading ? null : onPressed,
@@ -255,17 +258,21 @@ class AppButton extends StatelessWidget {
               child: _buildChild(AppColors.textDark),
             ),
           ),
+          )
         );
 
       case ButtonVariant.secondary:
         return SizedBox(
           width: isFullWidth ? double.infinity : null,
           height: _height,
-          child: ElevatedButton(
+          child: ClipRRect(   
+            borderRadius: _borderRadius,
+            child: ElevatedButton(
             onPressed: isLoading ? null : onPressed,
             style: _buildStyle(),
             child: _buildChild(AppColors.textLight),
           ),
+        ),
         );
 
       case ButtonVariant.outlined:
