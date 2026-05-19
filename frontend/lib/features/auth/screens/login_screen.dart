@@ -1,15 +1,29 @@
 //handles ui login
 
 import 'package:flutter/material.dart';
+import 'package:mealchemy/core/theme/app_colours.dart';
+import 'package:mealchemy/features/auth/widgets/login_header.dart';
+import 'package:mealchemy/features/auth/widgets/login_form.dart';
+import 'package:mealchemy/features/auth/widgets/login_footer.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
-  @override
+@override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
-      body: const Center(child: Text('Login Screen')),
+      backgroundColor: AppColors.bgLight,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              const LoginHeader(),
+              // const LoginForm(),
+              // const LoginFooter(),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
