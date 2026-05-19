@@ -1,0 +1,141 @@
+/*Colour palette visuals, I tried to make panatome colour cards to display colour theme*/
+
+.palette-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    gap: 16px;
+  }
+  
+  .simple-palette .swatch,
+  .semantic-palette .swatch {
+    min-height: 270px;
+  }
+  
+  .swatch {
+    position: relative;
+    overflow: hidden;
+    min-height: 180px;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: var(--text-dark);
+    box-shadow: var(--shadow-soft);
+    transition: transform 180ms ease;
+  }
+  
+  .swatch::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, transparent, rgba(255, 255, 255, 0.32), transparent);
+    transform: translateX(-110%);
+    transition: transform 520ms ease;
+  }
+  
+  .swatch:hover {
+    transform: translateY(-8px) scale(1.025);
+  }
+  
+  .swatch:hover::before {
+    transform: translateX(110%);
+  }
+  
+  .swatch.light-text {
+    color: var(--text-light);
+  }
+  
+  .swatch-role {
+    width: fit-content;
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0 10px;
+    background: rgba(255, 255, 255, 0.72);
+    color: var(--primary);
+    font-size: 0.76rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+  
+  .swatch strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+  }
+  
+  .swatch code {
+    font-family: var(--font-code);
+    font-weight: 800;
+  }
+  
+  .swatch small {
+    font-weight: 800;
+  }
+  
+  .swatch-use {
+    position: relative;
+    z-index: 1;
+    margin: 8px 0 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+  
+  .rule-bar {
+    display: grid;
+    grid-template-columns: 60fr 30fr 10fr;
+    min-height: 72px;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .rule-bar span {
+    display: grid;
+    place-items: center;
+    color: var(--text-dark);
+    font-weight: 900;
+    background-size: 200% 100%;
+    animation: ratio-glow 4s ease-in-out infinite;
+  }
+  
+  @keyframes ratio-glow {
+    0%,
+    100% {
+      filter: brightness(1);
+    }
+    50% {
+      filter: brightness(1.08);
+    }
+  }
+  
+  @media (max-width: 1440px) {
+    .palette-grid {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+      gap: 14px;
+    }
+  
+    .simple-palette .swatch,
+    .semantic-palette .swatch {
+      min-height: 230px;
+    }
+  
+    .swatch {
+      min-height: 160px;
+      padding: 14px;
+    }
+  
+    .swatch strong {
+      font-size: 1.18rem;
+    }
+  }
+  
+  @media (max-width: 760px) {
+    .palette-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
