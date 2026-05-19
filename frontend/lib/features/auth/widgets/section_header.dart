@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 
-class LoginHeader extends StatelessWidget {
-  const LoginHeader({super.key});
+class SectionHeader extends StatelessWidget {
+  const SectionHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
