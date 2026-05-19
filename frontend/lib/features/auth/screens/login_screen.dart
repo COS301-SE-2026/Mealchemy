@@ -18,7 +18,7 @@ class LoginScreen extends StatelessWidget {
           child: Column(
             children: [
               const LoginHeader(),
-              const LoginForm(),
+              //const LoginForm(),
               // const LoginFooter(),
             ],
           ),

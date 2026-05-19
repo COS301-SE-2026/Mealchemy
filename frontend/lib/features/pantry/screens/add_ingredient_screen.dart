@@ -107,7 +107,7 @@ class AddIngredientScreen extends StatelessWidget {
               label: 'Price paid',
               hint: 'e.g. 89.99',
               keyboardType: TextInputType.number,
-              prefixIcon: Icons.payments_outlined,
+              leftIcon: Icons.payments_outlined,
               onChanged: (_) {},
             ),
             const SizedBox(height: 28),
