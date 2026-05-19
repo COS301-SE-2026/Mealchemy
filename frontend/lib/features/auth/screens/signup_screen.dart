@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/features/auth/widgets/section_header.dart';
+import 'package:mealchemy/features/auth/widgets/signup_form.dart';
 
 class SignupScreen extends StatelessWidget {
   const SignupScreen({super.key});
@@ -16,7 +17,7 @@ class SignupScreen extends StatelessWidget {
           child: Column(
             children: [
               const SectionHeader(),
-              //const RegistrationForm(),
+              const SignupForm(),
               // const RegistrationFooter(),
             ],
           ),
