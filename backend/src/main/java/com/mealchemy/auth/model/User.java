@@ -34,10 +34,6 @@ public class User {
         return userId;
     }
 
-    public void setUserId(Long id) {
-        this.userId = id; 
-    }
-
     public String getEmail() {
         return email; 
     }
