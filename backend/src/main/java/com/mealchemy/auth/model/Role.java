@@ -17,9 +17,10 @@ public class Role {
     @Column(name = "role_id")
     private Long roleId;
 
-    @Column(name = "role_name", nullable = false)
+    @Column(name = "role_name", nullable = false, unique = true)
     private String roleName;
 
+    // Hibernate uses JSON serialisation when sending data to db and JSON deserialisation when reading it back
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "permissions", columnDefinition = "jsonb")
     private Map<String, Object> permissions;
