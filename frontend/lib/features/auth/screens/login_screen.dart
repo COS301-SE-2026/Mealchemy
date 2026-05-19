@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
-import 'package:mealchemy/features/auth/widgets/login_header.dart';
+import 'package:mealchemy/features/auth/widgets/section_header.dart';
 import 'package:mealchemy/features/auth/widgets/login_form.dart';
 import 'package:mealchemy/features/auth/widgets/login_footer.dart';
 
@@ -17,8 +17,8 @@ class LoginScreen extends StatelessWidget {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              const LoginHeader(),
-              //const LoginForm(),
+              const SectionHeader(),
+              const LoginForm(),
               // const LoginFooter(),
             ],
           ),

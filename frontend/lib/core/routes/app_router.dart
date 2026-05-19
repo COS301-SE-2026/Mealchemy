@@ -10,7 +10,7 @@ import '../../features/pantry/screens/add_ingredient_screen.dart';
 
 
 final appRouter = GoRouter(
-  initialLocation: AppRoutes.pantry, // Sets the first screen shown when the app launches. 
+  initialLocation: AppRoutes.login, // Sets the first screen shown when the app launches. 
                                     // During development: change this to your screen (e.g. AppRoutes.pantry)
                                     // Before committing: ALWAYS reset this back to AppRoutes.login
   routes: [

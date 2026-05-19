@@ -1,13 +1,27 @@
-//handles ui signup
+//handles ui login
+
 import 'package:flutter/material.dart';
+import 'package:mealchemy/core/theme/app_colours.dart';
+import 'package:mealchemy/features/auth/widgets/section_header.dart';
+
 class SignupScreen extends StatelessWidget {
   const SignupScreen({super.key});
 
-  @override
+@override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Signup')),
-      body: const Center(child: Text('Signup Screen')),
+      backgroundColor: AppColors.bgLight,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              const SectionHeader(),
+              //const RegistrationForm(),
+              // const RegistrationFooter(),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
