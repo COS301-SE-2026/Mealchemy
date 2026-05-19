@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 void main() {
+  //Helper function to build the widget with necessary routing for last test loading state
   Widget buildWidget() {
   return ProviderScope(
     child: MaterialApp.router(
