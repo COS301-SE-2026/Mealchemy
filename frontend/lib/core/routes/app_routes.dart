@@ -6,6 +6,7 @@ class AppRoutes {
   static const String pantry = '/pantry';
   static const String vault = '/vault';
   static const String preference = '/preference';
-  static const String profile    = '/profile';
+  static const String profile = '/profile';
   static const String addIngredient = '/pantry/add';
+  static const String showcase = '/component_showcase';
 }

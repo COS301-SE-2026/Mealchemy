@@ -175,7 +175,6 @@ class PreferenceScreen extends StatelessWidget {
             const SizedBox(height: 14),
             AppButton(
               label: 'Reset All Directives',
-              variant: AppButtonVariant.outline,
               onPressed: () {},
             ),
           ],

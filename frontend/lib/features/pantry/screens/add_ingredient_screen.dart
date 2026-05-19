@@ -118,13 +118,11 @@ class AddIngredientScreen extends StatelessWidget {
             const SizedBox(height: 36),
             AppButton(
               label: 'Save Ingredient',
-              icon: Icons.check,
               onPressed: () {},
             ),
             const SizedBox(height: 14),
             AppButton(
               label: 'Cancel',
-              variant: AppButtonVariant.outline,
               onPressed: () => context.pop(),
             ),
           ],
