@@ -16,4 +16,14 @@ void main() {
     //using mock repo
     expect(repository, isA<MockPreferenceRepository>());
   });
+
+  test('userPreferencesProvider exposes mock preference data', () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final preferences = await container.read(userPreferencesProvider.future);
+
+    expect(preferences.selectedAllergies, contains('PEANUTS'));
+    expect(preferences.flavourProfiles.first.selected, isTrue);
+  });
 }
