@@ -9,7 +9,7 @@ class SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: 
-        BorderRadius.circular(56),
+        BorderRadius.circular(30),
       child: SizedBox(
         height: 400,
         width: double.infinity,

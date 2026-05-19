@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/features/auth/widgets/section_header.dart';
 import 'package:mealchemy/features/auth/widgets/login_form.dart';
-import 'package:mealchemy/features/auth/widgets/login_footer.dart';
+import 'package:mealchemy/features/auth/widgets/section_footer.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -15,11 +15,19 @@ class LoginScreen extends StatelessWidget {
       backgroundColor: AppColors.bgLight,
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Column(
+          child: Stack(
             children: [
               const SectionHeader(),
-              const LoginForm(),
-              // const LoginFooter(),
+              Padding(
+                padding: const EdgeInsets.only(top: 275),
+                child: Column(
+                  children: [
+                    const LoginForm(),
+                    const SectionFooter(),
+                  ],
+                ),
+              ),
+              
             ],
           ),
         ),

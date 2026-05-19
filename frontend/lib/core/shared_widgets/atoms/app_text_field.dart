@@ -85,7 +85,7 @@ class _AppTextFieldState extends State<AppTextField> {
   OutlineInputBorder get _defaultBorder => OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
-          color: widget.customColor ?? AppColors.divider,
+          color: widget.customColor ?? AppColors.inputBorder,
           width: 1,
         ),
       );
@@ -152,7 +152,7 @@ class _AppTextFieldState extends State<AppTextField> {
               ),
               filled: true,
               fillColor: widget.enabled
-                  ? (widget.customFillColor ?? AppColors.surfaceWhite)
+                  ? (widget.customFillColor ?? AppColors.surfaceMuted)
                   : AppColors.surfaceLight,
               border: _defaultBorder,
               enabledBorder: _defaultBorder,
