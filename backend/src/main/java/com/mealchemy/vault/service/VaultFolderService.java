@@ -31,6 +31,13 @@ public class VaultFolderService {
         return mapToResponseDto(vaultFolderForReturn);
     }
 
+    // Post to create a new vault folder
+    public VaultResponse createVaultFolder(VaultFolderRequest request)
+    {
+        VaultFolder vaultFolderForReturn = mapToEntity(request);
+        return mapToResponseDto(vaultFolderRepository.save(vaultFolderForReturn));
+    }
+
     /* Mapping functions */
 
     private VaultFolderResponse mapToResponseDto(VaultFolder vaultFolderIn)
