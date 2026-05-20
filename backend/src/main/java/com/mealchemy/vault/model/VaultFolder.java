@@ -1,7 +1,13 @@
 package com.mealchemy.vault.model;
 
+/* Import libraries */
+
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+
+/* Import classes */
+
+import com.mealchemy.vault.model.Vault;
 
 @Entity
 @Table(name = vault_folders)
@@ -56,10 +62,5 @@ public class VaultFolder {
     public void setFolderName(String folderNameIn)
     {
         folderName = folderNameIn;
-    }
-
-    public void setCreatedAt(OffsetDateTime createdAtIn)
-    {
-        createdAt = createdAtIn;
     }
 }
