@@ -7,6 +7,7 @@ import '../models/pantry_summary.dart';
 import '../repositories/api_pantry_repository.dart';
 import '../repositories/mock_pantry_repository.dart';
 import '../repositories/pantry_repository.dart';
+import '../widgets/pantry_item_card.dart';
 
 //selects mock/API repo
 final pantryRepositoryProvider = Provider<PantryRepository>((ref) {
@@ -17,26 +18,95 @@ final pantryRepositoryProvider = Provider<PantryRepository>((ref) {
   return ApiPantryRepository();
 });
 
-//pantry summaries
-final pantrySummaryProvider = FutureProvider<PantrySummary>((ref) {
-  final repository = ref.watch(pantryRepositoryProvider);
-  return repository.getPantrySummary();
+//editable pantry screen
+final pantryStateProvider = AsyncNotifierProvider<PantryNotifier, PantryState>(
+  PantryNotifier.new,
+);
+
+class PantryNotifier extends AsyncNotifier<PantryState> {
+  late final PantryRepository _repository;
+
+  @override
+  Future<PantryState> build() async {
+    _repository = ref.watch(pantryRepositoryProvider);
+
+    final summary = await _repository.getPantrySummary();
+    final filters = await _repository.getPantryFilters();
+    final ingredients = await _repository.getPantryIngredients();
+    final categories = await _repository.getIngredientCategories();
+
+    return PantryState(
+      summary: summary,
+      filters: filters,
+      ingredients: ingredients,
+      categories: categories,
+    );
+  }
+
+  //filtering
+  void selectFilter(String filterLabel) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    state = AsyncData(current.copyWith(selectedFilter: filterLabel));
+  }
+
+  //searching
+  void updateSearchQuery(String query) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    state = AsyncData(current.copyWith(searchQuery: query.trim()));
+  }
+
+  //clears search
+  void clearSearch() {
+    updateSearchQuery('');
+  }
+
+  //out of stock
+  void markOutOfStock(String ingredientName) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final updatedIngredients = current.ingredients.map((ingredient) {
+      if (ingredient.name != ingredientName) return ingredient;
+      return ingredient.copyWith(status: PantryItemStatus.expired);
+    }).toList();
+
+    state = AsyncData(current.copyWith(ingredients: updatedIngredients));
+  }
+
+  //removes ingredient from pantry list
+  void removeIngredient(String ingredientName) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final updatedIngredients = current.ingredients
+        .where((ingredient) => ingredient.name != ingredientName)
+        .toList();
+
+    state = AsyncData(current.copyWith(ingredients: updatedIngredients));
+  }
+}
+
+final pantrySummaryProvider = FutureProvider<PantrySummary>((ref) async {
+  final pantryState = await ref.watch(pantryStateProvider.future);
+  return pantryState.summary;
 });
 
-//pantry filtering
-final pantryFiltersProvider = FutureProvider<List<PantryFilter>>((ref) {
-  final repository = ref.watch(pantryRepositoryProvider);
-  return repository.getPantryFilters();
+final pantryFiltersProvider = FutureProvider<List<PantryFilter>>((ref) async {
+  final pantryState = await ref.watch(pantryStateProvider.future);
+  return pantryState.filters;
 });
 
-//pantry ingredients
-final pantryIngredientsProvider = FutureProvider<List<PantryIngredient>>((ref) {
-  final repository = ref.watch(pantryRepositoryProvider);
-  return repository.getPantryIngredients();
+final pantryIngredientsProvider =
+    FutureProvider<List<PantryIngredient>>((ref) async {
+  final pantryState = await ref.watch(pantryStateProvider.future);
+  return pantryState.ingredients;
 });
 
-//ingredient categories (user adds)
-final ingredientCategoriesProvider = FutureProvider<List<String>>((ref) {
-  final repository = ref.watch(pantryRepositoryProvider);
-  return repository.getIngredientCategories();
+final ingredientCategoriesProvider = FutureProvider<List<String>>((ref) async {
+  final pantryState = await ref.watch(pantryStateProvider.future);
+  return pantryState.categories;
 });
