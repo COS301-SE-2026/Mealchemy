@@ -34,4 +34,12 @@ public class VaultFolderRecipeController
     {
         return vaultFolderRecipeService.getFoldersByRecipeId(recipeId);
     }
+
+    // Get
+    @GetMapping("/{id}")
+    public VaultFolderRecipeResponse getFolderRecipeById(@PathVariabl Long id)
+    {
+        return vaultFolderRecipeService.getFolderRecipeById(id);
+    }
+
 }
