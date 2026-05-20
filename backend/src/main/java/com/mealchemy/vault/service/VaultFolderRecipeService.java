@@ -30,20 +30,20 @@ public class VaultFolderRecipeService {
     }
 
     // Get a single record by id
-    public VaultFolderRecipeResponse getFolderRecipesById(Long id)
+    public VaultFolderRecipeResponse getFolderRecipeById(Long id)
     {
         VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("No record found"));
     }
 
     // Post create a new record
-    public VaultFolderRecipeResponse createVaultFolderRecipes(VaultFolderRecipeRequest request)
+    public VaultFolderRecipeResponse createVaultFolderRecipe(VaultFolderRecipeRequest request)
     {
         VaultFolderRecipe vaultFolderRecipeForReturn = mapToEntity(request);
         return mapToResponseDto(vaultFolderRecipeRepository.save(vaultFolderRecipeForReturn));
     }
 
     // Put to update a record
-    public VaultFolderRecipeResponse updateVaultFolderRecipes(Long id, VaultFolderRecipeRequest request)
+    public VaultFolderRecipeResponse updateVaultFolderRecipe(Long id, VaultFolderRecipeRequest request)
     {
         VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("No record found"));
 
@@ -53,7 +53,11 @@ public class VaultFolderRecipeService {
         return mapToResponseDto(vaultFolderRecipeRepository.save(vaultFolderRecipeForReturn));
     }
 
-    
+    // Delete a specific record using id
+    public void deleteVaultFolderRecipe(Long id)
+    {
+        vaultFolderRecipeRepository.deleteById(id);
+    }
 
     /* Mapping functions */
 
