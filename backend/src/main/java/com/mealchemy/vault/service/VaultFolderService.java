@@ -18,9 +18,17 @@ public class VaultFolderService {
         this.vaultFolderRepository = vaultFolderRepository;
     }
 
+    // Get all folders relating to one vault
     public List<VaultFolderResponse> findVaultFolderByVaultId(Long vaultId)
     {
         return vaultFolderRepository.findByVaultId(vaultId).stream().map(this::mapToResponseDto).collect(Collectors.toList());
+    }
+
+    // Get a single folder by name
+    public VaultResponse findVaultFolderByName(String name)
+    {
+        VaultFolder vaultFolderForReturn = vaultFolderRepository.findByFolderName(name).orElseThrow(() -> new RuntimeException("Folder not found."));
+        return mapToResponseDto(vaultFolderForReturn);
     }
 
     /* Mapping functions */

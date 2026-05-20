@@ -41,7 +41,7 @@ public class VaultService
     // Put to update an existing field
     public VaultResponse updateVault(Long id, VaultRequest request)
     {
-        Vault vaultForReturn = vaultRepository.findById(id).orElseThrow(new RuntimeException("Vault not found."));
+        Vault vaultForReturn = vaultRepository.findById(id).orElseThrow(() -> new RuntimeException("Vault not found."));
 
         vaultForReturn.setOwnerId(request.getOwnerId());
         vaultForReturn.setVaultType(request.getVaultType());
