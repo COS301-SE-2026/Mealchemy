@@ -9,7 +9,7 @@ WITH private_vault AS (
     INSERT INTO vaults (owner_id, vault_type, name)
     VALUES (
         (SELECT user_id FROM users WHERE email = 'admin@mealchemy.com'),
-        'private',
+        'PRIVATE'::vault_type_enum,
         'My Vault'
     )
     RETURNING vault_id

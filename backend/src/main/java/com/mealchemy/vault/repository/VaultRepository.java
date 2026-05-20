@@ -12,5 +12,5 @@ import com.mealchemy.vault.model.Vault;
 @Repository
 public interface VaultRepository extends JpaRepository<Vault, Integer>
 {
-    List<Vault> findByOwnerId(int ownerId); 
+    List<Vault> findByOwnerId(Integer ownerId); 
 }

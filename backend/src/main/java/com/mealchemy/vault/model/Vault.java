@@ -25,7 +25,7 @@
         private int vaultId;
         
         @Column(name = "owner_id")
-        private int ownerId;
+        private Integer ownerId;
 
         @Enumerated(EnumType.STRING)
         @Column(name = "vault_type", nullable = false, columnDefinition = "vault_type_enum")
@@ -45,7 +45,7 @@
             return vaultId;
         }
 
-        public int getOwnerId()
+        public Integer getOwnerId()
         {
             return ownerId;
         }
@@ -67,7 +67,7 @@
 
         /* Setters */
 
-        public void setOwnerId(int ownerIdIn)
+        public void setOwnerId(Integer ownerIdIn)
         {
             ownerId = ownerIdIn;
         }

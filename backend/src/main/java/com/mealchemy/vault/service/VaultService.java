@@ -22,7 +22,7 @@ public class VaultService
     }
 
     // Get all vaults that beint to ownerId
-    public List<VaultResponse> getVaultsByOwnerId(int ownerId)
+    public List<VaultResponse> getVaultsByOwnerId(Integer ownerId)
     {
         return vaultRepository.findByOwnerId(ownerId).stream().map(this::mapToResponseDto).collect(Collectors.toList());
     }

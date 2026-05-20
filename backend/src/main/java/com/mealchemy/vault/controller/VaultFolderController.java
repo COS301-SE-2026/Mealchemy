@@ -30,7 +30,7 @@ public class VaultFolderController
     }
 
     // Get
-    @GetMapping("/folder/{name}")
+    @GetMapping("/folder/name/{name}")
     public VaultFolderResponse getVaultFolderByName(@PathVariable String name)
     {
         return vaultFolderService.getVaultFolderByName(name);

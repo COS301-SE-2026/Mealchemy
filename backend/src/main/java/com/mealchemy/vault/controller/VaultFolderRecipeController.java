@@ -10,7 +10,7 @@ import com.mealchemy.vault.dto.VaultFolderRecipeResponse;
 import com.mealchemy.vault.service.VaultFolderRecipeService;
 
 @RestController
-@RequestMapping("/folder/recipes")
+@RequestMapping("/recipefolders")
 public class VaultFolderRecipeController
 {
     private final VaultFolderRecipeService vaultFolderRecipeService;
@@ -23,14 +23,14 @@ public class VaultFolderRecipeController
     /* Mapping Functions */
 
     // Get
-    @GetMapping("/{folderId}")
+    @GetMapping("/recipes/{folderId}")
     public List<VaultFolderRecipeResponse> getRecipesByFolderId(@PathVariable int folderId)
     {
         return vaultFolderRecipeService.getRecipesByFolderId(folderId);
     }
 
     // Get
-    @GetMapping("/{recipeId}")
+    @GetMapping("/folders/{recipeId}")
     public List<VaultFolderRecipeResponse> getFoldersByRecipeId(@PathVariable int recipeId)
     {
         return vaultFolderRecipeService.getFoldersByRecipeId(recipeId);

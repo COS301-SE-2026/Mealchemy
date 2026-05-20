@@ -14,7 +14,7 @@ public class VaultResponse
     /* Variable declarations */
 
     private int vaultId;
-    private int ownerId;
+    private Integer ownerId;
     private VaultType vaultType;
     private String name;
     private OffsetDateTime createdAt;
@@ -26,7 +26,7 @@ public class VaultResponse
         return vaultId;
     }
 
-    public int getOwnerId()
+    public Integer getOwnerId()
     {
         return ownerId;
     }
@@ -53,7 +53,7 @@ public class VaultResponse
         vaultId = vaultIdIn;
     }
 
-    public void setOwnerId(int ownerIdIn)
+    public void setOwnerId(Integer ownerIdIn)
     {
         ownerId = ownerIdIn;
     }
