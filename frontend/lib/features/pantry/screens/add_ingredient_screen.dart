@@ -106,7 +106,7 @@ class _AddIngredientContent extends StatelessWidget {
                 onChanged: (_) {},
               ),
             ),
-          ],
+          ], // ← Row closes here
         ),
         const SizedBox(height: 28),
 
@@ -126,14 +126,16 @@ class _AddIngredientContent extends StatelessWidget {
           onChanged: (_) {},
         ),
         const SizedBox(height: 36),
-        AppButton(
+        AppButton.primary(
           label: 'Save Ingredient',
           onPressed: () {},
+          isFullWidth: true,
         ),
         const SizedBox(height: 14),
-        AppButton(
+        AppButton.outlined(
           label: 'Cancel',
           onPressed: () => context.pop(),
+          isFullWidth: true,
         ),
       ],
     );

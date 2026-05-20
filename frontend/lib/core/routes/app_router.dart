@@ -7,10 +7,11 @@ import '../../features/pantry/screens/pantry_screen.dart';
 import '../../features/preference/screens/preference_screen.dart';
 import '../../features/vault/screens/vault_screen.dart';
 import '../../features/pantry/screens/add_ingredient_screen.dart';
+import '../../features/auth/screens/signup_screen.dart';
 
 
 final appRouter = GoRouter(
-  initialLocation: AppRoutes.pantry, // Sets the first screen shown when the app launches. 
+  initialLocation: AppRoutes.login, // Sets the first screen shown when the app launches. 
                                     // During development: change this to your screen (e.g. AppRoutes.pantry)
                                     // Before committing: ALWAYS reset this back to AppRoutes.login
   routes: [
@@ -38,5 +39,9 @@ final appRouter = GoRouter(
       path: AppRoutes.addIngredient,
       builder: (context, state) => const AddIngredientScreen(),
     ),
+    GoRoute(
+      path: AppRoutes.signup,
+      builder: (context, state) => const SignupScreen(),
+    )
   ],
 );
