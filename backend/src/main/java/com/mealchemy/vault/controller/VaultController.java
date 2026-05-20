@@ -2,10 +2,11 @@ package com.mealchemy.vault.controller;
 
 /* Import libraries */
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 /* Import classes */
 import com.mealchemy.vault.dto.VaultResponse;
-import com.mealchemy.vault.sto.VaultRequest;
+import com.mealchemy.vault.dto.VaultRequest;
 import com.mealchemy.vault.service.VaultService;
 
 @RestController

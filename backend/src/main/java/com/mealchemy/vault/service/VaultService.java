@@ -2,10 +2,13 @@ package com.mealchemy.vault.service;
 
 /* Import libraries */
 import org.springframework.stereotype.Service;
+import java.util.stream.Collectors;
+import java.util.List;
 
 /* Import classes */
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.dto.VaultResponse;
+import com.mealchemy.vault.dto.VaultRequest;
 import com.mealchemy.vault.repository.VaultRepository;
 
 @Service
@@ -28,13 +31,13 @@ public class VaultService
     public VaultResponse getVault(int id)
     {
         Vault vaultForReturn = vaultRepository.findById(id).orElseThrow(() -> new RuntimeException("Vault not found."));
-        return mapToResponseDto(vaultToReturn);
+        return mapToResponseDto(vaultForReturn);
     }
 
     // Post to create a new vault
     public VaultResponse createVault(VaultRequest request)
     {
-        Vault vaultForReturn = mapToEntity(request);
+        Vault vaultForReturn = mapRequestToEntity(request);
         return mapToResponseDto(vaultRepository.save(vaultForReturn));
     }
 
@@ -63,11 +66,22 @@ public class VaultService
         VaultResponse response = new VaultResponse();
 
         response.setVaultId(vaultIn.getVaultId());
-        response.setOwnerId(vaultIn.getOwnerId);
+        response.setOwnerId(vaultIn.getOwnerId());
         response.setVaultType(vaultIn.getVaultType());
         response.setName(vaultIn.getName());
         response.setCreatedAt(vaultIn.getCreatedAt());
 
         return response;
+    }
+
+    private VaultFolder mapRequestToEntity(VaultRequest request)
+    {
+        Vault vault = new Vault();
+
+        vault.setOwnerId(request.getOwnerId());
+        vault.setVaultType(request.getVaultType());
+        vault.setName(request.getName());
+
+        return vault;
     }
 }

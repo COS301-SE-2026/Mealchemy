@@ -2,6 +2,8 @@ package com.mealchemy.vault.service;
 
 /* Import libraries */
 import org.springframework.stereotype.Service;
+import java.util.stream.Collectors;
+import java.util.List;
 
 /* Import classes */
 import com.mealchemy.vault.model.VaultFolder;
@@ -39,9 +41,9 @@ public class VaultFolderService {
     }
 
     // Post to create a new vault folder
-    public VaultFoldertesponse createVaultFolder(VaultFolderRequest request)
+    public VaultFolderResponse createVaultFolder(VaultFolderRequest request)
     {
-        VaultFolder vaultFolderForReturn = mapToEntity(request);
+        VaultFolder vaultFolderForReturn = mapRequestToEntity(request);
         return mapToResponseDto(vaultFolderRepository.save(vaultFolderForReturn));
     }
 
@@ -50,8 +52,8 @@ public class VaultFolderService {
     {
         VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(id).orElseThrow(() -> new RuntimeException("Folder not found."));
         
-        vaultFolderForReturn.setVaultId(request.getVaultId);
-        vaultFolderForReturn.setFolderName(request.getFolderName);
+        vaultFolderForReturn.setVaultId(request.getVaultId());
+        vaultFolderForReturn.setFolderName(request.getFolderName());
 
         return mapToResponseDto(vaultFolderRepository.save(vaultFolderForReturn));
     }

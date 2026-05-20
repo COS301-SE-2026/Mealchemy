@@ -2,6 +2,7 @@ package com.mealchemy.vault.controller;
 
 /* Import libraries */
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 /* Import classes */
 import com.mealchemy.vault.dto.VaultFolderRequest;
@@ -22,21 +23,21 @@ public class VaultFolderController
     /* Mapping Functions */
 
     // Get
-    @GetMapping("/{vaultId}")
+    @GetMapping("/vault/{vaultId}")
     public List<VaultFolderResponse> getVaultFolderByVaultId(@PathVariable int vaultId)
     {
         return vaultFolderService.getVaultFolderByVaultId(vaultId);
     }
 
     // Get
-    @GetMapping("/{name}")
+    @GetMapping("/folder/{name}")
     public VaultFolderResponse getVaultFolderByName(@PathVariable String name)
     {
         return vaultFolderService.getVaultFolderByName(name);
     }
 
     // Get
-    @GetMapping("/{id}")
+    @GetMapping("/folder/{id}")
     public VaultFolderResponse getVaultFolderById(@PathVariable int id)
     {
         return vaultFolderService.getVaultFolderById(id);
@@ -46,7 +47,7 @@ public class VaultFolderController
     @PostMapping
     public VaultFolderResponse createVaultFolder(@RequestBody VaultFolderRequest request)
     {
-        return vaultFolderService.createVaultFolder(response);
+        return vaultFolderService.createVaultFolder(request);
     }
 
     // Put

@@ -2,6 +2,7 @@ package com.mealchemy.vault.controller;
 
 /* Import libraries */
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 /* Import classes */
 import com.mealchemy.vault.dto.VaultFolderRecipeRequest;
@@ -22,14 +23,14 @@ public class VaultFolderRecipeController
     /* Mapping Functions */
 
     // Get
-    @GetMapping("/folderId")
+    @GetMapping("/{folderId}")
     public List<VaultFolderRecipeResponse> getRecipesByFolderId(@PathVariable int folderId)
     {
         return vaultFolderRecipeService.getRecipesByFolderId(folderId);
     }
 
     // Get
-    @GetMapping("/recipeId")
+    @GetMapping("/{recipeId}")
     public List<VaultFolderRecipeResponse> getFoldersByRecipeId(@PathVariable int recipeId)
     {
         return vaultFolderRecipeService.getFoldersByRecipeId(recipeId);
@@ -37,19 +38,20 @@ public class VaultFolderRecipeController
 
     // Get
     @GetMapping("/{id}")
-    public VaultFolderRecipeResponse getFolderRecipeById(@PathVariabl int id)
+    public VaultFolderRecipeResponse getFolderRecipeById(@PathVariable int id)
     {
         return vaultFolderRecipeService.getFolderRecipeById(id);
     }
 
     // Post
     @PostMapping
-    public VaultFolderRecipeResponse createVaultFolderRecipe(@RequestBody vaultFolderRecipeRequest request)
+    public VaultFolderRecipeResponse createVaultFolderRecipe(@RequestBody VaultFolderRecipeRequest request)
     {
         return vaultFolderRecipeService.createVaultFolderRecipe(request);
     }
 
     // Put
+    @PutMapping("/{id}")
     public VaultFolderRecipeResponse updateVaultFolderRecipe(@PathVariable int id, @RequestBody VaultFolderRecipeRequest request)
     {
         return vaultFolderRecipeService.updateVaultFolderRecipe(id, request);

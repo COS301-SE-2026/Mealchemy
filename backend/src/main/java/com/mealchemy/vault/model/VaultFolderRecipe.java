@@ -38,7 +38,7 @@ public class VaultFolderRecipe {
         return folderId;
     }
 
-    public Recipe getRecipeId()
+    public int getRecipeId()
     {
         return recipeId;
     }
@@ -55,7 +55,7 @@ public class VaultFolderRecipe {
         folderId = folderIdIn;
     }
 
-    public void setRecipeId(Recipe recipeIdIn)
+    public void setRecipeId(int recipeIdIn)
     {
         recipeId = recipeIdIn;
     }

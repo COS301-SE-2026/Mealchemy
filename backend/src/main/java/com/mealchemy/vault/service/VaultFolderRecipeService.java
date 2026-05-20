@@ -2,10 +2,13 @@ package com.mealchemy.vault.service;
 
 /* Import libraries */
 import org.springframework.stereotype.Service;
+import java.util.stream.Collectors;
+import java.util.List;
 
 /* Import classes */
 import com.mealchemy.vault.model.VaultFolderRecipe;
 import com.mealchemy.vault.dto.VaultFolderRecipeResponse;
+import com.mealchemy.vault.dto.VaultFolderRecipeRequest;
 import com.mealchemy.vault.repository.VaultFolderRecipeRepository;
 
 @Service
@@ -33,12 +36,13 @@ public class VaultFolderRecipeService {
     public VaultFolderRecipeResponse getFolderRecipeById(int id)
     {
         VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("No record found"));
+        return mapToResponseDto(vaultFolderRecipeForReturn);
     }
 
     // Post create a new record
     public VaultFolderRecipeResponse createVaultFolderRecipe(VaultFolderRecipeRequest request)
     {
-        VaultFolderRecipe vaultFolderRecipeForReturn = mapToEntity(request);
+        VaultFolderRecipe vaultFolderRecipeForReturn = mapRequestToEntity(request);
         return mapToResponseDto(vaultFolderRecipeRepository.save(vaultFolderRecipeForReturn));
     }
 
@@ -66,10 +70,20 @@ public class VaultFolderRecipeService {
         VaultFolderRecipeResponse response = new VaultFolderRecipeResponse();
 
         response.setId(vaultFolderRecipeIn.getId());
-        response.setFolderId(vaultFolderRecipeIn.getFolderId);
+        response.setFolderId(vaultFolderRecipeIn.getFolderId());
         response.setRecipeId(vaultFolderRecipeIn.getRecipeId());
         response.setAddedAt(vaultFolderRecipeIn.getAddedAt());
 
         return response;
+    }
+
+    private VaultFolder mapRequestToEntity(VaultFolderRecipeRequest request)
+    {
+        VaultFolderRecipe vaultFolderRecipe = new VaultFolderRecipe();
+
+        vaultFolderRecipe.setFolderId(request.getFolderId());
+        vaultFolderRecipe.setRecipeId(request.getRecipeId());
+
+        return vaultFolderRecipe;
     }
 }

@@ -23,7 +23,7 @@ public class VaultRequest
         return ownerId;
     }
 
-    public String getVaultType()
+    public VaultType getVaultType()
     {
         return vaultType;
     }
@@ -40,7 +40,7 @@ public class VaultRequest
         ownerId = ownerIdIn;
     }
 
-    public void setVaultType(String vaultTypeIn)
+    public void setVaultType(VaultType vaultTypeIn)
     {
         if(Arrays.stream(VaultType.values()).map(Enum::name).anyMatch(vaultTypeIn::equals))
         {

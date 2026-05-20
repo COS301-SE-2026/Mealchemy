@@ -1,4 +1,4 @@
-package com.mealchemy.vault.model;
+package com.mealchemy.vault.dto;
 
 /* Import libraries */
 

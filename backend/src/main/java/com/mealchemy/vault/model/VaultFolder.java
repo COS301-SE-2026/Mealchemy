@@ -8,7 +8,7 @@ import java.time.OffsetDateTime;
 /* Import classes */
 
 @Entity
-@Table(name = vault_folders)
+@Table(name = "vault_folders")
 public class VaultFolder {
     
     /* Declaring fields */
@@ -34,7 +34,7 @@ public class VaultFolder {
         return folderId;
     }
     
-    public Vault getVaultId()
+    public int getVaultId()
     {
         return vaultId;
     }

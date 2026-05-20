@@ -51,7 +51,7 @@ public class VaultFolderResponse {
         folderName = folderNameIn;
     }
 
-    public void setCreatedAt(OffsetDatetime createdAtIn)
+    public void setCreatedAt(OffsetDateTime createdAtIn)
     {
         createdAt = createdAtIn;
     }
