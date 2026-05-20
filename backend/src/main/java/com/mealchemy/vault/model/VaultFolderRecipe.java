@@ -28,7 +28,12 @@ public class VaultFolderRecipe {
 
     /* Getters */
 
-    public VaultFolder getFolderId()
+    public Long getId()
+    {
+        return id;
+    }
+
+    public Long getFolderId()
     {
         return folderId;
     }
