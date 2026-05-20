@@ -7,8 +7,6 @@ import java.time.OffsetDateTime;
 
 /* Import classes */
 
-import com.mealchemy.vault.model.Vault;
-
 @Entity
 @Table(name = vault_folders)
 public class VaultFolder {
@@ -20,9 +18,8 @@ public class VaultFolder {
     @Column(name = "folder_id")
     private Long folderId;
 
-    @ManyToOne
-    @JoinColumn(name = "vault_id", nullable = false)
-    private Vault vault;
+    Column(name = "vault_id", nullable = false)
+    private Long vaultId;
 
     @Column(name = "name", nullable = false, length = 100)
     private String folderName;
@@ -37,9 +34,9 @@ public class VaultFolder {
         return folderId;
     }
     
-    public Vault getVault()
+    public Vault getVaultId()
     {
-        return vault;
+        return vaultId;
     }
 
     public String getFolderName()
@@ -54,9 +51,9 @@ public class VaultFolder {
 
     /* Setters */
 
-    public void setVault(Vault vaultIn)
+    public void setVaultId(Long vaultIdIn)
     {
-        vault = vaultIn;
+        vaultId = vaultIdIn;
     }
 
     public void setFolderName(String folderNameIn)
