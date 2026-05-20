@@ -38,7 +38,7 @@ public class VaultService
         return mapToResponseDto(vaultRepository.save(vaultForReturn));
     }
 
-    // Put to update an existing field
+    // Put to update an existing vault
     public VaultResponse updateVault(Long id, VaultRequest request)
     {
         Vault vaultForReturn = vaultRepository.findById(id).orElseThrow(() -> new RuntimeException("Vault not found."));

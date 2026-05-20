@@ -19,22 +19,40 @@ public class VaultFolderService {
     }
 
     // Get all folders relating to one vault
-    public List<VaultFolderResponse> findVaultFolderByVaultId(Long vaultId)
+    public List<VaultFolderResponse> getVaultFolderByVaultId(Long vaultId)
     {
         return vaultFolderRepository.findByVaultId(vaultId).stream().map(this::mapToResponseDto).collect(Collectors.toList());
     }
 
     // Get a single folder by name
-    public VaultResponse findVaultFolderByName(String name)
+    public VaultFolderResponse getVaultFolderByName(String name)
     {
         VaultFolder vaultFolderForReturn = vaultFolderRepository.findByFolderName(name).orElseThrow(() -> new RuntimeException("Folder not found."));
         return mapToResponseDto(vaultFolderForReturn);
     }
 
+    // Get a single folder by id
+    public VaultFolderResponse getVaultFolderById(Long id)
+    {
+        VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(id).orElseThrow(() -> new RuntimeException("Folder not found."));
+        return mapToResponseDto(vaultFolderForReturn);
+    }
+
     // Post to create a new vault folder
-    public VaultResponse createVaultFolder(VaultFolderRequest request)
+    public VaultFoldertesponse createVaultFolder(VaultFolderRequest request)
     {
         VaultFolder vaultFolderForReturn = mapToEntity(request);
+        return mapToResponseDto(vaultFolderRepository.save(vaultFolderForReturn));
+    }
+
+    // Put to update an existing folder
+    public VaultFolderResponse updateVaultFolder(Long id, VaultFolderRequest request)
+    {
+        VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(id).orElseThrow(() -> new RuntimeException("Folder not found."));
+        
+        vaultFolderForReturn.setVaultId(request.getVaultId);
+        vaultFolderForReturn.setFolderName(request.getFolderName);
+
         return mapToResponseDto(vaultFolderRepository.save(vaultFolderForReturn));
     }
 
