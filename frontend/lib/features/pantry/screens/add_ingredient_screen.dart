@@ -38,13 +38,41 @@ class AddIngredientScreen extends ConsumerWidget {
   }
 }
 
-class _AddIngredientContent extends StatelessWidget {
+class _AddIngredientContent extends ConsumerStatefulWidget {
   const _AddIngredientContent({required this.categories});
 
   final List<String> categories;
 
   @override
+  ConsumerState<_AddIngredientContent> createState() =>
+      _AddIngredientContentState();
+}
+
+class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _quantityController = TextEditingController();
+  final TextEditingController _unitController = TextEditingController();
+  final TextEditingController _priceController = TextEditingController();
+
+  String _selectedCategory = 'produce';
+  bool _isOutOfStock = false;
+  bool _showValidation = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _quantityController.dispose();
+    _unitController.dispose();
+    _priceController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final hasName = _nameController.text.trim().isNotEmpty;
+    final hasQuantity = _quantityController.text.trim().isNotEmpty;
+    final hasUnit = _unitController.text.trim().isNotEmpty;
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
       children: [
@@ -77,43 +105,59 @@ class _AddIngredientContent extends StatelessWidget {
         const AppSectionHeader(title: 'Ingredient Details'),
         const SizedBox(height: 14),
         AppTextField(
+          controller: _nameController,
           label: 'Ingredient name',
           hint: 'e.g. Chicken breast',
-          onChanged: (_) {},
+          onChanged: (_) => setState(() {}),
         ),
+        if (_showValidation && !hasName)
+          const _ValidationText('Ingredient name is required.'),
         const SizedBox(height: 14),
-        _CategorySelector(categories: categories),
+        _CategorySelector(
+          categories: widget.categories,
+          selectedCategory: _selectedCategory,
+          onSelected: (category) {
+            setState(() {
+              _selectedCategory = category;
+            });
+          },
+        ),
         const SizedBox(height: 28),
 
-        //amount + units
+        //amount and units
         const AppSectionHeader(title: 'Quantity'),
         const SizedBox(height: 14),
         Row(
           children: [
             Expanded(
               child: AppTextField(
+                controller: _quantityController,
                 label: 'Quantity',
                 hint: 'e.g. 800',
                 keyboardType: TextInputType.number,
-                onChanged: (_) {},
+                onChanged: (_) => setState(() {}),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: AppTextField(
+                controller: _unitController,
                 label: 'Unit',
                 hint: 'g, ml, cups',
-                onChanged: (_) {},
+                onChanged: (_) => setState(() {}),
               ),
             ),
-          ], // ← Row closes here
+          ],
         ),
+        if (_showValidation && (!hasQuantity || !hasUnit))
+          const _ValidationText('Quantity and unit are required.'),
         const SizedBox(height: 28),
 
         //purchase details
         const AppSectionHeader(title: 'Purchase Info'),
         const SizedBox(height: 14),
         AppTextField(
+          controller: _priceController,
           label: 'Price paid',
           hint: 'e.g. 89.99',
           keyboardType: TextInputType.number,
@@ -122,35 +166,64 @@ class _AddIngredientContent extends StatelessWidget {
         ),
         const SizedBox(height: 28),
         _StockToggle(
-          value: false,
-          onChanged: (_) {},
+          value: _isOutOfStock,
+          onChanged: (value) {
+            setState(() {
+              _isOutOfStock = value;
+            });
+          },
         ),
         const SizedBox(height: 36),
-        AppButton.primary(
+        AppButton(
           label: 'Save Ingredient',
-          onPressed: () {},
-          isFullWidth: true,
+          onPressed: _saveIngredient,
         ),
         const SizedBox(height: 14),
-        AppButton.outlined(
+        AppButton(
           label: 'Cancel',
           onPressed: () => context.pop(),
-          isFullWidth: true,
         ),
       ],
     );
   }
+
+  void _saveIngredient() {
+    final hasRequiredFields = _nameController.text.trim().isNotEmpty &&
+        _quantityController.text.trim().isNotEmpty &&
+        _unitController.text.trim().isNotEmpty;
+
+    if (!hasRequiredFields) {
+      setState(() {
+        _showValidation = true;
+      });
+      return;
+    }
+
+    ref.read(pantryStateProvider.notifier).addIngredient(
+          name: _nameController.text,
+          quantity: _quantityController.text,
+          unit: _unitController.text,
+          category: _selectedCategory,
+          isOutOfStock: _isOutOfStock,
+        );
+
+    context.pop();
+  }
 }
 
 class _CategorySelector extends StatelessWidget {
-  const _CategorySelector({required this.categories});
+  const _CategorySelector({
+    required this.categories,
+    required this.selectedCategory,
+    required this.onSelected,
+  });
 
   final List<String> categories;
+  final String selectedCategory;
+  final ValueChanged<String> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    const selectedCategory = 'produce';
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -170,7 +243,7 @@ class _CategorySelector extends StatelessWidget {
             return ChoiceChip(
               label: Text(category.toUpperCase()),
               selected: selected,
-              onSelected: (_) {},
+              onSelected: (_) => onSelected(category),
               selectedColor: AppColors.primary,
               backgroundColor: AppColors.surfaceLight,
               labelStyle: AppTextStyles.label.copyWith(
@@ -219,6 +292,23 @@ class _StockToggle extends StatelessWidget {
         style: AppTextStyles.bodySmall.copyWith(
           color: AppColors.textMuted,
         ),
+      ),
+    );
+  }
+}
+
+class _ValidationText extends StatelessWidget {
+  const _ValidationText(this.message);
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Text(
+        message,
+        style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
       ),
     );
   }

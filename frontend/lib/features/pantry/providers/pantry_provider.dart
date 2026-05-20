@@ -77,6 +77,41 @@ class PantryNotifier extends AsyncNotifier<PantryState> {
     state = AsyncData(current.copyWith(ingredients: updatedIngredients));
   }
 
+  //adds ingredient to pantry
+  void addIngredient({
+    required String name,
+    required String quantity,
+    required String unit,
+    required String category,
+    required bool isOutOfStock,
+  }) {
+    final current = state.valueOrNull;
+    final cleanedName = name.trim();
+    final cleanedQuantity = quantity.trim();
+    final cleanedUnit = unit.trim();
+
+    if (current == null ||
+        cleanedName.isEmpty ||
+        cleanedQuantity.isEmpty ||
+        cleanedUnit.isEmpty) {
+      return;
+    }
+
+    final displayCategory = _displayCategory(category);
+    final newIngredient = PantryIngredient(
+      name: cleanedName,
+      details: '$cleanedQuantity$cleanedUnit • Manual entry',
+      category: displayCategory,
+      status: isOutOfStock ? PantryItemStatus.expired : PantryItemStatus.fresh,
+    );
+
+    state = AsyncData(
+      current.copyWith(
+        ingredients: [...current.ingredients, newIngredient],
+      ),
+    );
+  }
+
   //removes ingredient from pantry list
   void removeIngredient(String ingredientName) {
     final current = state.valueOrNull;
@@ -110,3 +145,13 @@ final ingredientCategoriesProvider = FutureProvider<List<String>>((ref) async {
   final pantryState = await ref.watch(pantryStateProvider.future);
   return pantryState.categories;
 });
+
+//changes enum values
+String _displayCategory(String category) {
+  return switch (category) {
+    'meat' || 'poultry' || 'seafood' => 'Proteins',
+    'produce' => 'Vegetables',
+    'dairy' => 'Dairy',
+    _ => 'Other',
+  };
+}

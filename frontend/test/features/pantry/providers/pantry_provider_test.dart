@@ -106,4 +106,29 @@ void main() {
       isFalse,
     );
   });
+
+  test('addIngredient adds manual ingredient to local pantry list', () async {
+  final container = ProviderContainer();
+  addTearDown(container.dispose);
+
+  await container.read(pantryStateProvider.future);
+
+  final notifier = container.read(pantryStateProvider.notifier);
+  notifier.addIngredient(
+    name: 'Brown Rice',
+    quantity: '500',
+    unit: 'g',
+    category: 'grains',
+    isOutOfStock: false,
+  );
+
+  final pantryState = container.read(pantryStateProvider).value!;
+  final ingredient = pantryState.ingredients.firstWhere(
+    (item) => item.name == 'Brown Rice',
+  );
+
+  expect(ingredient.details, '500g • Manual entry');
+  expect(ingredient.category, 'Other');
+  expect(ingredient.status, PantryItemStatus.fresh);
+});
 }
