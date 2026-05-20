@@ -137,11 +137,6 @@ class _PreferenceContent extends StatelessWidget {
             const SizedBox(height: 14),
             AppTextField(
               hint: 'Add an ingredient...',
-              suffixIcon: IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.add),
-                tooltip: 'Add ingredient',
-              ),
             ),
             const SizedBox(height: 12),
             Wrap(

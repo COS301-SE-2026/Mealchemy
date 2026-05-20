@@ -106,6 +106,73 @@ class _AddIngredientContent extends StatelessWidget {
                 onChanged: (_) {},
               ),
             ),
+            const SizedBox(height: 12),
+            Text(
+              'Capture the ingredient details you have on hand. This will later help Mealchemy match recipes to your pantry.',
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.textMuted,
+                height: 1.55,
+              ),
+            ),
+            const SizedBox(height: 32),
+            //ingredients
+            const AppSectionHeader(title: 'Ingredient Details'),
+            const SizedBox(height: 14),
+            AppTextField(
+              label: 'Ingredient name',
+              hint: 'e.g. Chicken breast',
+              onChanged: (_) {},
+            ),
+            const SizedBox(height: 14),
+            _CategorySelector(categories: categories),
+            const SizedBox(height: 28),
+            const AppSectionHeader(title: 'Quantity'),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: AppTextField(
+                    label: 'Quantity',
+                    hint: 'e.g. 800',
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) {},
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppTextField(
+                    label: 'Unit',
+                    hint: 'g, ml, cups',
+                    onChanged: (_) {},
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 28),
+            const AppSectionHeader(title: 'Purchase Info'),
+            const SizedBox(height: 14),
+            AppTextField(
+              label: 'Price paid',
+              hint: 'e.g. 89.99',
+              keyboardType: TextInputType.number,
+              prefixIcon: Icons.payments_outlined,
+              onChanged: (_) {},
+            ),
+            const SizedBox(height: 28),
+            _StockToggle(
+              value: false,
+              onChanged: (_) {},
+            ),
+            const SizedBox(height: 36),
+            AppButton(
+              label: 'Save Ingredient',
+              onPressed: () {},
+            ),
+            const SizedBox(height: 14),
+            AppButton(
+              label: 'Cancel',
+              onPressed: () => context.pop(),
+            ),
           ],
         ),
         const SizedBox(height: 28),

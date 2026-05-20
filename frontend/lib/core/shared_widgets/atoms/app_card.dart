@@ -103,7 +103,7 @@ class AppCard extends StatelessWidget {
   Color get _backgroundColor {
     switch (variant) {
       case CardVariant.light:
-        return AppColors.surfaceWhite;
+        return AppColors.bgLight;
       case CardVariant.dark:
         return AppColors.primary;
       case CardVariant.accent:

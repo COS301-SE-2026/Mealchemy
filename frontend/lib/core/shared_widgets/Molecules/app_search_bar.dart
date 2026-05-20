@@ -25,13 +25,6 @@ class AppSearchBar extends StatelessWidget {
       controller: controller,
       hint: hint,
       prefixIcon: Icons.search,
-      suffixIcon: onClear == null
-          ? null
-          : IconButton(
-              onPressed: onClear,
-              icon: const Icon(Icons.close),
-              tooltip: 'Clear search',
-            ),
       onChanged: onChanged,
       onSubmitted: onSubmitted,
     );
