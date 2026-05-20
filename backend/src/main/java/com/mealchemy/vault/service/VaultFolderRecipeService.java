@@ -35,6 +35,13 @@ public class VaultFolderRecipeService {
         VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("No record found"));
     }
 
+    // Post create a new record
+    public VaultFolderRecipeResponse createVaultFolderRecipes(VaultFolderRecipeRequest request)
+    {
+        VaultFolderRecipe vaultFolderRecipeForReturn = mapToEntity(request);
+        return mapToResponseDto(vaultFolderRecipeRepository.save(vaultFolderRecipeForReturn));
+    }
+
     /* Mapping functions */
 
     private VaultFolderRecipeResponse mapToResponseDto(VaultFolderRecipe vaultFolderRecipeIn)
