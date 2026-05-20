@@ -55,10 +55,11 @@ public class AuthService {
     }
 
     // Logic to register new user
+    @Transactional
     public AuthResponse register(RegisterRequest request) { //return auth response dto to send to frontend. Take in a register request dto
         // 1. check if user already exists or email is already in use
         if(userRepository.existsByEmail(request.email())) {
-            throw new RuntimeException("Email already registered");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already registered");
         }
 
         // 2. else email is free - create new user and set it's values - need role id first
@@ -70,7 +71,6 @@ public class AuthService {
         
         //postgres assigns id
         user.setEmail(request.email());
-        user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setRoleId(userRole.getRoleId());
         userRepository.save(user); //inserts into db
@@ -111,8 +111,8 @@ public class AuthService {
                         new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
 
         // 2. check account is not soft deleted
-        if (!user.getDeletedAt().equals(null)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials - account deleted");
+        if (user.getDeletedAt() != null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
 
         // 3. check password matches stored hash
