@@ -20,7 +20,7 @@ public class VaultFolderRecipeRequest {
         return folderId;
     }
 
-    public int getRecipe()
+    public int getRecipeId()
     {
         return recipeId;
     }

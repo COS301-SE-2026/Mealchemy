@@ -74,7 +74,7 @@ public class VaultService
         return response;
     }
 
-    private VaultFolder mapRequestToEntity(VaultRequest request)
+    private Vault mapRequestToEntity(VaultRequest request)
     {
         Vault vault = new Vault();
 

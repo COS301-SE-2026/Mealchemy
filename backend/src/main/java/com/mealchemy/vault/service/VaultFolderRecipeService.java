@@ -77,7 +77,7 @@ public class VaultFolderRecipeService {
         return response;
     }
 
-    private VaultFolder mapRequestToEntity(VaultFolderRecipeRequest request)
+    private VaultFolderRecipe mapRequestToEntity(VaultFolderRecipeRequest request)
     {
         VaultFolderRecipe vaultFolderRecipe = new VaultFolderRecipe();
 

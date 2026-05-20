@@ -60,10 +60,7 @@ public class VaultResponse
 
     public void setVaultType(VaultType vaultTypeIn)
     {
-        if(Arrays.stream(VaultType.values()).map(Enum::name).anyMatch(vaultTypeIn::equals))
-        {
-            vaultType = vaultTypeIn;
-        }
+        vaultType = vaultTypeIn;
     }
 
     public void setName(String nameIn)
