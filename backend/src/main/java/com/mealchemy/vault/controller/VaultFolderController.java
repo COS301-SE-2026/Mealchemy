@@ -34,4 +34,12 @@ public class VaultFolderController
     {
         return vaultFolderService.getVaultFolderByName(name);
     }
+
+    // Get
+    @GetMapping("/{id}")
+    public VaultFolderResponse getVaultFolderById(@PathVariable Long id)
+    {
+        return vaultFolderService.getVaultFolderById(id);
+    }
+
 }
