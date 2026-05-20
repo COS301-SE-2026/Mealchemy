@@ -15,7 +15,7 @@ import '../widgets/flavour_profile_card.dart';
 import '../widgets/preference_option_card.dart';
 import '../widgets/preference_tag_chip.dart';
 
-//had to put ConsumerWidget to let screen read Riverpod providers 
+//consumer widget lets screen read Riverpod providers
 class PreferenceScreen extends ConsumerWidget {
   const PreferenceScreen({super.key});
 
@@ -24,7 +24,7 @@ class PreferenceScreen extends ConsumerWidget {
     //loads mock/API data
     final preferencesState = ref.watch(userPreferencesProvider);
 
-    //handles the diff states
+    //handles loading, error, and loaded states
     return preferencesState.when(
       loading: () => const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -43,13 +43,30 @@ class PreferenceScreen extends ConsumerWidget {
   }
 }
 
-class _PreferenceContent extends StatelessWidget {
+class _PreferenceContent extends ConsumerStatefulWidget {
   const _PreferenceContent({required this.preferences});
 
   final UserPreferences preferences;
 
   @override
+  ConsumerState<_PreferenceContent> createState() => _PreferenceContentState();
+}
+
+class _PreferenceContentState extends ConsumerState<_PreferenceContent> {
+  final TextEditingController _dislikedIngredientController =
+      TextEditingController();
+
+  @override
+  void dispose() {
+    _dislikedIngredientController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final preferenceNotifier = ref.read(userPreferencesProvider.notifier);
+    final preferences = widget.preferences;
+
     return Scaffold(
       backgroundColor: AppColors.bgLight,
       appBar: AppBar(
@@ -94,7 +111,7 @@ class _PreferenceContent extends StatelessWidget {
             ),
             const SizedBox(height: 32),
 
-            // Dietary selection cards.
+            //dietary restrictions
             const AppSectionHeader(title: 'Dietary Directives'),
             const SizedBox(height: 14),
             ...preferences.dietaryDirectives.map(
@@ -104,13 +121,15 @@ class _PreferenceContent extends StatelessWidget {
                   title: directive.title,
                   subtitle: directive.subtitle,
                   selected: directive.selected,
-                  onTap: () {},
+                  onTap: () => preferenceNotifier.toggleDietaryDirective(
+                    directive.title,
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: 22),
 
-            // Allergy and dislike tags.
+            //allergy and disliked
             const AppSectionHeader(title: 'Critical Allergies'),
             const SizedBox(height: 14),
             Wrap(
@@ -121,13 +140,13 @@ class _PreferenceContent extends StatelessWidget {
                   (allergy) => PreferenceTagChip(
                     label: allergy,
                     selected: true,
-                    onRemove: () {},
+                    onRemove: () => preferenceNotifier.removeAllergy(allergy),
                   ),
                 ),
                 ...preferences.availableAllergies.map(
                   (allergy) => PreferenceTagChip(
                     label: allergy,
-                    onTap: () {},
+                    onTap: () => preferenceNotifier.selectAllergy(allergy),
                   ),
                 ),
               ],
@@ -136,7 +155,9 @@ class _PreferenceContent extends StatelessWidget {
             const AppSectionHeader(title: 'Aversions & Dislikes'),
             const SizedBox(height: 14),
             AppTextField(
+              controller: _dislikedIngredientController,
               hint: 'Add an ingredient...',
+              onSubmitted: (_) => _addDislikedIngredient(preferenceNotifier),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -147,14 +168,15 @@ class _PreferenceContent extends StatelessWidget {
                     (ingredient) => PreferenceTagChip(
                       label: ingredient,
                       selected: true,
-                      onRemove: () {},
+                      onRemove: () => preferenceNotifier
+                          .removeDislikedIngredient(ingredient),
                     ),
                   )
                   .toList(),
             ),
             const SizedBox(height: 28),
 
-            // Cuisine preference cards.
+            //cuisine preference
             const AppSectionHeader(title: 'Flavour Profiles'),
             const SizedBox(height: 16),
             ...preferences.flavourProfiles.map(
@@ -165,7 +187,9 @@ class _PreferenceContent extends StatelessWidget {
                   description: profile.description,
                   icon: _iconForFlavourProfile(profile.iconKey),
                   selected: profile.selected,
-                  onTap: () {},
+                  onTap: () => preferenceNotifier.toggleFlavourProfile(
+                    profile.label,
+                  ),
                 ),
               ),
             ),
@@ -177,16 +201,23 @@ class _PreferenceContent extends StatelessWidget {
             const SizedBox(height: 14),
             AppButton(
               label: 'Reset All Directives',
-              onPressed: () {},
+              onPressed: preferenceNotifier.resetPreferences,
             ),
           ],
         ),
       ),
     );
   }
+
+  void _addDislikedIngredient(UserPreferencesNotifier preferenceNotifier) {
+    preferenceNotifier.addDislikedIngredient(
+      _dislikedIngredientController.text,
+    );
+    _dislikedIngredientController.clear();
+  }
 }
 
-// Maps mock/API icon keys to visual icons.
+//maps mock/API icon keys to visual icons
 IconData _iconForFlavourProfile(String iconKey) {
   return switch (iconKey) {
     'mediterranean' => Icons.local_florist_outlined,
