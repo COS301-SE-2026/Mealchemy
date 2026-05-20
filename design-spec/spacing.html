@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Spacing & Shape | Mealchemy</title>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/spacing.css">
+  </head>
+  <body>
+    <header class="site-header"><nav class="nav-shell" aria-label="Design specification navigation"><a class="brand-mark" href="index.html"><img class="nav-logo" src="assets/logos/logo-mark.png" alt="" aria-hidden="true"><span>Mealchemy</span></a><div class="nav-links"><a href="colours.html">Colours</a><a href="typography.html">Type</a><a href="logo.html">Logo</a><a href="principles.html">Design Principles</a><a href="components.html">Components</a><a href="spacing.html">Spacing</a><a href="accessibility.html">Accessibility</a><a href="wireframes.html">Wireframes</a></div></nav></header>
+
+    <main class="page">
+      <section class="section reveal">
+        <div class="section-heading"><div><p class="section-kicker">06 Spacing & Shape</p><h1>Spacing and Shape</h1></div><p class="section-lede">Spacing controls the distance between elements. Radius controls how rounded a component's corners are, helping users recognise buttons, cards, sheets, and tags consistently.</p></div>
+
+        <div class="card">
+          <div class="scale-row"><strong>4px</strong><div class="scale-block" style="width:4px"></div><code>xs</code></div>
+          <div class="scale-row"><strong>8px</strong><div class="scale-block" style="width:8px"></div><code>sm</code></div>
+          <div class="scale-row"><strong>16px</strong><div class="scale-block" style="width:16px"></div><code>md</code></div>
+          <div class="scale-row"><strong>24px</strong><div class="scale-block" style="width:24px"></div><code>lg</code></div>
+          <div class="scale-row"><strong>32px</strong><div class="scale-block" style="width:32px"></div><code>xl</code></div>
+          <p class="scale-note">This is the spacing scale: each token is a reusable distance between interface elements. Small steps such as 4px and 8px separate tight items like icons and labels, while 24px and 32px create clearer breaks between cards, sections, and page groups.</p>
+        </div>
+
+      </section>
+      <section class="section reveal">
+        <h2>Radius Scale</h2>
+        <p class="section-lede">Small radius feels precise and compact. Medium radius is used for buttons and inputs. Larger radius softens cards and panels, while pill radius is reserved for tags and rounded actions.</p>
+        <div class="grid">
+          <div class="radius-demo" style="border-radius:8px">sm 8px</div>
+          <div class="radius-demo" style="border-radius:12px">md 12px</div>
+          <div class="radius-demo" style="border-radius:16px">lg 16px</div>
+        </div>
+        <div class="radius-showcase">
+          <article class="radius-example radius-input">
+            <div class="radius-ui radius-button"><span>+</span> Save recipe</div>
+            <div class="radius-ui radius-field"><span>⌕</span> Search recipes</div>
+            <strong>Input / Button · 12px</strong>
+            <p>Used for form fields and standard action buttons.</p>
+          </article>
+          <article class="radius-example radius-card">
+            <div class="radius-ui radius-mini-card"><span>92% Match</span><strong>Roasted tomato pasta</strong><small>35 min · pantry friendly</small></div>
+            <strong>Card · 16px</strong>
+            <p>Used for recipe cards, panels, and grouped content.</p>
+          </article>
+          <article class="radius-example radius-sheet">
+            <div class="radius-ui radius-bottom-sheet"><i></i><strong>Meal filters</strong><span>Dinner · Quick · High protein</span></div>
+            <strong>Bottom Sheet · 20px top</strong>
+            <p>Used for modal sheets with rounded top corners.</p>
+          </article>
+          <article class="radius-example radius-pill">
+            <div class="radius-ui radius-filter-tag"><span>✓</span> Vegetarian</div>
+            <strong>Filter Tag · 9999px</strong>
+            <p>Used for category tags and rounded controls.</p>
+          </article>
+        </div>
+      </section>
+      
+    </main>
+    <footer class="site-footer"><div class="footer-inner"><strong>Mealchemy</strong><span>Spacing section</span></div></footer>
+    <script src="js/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,120 @@
+/*logo and icon stylings */
+
+.logo-variant-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+  }
+  
+  .logo-stage {
+    min-height: 340px;
+    padding: 24px;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    place-items: center;
+    gap: 18px;
+    border-radius: var(--radius-md);
+    background:
+      radial-gradient(circle at 80% 0%, rgba(212, 175, 55, 0.08), transparent 14rem),
+      var(--primary-dark);
+    color: var(--accent);
+    overflow: hidden;
+  }
+  
+  .logo-stage p {
+    margin: 0;
+    color: inherit;
+    font-weight: 800;
+  }
+  
+  .logo-stage-light {
+    background: var(--bg-light);
+    color: var(--primary-dark);
+  }
+  
+  .logo-stage-dark {
+    background: var(--bg-dark);
+    color: var(--accent);
+  }
+  
+  .logo-asset {
+    width: 100%;
+    max-width: 280px;
+    max-height: 220px;
+    object-fit: contain;
+    border-radius: 0;
+  }
+  
+  .logo-full {
+    max-width: 260px;
+  }
+  
+  .primary-original {
+    border-radius: var(--radius-sm);
+  }
+  
+  .logo-mark-only {
+    max-width: 210px;
+  }
+  
+  .logo-wordmark-only {
+    max-width: 300px;
+  }
+  
+  .mealchemy-logo {
+    text-align: center;
+  }
+  
+  .mealchemy-logo .logo-box {
+    width: 112px;
+    height: 112px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 22px;
+    border: 2px solid var(--accent);
+    font-family: var(--font-display);
+    font-size: 4rem;
+  }
+  
+  .mealchemy-logo .wordmark {
+    font-family: var(--font-display);
+    font-size: clamp(2.4rem, 6vw, 5.6rem);
+    letter-spacing: 0;
+  }
+  
+  .icon-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+  
+  .gold-note {
+    margin: 18px 0 0;
+    color: var(--accent);
+    font-weight: 800;
+  }
+  
+  .icon-tile {
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(92, 0, 24, 0.16);
+    border-radius: var(--radius-sm);
+    background: var(--surface-white);
+    color: var(--primary);
+    font-size: 2rem;
+    transition: transform 180ms ease, background 180ms ease;
+  }
+  
+  .icon-tile:hover {
+    transform: scale(1.08);
+    background: var(--accent);
+  }
+  
+  @media (max-width: 900px) {
+    .logo-variant-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
