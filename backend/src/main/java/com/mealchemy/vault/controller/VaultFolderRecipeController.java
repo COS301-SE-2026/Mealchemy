@@ -42,4 +42,11 @@ public class VaultFolderRecipeController
         return vaultFolderRecipeService.getFolderRecipeById(id);
     }
 
+    // Post
+    @PostMapping
+    public VaultFolderRecipeResponse createVaultFolderRecipe(@RequestBody vaultFolderRecipeRequest request)
+    {
+        return vaultFolderRecipeService.createVaultFolderRecipe(request);
+    }
+
 }
