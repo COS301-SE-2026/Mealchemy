@@ -6,6 +6,7 @@ import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/core/shared_widgets/Organisms/app_navbar.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
+import 'package:mealchemy/features/vault/models/vault_folder.dart';
 
 import '../providers/vault_provider.dart';
 import '../widgets/vault_folder_list.dart';
@@ -44,7 +45,7 @@ class VaultScreen extends ConsumerWidget {
 class _VaultContent extends StatelessWidget {
   const _VaultContent({required this.folders});
 
-  final folders;
+  final List<VaultFolder> folders;
 
   @override
   Widget build(BuildContext context) {

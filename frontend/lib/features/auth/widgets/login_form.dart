@@ -141,8 +141,10 @@ class _LoginFormState extends State<LoginForm> {
               hint: '........',
               controller: _passwordController,
               onChanged: (_) {
-                if (_passwordError != null)
+                if (_passwordError != null){
                   setState(() => _passwordError = null);
+                }
+                  
               },
             ),
             const SizedBox(height: 24),

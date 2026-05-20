@@ -158,8 +158,10 @@ class _SignupFormState extends State<SignupForm> {
               controller: _passwordController,
               errorText: _passwordError,
               onChanged: (_) {
-                if (_passwordError != null)
-                  setState(() => _passwordError = null);
+                if (_passwordError != null){
+                   setState(() => _passwordError = null);
+                }
+                 
               },
             ),
             const SizedBox(height: 16),
@@ -180,8 +182,9 @@ class _SignupFormState extends State<SignupForm> {
               controller: _confirmPasswordController,
               errorText: _confirmPasswordError,
               onChanged: (_) {
-                if (_confirmPasswordError != null)
+                if (_confirmPasswordError != null){
                   setState(() => _confirmPasswordError = null);
+                }
               },
             ),
             const SizedBox(height: 24),
