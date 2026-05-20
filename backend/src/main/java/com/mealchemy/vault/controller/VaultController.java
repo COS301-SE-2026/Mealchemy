@@ -23,14 +23,14 @@ public class VaultController
 
     // Get
     @GetMapping("/owner/{ownerId}")
-    public List<VaultResponse> getVaultsByOwnerId(@PathVariable Long ownerId)
+    public List<VaultResponse> getVaultsByOwnerId(@PathVariable int ownerId)
     {
         return vaultService.getVaultsByOwnerId(ownerId);
     }
 
     // Get
     @GetMapping("/{id}")
-    public VaultResponse getVault(@PathVariable Long id)
+    public VaultResponse getVault(@PathVariable int id)
     {
         return vaultService.getVault(id);
     }
@@ -44,14 +44,14 @@ public class VaultController
 
     // Put
     @PutMapping("/{id}")
-    public VaultResponse updateVault(@PathVariable Long id, @RequestBody VaultRequest request)
+    public VaultResponse updateVault(@PathVariable int id, @RequestBody VaultRequest request)
     {
         return vaultService.updateVault(id, request);
     }
 
     // Delete
     @DeleteMapping("/{id}")
-    public void deleteVault(@PathVariable Long id)
+    public void deleteVault(@PathVariable int id)
     {
         vaultService.deleteVault(id);
     }

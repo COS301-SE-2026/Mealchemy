@@ -10,29 +10,29 @@ public class VaultFolderRecipeRequest {
     
     /* Declaring fields */
 
-    private Long folderId;
-    private Long recipeId;
+    private int folderId;
+    private int recipeId;
 
     /* Getters */
 
-    public Long getFolderId()
+    public int getFolderId()
     {
         return folderId;
     }
 
-    public Long getRecipe()
+    public int getRecipe()
     {
         return recipeId;
     }
 
     /* Setters */
 
-    public void setFolderId(Long folderIdIn)
+    public void setFolderId(int folderIdIn)
     {
         folderId = folderIdIn;
     }
 
-    public void setRecipeId(Long recipeIdIn)
+    public void setRecipeId(int recipeIdIn)
     {
         recipeId = recipeIdIn;
     }

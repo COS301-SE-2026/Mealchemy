@@ -15,25 +15,25 @@ public class VaultFolderRecipe {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private int id;
 
     @Column(name = "folder_id", nullable = false)
-    private Long folderId;
+    private int folderId;
 
     @Column(name = "recipe_id", nullable = false)
-    private Long recipeId;
+    private int recipeId;
 
     @Column(name = "added_at", nullable = false)
     private OffsetDateTime addedAt = OffsetDateTime.now();
 
     /* Getters */
 
-    public Long getId()
+    public int getId()
     {
         return id;
     }
 
-    public Long getFolderId()
+    public int getFolderId()
     {
         return folderId;
     }
@@ -50,7 +50,7 @@ public class VaultFolderRecipe {
 
     /* Setters */
 
-    public void setFolderId(Long folderIdIn)
+    public void setFolderId(int folderIdIn)
     {
         folderId = folderIdIn;
     }

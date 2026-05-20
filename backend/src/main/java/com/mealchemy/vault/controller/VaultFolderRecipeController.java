@@ -23,21 +23,21 @@ public class VaultFolderRecipeController
 
     // Get
     @GetMapping("/folderId")
-    public List<VaultFolderRecipeResponse> getRecipesByFolderId(@PathVariable Long folderId)
+    public List<VaultFolderRecipeResponse> getRecipesByFolderId(@PathVariable int folderId)
     {
         return vaultFolderRecipeService.getRecipesByFolderId(folderId);
     }
 
     // Get
     @GetMapping("/recipeId")
-    public List<VaultFolderRecipeResponse> getFoldersByRecipeId(@PathVariable Long recipeId)
+    public List<VaultFolderRecipeResponse> getFoldersByRecipeId(@PathVariable int recipeId)
     {
         return vaultFolderRecipeService.getFoldersByRecipeId(recipeId);
     }
 
     // Get
     @GetMapping("/{id}")
-    public VaultFolderRecipeResponse getFolderRecipeById(@PathVariabl Long id)
+    public VaultFolderRecipeResponse getFolderRecipeById(@PathVariabl int id)
     {
         return vaultFolderRecipeService.getFolderRecipeById(id);
     }
@@ -50,17 +50,15 @@ public class VaultFolderRecipeController
     }
 
     // Put
-    public VaultFolderRecipeResponse updateVaultFolderRecipe(@PathVariable Long id, @RequestBody VaultFolderRecipeRequest request)
+    public VaultFolderRecipeResponse updateVaultFolderRecipe(@PathVariable int id, @RequestBody VaultFolderRecipeRequest request)
     {
         return vaultFolderRecipeService.updateVaultFolderRecipe(id, request);
     }
 
     // Delete
     @DeleteMapping("/{id}")
-    public void deleteVaultFolderRecipe(@PathVariable Long id)
+    public void deleteVaultFolderRecipe(@PathVariable int id)
     {
         vaultFolderRecipeService.deleteVaultFolderRecipe(id);
     }
-
-
 }

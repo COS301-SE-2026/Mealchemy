@@ -13,20 +13,20 @@ public class VaultResponse
 {
     /* Variable declarations */
 
-    private Long vaultId;
-    private Long ownerId;
+    private int vaultId;
+    private int ownerId;
     private VaultType vaultType;
     private String name;
     private OffsetDateTime createdAt;
 
     /* Getters */
 
-    public Long getVaultId()
+    public int getVaultId()
     {
         return vaultId;
     }
 
-    public Long getOwnerId()
+    public int getOwnerId()
     {
         return ownerId;
     }
@@ -48,12 +48,12 @@ public class VaultResponse
 
     /* Setters */
 
-    public void setVaultId(Long vaultIdIn)
+    public void setVaultId(int vaultIdIn)
     {
         vaultId = vaultIdIn;
     }
 
-    public void setOwnerId(Long ownerIdIn)
+    public void setOwnerId(int ownerIdIn)
     {
         ownerId = ownerIdIn;
     }

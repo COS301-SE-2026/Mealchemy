@@ -7,19 +7,19 @@ public class VaultFolderResponse {
     
     /* Variable declarations */
 
-    private Long folderId;
-    private Long vaultId;
+    private int folderId;
+    private int vaultId;
     private String folderName;
     private OffsetDateTime createdAt;
 
     /* Getters */
 
-    public Long getFolderId()
+    public int getFolderId()
     {
         return folderId;
     }
 
-    public Long getVaultId()
+    public int getVaultId()
     {
         return vaultId;
     }
@@ -36,12 +36,12 @@ public class VaultFolderResponse {
 
     /* Setters */
 
-    public void setFolderId(Long folderIdIn)
+    public void setFolderId(int folderIdIn)
     {
         folderId = folderIdIn;
     }
 
-    public void setVaultId(Long vaultIdIn)
+    public void setVaultId(int vaultIdIn)
     {
         vaultId = vaultIdIn;
     }

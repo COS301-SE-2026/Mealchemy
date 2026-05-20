@@ -20,10 +20,10 @@ public class Vault
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "vault_id")
-    private Long vaultId;
+    private int vaultId;
     
     @Column(name = "owner_id")
-    private Long ownerId;
+    private int ownerId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "vault_type", nullable = false)
@@ -37,12 +37,12 @@ public class Vault
 
     /* Getters */
 
-    public Long getVaultId()
+    public int getVaultId()
     {
         return vaultId;
     }
 
-    public Long getOwnerId()
+    public int getOwnerId()
     {
         return ownerId;
     }
@@ -64,7 +64,7 @@ public class Vault
 
     /* Setters */
 
-    public void setOwnerId(Long ownerIdIn)
+    public void setOwnerId(int ownerIdIn)
     {
         ownerId = ownerIdIn;
     }

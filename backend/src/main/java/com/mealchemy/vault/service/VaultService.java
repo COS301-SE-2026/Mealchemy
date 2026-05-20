@@ -18,14 +18,14 @@ public class VaultService
         this.vaultRepository = vaultRepository;
     }
 
-    // Get all vaults that belong to ownerId
-    public List<VaultResponse> getVaultsByOwnerId(Long ownerId)
+    // Get all vaults that beint to ownerId
+    public List<VaultResponse> getVaultsByOwnerId(int ownerId)
     {
         return vaultRepository.findByOwnerId(ownerId).stream().map(this::mapToResponseDto).collect(Collectors.toList());
     }
 
     // Get a single vault using id
-    public VaultResponse getVault(Long id)
+    public VaultResponse getVault(int id)
     {
         Vault vaultForReturn = vaultRepository.findById(id).orElseThrow(() -> new RuntimeException("Vault not found."));
         return mapToResponseDto(vaultToReturn);
@@ -39,7 +39,7 @@ public class VaultService
     }
 
     // Put to update an existing vault
-    public VaultResponse updateVault(Long id, VaultRequest request)
+    public VaultResponse updateVault(int id, VaultRequest request)
     {
         Vault vaultForReturn = vaultRepository.findById(id).orElseThrow(() -> new RuntimeException("Vault not found."));
 
@@ -51,7 +51,7 @@ public class VaultService
     }
 
     // Delete a specific vault using id
-    public void deleteVault(Long id)
+    public void deleteVault(int id)
     {
         vaultRepository.deleteById(id);
     }

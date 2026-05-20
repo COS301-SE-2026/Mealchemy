@@ -12,13 +12,13 @@ import com.mealchemy.shared.enums.VaultType;
 public class VaultRequest
 {
     /* Variable declarations */
-    private Long ownerId;
+    private int ownerId;
     private VaultType vaultType;
     private String name;
 
     /* Getters */
 
-    public Long getOwnerId()
+    public int getOwnerId()
     {
         return ownerId;
     }
@@ -35,7 +35,7 @@ public class VaultRequest
 
     /* Setters */
 
-    public void setOwnerId(Long ownerIdIn)
+    public void setOwnerId(int ownerIdIn)
     {
         ownerId = ownerIdIn;
     }

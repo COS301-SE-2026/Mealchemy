@@ -23,7 +23,7 @@ public class VaultFolderController
 
     // Get
     @GetMapping("/{vaultId}")
-    public List<VaultFolderResponse> getVaultFolderByVaultId(@PathVariable Long vaultId)
+    public List<VaultFolderResponse> getVaultFolderByVaultId(@PathVariable int vaultId)
     {
         return vaultFolderService.getVaultFolderByVaultId(vaultId);
     }
@@ -37,7 +37,7 @@ public class VaultFolderController
 
     // Get
     @GetMapping("/{id}")
-    public VaultFolderResponse getVaultFolderById(@PathVariable Long id)
+    public VaultFolderResponse getVaultFolderById(@PathVariable int id)
     {
         return vaultFolderService.getVaultFolderById(id);
     }
@@ -51,14 +51,14 @@ public class VaultFolderController
 
     // Put
     @PutMapping("/{id}")
-    public VaultFolderResponse updateVaultFolder(@PathVariable Long id, @RequestBody VaultFolderRequest request)
+    public VaultFolderResponse updateVaultFolder(@PathVariable int id, @RequestBody VaultFolderRequest request)
     {
         return vaultFolderService.updateVaultFolder(id, request);
     }
 
     // Delete
     @DeleteMapping("/{id}")
-    public void deleteVaultFolder(@PathVariable Long id)
+    public void deleteVaultFolder(@PathVariable int id)
     {
         vaultFolderService.deleteVaultFolder(id);
     }

@@ -10,7 +10,7 @@ import java.utils.List;
 import com.mealchemy.vault.model.Vault;
 
 @Repository
-public interface VaultRepository extends JpaRepository<Vault, Long>
+public interface VaultRepository extends JpaRepository<Vault, int>
 {
-    List<Vault> findByOwnerId(Long ownerId); 
+    List<Vault> findByOwnerId(int ownerId); 
 }

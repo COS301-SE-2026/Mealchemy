@@ -19,7 +19,7 @@ public class VaultFolderService {
     }
 
     // Get all folders relating to one vault
-    public List<VaultFolderResponse> getVaultFolderByVaultId(Long vaultId)
+    public List<VaultFolderResponse> getVaultFolderByVaultId(int vaultId)
     {
         return vaultFolderRepository.findByVaultId(vaultId).stream().map(this::mapToResponseDto).collect(Collectors.toList());
     }
@@ -32,7 +32,7 @@ public class VaultFolderService {
     }
 
     // Get a single folder by id
-    public VaultFolderResponse getVaultFolderById(Long id)
+    public VaultFolderResponse getVaultFolderById(int id)
     {
         VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(id).orElseThrow(() -> new RuntimeException("Folder not found."));
         return mapToResponseDto(vaultFolderForReturn);
@@ -46,7 +46,7 @@ public class VaultFolderService {
     }
 
     // Put to update an existing folder
-    public VaultFolderResponse updateVaultFolder(Long id, VaultFolderRequest request)
+    public VaultFolderResponse updateVaultFolder(int id, VaultFolderRequest request)
     {
         VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(id).orElseThrow(() -> new RuntimeException("Folder not found."));
         
@@ -57,7 +57,7 @@ public class VaultFolderService {
     }
 
     // Delete a specific folder using id
-    public void deleteVaultFolder(Long id)
+    public void deleteVaultFolder(int id)
     {
         vaultFolderRepository.deleteById(id);
     }

@@ -16,10 +16,10 @@ public class VaultFolder {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "folder_id")
-    private Long folderId;
+    private int folderId;
 
     @Column(name = "vault_id", nullable = false)
-    private Long vaultId;
+    private int vaultId;
 
     @Column(name = "name", nullable = false, length = 100)
     private String folderName;
@@ -29,7 +29,7 @@ public class VaultFolder {
 
     /* Getters */
 
-    public Long getFolderId()
+    public int getFolderId()
     {
         return folderId;
     }
@@ -51,7 +51,7 @@ public class VaultFolder {
 
     /* Setters */
 
-    public void setVaultId(Long vaultIdIn)
+    public void setVaultId(int vaultIdIn)
     {
         vaultId = vaultIdIn;
     }

@@ -18,19 +18,19 @@ public class VaultFolderRecipeService {
     }
 
     // Get all recipes using folderId
-    public List<VaultFolderRecipeResponse> getRecipesByFolderId(Long folderId)
+    public List<VaultFolderRecipeResponse> getRecipesByFolderId(int folderId)
     {
         return vaultFolderRecipeRepository.findByFolderId(folderId).stream().map(this::mapToResponseDto).collect(Collectors.toList());
     }
 
     // Get all folders containing a recipe
-    public List<VaultFolderRecipeResponse> getFoldersByRecipeId(Long recipeId)
+    public List<VaultFolderRecipeResponse> getFoldersByRecipeId(int recipeId)
     {
         return vaultFolderRecipeRepository.findByRecipeId(recipeId).stream().map(this::mapToResponseDto).collect(Collectors.toList());
     }
 
     // Get a single record by id
-    public VaultFolderRecipeResponse getFolderRecipeById(Long id)
+    public VaultFolderRecipeResponse getFolderRecipeById(int id)
     {
         VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("No record found"));
     }
@@ -43,7 +43,7 @@ public class VaultFolderRecipeService {
     }
 
     // Put to update a record
-    public VaultFolderRecipeResponse updateVaultFolderRecipe(Long id, VaultFolderRecipeRequest request)
+    public VaultFolderRecipeResponse updateVaultFolderRecipe(int id, VaultFolderRecipeRequest request)
     {
         VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("No record found"));
 
@@ -54,7 +54,7 @@ public class VaultFolderRecipeService {
     }
 
     // Delete a specific record using id
-    public void deleteVaultFolderRecipe(Long id)
+    public void deleteVaultFolderRecipe(int id)
     {
         vaultFolderRecipeRepository.deleteById(id);
     }

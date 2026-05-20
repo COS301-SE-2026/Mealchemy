@@ -9,24 +9,24 @@ import java.time.OffsetDateTime;
 public class VaultFolderRecipeResponse {
     
     /* Declaring fields */
-    private Long id;
-    private Long folderId;
-    private Long recipeId;
+    private int id;
+    private int folderId;
+    private int recipeId;
     private OffsetDateTime addedAt;
 
     /* Getters */
 
-    public Long getId()
+    public int getId()
     {
         return id;
     }
 
-    public Long getFolderId()
+    public int getFolderId()
     {
         return folderId;
     }
 
-    public Long getRecipe()
+    public int getRecipe()
     {
         return recipeId;
     }
@@ -38,17 +38,17 @@ public class VaultFolderRecipeResponse {
 
     /* Setters */
 
-    public void setId(Long idIn)
+    public void setId(int idIn)
     {
         id = idIn;
     }
 
-    public void setFolderId(Long folderIdIn)
+    public void setFolderId(int folderIdIn)
     {
         folderId = folderIdIn;
     }
 
-    public void setRecipeId(Long recipeIdIn)
+    public void setRecipeId(int recipeIdIn)
     {
         recipeId = recipeIdIn;
     }
