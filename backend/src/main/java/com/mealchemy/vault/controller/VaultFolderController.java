@@ -55,4 +55,11 @@ public class VaultFolderController
     {
         return vaultFolderService.updateVaultFolder(id, request);
     }
+
+    // Delete
+    @DeleteMapping("/{id}")
+    public void deleteVaultFolder(@PathVariable Long id)
+    {
+        vaultFolderService.deleteVaultFolder(id);
+    }
 }
