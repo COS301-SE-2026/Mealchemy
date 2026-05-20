@@ -99,6 +99,12 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -145,9 +151,7 @@
 						<exclude>**/*Mapper.class</exclude>
 						<exclude>**/*Builder.class</exclude>
 						<!-- Placeholder feature packages, remove each line as the package gets real code + tests -->
-						<exclude>**/auth/**/*.class</exclude>
 						<exclude>**/pantry/**/*.class</exclude>
-						<exclude>**/preference/**/*.class</exclude>
 						<exclude>**/vault/**/*.class</exclude>
 					</excludes>
 				</configuration>
