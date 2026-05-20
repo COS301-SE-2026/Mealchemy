@@ -10,7 +10,7 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
- 
+  //RecipeHero uses context.pop() so the tree needs a GoRouter
   Widget host(Recipe recipe) {
     final router = GoRouter(
       initialLocation: '/',
@@ -48,44 +48,5 @@ void main() {
     expect(find.byIcon(Icons.arrow_back), findsOneWidget);
     expect(find.byIcon(Icons.favorite_border), findsOneWidget);
     expect(find.byIcon(Icons.share_outlined), findsOneWidget);
-  });
-
-  testWidgets('RecipeHero shows chef name and rating when provided', (
-    tester,
-  ) async {
-    const recipe = Recipe(
-      recipeId: 1,
-      title: 'Saffron-Infused Risotto',
-      chefName: 'Chef Isabella V.',
-      rating: 4.8,
-    );
-
-    await tester.pumpWidget(host(recipe));
-
-    expect(find.text('Chef Isabella V.'), findsOneWidget);
-    expect(find.text('4.8'), findsOneWidget);
-    expect(find.byIcon(Icons.star), findsOneWidget);
-  });
-
-  testWidgets('RecipeHero hides chef row when chefName is null', (tester) async {
-    await tester.pumpWidget(host(baseRecipe));
-
-    expect(find.byIcon(Icons.star), findsNothing);
-    expect(find.byIcon(Icons.person), findsNothing);
-  });
-
-  testWidgets('RecipeHero shows fallback person icon when chefName set but avatar null', (
-    tester,
-  ) async {
-    const recipe = Recipe(
-      recipeId: 1,
-      title: 'Test',
-      chefName: 'Anonymous Cook',
-    );
-
-    await tester.pumpWidget(host(recipe));
-
-    expect(find.text('Anonymous Cook'), findsOneWidget);
-    expect(find.byIcon(Icons.person), findsOneWidget);
   });
 }

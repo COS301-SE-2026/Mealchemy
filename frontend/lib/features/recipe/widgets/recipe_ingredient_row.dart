@@ -4,7 +4,7 @@ import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/recipe_ingredient.dart';
 
-//a row in ingredientce list
+//a row in the ingredients list
 class RecipeIngredientRow extends StatelessWidget {
   const RecipeIngredientRow({super.key, required this.ingredient});
 
@@ -12,14 +12,11 @@ class RecipeIngredientRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final inPantry = ingredient.inPantry == true;
-    final dotColor = inPantry ? AppColors.error : AppColors.accent;
-
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          CircleAvatar(radius: 4, backgroundColor: dotColor),
+          const CircleAvatar(radius: 4, backgroundColor: AppColors.accent),
           const SizedBox(width: 14),
           Expanded(
             child: Text(
@@ -32,34 +29,7 @@ class RecipeIngredientRow extends StatelessWidget {
               _formatQuantity(ingredient),
               style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
             ),
-          if (inPantry) ...[
-            const SizedBox(width: 10),
-            const _InPantryBadge(),
-          ],
         ],
-      ),
-    );
-  }
-}
-
-class _InPantryBadge extends StatelessWidget {
-  const _InPantryBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        'IN PANTRY',
-        style: AppTextStyles.label.copyWith(
-          color: AppColors.textDark,
-          fontSize: 9,
-          letterSpacing: 0.6,
-        ),
       ),
     );
   }

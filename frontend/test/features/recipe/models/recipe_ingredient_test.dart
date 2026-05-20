@@ -11,7 +11,6 @@ void main() {
         'quantity': 320.0,
         'unit': 'g',
         'sort_order': 1,
-        'in_pantry': true,
       };
 
       final ingredient = RecipeIngredient.fromJson(json);
@@ -22,10 +21,9 @@ void main() {
       expect(ingredient.quantity, 320.0);
       expect(ingredient.unit, 'g');
       expect(ingredient.sortOrder, 1);
-      expect(ingredient.inPantry, true);
     });
 
-    test('parses a payload with null quantity, unit and in_pantry', () {
+    test('parses a payload with null quantity and unit', () {
       final json = <String, dynamic>{
         'ingredient_id': 102,
         'recipe_id': 1,
@@ -33,7 +31,6 @@ void main() {
         'quantity': null,
         'unit': null,
         'sort_order': 5,
-        'in_pantry': null,
       };
 
       final ingredient = RecipeIngredient.fromJson(json);
@@ -41,11 +38,10 @@ void main() {
       expect(ingredient.nameRaw, 'Salt to taste');
       expect(ingredient.quantity, isNull);
       expect(ingredient.unit, isNull);
-      expect(ingredient.inPantry, isNull);
     });
 
     test('coerces an integer quantity into a double', () {
-      
+      //backend will likely send DECIMAL(10,3) values as int when there are no fractionals
       final json = <String, dynamic>{
         'ingredient_id': 103,
         'recipe_id': 1,

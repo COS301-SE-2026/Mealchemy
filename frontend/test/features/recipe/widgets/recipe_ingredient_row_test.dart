@@ -34,10 +34,9 @@ void main() {
     expect(find.text('Arborio rice'), findsOneWidget);
     //integer quantity strips trailing zeros
     expect(find.text('320 g'), findsOneWidget);
-    expect(find.text('IN PANTRY'), findsNothing);
   });
 
-  testWidgets('RecipeIngredientRow shows IN PANTRY badge when inPantry is true', (
+  testWidgets('RecipeIngredientRow renders bare quantity when unit is null', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -49,7 +48,6 @@ void main() {
             nameRaw: 'Garlic cloves',
             quantity: 3,
             sortOrder: 2,
-            inPantry: true,
           ),
         ),
       ),
@@ -58,7 +56,6 @@ void main() {
     expect(find.text('Garlic cloves'), findsOneWidget);
     //null unit drops the unit suffix
     expect(find.text('3'), findsOneWidget);
-    expect(find.text('IN PANTRY'), findsOneWidget);
   });
 
   testWidgets('RecipeIngredientRow hides quantity when null', (tester) async {
@@ -76,7 +73,7 @@ void main() {
     );
 
     expect(find.text('Salt to taste'), findsOneWidget);
-    //regex for a string first charachter is a digit. 
+    //regex for a string whose first character is a digit
     expect(find.textContaining(RegExp(r'^\d')), findsNothing);
   });
 
@@ -99,26 +96,5 @@ void main() {
     );
 
     expect(find.text('0.5 cup'), findsOneWidget);
-  });
-
-  testWidgets('RecipeIngredientRow does not show IN PANTRY when inPantry is null', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      host(
-        const RecipeIngredientRow(
-          ingredient: RecipeIngredient(
-            ingredientId: 5,
-            recipeId: 1,
-            nameRaw: 'Saffron threads',
-            quantity: 1,
-            unit: 'pinch',
-            sortOrder: 5,
-          ),
-        ),
-      ),
-    );
-
-    expect(find.text('IN PANTRY'), findsNothing);
   });
 }

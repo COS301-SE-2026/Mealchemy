@@ -6,7 +6,6 @@ void main() {
     test('parses a full payload with snake_case keys', () {
       final json = <String, dynamic>{
         'recipe_id': 1,
-        'owner_id': 42,
         'title': 'Saffron-Infused Risotto',
         'description': 'A rich Italian classic',
         'cuisine_type': 'italian',
@@ -14,18 +13,11 @@ void main() {
         'cooking_time_mins': 30,
         'serving_size': 4,
         'photo_url': 'https://example.com/risotto.jpg',
-        'video_url': 'https://example.com/risotto.mp4',
-        'is_community_published': true,
-        'chef_name': 'Chef Isabella V.',
-        'chef_avatar_url': 'https://example.com/chef.png',
-        'rating': 4.8,
-        'rating_count': 124,
       };
 
       final recipe = Recipe.fromJson(json);
 
       expect(recipe.recipeId, 1);
-      expect(recipe.ownerId, 42);
       expect(recipe.title, 'Saffron-Infused Risotto');
       expect(recipe.description, 'A rich Italian classic');
       expect(recipe.cuisineType, 'italian');
@@ -33,12 +25,6 @@ void main() {
       expect(recipe.cookingTimeMins, 30);
       expect(recipe.servingSize, 4);
       expect(recipe.photoUrl, 'https://example.com/risotto.jpg');
-      expect(recipe.videoUrl, 'https://example.com/risotto.mp4');
-      expect(recipe.isCommunityPublished, true);
-      expect(recipe.chefName, 'Chef Isabella V.');
-      expect(recipe.chefAvatarUrl, 'https://example.com/chef.png');
-      expect(recipe.rating, 4.8);
-      expect(recipe.ratingCount, 124);
     });
 
     test('parses a minimal payload with only required fields', () {
@@ -57,15 +43,11 @@ void main() {
       expect(recipe.cookingTimeMins, isNull);
       expect(recipe.servingSize, isNull);
       expect(recipe.photoUrl, isNull);
-      expect(recipe.videoUrl, isNull);
-      expect(recipe.isCommunityPublished, isNull);
       expect(recipe.ingredients, isNull);
       expect(recipe.steps, isNull);
-      expect(recipe.chefName, isNull);
-      expect(recipe.rating, isNull);
     });
 
-    test('parses nested ingredients and steps from list response', () {
+    test('parses nested ingredients and steps from a detail response', () {
       final json = <String, dynamic>{
         'recipe_id': 1,
         'title': 'With Children',
@@ -97,18 +79,20 @@ void main() {
       expect(recipe.steps!.first.content, 'Warm the stock.');
     });
 
-    test('coerces integer rating value to double', () {
-      //backend may have 5 not 5.0
+    test('ignores extra JSON keys not on the lightweight contract', () {
+      //backend may send richer payloads; the model should silently drop them
       final json = <String, dynamic>{
         'recipe_id': 1,
-        'title': 'Whole Rating',
-        'rating': 5,
+        'title': 'Extras',
+        'owner_id': 42,
+        'chef_name': 'Some chef',
+        'rating': 4.8,
       };
 
       final recipe = Recipe.fromJson(json);
 
-      expect(recipe.rating, 5.0);
-      expect(recipe.rating, isA<double>());
+      expect(recipe.recipeId, 1);
+      expect(recipe.title, 'Extras');
     });
   });
 

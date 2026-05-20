@@ -27,7 +27,7 @@ void main() {
   });
 
   group('MockRecipeRepository.getRecipeById', () {
-    test('returns Saffron Risotto with chef info and 5 ingredients for id 1', () async {
+    test('returns Saffron Risotto with 5 ingredients and 3 steps for id 1', () async {
       final repository = MockRecipeRepository();
 
       final recipe = await repository.getRecipeById(1);
@@ -35,8 +35,6 @@ void main() {
       expect(recipe.recipeId, 1);
       expect(recipe.title, 'Saffron-Infused Risotto');
       expect(recipe.cuisineType, 'italian');
-      expect(recipe.chefName, 'Chef Isabella V.');
-      expect(recipe.rating, 4.8);
       expect(recipe.ingredients, hasLength(5));
       expect(recipe.steps, hasLength(3));
     });
@@ -49,9 +47,6 @@ void main() {
       expect(recipe.recipeId, 2);
       expect(recipe.title, 'Caprese Pasta Salad');
       expect(recipe.cuisineType, 'italian');
-      //caprese has no chef / rating on purpose to verify both code paths
-      expect(recipe.chefName, isNull);
-      expect(recipe.rating, isNull);
     });
 
     test('throws StateError when the id is unknown', () async {

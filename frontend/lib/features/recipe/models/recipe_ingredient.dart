@@ -1,5 +1,4 @@
-//one ingredient line in a recipe
-// mirrors recipe_ingredients table
+//one ingredient line in a recipe, mirrors recipe_ingredients table (V12)
 class RecipeIngredient {
   final int ingredientId;
   final int recipeId;
@@ -8,9 +7,6 @@ class RecipeIngredient {
   final String? unit;
   final int sortOrder;
 
-  //design-only
-  final bool? inPantry;
-
   const RecipeIngredient({
     required this.ingredientId,
     required this.recipeId,
@@ -18,7 +14,6 @@ class RecipeIngredient {
     this.quantity,
     this.unit,
     this.sortOrder = 0,
-    this.inPantry,
   });
 
   factory RecipeIngredient.fromJson(Map<String, dynamic> json) {
@@ -29,7 +24,6 @@ class RecipeIngredient {
       quantity: (json['quantity'] as num?)?.toDouble(),
       unit: json['unit'] as String?,
       sortOrder: (json['sort_order'] as int?) ?? 0,
-      inPantry: json['in_pantry'] as bool?,
     );
   }
 }

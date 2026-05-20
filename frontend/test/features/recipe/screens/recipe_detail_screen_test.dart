@@ -67,8 +67,6 @@ void main() {
     prepTimeMins: 15,
     cookingTimeMins: 30,
     servingSize: 4,
-    chefName: 'Chef Isabella V.',
-    rating: 4.8,
     ingredients: [
       RecipeIngredient(
         ingredientId: 2,
@@ -167,8 +165,6 @@ void main() {
 
     //hero
     expect(find.text('Saffron-Infused Risotto'), findsOneWidget);
-    expect(find.text('Chef Isabella V.'), findsOneWidget);
-    expect(find.text('4.8'), findsOneWidget);
 
     //tab bar has all 4 tabs - count Tab widgets directly because the
     //section titles inside Overview also render the word "Ingredients"

@@ -17,13 +17,10 @@ class MockRecipeRepository implements RecipeRepository {
       prepTimeMins: 15,
       cookingTimeMins: 30,
       servingSize: 4,
-      chefName: 'Chef Isabella V.',
-      rating: 4.8,
-      ratingCount: 124,
       ingredients: const [
         RecipeIngredient(ingredientId: 101, recipeId: 1, nameRaw: 'Arborio rice', quantity: 320, unit: 'g', sortOrder: 1),
         RecipeIngredient(ingredientId: 102, recipeId: 1, nameRaw: 'Saffron threads', quantity: 1, unit: 'pinch', sortOrder: 2),
-        RecipeIngredient(ingredientId: 103, recipeId: 1, nameRaw: 'Garlic cloves', quantity: 3, unit: null, sortOrder: 3, inPantry: true),
+        RecipeIngredient(ingredientId: 103, recipeId: 1, nameRaw: 'Garlic cloves', quantity: 3, unit: null, sortOrder: 3),
         RecipeIngredient(ingredientId: 104, recipeId: 1, nameRaw: 'Parmesan, grated', quantity: 80, unit: 'g', sortOrder: 4),
         RecipeIngredient(ingredientId: 105, recipeId: 1, nameRaw: 'Vegetable stock', quantity: 1, unit: 'L', sortOrder: 5),
       ],
@@ -45,7 +42,7 @@ class MockRecipeRepository implements RecipeRepository {
       servingSize: 6,
       ingredients: const [
         RecipeIngredient(ingredientId: 106, recipeId: 2, nameRaw: 'Cavatappi pasta', quantity: 225, unit: 'g', sortOrder: 1),
-        RecipeIngredient(ingredientId: 107, recipeId: 2, nameRaw: 'Cherry tomatoes, halved', quantity: 450, unit: 'g', sortOrder: 2, inPantry: true),
+        RecipeIngredient(ingredientId: 107, recipeId: 2, nameRaw: 'Cherry tomatoes, halved', quantity: 450, unit: 'g', sortOrder: 2),
         RecipeIngredient(ingredientId: 108, recipeId: 2, nameRaw: 'Mini mozzarella balls', quantity: 150, unit: 'g', sortOrder: 3),
         RecipeIngredient(ingredientId: 109, recipeId: 2, nameRaw: 'Fresh basil leaves', quantity: 40, unit: 'g', sortOrder: 4),
       ],

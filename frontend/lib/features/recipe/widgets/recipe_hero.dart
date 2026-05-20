@@ -5,7 +5,7 @@ import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/recipe.dart';
 
-//image with overlay, back/share buttons, title and chef info
+//image with overlay, back/share buttons, recipe title
 class RecipeHero extends StatelessWidget {
   const RecipeHero({super.key, required this.recipe, this.height = 290});
 
@@ -63,55 +63,13 @@ class RecipeHero extends StatelessWidget {
             left: 20,
             right: 20,
             bottom: 20,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  recipe.title,
-                  style: AppTextStyles.heading1.copyWith(
-                    color: AppColors.textDark,
-                    fontSize: 30,
-                    height: 1.1,
-                  ),
-                ),
-                if (recipe.chefName != null) ...[
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 11,
-                        backgroundColor: AppColors.accent,
-                        backgroundImage: recipe.chefAvatarUrl != null
-                            ? NetworkImage(recipe.chefAvatarUrl!)
-                            : null,
-                        child: recipe.chefAvatarUrl == null
-                            ? const Icon(Icons.person, size: 14, color: AppColors.textDark)
-                            : null,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        recipe.chefName!,
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textDark,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      if (recipe.rating != null) ...[
-                        const SizedBox(width: 12),
-                        const Icon(Icons.star, color: AppColors.accent, size: 14),
-                        const SizedBox(width: 4),
-                        Text(
-                          recipe.rating!.toStringAsFixed(1),
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textDark,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ],
+            child: Text(
+              recipe.title,
+              style: AppTextStyles.heading1.copyWith(
+                color: AppColors.textDark,
+                fontSize: 30,
+                height: 1.1,
+              ),
             ),
           ),
         ],
