@@ -42,6 +42,19 @@ public class VaultFolderRecipeService {
         return mapToResponseDto(vaultFolderRecipeRepository.save(vaultFolderRecipeForReturn));
     }
 
+    // Put to update a record
+    public VaultFolderRecipeResponse updateVaultFolderRecipes(Long id, VaultFolderRecipeRequest request)
+    {
+        VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("No record found"));
+
+        vaultFolderRecipeForReturn.setFolderId(request.getFolderId());
+        vaultFolderRecipeForReturn.setRecipeId(request.getRecipeId());
+
+        return mapToResponseDto(vaultFolderRecipeRepository.save(vaultFolderRecipeForReturn));
+    }
+
+    
+
     /* Mapping functions */
 
     private VaultFolderRecipeResponse mapToResponseDto(VaultFolderRecipe vaultFolderRecipeIn)

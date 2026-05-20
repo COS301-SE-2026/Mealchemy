@@ -6,7 +6,7 @@ import java.time.OffsetDateTime;
 
 /* Import classes */
 
-public class VaultFolderRecipe {
+public class VaultFolderRecipeResponse {
     
     /* Declaring fields */
     private Long id;
@@ -48,7 +48,7 @@ public class VaultFolderRecipe {
         folderId = folderIdIn;
     }
 
-    public void setRecipe(Long recipeIdIn)
+    public void setRecipeId(Long recipeIdIn)
     {
         recipeId = recipeIdIn;
     }
