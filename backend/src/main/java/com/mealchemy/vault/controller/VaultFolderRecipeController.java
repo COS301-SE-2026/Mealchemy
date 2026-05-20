@@ -49,4 +49,10 @@ public class VaultFolderRecipeController
         return vaultFolderRecipeService.createVaultFolderRecipe(request);
     }
 
+    // Put
+    public VaultFolderRecipeResponse updateVaultFolderRecipe(@PathVariable Long id, @RequestBody VaultFolderRecipeRequest request)
+    {
+        return vaultFolderRecipeService.updateVaultFolderRecipe(id, request);
+    }
+
 }
