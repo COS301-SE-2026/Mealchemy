@@ -55,4 +55,12 @@ public class VaultFolderRecipeController
         return vaultFolderRecipeService.updateVaultFolderRecipe(id, request);
     }
 
+    // Delete
+    @DeleteMapping("/{id}")
+    public void deleteVaultFolderRecipe(@PathVariable Long id)
+    {
+        vaultFolderRecipeService.deleteVaultFolderRecipe(id);
+    }
+
+
 }
