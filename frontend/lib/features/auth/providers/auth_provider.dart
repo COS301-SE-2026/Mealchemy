@@ -21,12 +21,14 @@ class AuthState {
   final bool isLoading;
   final String? errorMessage;
   final String? token;
+    final bool onboardingRequired;
 
   const AuthState({
     this.isLoggedIn = false,
     this.isLoading = false,
     this.errorMessage,
     this.token,
+    this.onboardingRequired = false,
   });
 
   AuthState copyWith({
@@ -34,12 +36,14 @@ class AuthState {
     bool? isLoading,
     String? errorMessage,
     String? token,
+    bool? onboardingRequired,
   }) {
     return AuthState(
       isLoggedIn: isLoggedIn ?? this.isLoggedIn,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
       token: token ?? this.token,
+      onboardingRequired: onboardingRequired ?? this.onboardingRequired,
     );
   }
 }
@@ -60,6 +64,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isLoading: false,
         isLoggedIn: true,
         token: result.token,
+        onboardingRequired: result.onboardingRequired,
       );
       return true;
     }
@@ -85,6 +90,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isLoading: false,
         isLoggedIn: true,
         token: result.token,
+        onboardingRequired: result.onboardingRequired,
       );
       return true;
     }

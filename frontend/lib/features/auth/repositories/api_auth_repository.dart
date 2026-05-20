@@ -17,7 +17,13 @@ class ApiAuthRepository implements AuthRepository {
       });
       return AuthResult.success(
         token: response.data['token'],
-        user: User.fromJson(response.data['user']),
+        user: User(
+          userId: response.data['user_id'],
+          email: email,
+          displayName: '',
+          role: 'user',
+        ),
+        onboardingRequired: response.data['onboarding_required'] ?? false,
       );
     } catch (e) {
       return AuthResult.failure('Invalid email or password');
@@ -38,7 +44,13 @@ class ApiAuthRepository implements AuthRepository {
       });
       return AuthResult.success(
         token: response.data['token'],
-        user: User.fromJson(response.data['user']),
+        user: User(
+          userId: response.data['user_id'],
+          email: email,
+          displayName: displayName,
+          role: 'user',
+        ),
+        onboardingRequired: response.data['onboarding_required'] ?? false,
       );
     } catch (e) {
       return AuthResult.failure('Something went wrong. Please try again.');
