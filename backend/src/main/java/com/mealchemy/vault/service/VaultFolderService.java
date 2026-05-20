@@ -56,6 +56,12 @@ public class VaultFolderService {
         return mapToResponseDto(vaultFolderRepository.save(vaultFolderForReturn));
     }
 
+    // Delete a specific folder using id
+    public void deleteVaultFolder(Long id)
+    {
+        vaultFolderRepository.deleteById(id);
+    }
+
     /* Mapping functions */
 
     private VaultFolderResponse mapToResponseDto(VaultFolder vaultFolderIn)
