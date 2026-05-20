@@ -29,6 +29,12 @@ public class VaultFolderRecipeService {
         return vaultFolderRecipeRepository.findByRecipeId(recipeId).stream().map(this::mapToResponseDto).collect(Collectors.toList());
     }
 
+    // Get a single record by id
+    public VaultFolderRecipeResponse getFolderRecipesById(Long id)
+    {
+        VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("No record found"));
+    }
+
     /* Mapping functions */
 
     private VaultFolderRecipeResponse mapToResponseDto(VaultFolderRecipe vaultFolderRecipeIn)
