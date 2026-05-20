@@ -68,7 +68,7 @@ public class VaultFolderService {
     {
         VaultFolderResponse response = new VaultFolderResponse();
 
-        response.setFolderId(vaultFolderIn.getFolderId())
+        response.setFolderId(vaultFolderIn.getFolderId());
         response.setVaultId(vaultFolderIn.getVaultId());
         response.setFolderName(vaultFolderIn.getFolderName());
         response.setCreatedAt(vaultFolderIn.getCreatedAt());

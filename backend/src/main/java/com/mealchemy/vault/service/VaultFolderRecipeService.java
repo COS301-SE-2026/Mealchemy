@@ -65,7 +65,7 @@ public class VaultFolderRecipeService {
     {
         VaultFolderRecipeResponse response = new VaultFolderRecipeResponse();
 
-        response.setId(vaultFolderRecipeIn.getId())
+        response.setId(vaultFolderRecipeIn.getId());
         response.setFolderId(vaultFolderRecipeIn.getFolderId);
         response.setRecipeId(vaultFolderRecipeIn.getRecipeId());
         response.setAddedAt(vaultFolderRecipeIn.getAddedAt());

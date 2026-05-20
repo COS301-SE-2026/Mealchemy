@@ -29,7 +29,7 @@
 
         @Enumerated(EnumType.STRING)
         @Column(name = "vault_type", nullable = false, columnDefinition = "vault_type_enum")
-        @JdbcTypeCode(SqlTypes.NAMED_ENUM);
+        @JdbcTypeCode(SqlTypes.NAMED_ENUM)
         private VaultType vaultType = VaultType.PRIVATE;
 
         @Column(nullable = false)

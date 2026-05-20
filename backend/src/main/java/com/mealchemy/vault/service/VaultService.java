@@ -62,7 +62,7 @@ public class VaultService
     {
         VaultResponse response = new VaultResponse();
 
-        response.setVaultId(vaultIn.getVaultId())
+        response.setVaultId(vaultIn.getVaultId());
         response.setOwnerId(vaultIn.getOwnerId);
         response.setVaultType(vaultIn.getVaultType());
         response.setName(vaultIn.getName());
