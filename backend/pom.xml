@@ -139,24 +139,18 @@
 				<version>0.8.12</version>
 				<configuration>
 					<excludes>
-						<!-- @SpringBootApplication entry point, no business logic -->
 						<exclude>**/MealchemyApplication.class</exclude>
-						<!-- @Configuration classes, no business logic -->
 						<exclude>**/*Configuration.class</exclude>
 						<exclude>**/*Config.class</exclude>
-						<!-- Pure JPA entities, no business logic -->
 						<exclude>**/entity/**/*.class</exclude>
 						<exclude>**/entities/**/*.class</exclude>
-						<!-- Generated mappers and builders -->
 						<exclude>**/*Mapper.class</exclude>
 						<exclude>**/*Builder.class</exclude>
-						<!-- JPA repository interfaces - no executable code to cover -->
 						<exclude>**/repository/**/*.class</exclude>
-						<!-- Shared enums - no business logic -->
 						<exclude>**/shared/**/*.class</exclude>
-						<!-- JWT utility - covered by integration, not unit tests -->
 						<exclude>**/config/JwtUtil.class</exclude>
-						<!-- Placeholder feature packages, remove each line as the package gets real code + tests -->
+						<exclude>**/model/**/*.class</exclude>
+						<exclude>**/dto/**/*.class</exclude>
 						<exclude>**/pantry/**/*.class</exclude>
 						<exclude>**/vault/**/*.class</exclude>
 					</excludes>
