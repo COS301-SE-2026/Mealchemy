@@ -25,8 +25,8 @@ public class Vault {
     @Column(nullable = false)
     private String name = "My Vault";
 
-    @Column(name = "created_at", nullable = false)
-    private OffsetDateTime createdAt = OffsetDateTime.now();
+    @Column(name = "created_at", nullable = false) //Postgres sets it
+    private OffsetDateTime createdAt;
 
     // Getters and setters
     public Long getVaultId() { 

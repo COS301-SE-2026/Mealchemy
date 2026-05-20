@@ -24,7 +24,7 @@ public class User {
     private Long roleId;
 
     @Column(name = "created_at", nullable = false)
-    private OffsetDateTime createdAt = OffsetDateTime.now();
+    private OffsetDateTime createdAt; //postgres sets it
 
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
