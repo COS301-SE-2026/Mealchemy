@@ -35,12 +35,12 @@ class Validators {
   }
 
   //Display name  validation
-  static String? displayName(String? value) {
+  static String? textField(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Display name is required';
+      return 'Text is required';
     }
     if (value.trim().length < 2) {
-       return 'Display name must be at least 2  characters';
+       return 'Text must be at least 2  characters';
     }
     return null;
   }
