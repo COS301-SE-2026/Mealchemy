@@ -149,6 +149,8 @@
 						<exclude>**/repository/**/*.class</exclude>
 						<exclude>**/shared/**/*.class</exclude>
 						<exclude>**/config/JwtUtil.class</exclude>
+						<exclude>**/config/JwtAuthFilter.class</exclude>
+						<exclude>**/config/GlobalExceptionHandler.class</exclude>
 						<exclude>**/model/**/*.class</exclude>
 						<exclude>**/dto/**/*.class</exclude>
 						<exclude>**/pantry/**/*.class</exclude>
