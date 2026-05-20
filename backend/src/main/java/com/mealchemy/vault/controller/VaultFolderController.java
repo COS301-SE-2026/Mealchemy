@@ -28,5 +28,10 @@ public class VaultFolderController
         return vaultFolderService.getVaultFolderByVaultId(vaultId);
     }
 
-
+    // Get
+    @GetMapping("/{name}")
+    public VaultFolderResponse getVaultFolderByName(@PathVariable String name)
+    {
+        return vaultFolderService.getVaultFolderByName(name);
+    }
 }
