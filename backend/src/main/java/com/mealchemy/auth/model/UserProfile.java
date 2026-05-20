@@ -16,10 +16,10 @@ public class UserProfile {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "profile_id")
-    private Long profileId;
+    private Integer profileId;
 
     @Column(name = "user_id", nullable = false, unique = true)
-    private Long userId;
+    private Integer userId;
 
     @Column(name = "display_name")
     private String displayName;
@@ -28,7 +28,8 @@ public class UserProfile {
     private String avatarUrl;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "preferred_unit", nullable = false)
+    @Column(name = "preferred_unit", nullable = false, columnDefinition = "preferred_unit_enum")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private PreferredUnit preferredUnit = PreferredUnit.METRIC;
 
     @JdbcTypeCode(SqlTypes.JSON)
@@ -39,15 +40,15 @@ public class UserProfile {
     private OffsetDateTime updatedAt = OffsetDateTime.now();
 
     // Getters and setters
-    public Long getProfileId() {
+    public Integer getProfileId() {
         return profileId; 
     }
     
-    public Long getUserId() {
+    public Integer getUserId() {
         return userId; 
     }
 
-    public void setUserId(Long id) {
+    public void setUserId(Integer id) {
         this.userId = id;
     }
     

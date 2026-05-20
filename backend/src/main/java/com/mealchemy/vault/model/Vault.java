@@ -6,6 +6,9 @@ import com.mealchemy.shared.enums.VaultType;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "vaults")
 public class Vault {
@@ -13,31 +16,32 @@ public class Vault {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "vault_id")
-    private Long vaultId;
+    private Integer vaultId;
 
     @Column(name = "owner_id") 
-    private Long ownerId;
+    private Integer ownerId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "vault_type", nullable = false)
+    @Column(name = "vault_type", nullable = false, columnDefinition = "vault_type_enum")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private VaultType vaultType = VaultType.PRIVATE;
 
     @Column(nullable = false)
     private String name = "My Vault";
 
     @Column(name = "created_at", nullable = false) //Postgres sets it
-    private OffsetDateTime createdAt;
+    private OffsetDateTime createdAt = OffsetDateTime.now();
 
     // Getters and setters
-    public Long getVaultId() { 
+    public Integer getVaultId() { 
         return vaultId; 
     }
 
-    public Long getOwnerId() { 
+    public Integer getOwnerId() { 
         return ownerId; 
     }
 
-    public void setOwnerId(Long id) { 
+    public void setOwnerId(Integer id) { 
         this.ownerId = id; 
     }
 

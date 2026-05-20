@@ -8,6 +8,6 @@ import java.util.Optional;
 import java.util.List;
 
 
-public interface VaultRepository extends JpaRepository<Vault, Long> { // Vault object, primary key is Long (vault_id)
-    Optional<VaultRepository> findByOwnerId(Long ownerId); // finds owner of Vault when user opens their vault
+public interface VaultRepository extends JpaRepository<Vault, Integer> { // Vault object, primary key is Integer (vault_id)
+    Optional<VaultRepository> findByOwnerId(Integer ownerId); // finds owner of Vault when user opens their vault
 }

@@ -9,6 +9,6 @@ import java.util.Optional;
 import java.util.List;
 
 
-public interface UserPreferencesRepository extends JpaRepository<UserPreferences, Long>{ // UserPreferences object, primary key is Long (preference_id)
-    Optional<UserPreferences> findByUserId(Long userId); 
+public interface UserPreferencesRepository extends JpaRepository<UserPreferences, Integer>{ // UserPreferences object, primary key is Integer (preference_id)
+    Optional<UserPreferences> findByUserId(Integer userId); 
 }

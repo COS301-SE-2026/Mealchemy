@@ -15,10 +15,10 @@ public class UserPreferences {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "preference_id")
-    private Long preferenceId;
+    private Integer preferenceId;
 
     @Column(name = "user_id", nullable = false, unique = true)
-    private Long userId;
+    private Integer userId;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "dietary_restrictions", columnDefinition = "jsonb")
@@ -40,11 +40,11 @@ public class UserPreferences {
     private OffsetDateTime updatedAt = OffsetDateTime.now();
 
     // Getters and setters
-    public Long getUserId() { 
+    public Integer getUserId() { 
         return userId; 
     }
 
-    public void setUserId(Long id) { 
+    public void setUserId(Integer id) { 
         this.userId = id; 
     }
 

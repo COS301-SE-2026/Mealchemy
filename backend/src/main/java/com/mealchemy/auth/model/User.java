@@ -12,7 +12,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
-    private Long userId;
+    private Integer userId;
 
     @Column(nullable = false, unique = true) //email field can't be null and must be unique
     private String email;
@@ -21,16 +21,16 @@ public class User {
     private String passwordHash;  //don't store raw text
 
     @Column(name = "role_id", nullable = false)
-    private Long roleId;
+    private Integer roleId;
 
     @Column(name = "created_at", nullable = false)
-    private OffsetDateTime createdAt; //postgres sets it
+    private OffsetDateTime createdAt = OffsetDateTime.now();
 
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
 
     // Getters and setters
-    public Long getUserId() {
+    public Integer getUserId() {
         return userId;
     }
 
@@ -50,11 +50,11 @@ public class User {
         this.passwordHash = p;
     }
 
-    public Long getRoleId() {
+    public Integer getRoleId() {
         return roleId; 
     }
     
-    public void setRoleId(Long roleId) {
+    public void setRoleId(Integer roleId) {
         this.roleId = roleId;
     }
 

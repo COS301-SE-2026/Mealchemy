@@ -6,6 +6,6 @@ import java.util.Optional;
 import java.util.List;
 
 
-public interface UserProfileRepository extends JpaRepository<UserProfile, Long>{ //UserProfile object and Long is profileId
-    Optional<UserProfile> findByUserId(Long userId); //want to fetch user by their id not profile id
+public interface UserProfileRepository extends JpaRepository<UserProfile, Integer>{ //UserProfile object and Integer is profileId
+    Optional<UserProfile> findByUserId(Integer userId); //want to fetch user by their id not profile id
 }

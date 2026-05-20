@@ -15,12 +15,12 @@ import java.util.Date;
 public class JwtUtil {
 
     private final SecretKey secretKey; //cryptographic key to sign and verify tokens
-    private final long expirationMs; //time period token is valid for
+    private final Integer expirationMs; //time period token is valid for
 
     //constructor
     public JwtUtil(
             @Value("${jwt.secret}") String secret,
-            @Value("${jwt.expiration-ms}") long expirationMs) {
+            @Value("${jwt.expiration-ms}") Integer expirationMs) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirationMs = expirationMs;
     }
