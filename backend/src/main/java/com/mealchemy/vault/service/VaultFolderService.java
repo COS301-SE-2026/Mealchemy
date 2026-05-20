@@ -18,6 +18,10 @@ public class VaultFolderService {
         this.vaultFolderRepository = vaultFolderRepository;
     }
 
+    public List<VaultFolderResponse> findVaultFolderByVaultId(Long vaultId)
+    {
+        return vaultFolderRepository.findByVaultId(vaultId).stream().map(this::mapToResponseDto).collect(Collectors.toList());
+    }
 
     /* Mapping functions */
 
