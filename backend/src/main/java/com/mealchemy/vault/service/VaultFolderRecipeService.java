@@ -17,6 +17,11 @@ public class VaultFolderRecipeService {
         this.vaultFolderRecipeRepository = vaultFolderRecipeRepository;
     }
 
+    // Get all recipes using folderId
+    public List<VaultFolderRecipeResponse> getRecipesByFolderId(Long folderId)
+    {
+        return vaultFolderRecipeRepository.findByFolderId(folderId).stream().map(this::mapToResponseDto).collect(Collectors.toList());
+    }
 
     /* Mapping functions */
 
