@@ -1,0 +1,187 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../core/theme/app_colours.dart';
+import '../../../core/theme/app_typography.dart';
+import '../models/recipe.dart';
+
+//image with overlay, back/share buttons, title and chef info
+class RecipeHero extends StatelessWidget {
+  const RecipeHero({super.key, required this.recipe, this.height = 290});
+
+  final Recipe recipe;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: height,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          _HeroImage(photoUrl: recipe.photoUrl),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, AppColors.bgDark.withValues(alpha: 0.8)],
+                stops: const [0.35, 1.0],
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Row(
+                children: [
+                  _HeroCircleButton(
+                    icon: Icons.arrow_back,
+                    onTap: () => context.pop(),
+                    background: AppColors.surfaceWhite.withValues(alpha: 0.95),
+                    iconColor: AppColors.textLight,
+                  ),
+                  const Spacer(),
+                  _HeroCircleButton(
+                    icon: Icons.favorite_border,
+                    onTap: () {},
+                    background: AppColors.textLight.withValues(alpha: 0.45),
+                    iconColor: AppColors.textDark,
+                  ),
+                  const SizedBox(width: 10),
+                  _HeroCircleButton(
+                    icon: Icons.share_outlined,
+                    onTap: () {},
+                    background: AppColors.textLight.withValues(alpha: 0.45),
+                    iconColor: AppColors.textDark,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            left: 20,
+            right: 20,
+            bottom: 20,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  recipe.title,
+                  style: AppTextStyles.heading1.copyWith(
+                    color: AppColors.textDark,
+                    fontSize: 30,
+                    height: 1.1,
+                  ),
+                ),
+                if (recipe.chefName != null) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 11,
+                        backgroundColor: AppColors.accent,
+                        backgroundImage: recipe.chefAvatarUrl != null
+                            ? NetworkImage(recipe.chefAvatarUrl!)
+                            : null,
+                        child: recipe.chefAvatarUrl == null
+                            ? const Icon(Icons.person, size: 14, color: AppColors.textDark)
+                            : null,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        recipe.chefName!,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textDark,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (recipe.rating != null) ...[
+                        const SizedBox(width: 12),
+                        const Icon(Icons.star, color: AppColors.accent, size: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          recipe.rating!.toStringAsFixed(1),
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.textDark,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroImage extends StatelessWidget {
+  const _HeroImage({this.photoUrl});
+
+  final String? photoUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    if (photoUrl != null) {
+      return Image.network(
+        photoUrl!,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const _HeroPlaceholder(),
+      );
+    }
+    return const _HeroPlaceholder();
+  }
+}
+
+class _HeroPlaceholder extends StatelessWidget {
+  const _HeroPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(gradient: AppColors.brandOverlay),
+      child: const Center(
+        child: Icon(
+          Icons.restaurant_menu,
+          color: AppColors.accent,
+          size: 72,
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroCircleButton extends StatelessWidget {
+  const _HeroCircleButton({
+    required this.icon,
+    required this.onTap,
+    required this.background,
+    required this.iconColor,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final Color background;
+  final Color iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: background,
+        ),
+        child: Icon(icon, color: iconColor, size: 19),
+      ),
+    );
+  }
+}
