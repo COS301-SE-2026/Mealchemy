@@ -49,4 +49,10 @@ public class VaultFolderController
         return vaultFolderService.createVaultFolder(response);
     }
 
+    // Put
+    @PutMapping("/{id}")
+    public VaultFolderResponse updateVaultFolder(@PathVariable Long id, @RequestBody VaultFolderRequest request)
+    {
+        return vaultFolderService.updateVaultFolder(id, request);
+    }
 }
