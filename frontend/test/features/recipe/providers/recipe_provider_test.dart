@@ -95,8 +95,8 @@ void main() {
     });
 
     test('copyWith clears errorMessage when not provided', () {
-      //copyWith intentionally does NOT preserve errorMessage so it self-clears
-      //between submits - verify that contract
+      //copyWith intentionally does not preserve errorMessage so it self clears
+     
       const seeded = AddRecipeState(errorMessage: 'old error');
 
       final next = seeded.copyWith(isSubmitting: true);

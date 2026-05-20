@@ -8,10 +8,17 @@ import '../../features/preference/screens/preference_screen.dart';
 import '../../features/vault/screens/vault_screen.dart';
 import '../../features/pantry/screens/add_ingredient_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
+import '../../features/recipe/screens/recipe_detail_screen.dart';
+import '../../features/recipe/screens/add_recipe_screen.dart';
 
 
 final appRouter = GoRouter(
-  initialLocation: AppRoutes.login, // Sets the first screen shown when the app launches. 
+ 
+
+    initialLocation: AppRoutes.login,
+    
+    
+    // Sets the first screen shown when the app launches. 
                                     // During development: change this to your screen (e.g. AppRoutes.pantry)
                                     // Before committing: ALWAYS reset this back to AppRoutes.login
   routes: [
@@ -42,6 +49,19 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.signup,
       builder: (context, state) => const SignupScreen(),
-    )
+    ),
+    GoRoute(
+      path: AppRoutes.addRecipe,
+      builder: (context, state) => const AddRecipeScreen(),
+    ),
+    GoRoute(
+      //note this has a parameter. to see screen: initialLocation: '/recipe/1',
+      //only string literal wont work
+      path: AppRoutes.recipeDetail,
+      builder: (context, state) {
+        final id = int.parse(state.pathParameters['id']!);
+        return RecipeDetailScreen(recipeId: id);
+      },
+    ),
   ],
 );
