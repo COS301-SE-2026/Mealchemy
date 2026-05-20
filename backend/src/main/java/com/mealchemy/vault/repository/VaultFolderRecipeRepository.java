@@ -13,6 +13,5 @@ import com.mealchemy.vault.model.VaultFolderRecipe;
 public inteface VaultFolderRecipeRepository extends JpaRepository<VaultFolderRecipe, Long>
 {
     List<VaultFolderRecipe> findByFolderId(Long folderId);
-    Optional<VaultFolderRecipe> findById(Long id);
-    Optional<VaultFolderRecipe> findByRecipeId(Long RecipeId);
+    List<VaultFolderRecipe> findByRecipeId(Long RecipeId);
 }

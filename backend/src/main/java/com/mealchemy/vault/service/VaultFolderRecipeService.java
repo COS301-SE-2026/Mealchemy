@@ -23,6 +23,12 @@ public class VaultFolderRecipeService {
         return vaultFolderRecipeRepository.findByFolderId(folderId).stream().map(this::mapToResponseDto).collect(Collectors.toList());
     }
 
+    // Get all folders containing a recipe
+    public List<VaultFolderRecipeResponse> getFoldersByRecipeId(Long recipeId)
+    {
+        return vaultFolderRecipeRepository.findByRecipeId(recipeId).stream().map(this::mapToResponseDto).collect(Collectors.toList());
+    }
+
     /* Mapping functions */
 
     private VaultFolderRecipeResponse mapToResponseDto(VaultFolderRecipe vaultFolderRecipeIn)
