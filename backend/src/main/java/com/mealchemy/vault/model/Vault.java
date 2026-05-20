@@ -1,84 +1,87 @@
-package com.mealchemy.vault.model;
+    package com.mealchemy.vault.model;
 
-/* Import libraries */
+    /* Import libraries */
 
-import jakarta.persistence.*;
-import java.time.OffsetDateTime;
-import java.util.Arrays;
+    import jakarta.persistence.*;
+    import java.time.OffsetDateTime;
+    import java.util.Arrays;
+    import org.hibernate.annotations.JdbcTypeCode;
+    import org.hibernate.type.SqlTypes;
 
-/* Import classes */
+    /* Import classes */
 
-import com.mealchemy.shared.enums.VaultType;
+    import com.mealchemy.shared.enums.VaultType;
 
-@Entity
-@Table(name = "vaults")
-public class Vault
-{
-
-    /* Declaring fields */
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "vault_id")
-    private int vaultId;
-    
-    @Column(name = "owner_id")
-    private int ownerId;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "vault_type", nullable = false)
-    private VaultType vaultType = VaultType.PRIVATE;
-
-    @Column(nullable = false)
-    private String name = "My Vault";
-
-    @Column(name = "created_at", nullable = false)
-    private OffsetDateTime createdAt;
-
-    /* Getters */
-
-    public int getVaultId()
+    @Entity
+    @Table(name = "vaults")
+    public class Vault
     {
-        return vaultId;
-    }
 
-    public int getOwnerId()
-    {
-        return ownerId;
-    }
+        /* Declaring fields */
 
-    public String getVaultType()
-    {
-        return vaultType;
-    }
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        @Column(name = "vault_id")
+        private int vaultId;
+        
+        @Column(name = "owner_id")
+        private int ownerId;
 
-    public String getName()
-    {
-        return name;
-    }
+        @Enumerated(EnumType.STRING)
+        @Column(name = "vault_type", nullable = false, columnDefinition = "vault_type_enum")
+        @JdbcTypeCode(SqlTypes.NAMED_ENUM);
+        private VaultType vaultType = VaultType.PRIVATE;
 
-    public OffsetDateTime getCreatedAt()
-    {
-        return createdAt;
-    }
+        @Column(nullable = false)
+        private String name = "My Vault";
 
-    /* Setters */
+        @Column(name = "created_at", nullable = false)
+        private OffsetDateTime createdAt = OffsetDateTime.now();
 
-    public void setOwnerId(int ownerIdIn)
-    {
-        ownerId = ownerIdIn;
-    }
+        /* Getters */
 
-    public void setVaultType(String vaultTypeIn)
-    {
-        if(Arrays.stream(VaultType.values()).map(Enum::name).anyMatch(vaultTypeIn::equals))
+        public int getVaultId()
         {
-            vaultType = vaultTypeIn;
+            return vaultId;
+        }
+
+        public int getOwnerId()
+        {
+            return ownerId;
+        }
+
+        public String getVaultType()
+        {
+            return vaultType;
+        }
+
+        public String getName()
+        {
+            return name;
+        }
+
+        public OffsetDateTime getCreatedAt()
+        {
+            return createdAt;
+        }
+
+        /* Setters */
+
+        public void setOwnerId(int ownerIdIn)
+        {
+            ownerId = ownerIdIn;
+        }
+
+        public void setVaultType(String vaultTypeIn)
+        {
+            if(Arrays.stream(VaultType.values()).map(Enum::name).anyMatch(vaultTypeIn::equals))
+            {
+                vaultType = vaultTypeIn;
+            }
+        }
+
+        public void setName(String nameIn)
+        {
+            name = nameIn;
         }
     }
-
-    public void setName(String nameIn)
-    {
-        name = nameIn;
-    }
-}
