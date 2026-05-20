@@ -12,7 +12,6 @@ void main() {
 
   //make sure renders everything
   testWidgets('PantryScreen renders pantry overview', (tester) async {
-    //wrapping screen
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(
@@ -23,10 +22,49 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    //make sure displays 
     expect(find.text('Pantry'), findsWidgets);
     expect(find.text('Meal Optimization'), findsOneWidget);
     expect(find.text('Proteins'), findsOneWidget);
     expect(find.text('Chicken Breast'), findsOneWidget);
+  });
+
+  testWidgets('PantryScreen filters pantry items by search query', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: PantryScreen(),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'milk');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Full Cream Milk'), findsOneWidget);
+    expect(find.text('Chicken Breast'), findsNothing);
+  });
+
+  testWidgets('PantryScreen filters pantry items by category', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: PantryScreen(),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    final dairyFilter = find.textContaining('Dairy').first;
+    await tester.ensureVisible(dairyFilter);
+    await tester.tap(dairyFilter);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Full Cream Milk'), findsOneWidget);
+    expect(find.text('Chicken Breast'), findsNothing);
   });
 }
