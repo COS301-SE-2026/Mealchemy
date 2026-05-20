@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import '../repositories/mock_auth_repository.dart';
 import '../repositories/api_auth_repository.dart';
 import '../repositories/auth_repository.dart';
-import '../models/auth_result.dart';
 import '../../../core/constants/app_config.dart';
 
 //Switch between mock and real API implementations based on config 
