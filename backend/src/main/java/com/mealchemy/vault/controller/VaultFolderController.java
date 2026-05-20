@@ -42,4 +42,11 @@ public class VaultFolderController
         return vaultFolderService.getVaultFolderById(id);
     }
 
+    // Post
+    @PostMapping
+    public VaultFolderResponse createVaultFolder(@RequestBody VaultFolderRequest request)
+    {
+        return vaultFolderService.createVaultFolder(response);
+    }
+
 }
