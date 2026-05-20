@@ -5,6 +5,7 @@ import 'package:mealchemy/core/shared_widgets/atoms/app_card.dart';
 import 'package:mealchemy/core/shared_widgets/atoms/app_text_field.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
+import 'package:mealchemy/core/utils/validators.dart';
 
 class SignupForm extends StatefulWidget {
   const SignupForm({super.key});
@@ -15,12 +16,17 @@ class SignupForm extends StatefulWidget {
 
 class _SignupFormState extends State<SignupForm> {
   // Input controllers for the signup fields
-  final _nameController            = TextEditingController();
-  final _emailController           = TextEditingController();
-  final _passwordController        = TextEditingController();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
   bool _isLoading = false;
+  //Validation error variables
+  String? _nameError;
+  String? _emailError;
+  String? _passwordError;
+  String? _confirmPasswordError;
 
   @override
   void dispose() {
@@ -32,13 +38,27 @@ class _SignupFormState extends State<SignupForm> {
     super.dispose();
   }
 
+  bool _validate() {
+    setState(() {
+      _nameError = Validators.textField(_nameController.text);
+      _emailError = Validators.email(_emailController.text);
+      _passwordError = Validators.password(_passwordController.text);
+      _confirmPasswordError = Validators.confirmPassword(
+          _passwordController.text, _confirmPasswordController.text);
+    });
+    return _nameError == null &&
+        _emailError == null &&
+        _passwordError == null &&
+        _confirmPasswordError == null;
+  }
+
   //On click register button logic
   void _handleRegister() {
+    if (!_validate()) return;
     setState(() => _isLoading = true);
     Future.delayed(const Duration(seconds: 1), () {
       if (mounted) {
         setState(() => _isLoading = false);
-        // TODO: connect to auth provider then navigate to preference screen
         context.go('/preference');
       }
     });
@@ -74,7 +94,6 @@ class _SignupFormState extends State<SignupForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-
             //Create Account heading
             Text(
               'Create Account',
@@ -102,6 +121,10 @@ class _SignupFormState extends State<SignupForm> {
               controller: _nameController,
               keyboardType: TextInputType.name,
               leftIcon: Icons.person_outline,
+              errorText: _nameError,
+              onChanged: (_) {
+                if (_nameError != null) setState(() => _nameError = null);
+              },
             ),
             const SizedBox(height: 16),
 
@@ -112,6 +135,10 @@ class _SignupFormState extends State<SignupForm> {
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
               leftIcon: Icons.email_outlined,
+              errorText: _emailError,
+              onChanged: (_) {
+                if (_emailError != null) setState(() => _emailError = null);
+              },
             ),
             const SizedBox(height: 16),
 
@@ -129,6 +156,11 @@ class _SignupFormState extends State<SignupForm> {
             AppTextField.private(
               hint: '........',
               controller: _passwordController,
+              errorText: _passwordError,
+              onChanged: (_) {
+                if (_passwordError != null)
+                  setState(() => _passwordError = null);
+              },
             ),
             const SizedBox(height: 16),
 
@@ -146,6 +178,11 @@ class _SignupFormState extends State<SignupForm> {
             AppTextField.private(
               hint: '........',
               controller: _confirmPasswordController,
+              errorText: _confirmPasswordError,
+              onChanged: (_) {
+                if (_confirmPasswordError != null)
+                  setState(() => _confirmPasswordError = null);
+              },
             ),
             const SizedBox(height: 24),
 
