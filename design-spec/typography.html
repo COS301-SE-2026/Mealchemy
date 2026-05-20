@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Typography | Mealchemy</title>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/typography.css">
+  </head>
+
+  <body>
+    <header class="site-header"><nav class="nav-shell" aria-label="Design specification navigation"><a class="brand-mark" href="index.html"><img class="nav-logo" src="assets/logos/logo-mark.png" alt="" aria-hidden="true"><span>Mealchemy</span></a><div class="nav-links"><a href="colours.html">Colours</a><a href="typography.html">Type</a><a href="logo.html">Logo</a><a href="principles.html">Design Principles</a><a href="components.html">Components</a><a href="spacing.html">Spacing</a><a href="accessibility.html">Accessibility</a><a href="wireframes.html">Wireframes</a></div></nav></header>
+    <main class="page">
+      <section class="section reveal">
+        <div class="section-heading type-heading">
+          <div>
+            <p class="section-kicker">02 Typography</p>
+            <h1>Typography system</h1>
+          </div>
+          <p class="section-lede">Headings use Newsreader for a refined editorial tone. Body, buttons, labels, and interface text use Plus Jakarta Sans for clarity. Inter is a fallback for system UI, while CMU Serif is reserved for the static logo wordmark.</p>
+        </div>
+
+        <div class="type-specimen">
+          <p class="section-kicker">Hero wordmark sample</p>
+          <div class="display-sample">Mealchemy</div>
+          <p>Newsreader, 40px, weight 900, with tightened spacing for the splash and brand moments.</p>
+        </div>
+      </section>
+
+      <section class="section reveal">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Font Families</p>
+            <h2>Typefaces</h2>
+          </div>
+          <p class="section-lede">Each typeface has a specific role so screens feel luxurious without becoming crowded or inconsistent.</p>
+        </div>
+        <div class="type-visual-grid">
+          <article class="type-visual font-sample font-newsreader">
+            <span>Newsreader</span>
+            <strong style="font-size:40px;font-weight:900;letter-spacing:-0.75px">Elegant recipe headings.</strong>
+            <p>Used for display, page titles, and section headings.</p>
+          </article>
+          <article class="type-visual font-sample font-jakarta">
+            <span>Plus Jakarta Sans</span>
+            <strong style="font-size:18px;font-weight:600">Clear app content and controls.</strong>
+            <p>Used for body copy, buttons, labels, forms, and navigation.</p>
+          </article>
+          <article class="type-visual font-sample font-inter">
+            <span>Inter</span>
+            <strong style="font-size:18px;font-weight:600">Fallback interface font.</strong>
+            <p>Used only as a fallback if Plus Jakarta Sans is unavailable.</p>
+          </article>
+          <article class="type-visual font-sample font-cmu">
+            <span>CMU Serif</span>
+            <strong style="font-size:34px;font-weight:700">MEALCHEMY</strong>
+            <p>Reserved for the static wordmark and logo exports.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section reveal">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Weights and Spacing</p>
+            <h2>Token examples</h2>
+          </div>
+          <p class="section-lede">These cards visually show the size, weight, and letter spacing used by each typography token.</p>
+        </div>
+        <div class="type-visual-grid token-example-grid">
+          <article class="type-visual display-token" style="--mt:0px;--mb:32px"><span>display · 40px · 900 · -0.75px</span><div class="type-sample"><small class="margin-label top">top 0px</small><strong>Mealchemy</strong><small class="margin-label bottom">bottom 32px</small></div><p>Brand wordmark and splash hero.</p></article>
+          <article class="type-visual h1-token" style="--mt:40px;--mb:24px"><span>heading1 · 32px · 800 · -0.3px</span><div class="type-sample"><small class="margin-label top">top 40px</small><strong>Welcome back</strong><small class="margin-label bottom">bottom 24px</small></div><p>Page titles and dashboard greeting.</p></article>
+          <article class="type-visual h2-token" style="--mt:32px;--mb:16px"><span>heading2 · 24px · 600 · -0.2px</span><div class="type-sample"><small class="margin-label top">top 32px</small><strong>Recommended</strong><small class="margin-label bottom">bottom 16px</small></div><p>Section titles and modal headings.</p></article>
+          <article class="type-visual title-token" style="--mt:24px;--mb:12px"><span>title · 18px · 600 · 0px</span><div class="type-sample"><small class="margin-label top">top 24px</small><strong>Roasted tomato pasta</strong><small class="margin-label bottom">bottom 12px</small></div><p>Card titles and list item names.</p></article>
+          <article class="type-visual body-token" style="--mt:0px;--mb:8px"><span>body · 14px · 400 · 0px</span><div class="type-sample"><small class="margin-label top">top 0px</small><strong>Descriptions, forms, and readable paragraphs.</strong><small class="margin-label bottom">bottom 8px</small></div><p>Primary content and form text.</p></article>
+          <article class="type-visual body-small-token" style="--mt:0px;--mb:4px"><span>bodySmall · 12px · 400 · 0.15px</span><div class="type-sample"><small class="margin-label top">top 0px</small><strong>35 min · pantry friendly</strong><small class="margin-label bottom">bottom 4px</small></div><p>Timestamps, metadata, and captions.</p></article>
+          <article class="type-visual button-token" style="--mt:16px;--mb:8px"><span>button · 16px · 600 · 0.3px</span><div class="type-sample"><small class="margin-label top">top 16px</small><strong>Save recipe</strong><small class="margin-label bottom">bottom 8px</small></div><p>Action labels inside elevated buttons.</p></article>
+          <article class="type-visual label-token" style="--mt:8px;--mb:4px"><span>label · 10px · 700 · 0.5px</span><div class="type-sample"><small class="margin-label top">top 8px</small><strong>HIGH PROTEIN</strong><small class="margin-label bottom">bottom 4px</small></div><p>Navigation labels, tags, and eyebrows.</p></article>
+        </div>
+      </section>
+
+      <section class="section reveal">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Type Scale</p>
+            <h2>Implementation table</h2>
+          </div>
+          <p class="section-lede">This table defines the approved type scale for headings, body text, labels, and interface actions.</p>
+        </div>
+        <table class="token-table type-scale-table">
+          <tr><th>Token</th><th>Font</th><th>Size</th><th>Weight</th><th>Letter spacing</th><th>Margin top</th><th>Margin bottom</th><th>Use</th></tr>
+          <tr><td>display</td><td>Newsreader</td><td>40px</td><td>900</td><td>-0.75px</td><td>0px</td><td>32px</td><td>Brand wordmark and splash hero</td></tr>
+          <tr><td>heading1</td><td>Newsreader</td><td>32px</td><td>800</td><td>-0.3px</td><td>40px</td><td>24px</td><td>Page titles and dashboard greeting</td></tr>
+          <tr><td>heading2</td><td>Newsreader</td><td>24px</td><td>600</td><td>-0.2px</td><td>32px</td><td>16px</td><td>Section titles and modal headings</td></tr>
+          <tr><td>title</td><td>Plus Jakarta Sans</td><td>18px</td><td>600</td><td>0px</td><td>24px</td><td>12px</td><td>Card titles and list item names</td></tr>
+          <tr><td>body</td><td>Plus Jakarta Sans</td><td>14px</td><td>400</td><td>0px</td><td>0px</td><td>8px</td><td>Descriptions, paragraphs, forms</td></tr>
+          <tr><td>bodySmall</td><td>Plus Jakarta Sans</td><td>12px</td><td>400</td><td>0.15px</td><td>0px</td><td>4px</td><td>Timestamps, metadata, captions</td></tr>
+          <tr><td>button</td><td>Plus Jakarta Sans</td><td>16px</td><td>600</td><td>0.3px</td><td>16px</td><td>8px</td><td>Button labels</td></tr>
+          <tr><td>label</td><td>Plus Jakarta Sans</td><td>10px</td><td>700</td><td>0.5px</td><td>8px</td><td>4px</td><td>Navigation labels, tags, eyebrows</td></tr>
+        </table>
+      </section>
+    </main>
+    <footer class="site-footer"><div class="footer-inner"><strong>Mealchemy</strong><span>Typography section</span></div></footer>
+    <script src="js/app.js"></script>
+  </body>
+</html>

@@ -1,5 +1,6 @@
 /*Colour palette visuals, I tried to make panatome colour cards to display colour theme*/
 
+/*added formating for contrast examples */
 .palette-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
@@ -112,6 +113,92 @@
     }
   }
   
+  .contrast-example-intro {
+    max-width: 760px;
+    margin: 32px 0 16px;
+  }
+  
+  .contrast-example-intro h3 {
+    margin: 0 0 8px;
+    font-family: var(--font-display);
+    font-size: clamp(1.7rem, 3vw, 2.4rem);
+    letter-spacing: -0.02em;
+  }
+  
+  .contrast-example-intro p {
+    margin: 0;
+    color: var(--text-dark);
+    font-weight: 700;
+    line-height: 1.55;
+  }
+  
+  .contrast-example-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: 16px;
+  }
+  
+  .contrast-example {
+    min-height: 210px;
+    padding: 22px;
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: var(--shadow-soft);
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease;
+  }
+  
+  .contrast-example:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 24px 55px rgba(0, 0, 0, 0.2);
+  }
+  
+  .contrast-light {
+    border: 1px solid rgba(92, 0, 24, 0.08);
+  }
+  
+  .contrast-dark {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  .contrast-number {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: rgba(212, 175, 55, 0.2);
+    color: inherit;
+    font-weight: 900;
+  }
+  
+  .contrast-number.muted-number {
+    background: rgba(212, 175, 55, 0.18);
+  }
+  
+  .contrast-number.gold-number {
+    background: rgba(212, 175, 55, 0.16);
+  }
+  
+  .contrast-example strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: clamp(2.4rem, 4vw, 3.6rem);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+  }
+  
+  .contrast-example p {
+    margin: 0;
+    max-width: 12rem;
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1.45;
+  }
+  
   @media (max-width: 1440px) {
     .palette-grid {
       grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
@@ -131,10 +218,32 @@
     .swatch strong {
       font-size: 1.18rem;
     }
+  
+    .contrast-example-grid {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+      gap: 12px;
+    }
+  
+    .contrast-example {
+      min-height: 180px;
+      padding: 18px;
+    }
+  
+    .contrast-example strong {
+      font-size: clamp(2rem, 3.6vw, 3rem);
+    }
+  
+    .contrast-example p {
+      font-size: 0.92rem;
+    }
   }
   
   @media (max-width: 760px) {
     .palette-grid {
+      grid-template-columns: 1fr;
+    }
+  
+    .contrast-example-grid {
       grid-template-columns: 1fr;
     }
   }
