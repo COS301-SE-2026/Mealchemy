@@ -18,7 +18,7 @@ public class VaultFolder {
     @Column(name = "folder_id")
     private Long folderId;
 
-    Column(name = "vault_id", nullable = false)
+    @Column(name = "vault_id", nullable = false)
     private Long vaultId;
 
     @Column(name = "name", nullable = false, length = 100)
