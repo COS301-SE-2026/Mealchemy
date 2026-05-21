@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
@@ -272,7 +271,7 @@ class _FolderRecipeRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: InkWell(
-        onTap: () => context.go('/recipe/${recipe.recipeId}'),
+        onTap: () => context.push('/recipe/${recipe.recipeId}'),
         borderRadius: BorderRadius.circular(10),
         child: Container(
           padding: const EdgeInsets.all(10),
