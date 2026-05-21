@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
@@ -37,8 +38,10 @@ class _QuickRecipeThumbnail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
+    return GestureDetector(
+      onTap: () => context.push('/recipe/${recipe.recipeId}'),
+      child: Column(
+        children: [
         Container(
           width: 64,
           height: 64,
@@ -83,7 +86,8 @@ class _QuickRecipeThumbnail extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ),
-      ],
+        ],
+      ),
     );
   }
 }
