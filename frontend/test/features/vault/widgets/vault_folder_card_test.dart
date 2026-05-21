@@ -12,7 +12,7 @@ void main() {
   final mockFolder = VaultFolder(
     folderId: 1,
     vaultId: 1,
-    name: 'Breakfast',
+    folderName: 'Breakfast',
     createdAt: DateTime(2026, 1, 1),
   );
 
