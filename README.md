@@ -63,37 +63,37 @@
 
 | Guide | Link |
 |---|---|
-| Docker Setup | [docker_setup.md](docs/docker_setup.md) |
+| Docker Setup | [docker_setup.MD](docs/docker_setup.MD) |
 | CI Setup | [ci_setup.MD](docs/ci_setup.MD) |
-| GitHub Setup | [github_setup.md](docs/github_setup.md) |
 | Act Setup | [act_setup.MD](docs/act_setup.MD) |
-| Code Coverage Setup | [code_coverage_setup.MD](docs/code_coverage_setup.MD) |
 | pgAdmin Setup | [pgAdmin_setup.MD](docs/pgAdmin_setup.MD) |
 | Render Setup | [render_setup.MD](docs/render_setup.MD) |
 | Security Setup | [security_setup.MD](docs/security_setup.MD) |
 | Design Spec Deployment | [design_spec_deployment_setup.MD](docs/design_spec_deployment_setup.MD) |
-| Wiki Submodule Setup | [wiki_submodule_setup.md](docs/wiki_submodule_setup.md) |
+| Wiki Submodule Setup | [wiki_submodule_setup.MD](docs/wiki_submodule_setup.MD) |
 
 ---
-
 ## Repository Structure
+
+The Mealchemy repository is a monorepo. Everything lives in one repository under the `cos301-se-2026` organisation. The top-level structure is:
 
 ```
 Mealchemy/
 ├── .github/
-│   └── workflows/        <- CI/CD pipeline and automation
-├── backend/              <- Spring Boot Java 21 REST API
-├── engine/               <- Python 3.12 recommendation engine
-├── frontend/             <- Flutter mobile app
-├── infrastructure/       <- Dockerfiles and docker-compose
-├── database/             <- Flyway SQL migrations
-├── design-spec/          <- Brand guide and wireframes
-├── docs/                 <- Setup guides and photo documentation
-└── wiki/                 <- Documentation submodule
+│   ├── workflows/          ← CI/CD pipeline and automation workflows
+│   ├── codecov.yml         ← Codecov coverage thresholds and flags
+│   └── labeler.yml         ← PR auto-label rules
+├── backend/                ← Spring Boot Java 21
+├── engine/                 ← Python 3.12 recommendation engine
+├── frontend/               ← Flutter mobile app
+├── infrastructure/         ← Dockerfiles and docker-compose.yml
+├── database/               ← Flyway SQL migration files
+├── design-spec/            ← Brand guide and wireframes (deployed to GitHub Pages)
+├── wiki/                   ← Git submodule pointing at Mealchemy.wiki.git
+├── .env.example            ← Template for local Docker credentials
+├── .secrets.example        ← Template for local act CI secrets
+└── README.md
 ```
-
----
-
 ## Getting Started
 
 ### Prerequisites
