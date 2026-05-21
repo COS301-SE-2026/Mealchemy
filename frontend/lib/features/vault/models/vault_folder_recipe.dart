@@ -13,10 +13,10 @@ class VaultFolderRecipe {
 
   factory VaultFolderRecipe.fromJson(Map<String, dynamic> json) {
     return VaultFolderRecipe(
-      folderId: json['id'] as int,
-      vaultId: json['folderId'] as int,
-      name: json['recipeId'] as int,
-      createdAt: DateTime.parse(json['addedAt'] as String),
+      id: json['id'] as int,
+      folderId: json['folderId'] as int,
+      recipeId: json['recipeId'] as int,
+      addedAt: DateTime.parse(json['addedAt'] as String),
     );
   }
 }
