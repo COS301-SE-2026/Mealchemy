@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/core/shared_widgets/Organisms/app_navbar.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
-import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/vault/models/vault_folder.dart';
 
 import '../providers/vault_provider.dart';
@@ -19,7 +19,7 @@ class VaultScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final foldersAsync = ref.watch(vaultFoldersProvider);
+    final vaultsAsync = ref.watch(vaultsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.bgLight,
@@ -33,11 +33,32 @@ class VaultScreen extends ConsumerWidget {
         foregroundColor: AppColors.textDark,
         child: const Icon(Icons.add),
       ),
-      body: foldersAsync.when(
+      body: vaultsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _VaultError(message: '$error'),
-        data: (folders) => _VaultContent(folders: folders),
+        data: (vaults) {
+          if (vaults.isEmpty) {
+            return const _VaultError(message: 'No vault found.');
+          }
+          return _VaultFoldersLoader(vaultId: vaults.first.vaultId);
+        },
       ),
+    );
+  }
+}
+
+class _VaultFoldersLoader extends ConsumerWidget {
+  const _VaultFoldersLoader({required this.vaultId});
+  final int vaultId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final foldersAsync = ref.watch(vaultFoldersProvider(vaultId));
+
+    return foldersAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => _VaultError(message: '$error'),
+      data: (folders) => _VaultContent(folders: folders),
     );
   }
 }
