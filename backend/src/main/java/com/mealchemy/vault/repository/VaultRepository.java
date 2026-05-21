@@ -1,13 +1,16 @@
-// talks to vaults table
-
 package com.mealchemy.vault.repository;
 
-import com.mealchemy.vault.model.Vault;
+/* Import libraries */
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 import java.util.Optional;
 import java.util.List;
 
+/* Import classes */
+import com.mealchemy.vault.model.Vault;
 
-public interface VaultRepository extends JpaRepository<Vault, Integer> { // Vault object, primary key is Integer (vault_id)
-    Optional<VaultRepository> findByOwnerId(Integer ownerId); // finds owner of Vault when user opens their vault
+@Repository
+public interface VaultRepository extends JpaRepository<Vault, Integer>
+{
+    List<Vault> findByOwnerId(Integer ownerId); 
 }

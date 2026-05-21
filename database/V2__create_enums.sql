@@ -7,9 +7,9 @@
 
 -- Vault types: private (per user), shared (multi-user), global (community/discovery).
 CREATE TYPE vault_type_enum AS ENUM (
-    'private',
-    'shared',
-    'global'
+    'PRIVATE',
+    'SHARED',
+    'GLOBAL'
 );
 
 -- User's preferred unit of measurement

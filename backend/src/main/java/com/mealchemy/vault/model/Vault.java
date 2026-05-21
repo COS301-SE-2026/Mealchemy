@@ -1,67 +1,84 @@
-// Vault model maps directly to vaults table - one field per column
+    package com.mealchemy.vault.model;
 
-package com.mealchemy.vault.model;
+    /* Import libraries */
 
-import com.mealchemy.shared.enums.VaultType;
-import jakarta.persistence.*;
-import java.time.OffsetDateTime;
+    import jakarta.persistence.*;
+    import java.time.OffsetDateTime;
+    import java.util.Arrays;
+    import org.hibernate.annotations.JdbcTypeCode;
+    import org.hibernate.type.SqlTypes;
 
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+    /* Import classes */
 
-@Entity
-@Table(name = "vaults")
-public class Vault {
+    import com.mealchemy.shared.enums.VaultType;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "vault_id")
-    private Integer vaultId;
+    @Entity
+    @Table(name = "vaults")
+    public class Vault
+    {
 
-    @Column(name = "owner_id") 
-    private Integer ownerId;
+        /* Declaring fields */
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "vault_type", nullable = false, columnDefinition = "vault_type_enum")
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    private VaultType vaultType = VaultType.PRIVATE;
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        @Column(name = "vault_id")
+        private int vaultId;
+        
+        @Column(name = "owner_id")
+        private Integer ownerId;
 
-    @Column(nullable = false)
-    private String name = "My Vault";
+        @Enumerated(EnumType.STRING)
+        @Column(name = "vault_type", nullable = false, columnDefinition = "vault_type_enum")
+        @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+        private VaultType vaultType = VaultType.PRIVATE;
 
-    @Column(name = "created_at", nullable = false) //Postgres sets it
-    private OffsetDateTime createdAt = OffsetDateTime.now();
+        @Column(nullable = false)
+        private String name = "My Vault";
 
-    // Getters and setters
-    public Integer getVaultId() { 
-        return vaultId; 
+        @Column(name = "created_at", nullable = false)
+        private OffsetDateTime createdAt = OffsetDateTime.now();
+
+        /* Getters */
+
+        public int getVaultId()
+        {
+            return vaultId;
+        }
+
+        public Integer getOwnerId()
+        {
+            return ownerId;
+        }
+
+        public VaultType getVaultType()
+        {
+            return vaultType;
+        }
+
+        public String getName()
+        {
+            return name;
+        }
+
+        public OffsetDateTime getCreatedAt()
+        {
+            return createdAt;
+        }
+
+        /* Setters */
+
+        public void setOwnerId(Integer ownerIdIn)
+        {
+            ownerId = ownerIdIn;
+        }
+
+        public void setVaultType(VaultType vaultTypeIn)
+        {
+            vaultType = vaultTypeIn;  
+        }
+
+        public void setName(String nameIn)
+        {
+            name = nameIn;
+        }
     }
-
-    public Integer getOwnerId() { 
-        return ownerId; 
-    }
-
-    public void setOwnerId(Integer id) { 
-        this.ownerId = id; 
-    }
-
-    public VaultType getVaultType() { 
-        return vaultType; 
-    }
-
-    public void setVaultType(VaultType type) { 
-        this.vaultType = type; 
-    }
-
-    public String getName() { 
-        return name; 
-    }
-
-    public void setName(String name) { 
-        this.name = name; 
-    }
-
-    public OffsetDateTime getCreatedAt() { 
-        return createdAt; 
-    }
-}

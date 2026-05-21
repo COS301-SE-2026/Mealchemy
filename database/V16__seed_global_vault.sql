@@ -12,4 +12,4 @@
 -- =============================================================================
 
 INSERT INTO vaults (owner_id, vault_type, name)
-VALUES (NULL, 'global'::vault_type_enum, 'Global');
+VALUES (NULL, 'GLOBAL'::vault_type_enum, 'Global');

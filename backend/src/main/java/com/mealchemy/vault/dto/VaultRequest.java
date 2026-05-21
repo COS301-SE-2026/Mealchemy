@@ -9,22 +9,14 @@ import java.util.Arrays;
 
 import com.mealchemy.shared.enums.VaultType;
 
-public class VaultResponse
+public class VaultRequest
 {
     /* Variable declarations */
-
-    private int vaultId;
     private Integer ownerId;
     private VaultType vaultType;
     private String name;
-    private OffsetDateTime createdAt;
 
     /* Getters */
-
-    public int getVaultId()
-    {
-        return vaultId;
-    }
 
     public Integer getOwnerId()
     {
@@ -41,17 +33,7 @@ public class VaultResponse
         return name;
     }
 
-    public OffsetDateTime getCreatedAt()
-    {
-        return createdAt;
-    }
-
     /* Setters */
-
-    public void setVaultId(int vaultIdIn)
-    {
-        vaultId = vaultIdIn;
-    }
 
     public void setOwnerId(Integer ownerIdIn)
     {
@@ -66,10 +48,5 @@ public class VaultResponse
     public void setName(String nameIn)
     {
         name = nameIn;
-    }
-
-    public void setCreatedAt(OffsetDateTime createdAtIn)
-    {
-        createdAt = createdAtIn;
     }
 }

@@ -138,24 +138,23 @@
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>0.8.12</version>
 				<configuration>
-					<excludes>
-						<exclude>**/MealchemyApplication.class</exclude>
-						<exclude>**/*Configuration.class</exclude>
-						<exclude>**/*Config.class</exclude>
-						<exclude>**/entity/**/*.class</exclude>
-						<exclude>**/entities/**/*.class</exclude>
-						<exclude>**/*Mapper.class</exclude>
-						<exclude>**/*Builder.class</exclude>
-						<exclude>**/repository/**/*.class</exclude>
-						<exclude>**/shared/**/*.class</exclude>
-						<exclude>**/config/JwtUtil.class</exclude>
-						<exclude>**/config/JwtAuthFilter.class</exclude>
-						<exclude>**/config/GlobalExceptionHandler.class</exclude>
-						<exclude>**/model/**/*.class</exclude>
-						<exclude>**/dto/**/*.class</exclude>
-						<exclude>**/pantry/**/*.class</exclude>
-						<exclude>**/vault/**/*.class</exclude>
-					</excludes>
+                <excludes>
+                    <exclude>**/MealchemyApplication.class</exclude>
+                    <exclude>**/*Configuration.class</exclude>
+                    <exclude>**/*Config.class</exclude>
+                    <exclude>**/entity/**/*.class</exclude>
+                    <exclude>**/entities/**/*.class</exclude>
+                    <exclude>**/*Mapper.class</exclude>
+                    <exclude>**/*Builder.class</exclude>
+                    <exclude>**/repository/**/*.class</exclude>
+                    <exclude>**/shared/**/*.class</exclude>
+                    <exclude>**/config/JwtUtil.class</exclude>
+                    <exclude>**/config/JwtAuthFilter.class</exclude>
+                    <exclude>**/config/GlobalExceptionHandler.class</exclude>
+                    <exclude>**/model/**/*.class</exclude>
+                    <exclude>**/dto/**/*.class</exclude>
+                    <exclude>**/pantry/**/*.class</exclude>
+                </excludes>
 				</configuration>
 				<executions>
 					<execution>

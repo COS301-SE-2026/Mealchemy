@@ -1,30 +1,18 @@
-package com.mealchemy.vault.model;
+package com.mealchemy.vault.dto;
 
 /* Import libraries */
 
-import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 
 /* Import classes */
 
-@Entity
-@Table(name = "vault_folder_recipes")
-public class VaultFolderRecipe {
+public class VaultFolderRecipeResponse {
     
     /* Declaring fields */
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-
-    @Column(name = "folder_id", nullable = false)
     private int folderId;
-
-    @Column(name = "recipe_id", nullable = false)
     private int recipeId;
-
-    @Column(name = "added_at", nullable = false)
-    private OffsetDateTime addedAt = OffsetDateTime.now();
+    private OffsetDateTime addedAt;
 
     /* Getters */
 
@@ -50,6 +38,11 @@ public class VaultFolderRecipe {
 
     /* Setters */
 
+    public void setId(int idIn)
+    {
+        id = idIn;
+    }
+
     public void setFolderId(int folderIdIn)
     {
         folderId = folderIdIn;
@@ -58,5 +51,10 @@ public class VaultFolderRecipe {
     public void setRecipeId(int recipeIdIn)
     {
         recipeId = recipeIdIn;
+    }
+
+    public void setAddedAt(OffsetDateTime addedAtIn)
+    {
+        addedAt = addedAtIn;
     }
 }
