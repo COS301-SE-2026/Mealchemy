@@ -9,12 +9,12 @@ import '../repositories/vault_repository.dart';
 import '../models/vault.dart';
 import '../models/vault_folder.dart';
 import '../models/vault_folder_recipe.dart';
-import '../../../core/constants/app_config.dart';
 
-// Flag to switch between mock and real API implementations
+// Toggleflutter run/ default is false now, have to include falg in flutter run command to use mock data
+const bool _useMock = bool.fromEnvironment('USE_MOCK');
+
 final vaultRepositoryProvider = Provider<VaultRepository>((ref) {
-  const useMock = false;
-  if (useMock) {
+  if (_useMock) {
     return MockVaultRepository();
   }
   return ApiVaultRepository(ref.read(dioProvider));

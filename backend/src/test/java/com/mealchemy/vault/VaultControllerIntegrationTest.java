@@ -1,4 +1,4 @@
-package com.mealchemy.vault.controller;
+package com.mealchemy.vault;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mealchemy.vault.dto.VaultRequest;
@@ -92,7 +92,7 @@ public class VaultControllerIntegrationTest
     void createVault_persistsAndReturnsVault() throws Exception
     {
         VaultRequest request = new VaultRequest();
-        request.setOwnerId(2);
+        request.setOwnerId(1);
         request.setVaultType(VaultType.PRIVATE);
         request.setName("New Vault");
 
@@ -103,7 +103,7 @@ public class VaultControllerIntegrationTest
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.vaultId", notNullValue()))
                 .andExpect(jsonPath("$.name", is("New Vault")))
-                .andExpect(jsonPath("$.ownerId", is(2)))
+                .andExpect(jsonPath("$.ownerId", is(1)))
                 .andExpect(jsonPath("$.vaultType", is("PRIVATE")));
     }
 

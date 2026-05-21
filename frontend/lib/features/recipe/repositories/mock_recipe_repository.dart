@@ -151,7 +151,7 @@ class MockRecipeRepository implements RecipeRepository {
     try {
       return _recipes.firstWhere((r) => r.recipeId == id);
     } catch (_) {
-      throw Exception('Recipe $id not found in mock data');
+      throw StateError('Recipe $id not found in mock data');
     }
   }
 

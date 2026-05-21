@@ -6,7 +6,6 @@ import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/core/shared_widgets/Organisms/app_navbar.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
-import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/vault/models/vault_folder.dart';
 
 import '../providers/vault_provider.dart';
@@ -29,7 +28,7 @@ class VaultScreen extends ConsumerWidget {
         onRouteSelected: (route) => context.go(route),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.go(AppRoutes.addRecipe),
+        onPressed: () => context.push(AppRoutes.addRecipe),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textDark,
         child: const Icon(Icons.add),
@@ -38,8 +37,9 @@ class VaultScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _VaultError(message: '$error'),
         data: (vaults) {
-          if (vaults.isEmpty)
+          if (vaults.isEmpty) {
             return const _VaultError(message: 'No vault found.');
+          }
           return _VaultFoldersLoader(vaultId: vaults.first.vaultId);
         },
       ),
