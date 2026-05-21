@@ -1,15 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mealchemy/core/theme/app_theme.dart';
 import 'package:mealchemy/features/vault/widgets/vault_quick_strip.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 
 void main() {
   Widget buildWidget(List<Recipe> recipes) {
-    return MaterialApp(
+    return MaterialApp.router(
       theme: AppTheme.light,
-      home: Scaffold(
-        body: VaultQuickStrip(recipes: recipes),
+      routerConfig: GoRouter(
+        initialLocation: '/',
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (context, state) => Scaffold(
+              body: VaultQuickStrip(recipes: recipes),
+            ),
+          ),
+          GoRoute(
+            path: '/recipe/:id',
+            builder: (context, state) => const Scaffold(body: Text('Recipe Detail')),
+          ),
+        ],
       ),
     );
   }
@@ -46,6 +59,16 @@ void main() {
         const Recipe(recipeId: 1, title: 'Pasta Vera', cuisineType: 'Italian'),
       ]));
       expect(find.byIcon(Icons.restaurant_rounded), findsOneWidget);
+    });
+
+    //Tapping a recipe thumbnail navigates to the recipe detail screen
+    testWidgets('tapping a thumbnail navigates to recipe detail', (tester) async {
+      await tester.pumpWidget(buildWidget([
+        const Recipe(recipeId: 1, title: 'Pasta Vera', cuisineType: 'Italian'),
+      ]));
+      await tester.tap(find.byType(GestureDetector).first);
+      await tester.pumpAndSettle();
+      expect(find.text('Recipe Detail'), findsOneWidget);
     });
   });
 }

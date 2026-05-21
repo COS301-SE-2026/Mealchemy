@@ -36,6 +36,10 @@ void main() {
               path: '/login',
               builder: (context, state) => const Scaffold(body: Text('Login')),
             ),
+            GoRoute(
+              path: '/recipe/:id',
+              builder: (context, state) => const Scaffold(body: Text('Recipe Detail')),
+            ),
           ],
         ),
       ),
@@ -66,6 +70,19 @@ void main() {
       await tester.tap(find.byType(InkWell).first);
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byIcon(Icons.folder_open_rounded), findsOneWidget);
+    });
+
+    //Tapping a recipe row inside an expanded folder navigates to recipe detail
+    testWidgets('tapping a recipe row navigates to recipe detail', (tester) async {
+      await tester.pumpWidget(buildWidget());
+      await tester.pumpAndSettle();
+      // expand the folder first
+      await tester.tap(find.byType(InkWell).first);
+      await tester.pumpAndSettle();
+      // tap the first recipe row (index 1, index 0 is the folder header)
+      await tester.tap(find.byType(InkWell).at(1));
+      await tester.pumpAndSettle();
+      expect(find.text('Recipe Detail'), findsOneWidget);
     });
   });
 }
