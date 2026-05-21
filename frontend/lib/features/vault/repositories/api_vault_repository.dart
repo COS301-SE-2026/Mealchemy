@@ -3,7 +3,6 @@ import 'vault_repository.dart';
 import '../models/vault.dart';
 import '../models/vault_folder.dart';
 import '../models/vault_folder_recipe.dart';
-import 'package:mealchemy/features/recipe/models/recipe.dart';
 
 class ApiVaultRepository implements VaultRepository {
   final Dio _dio;
