@@ -18,6 +18,6 @@ class Vault {
         ownerId: json['ownerId'],
         vaultType: json['vaultType'],
         name: json['name'],
-        createdAt: json['createdAt']);
+        createdAt: DateTime.parse(json['createdAt'] as String));
   }
 }
