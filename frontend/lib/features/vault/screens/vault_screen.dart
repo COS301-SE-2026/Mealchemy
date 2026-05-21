@@ -37,8 +37,9 @@ class VaultScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _VaultError(message: '$error'),
         data: (vaults) {
-          if (vaults.isEmpty)
+          if (vaults.isEmpty) {
             return const _VaultError(message: 'No vault found.');
+          }
           return _VaultFoldersLoader(vaultId: vaults.first.vaultId);
         },
       ),
