@@ -110,5 +110,16 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Add Recipe'), findsOneWidget);
     });
+
+    // Tapping logout button navigates back to login screen.
+    testWidgets('tapping logout navigates to login', (tester) async {
+      await tester.pumpWidget(buildWidget());
+      await tester.pump(const Duration(milliseconds: 600));
+
+      await tester.tap(find.byTooltip('Log out'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Login'), findsOneWidget);
+    });
   });
 }
