@@ -6,6 +6,7 @@ import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/core/shared_widgets/Organisms/app_navbar.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
+import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/vault/models/vault_folder.dart';
 
 import '../providers/vault_provider.dart';
@@ -13,7 +14,7 @@ import '../widgets/vault_folder_list.dart';
 import '../widgets/vault_quick_strip.dart';
 import '../widgets/vault_stats_card.dart';
 
-//Vault screen with the main widgets and layout
+// Vault screen with the main widgets and layout.
 class VaultScreen extends ConsumerWidget {
   const VaultScreen({super.key});
 
@@ -28,7 +29,7 @@ class VaultScreen extends ConsumerWidget {
         onRouteSelected: (route) => context.go(route),
       ),
       floatingActionButton: FloatingActionButton(
-         onPressed: () => context.push(AppRoutes.addRecipe),
+        onPressed: () => context.push(AppRoutes.addRecipe),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textDark,
         child: const Icon(Icons.add),
@@ -69,7 +70,7 @@ class _VaultContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    //TODO: Replace with rael data from provider recipes after merge to dev
+    // TODO: Replace with real data from recipe provider after API integration.
     final allRecipes = [
       Recipe(
         recipeId: 1,
@@ -111,7 +112,7 @@ class _VaultContent extends StatelessWidget {
 
     return CustomScrollView(
       slivers: [
-        //Gradient hero app bar
+        // Gradient hero app bar.
         SliverAppBar(
           expandedHeight: 160,
           pinned: true,
@@ -127,7 +128,7 @@ class _VaultContent extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      //Top row - title + camera
+                      // Top row - title and quick actions.
                       Row(
                         children: [
                           Text(
@@ -157,10 +158,19 @@ class _VaultContent extends StatelessWidget {
                             ),
                             tooltip: 'Search vault',
                           ),
+                          IconButton(
+                            onPressed: () => context.go(AppRoutes.login),
+                            icon: const Icon(
+                              Icons.logout,
+                              color: AppColors.textDark,
+                              size: 22,
+                            ),
+                            tooltip: 'Log out',
+                          ),
                         ],
                       ),
                       const SizedBox(height: 4),
-                      // Vault title with gold accent
+                      // Vault title with gold accent.
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
@@ -199,14 +209,14 @@ class _VaultContent extends StatelessWidget {
           ),
         ),
 
-        // Body content
+        // Body content.
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Stats card
+                // Stats card.
                 VaultStatsCard(
                   totalRecipes: 10,
                   createdPercent: 84,
@@ -215,7 +225,7 @@ class _VaultContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 28),
 
-                // Gold divider section label
+                // Gold divider section label.
                 Row(
                   children: [
                     Container(
@@ -238,11 +248,11 @@ class _VaultContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
 
-                // Quick recipe strip
+                // Quick recipe strip.
                 VaultQuickStrip(recipes: allRecipes),
                 const SizedBox(height: 28),
 
-                // Private vault section
+                // Private vault section.
                 VaultFolderList(folders: folders),
               ],
             ),
