@@ -1,3 +1,4 @@
+import 'package:mealchemy/features/recipe/models/recipe.dart';
 import '../models/vault_folder_recipe.dart';
 import '../models/vault_folder.dart';
 import '../models/vault.dart';
