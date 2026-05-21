@@ -8,6 +8,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import com.mealchemy.config.JwtUtil;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -38,7 +39,7 @@ public class VaultFolderRecipeControllerTest
 
     @MockBean   
     private JwtUtil jwtUtil;
-    
+
     @Autowired
     private ObjectMapper objectMapper;
 

@@ -20,6 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import jakarta.servlet.ServletException;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import com.mealchemy.config.JwtUtil;
 
 /* Importing classes */
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,7 +40,7 @@ public class VaultControllerTest
 
     @MockBean
     private JwtUtil jwtUtil;
-    
+
     @Autowired
     private ObjectMapper objectMapper;
 
