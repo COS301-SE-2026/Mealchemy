@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ (API 31+) replacement for android:fullBackupContent.
+
+  Controls what app data is included in:
+    Cloud backups (Google Drive / Auto Backup)
+    Device-to-device migration (transfer to a new phone)
+
+  Mealchemy stores JWT tokens in flutter_secure_storage. both
+  channels are configured with no includes, effectively opting out.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- No <include> entries = nothing is backed up. -->
+    </cloud-backup>
+    <device-transfer>
+        <!-- No <include> entries = nothing is transferred to a new device. -->
+    </device-transfer>
+</data-extraction-rules>

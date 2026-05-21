@@ -1,0 +1,16 @@
+/*design principles styling, mainly uses base styling*/
+
+.principle-number {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 18px;
+    border-radius: 50%;
+    color: var(--text-dark);
+    background: var(--primary);
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 900;
+  }
+  

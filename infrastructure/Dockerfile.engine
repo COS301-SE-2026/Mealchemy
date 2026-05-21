@@ -29,6 +29,14 @@ RUN mkdir -p /install && pip install --no-cache-dir --prefix=/install -r require
 # python:3.12.3-slim-bookworm
 FROM python:3.12-slim-bookworm AS runtime
 
+
+# Apply latest Debian security patches so Trivy doesn't flag stale OS
+#packages  into the base image (libc-bin, libcap2, libsystemd0, etc).
+RUN apt-get update && \
+    apt-get upgrade -y --no-install-recommends && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # Prevent .pyc files and ensure stdout/stderr are not buffered in the container
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1

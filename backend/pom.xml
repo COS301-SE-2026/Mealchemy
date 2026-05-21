@@ -29,6 +29,7 @@
 	<properties>
 		<java.version>21</java.version>
 		<postgresql.version>42.7.11</postgresql.version>
+		<tomcat.version>10.1.55</tomcat.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -70,6 +71,40 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>0.12.6</version>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>0.12.6</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-jackson</artifactId>
+			<version>0.12.6</version>
+			<scope>runtime</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -101,26 +136,25 @@
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.8.12</version>
+				<version>0.8.13</version>
 				<configuration>
-					<excludes>
-						<!-- @SpringBootApplication entry point, no business logic -->
-						<exclude>**/MealchemyApplication.class</exclude>
-						<!-- @Configuration classes, no business logic -->
-						<exclude>**/*Configuration.class</exclude>
-						<exclude>**/*Config.class</exclude>
-						<!-- Pure JPA entities, no business logic -->
-						<exclude>**/entity/**/*.class</exclude>
-						<exclude>**/entities/**/*.class</exclude>
-						<!-- Generated mappers and builders -->
-						<exclude>**/*Mapper.class</exclude>
-						<exclude>**/*Builder.class</exclude>
-						<!-- Placeholder feature packages, remove each line as the package gets real code + tests -->
-						<exclude>**/auth/**/*.class</exclude>
-						<exclude>**/pantry/**/*.class</exclude>
-						<exclude>**/preference/**/*.class</exclude>
-						<exclude>**/vault/**/*.class</exclude>
-					</excludes>
+                <excludes>
+                    <exclude>**/MealchemyApplication.class</exclude>
+                    <exclude>**/*Configuration.class</exclude>
+                    <exclude>**/*Config.class</exclude>
+                    <exclude>**/entity/**/*.class</exclude>
+                    <exclude>**/entities/**/*.class</exclude>
+                    <exclude>**/*Mapper.class</exclude>
+                    <exclude>**/*Builder.class</exclude>
+                    <exclude>**/repository/**/*.class</exclude>
+                    <exclude>**/shared/**/*.class</exclude>
+                    <exclude>**/config/JwtUtil.class</exclude>
+                    <exclude>**/config/JwtAuthFilter.class</exclude>
+                    <exclude>**/config/GlobalExceptionHandler.class</exclude>
+                    <exclude>**/model/**/*.class</exclude>
+                    <exclude>**/dto/**/*.class</exclude>
+                    <exclude>**/pantry/**/*.class</exclude>
+                </excludes>
 				</configuration>
 				<executions>
 					<execution>

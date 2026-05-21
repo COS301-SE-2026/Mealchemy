@@ -1,0 +1,203 @@
+/*component examples */
+
+.component-card {
+    padding: 22px;
+  }
+  
+  .component-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+    gap: 18px;
+  }
+  
+  .component-note {
+    max-width: 420px;
+    margin: 0;
+    color: var(--text-dark);
+    font-size: 1.05rem;
+    line-height: 1.55;
+    text-align: left;
+  }
+  
+  .component-preview-row {
+    display: grid;
+    grid-template-columns: minmax(300px, 380px) minmax(280px, 420px);
+    gap: 34px;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .field {
+    width: 100%;
+    min-height: 50px;
+    border: 0;
+    border-radius: var(--radius-md);
+    padding: 0 16px;
+    color: var(--text-light);
+    background: var(--surface-light);
+    font-family: var(--font-body);
+    outline: 1px solid transparent;
+    transition: outline 180ms ease, transform 180ms ease;
+  }
+  
+  .field-label {
+    display: block;
+    margin: 12px 0 6px;
+    color: var(--primary-dark);
+    font-size: 0.85rem;
+    font-weight: 800;
+  }
+  
+  .field-error {
+    margin: 6px 0 0;
+    color: var(--error);
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+  
+  .field:focus {
+    outline: 2px solid var(--primary);
+    transform: translateY(-2px);
+  }
+  
+  .field.error {
+    outline: 2px solid var(--error);
+  }
+  
+  .app-bar-demo {
+    min-height: 58px;
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    align-items: center;
+    margin-top: 18px;
+    border-radius: var(--radius-md);
+    padding: 0 10px;
+    color: var(--text-light);
+    background: var(--bg-light);
+    box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.22);
+  }
+  
+  .app-bar-demo strong {
+    justify-self: center;
+    font-size: 1rem;
+  }
+  
+  .app-bar-demo span {
+    display: grid;
+    place-items: center;
+    color: var(--primary-dark);
+    font-size: 1.4rem;
+    font-weight: 900;
+  }
+  
+  .bottom-nav-demo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 28px;
+    background: var(--surface-light);
+  }
+  
+  .bottom-nav-demo a {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0 14px;
+    color: var(--primary-dark);
+    text-decoration: none;
+    font-weight: 900;
+  }
+  
+  .bottom-nav-demo a.active,
+  .bottom-nav-demo a:hover {
+    color: var(--text-dark);
+    background: linear-gradient(90deg, var(--primary), var(--gradient-end));
+  }
+  
+  .mini-card {
+    display: grid;
+    gap: 8px;
+    margin-top: 18px;
+    border: 1px solid rgba(212, 175, 55, 0.28);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    background: var(--surface-light);
+  }
+  
+  .mini-card span {
+    color: var(--text-light);
+  }
+  
+  .icon-button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 18px;
+  }
+  
+  @media (max-width: 1440px) {
+    .component-card {
+      padding: 18px;
+    }
+  
+    .component-grid {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+      gap: 16px;
+    }
+  
+    .component-preview-row {
+      grid-template-columns: minmax(280px, 340px) minmax(260px, 380px);
+      gap: 26px;
+    }
+  }
+  
+  .icon-button-row button {
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(92, 0, 24, 0.16);
+    border-radius: 50%;
+    color: var(--primary-dark);
+    background: var(--surface-white);
+    font-size: 1.25rem;
+    font-weight: 900;
+  }
+  
+  .btn-muted {
+    color: var(--primary-dark);
+    background: rgba(248, 243, 235, 0.88);
+    box-shadow: inset 0 0 0 1px rgba(92, 0, 24, 0.18);
+  }
+  
+  .phone-frame {
+    max-width: 340px;
+    margin: 0;
+    padding: 20px;
+    border: 10px solid var(--bg-dark);
+    border-radius: 34px;
+    background: var(--bg-light);
+    box-shadow: var(--shadow-soft);
+  }
+  
+  @media (max-width: 720px) {
+    .component-grid {
+      grid-template-columns: 1fr;
+    }
+  
+    .component-preview-row {
+      grid-template-columns: 1fr;
+      justify-items: center;
+    }
+  
+    .component-note {
+      max-width: 560px;
+      text-align: center;
+    }
+  
+    .phone-frame {
+      margin: 0 auto;
+    }
+  }
+  

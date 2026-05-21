@@ -1,0 +1,226 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../core/routes/app_routes.dart';
+import '../../../core/shared_widgets/Molecules/app_search_bar.dart';
+import '../../../core/shared_widgets/Molecules/app_section_header.dart';
+import '../../../core/shared_widgets/Organisms/app_filter_bar.dart';
+import '../../../core/shared_widgets/Organisms/app_navbar.dart';
+import '../../../core/theme/app_colours.dart';
+import '../../../core/theme/app_typography.dart';
+import '../models/pantry_ingredient.dart';
+import '../models/pantry_summary.dart';
+import '../providers/pantry_provider.dart';
+import '../widgets/pantry_item_card.dart';
+import '../widgets/pantry_summary_card.dart';
+
+//change from stateless widget to consumer widget
+class PantryScreen extends ConsumerWidget {
+  const PantryScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pantryState = ref.watch(pantryStateProvider);
+
+    return Scaffold(
+      backgroundColor: AppColors.bgLight,
+      appBar: AppBar(
+        title: const Text('Pantry'),
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.qr_code_scanner_outlined),
+            tooltip: 'Scan ingredient',
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.more_vert),
+            tooltip: 'More options',
+          ),
+        ],
+      ),
+      bottomNavigationBar: AppNavbar(
+        currentRoute: AppRoutes.pantry,
+        onRouteSelected: (route) => context.go(route),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.go(AppRoutes.addIngredient),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textDark,
+        child: const Icon(Icons.add),
+      ),
+      body: SafeArea(
+        child: pantryState.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stackTrace) => _PantryError(message: '$error'),
+          data: (state) => _PantryContent(pantryState: state),
+        ),
+      ),
+    );
+  }
+}
+
+class _PantryContent extends ConsumerWidget {
+  const _PantryContent({required this.pantryState});
+
+  final PantryState pantryState;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pantryNotifier = ref.read(pantryStateProvider.notifier);
+    final visibleIngredients = _visibleIngredients(pantryState);
+    final groupedIngredients = _groupIngredientsByCategory(visibleIngredients);
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 28),
+      children: [
+        AppSearchBar(
+          hint: 'Search pantry...',
+          onChanged: pantryNotifier.updateSearchQuery,
+          onClear: pantryNotifier.clearSearch,
+        ),
+        const SizedBox(height: 18),
+        Text(
+          'Pantry',
+          style: AppTextStyles.heading1.copyWith(
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(height: 16),
+        AppFilterBar(
+          options: pantryState.filters
+              .map(
+                (filter) => AppFilterOption(
+                  label: filter.label,
+                  count: filter.count,
+                ),
+              )
+              .toList(),
+          selectedIndex: _selectedFilterIndex(pantryState),
+          onSelected: (index) => pantryNotifier.selectFilter(
+            pantryState.filters[index].label,
+          ),
+        ),
+        const SizedBox(height: 22),
+        PantrySummaryCard(
+          totalItems: pantryState.summary.totalItems,
+          freshnessPercent: pantryState.summary.freshnessPercent,
+          categoryCount: pantryState.summary.categoryCount,
+          optimizationPercent: pantryState.summary.optimizationPercent,
+        ),
+        const SizedBox(height: 26),
+        AppSectionHeader(
+          title: 'Items',
+          trailing: '${visibleIngredients.length} ITEMS',
+          showAccentLine: false,
+        ),
+        const SizedBox(height: 18),
+        if (visibleIngredients.isEmpty)
+          _EmptyPantryResults(query: pantryState.searchQuery)
+        else
+          ...groupedIngredients.entries.expand(
+            (entry) => [
+              AppSectionHeader(
+                title: entry.key,
+                trailing: '${entry.value.length} ITEMS',
+                showAccentLine: false,
+              ),
+              const SizedBox(height: 10),
+              ...entry.value.map(
+                (ingredient) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: PantryItemCard(
+                    name: ingredient.name,
+                    details: ingredient.details,
+                    status: ingredient.status,
+                    onEdit: () => pantryNotifier.markOutOfStock(
+                      ingredient.name,
+                    ),
+                    onDelete: () => pantryNotifier.removeIngredient(
+                      ingredient.name,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+//category and search filters
+List<PantryIngredient> _visibleIngredients(PantryState pantryState) {
+  final query = pantryState.searchQuery.toLowerCase();
+
+  return pantryState.ingredients.where((ingredient) {
+    final matchesFilter = pantryState.selectedFilter == 'All' ||
+        ingredient.category == pantryState.selectedFilter;
+    final matchesSearch =
+        query.isEmpty || ingredient.name.toLowerCase().contains(query);
+
+    return matchesFilter && matchesSearch;
+  }).toList();
+}
+
+//pantry rows grouped by categories
+Map<String, List<PantryIngredient>> _groupIngredientsByCategory(
+  List<PantryIngredient> ingredients,
+) {
+  final grouped = <String, List<PantryIngredient>>{};
+
+  for (final ingredient in ingredients) {
+    grouped.putIfAbsent(ingredient.category, () => []);
+    grouped[ingredient.category]!.add(ingredient);
+  }
+
+  return grouped;
+}
+
+int _selectedFilterIndex(PantryState pantryState) {
+  final index = pantryState.filters.indexWhere(
+    (filter) => filter.label == pantryState.selectedFilter,
+  );
+
+  return index < 0 ? 0 : index;
+}
+
+class _EmptyPantryResults extends StatelessWidget {
+  const _EmptyPantryResults({required this.query});
+
+  final String query;
+
+  @override
+  Widget build(BuildContext context) {
+    final message = query.isEmpty
+        ? 'No pantry ingredients found.'
+        : 'No ingredients match "$query".';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 28),
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+      ),
+    );
+  }
+}
+
+class _PantryError extends StatelessWidget {
+  const _PantryError({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        'Unable to load pantry data.',
+        style: AppTextStyles.body.copyWith(color: AppColors.error),
+      ),
+    );
+  }
+}
