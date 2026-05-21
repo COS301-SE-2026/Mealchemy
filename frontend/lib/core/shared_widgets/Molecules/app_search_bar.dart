@@ -24,8 +24,9 @@ class AppSearchBar extends StatelessWidget {
     return AppTextField(
       controller: controller,
       hint: hint,
-      leftIcon: Icons.search,
+      prefixIcon: Icons.search,
       onChanged: onChanged,
+      onSubmitted: onSubmitted,
     );
   }
 }

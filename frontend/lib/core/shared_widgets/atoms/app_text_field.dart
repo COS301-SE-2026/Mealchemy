@@ -11,9 +11,11 @@ class AppTextField extends StatefulWidget {
   final String? errorText;
   final bool isPrivate;
   final bool enabled;
-  final IconData? leftIcon;
+  final IconData? prefixIcon;
+  final Widget? suffixIcon;
   final TextEditingController? controller;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
   final TextInputType keyboardType;
   final int maxLines;
   final Color? customColor;
@@ -26,9 +28,11 @@ class AppTextField extends StatefulWidget {
     this.errorText,
     this.isPrivate = false,
     this.enabled = true,
-    this.leftIcon,
+    this.prefixIcon,
+    this.suffixIcon,
     this.controller,
     this.onChanged,
+    this.onSubmitted,
     this.keyboardType = TextInputType.text,
     this.maxLines = 1,
     this.customColor,
@@ -42,9 +46,11 @@ class AppTextField extends StatefulWidget {
     this.label,
     this.errorText,
     this.enabled = true,
-    this.leftIcon,
+    this.prefixIcon,       
+    this.suffixIcon,
     this.controller,
     this.onChanged,
+    this.onSubmitted,
     this.keyboardType = TextInputType.text,
     this.maxLines = 1,
     this.customColor,
@@ -60,10 +66,12 @@ class AppTextField extends StatefulWidget {
     this.enabled = true,
     this.controller,
     this.onChanged,
+    this.onSubmitted,
   }) : isPrivate = true,
        keyboardType = TextInputType.visiblePassword,
        maxLines = 1,
-       leftIcon = null,
+       prefixIcon = null,
+       suffixIcon = null,
        customColor = null,
        customFillColor = null;
 
@@ -168,10 +176,10 @@ class _AppTextFieldState extends State<AppTextField> {
                 horizontal: 16,
                 vertical: 14,
               ),
-              //Optional left icon
-              prefixIcon: widget.leftIcon != null
+              //Optional prefix icon
+              prefixIcon: widget.prefixIcon != null
                   ? Icon(
-                      widget.leftIcon,
+                      widget.prefixIcon,
                       size: 18,
                       color: _isFocused
                           ? _focusColor
@@ -191,7 +199,7 @@ class _AppTextFieldState extends State<AppTextField> {
                         color: AppColors.textMuted,
                       ),
                     )
-                  : null,
+                  : widget.suffixIcon,
             ),
           ),
         ),

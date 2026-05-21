@@ -120,11 +120,15 @@ class _SignupFormState extends State<SignupForm> {
               label: 'Display Name',
               controller: _nameController,
               keyboardType: TextInputType.name,
+<<<<<<< HEAD
               leftIcon: Icons.person_outline,
               errorText: _nameError,
               onChanged: (_) {
                 if (_nameError != null) setState(() => _nameError = null);
               },
+=======
+              prefixIcon: Icons.person_outline,
+>>>>>>> d423b9941270c051a4c9d3eea45e2ad7fcaf0c4f
             ),
             const SizedBox(height: 16),
 
@@ -134,11 +138,15 @@ class _SignupFormState extends State<SignupForm> {
               label: 'Email Address',
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
+<<<<<<< HEAD
               leftIcon: Icons.email_outlined,
               errorText: _emailError,
               onChanged: (_) {
                 if (_emailError != null) setState(() => _emailError = null);
               },
+=======
+              prefixIcon: Icons.email_outlined,
+>>>>>>> d423b9941270c051a4c9d3eea45e2ad7fcaf0c4f
             ),
             const SizedBox(height: 16),
 
