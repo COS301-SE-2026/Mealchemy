@@ -233,6 +233,7 @@ celerybeat.pid
 # Environments
 .env
 .secrets
+**/test/resources/application-test.properties
 .venv
 env/
 venv/
