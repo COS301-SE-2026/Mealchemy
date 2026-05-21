@@ -22,7 +22,7 @@ inserted_profile AS (
     SELECT
         user_id,
         'Admin',
-        'metric',
+        'metric'::preferred_unit_enum,
         '["oven", "airfryer", "blender"]'::jsonb
     FROM inserted_user
     RETURNING user_id

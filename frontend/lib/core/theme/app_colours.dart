@@ -6,9 +6,10 @@ class AppColors {
   static const Color primary = Color(0xFF5C0018);
   static const Color primaryDark = Color(0xFF570013);
   static const Color primaryLight = Color(0xFF70172A);
+  static const Color primaryGradientLight = Color(0xFFA8003A);
   static const Color accent = Color(0xFFD4AF37);
   static const Color accentMuted = Color(0xFF755B00);
-  static const Color accentLight = Color(0xFFF8F3EB);
+  static const Color accentLight = Color( 0xFFFEF9F1);
   static const Color tertiaryMuted = Color(0xFF7A5C5C);
   //Background
   static const Color bgLight = Color(0xFFFEF9F1);
@@ -18,6 +19,8 @@ class AppColors {
   static const Color surfaceLight = Color(0xFFF8F3EB);
   static const Color surfaceDark = Color(0xFF1A1A1A);
   static const Color surfaceWhite = Color(0xFFFFFFFF);
+  static const Color surfaceMuted = Color(0xFFF8F3EB);
+  static const Color inputBorder = Color(0xFFE0BFBF);
 
   //Text
   static const Color textLight = Color(0xFF1D1C17);
@@ -32,13 +35,22 @@ class AppColors {
 
   //Gradients
   static const LinearGradient brand = LinearGradient(
-    colors: [Color(0xFF5C0018), Color(0xFFA8003A)],
+    colors: [AppColors.primary, AppColors.primaryGradientLight],
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
   );
 
+  static const LinearGradient brandOverlay = LinearGradient(
+  colors: [
+    Color(0xD95C0018), //primary changed to  85% opacity
+    Color(0xD9A8003A), //primaryGradientLight change to 85% opacity
+  ],
+  begin: Alignment.centerLeft,
+  end: Alignment.centerRight,
+);
+
   static const LinearGradient warmBg = LinearGradient(
-    colors: [Color(0xFFFEF9F1), Color(0xFFF8F0E3)],
+    colors: [AppColors.bgLight, AppColors.bgDark],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );

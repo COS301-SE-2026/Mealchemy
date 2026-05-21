@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routes/app_routes.dart';
@@ -8,19 +9,63 @@ import '../../../core/shared_widgets/atoms/app_button.dart';
 import '../../../core/shared_widgets/atoms/app_text_field.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
+import '../models/user_preferences.dart';
+import '../providers/preference_provider.dart';
 import '../widgets/flavour_profile_card.dart';
 import '../widgets/preference_option_card.dart';
 import '../widgets/preference_tag_chip.dart';
 
-class PreferenceScreen extends StatelessWidget {
+//consumer widget lets screen read Riverpod providers
+class PreferenceScreen extends ConsumerWidget {
   const PreferenceScreen({super.key});
 
   @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    //loads mock/API data
+    final preferencesState = ref.watch(userPreferencesProvider);
+
+    //handles loading, error, and loaded states
+    return preferencesState.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => Scaffold(
+        appBar: AppBar(title: const Text('Preference')),
+        body: Center(
+          child: Text(
+            'Unable to load preferences.',
+            style: AppTextStyles.body.copyWith(color: AppColors.error),
+          ),
+        ),
+      ),
+      data: (preferences) => _PreferenceContent(preferences: preferences),
+    );
+  }
+}
+
+class _PreferenceContent extends ConsumerStatefulWidget {
+  const _PreferenceContent({required this.preferences});
+
+  final UserPreferences preferences;
+
+  @override
+  ConsumerState<_PreferenceContent> createState() => _PreferenceContentState();
+}
+
+class _PreferenceContentState extends ConsumerState<_PreferenceContent> {
+  final TextEditingController _dislikedIngredientController =
+      TextEditingController();
+
+  @override
+  void dispose() {
+    _dislikedIngredientController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Temporary mock data until preferences API is connected.
-    final selectedAllergies = ['PEANUTS', 'SHELLFISH'];
-    final availableAllergies = ['TREE NUTS', 'SOY', 'EGGS'];
-    final dislikedIngredients = ['CILANTRO', 'CAPERS', 'BLUE CHEESE'];
+    final preferenceNotifier = ref.read(userPreferencesProvider.notifier);
+    final preferences = widget.preferences;
 
     return Scaffold(
       backgroundColor: AppColors.bgLight,
@@ -66,49 +111,42 @@ class PreferenceScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
 
-            // Dietary selection cards.
+            //dietary restrictions
             const AppSectionHeader(title: 'Dietary Directives'),
             const SizedBox(height: 14),
-            const PreferenceOptionCard(
-              title: 'PLANT-BASED / VEGAN',
-              subtitle: 'Exclusively botanical-led cuisine.',
+            ...preferences.dietaryDirectives.map(
+              (directive) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: PreferenceOptionCard(
+                  title: directive.title,
+                  subtitle: directive.subtitle,
+                  selected: directive.selected,
+                  onTap: () => preferenceNotifier.toggleDietaryDirective(
+                    directive.title,
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(height: 10),
-            const PreferenceOptionCard(
-              title: 'CELIAC FRIENDLY / GLUTEN-FREE',
-              subtitle: 'Rigorous gluten-free adherence.',
-              selected: true,
-            ),
-            const SizedBox(height: 10),
-            const PreferenceOptionCard(
-              title: 'DAIRY FREE',
-              subtitle: 'Lactose and casein-free alternatives.',
-            ),
-            const SizedBox(height: 10),
-            const PreferenceOptionCard(
-              title: 'CARB CONSCIOUS / KETO',
-              subtitle: 'High protein and healthy fats focus.',
-            ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 22),
 
-            // Allergy and dislike tags.
+            //allergy and disliked
             const AppSectionHeader(title: 'Critical Allergies'),
             const SizedBox(height: 14),
             Wrap(
               spacing: 10,
               runSpacing: 10,
               children: [
-                ...selectedAllergies.map(
+                ...preferences.selectedAllergies.map(
                   (allergy) => PreferenceTagChip(
                     label: allergy,
                     selected: true,
-                    onRemove: () {},
+                    onRemove: () => preferenceNotifier.removeAllergy(allergy),
                   ),
                 ),
-                ...availableAllergies.map(
+                ...preferences.availableAllergies.map(
                   (allergy) => PreferenceTagChip(
                     label: allergy,
-                    onTap: () {},
+                    onTap: () => preferenceNotifier.selectAllergy(allergy),
                   ),
                 ),
               ],
@@ -117,57 +155,45 @@ class PreferenceScreen extends StatelessWidget {
             const AppSectionHeader(title: 'Aversions & Dislikes'),
             const SizedBox(height: 14),
             AppTextField(
+              controller: _dislikedIngredientController,
               hint: 'Add an ingredient...',
-              suffixIcon: IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.add),
-                tooltip: 'Add ingredient',
-              ),
+              onSubmitted: (_) => _addDislikedIngredient(preferenceNotifier),
             ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: dislikedIngredients
+              children: preferences.dislikedIngredients
                   .map(
                     (ingredient) => PreferenceTagChip(
                       label: ingredient,
                       selected: true,
-                      onRemove: () {},
+                      onRemove: () => preferenceNotifier
+                          .removeDislikedIngredient(ingredient),
                     ),
                   )
                   .toList(),
             ),
             const SizedBox(height: 28),
 
-            //cuisine preference cards
+            //cuisine preference
             const AppSectionHeader(title: 'Flavour Profiles'),
             const SizedBox(height: 16),
-            const FlavourProfileCard(
-              label: 'Mediterranean',
-              description: 'Bright herbs, olive oil, citrus, grains, and fresh vegetables.',
-              icon: Icons.local_florist_outlined,
-              selected: true,
+            ...preferences.flavourProfiles.map(
+              (profile) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: FlavourProfileCard(
+                  label: profile.label,
+                  description: profile.description,
+                  icon: _iconForFlavourProfile(profile.iconKey),
+                  selected: profile.selected,
+                  onTap: () => preferenceNotifier.toggleFlavourProfile(
+                    profile.label,
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(height: 12),
-            const FlavourProfileCard(
-              label: 'Asian Fusion',
-              description: 'Soy, ginger, chilli, sesame, rice bowls, noodles, and umami-rich sauces.',
-              icon: Icons.ramen_dining_outlined,
-            ),
-            const SizedBox(height: 12),
-            const FlavourProfileCard(
-              label: 'Comfort Classics',
-              description: 'Warm, familiar meals with hearty textures and simple pantry staples.',
-              icon: Icons.soup_kitchen_outlined,
-            ),
-            const SizedBox(height: 12),
-            const FlavourProfileCard(
-              label: 'Fresh & Light',
-              description: 'Lean proteins, crisp produce, lighter sauces, and balanced portions.',
-              icon: Icons.eco_outlined,
-            ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 28),
             AppButton(
               label: 'Update Profile',
               onPressed: () {},
@@ -175,11 +201,29 @@ class PreferenceScreen extends StatelessWidget {
             const SizedBox(height: 14),
             AppButton(
               label: 'Reset All Directives',
-              onPressed: () {},
+              onPressed: preferenceNotifier.resetPreferences,
             ),
           ],
         ),
       ),
     );
   }
+
+  void _addDislikedIngredient(UserPreferencesNotifier preferenceNotifier) {
+    preferenceNotifier.addDislikedIngredient(
+      _dislikedIngredientController.text,
+    );
+    _dislikedIngredientController.clear();
+  }
+}
+
+//maps mock/API icon keys to visual icons
+IconData _iconForFlavourProfile(String iconKey) {
+  return switch (iconKey) {
+    'mediterranean' => Icons.local_florist_outlined,
+    'asian' => Icons.ramen_dining_outlined,
+    'comfort' => Icons.soup_kitchen_outlined,
+    'fresh' => Icons.eco_outlined,
+    _ => Icons.restaurant_menu_outlined,
+  };
 }

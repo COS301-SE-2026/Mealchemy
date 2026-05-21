@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Accessibility | Mealchemy</title>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/accessibility.css">
+  </head>
+
+  <body>
+    <header class="site-header"><nav class="nav-shell" aria-label="Design specification navigation"><a class="brand-mark" href="index.html"><img class="nav-logo" src="assets/logos/logo-mark.png" alt="" aria-hidden="true"><span>Mealchemy</span></a><div class="nav-links"><a href="colours.html">Colours</a><a href="typography.html">Type</a><a href="logo.html">Logo</a><a href="principles.html">Design Principles</a><a href="components.html">Components</a><a href="spacing.html">Spacing</a><a href="accessibility.html">Accessibility</a><a href="wireframes.html">Wireframes</a></div></nav></header>
+
+    <main class="page">
+      <section class="section reveal">
+        <div class="section-heading compact-heading"><div><p class="section-kicker">07 Accessibility</p><h1>Accessibility Guidelines</h1></div><p class="section-lede">Mealchemy targets WCAG 2.2 Level AA with readable text, visible labels, accessible touch targets, and clear focus states.</p></div>
+        <div class="pour">
+          <article class="card interactive"><h3>Colour Independence</h3><p>Colour-coded states always include visible text labels, such as Fresh, Low, Expired, or a form error message.</p></article>
+          <article class="card interactive"><h3>Touch Targets</h3><p>Interactive elements meet the 48x48dp Material target where possible; icon buttons are 44x44dp.</p></article>
+          <article class="card interactive"><h3>Dynamic Text</h3><p>Layouts support system text scaling and are checked at 1.0x and 1.3x scale.</p></article>
+          <article class="card interactive"><h3>Keyboard Focus</h3><p>Interactive elements are reachable by keyboard and use a 3px primary-colour focus ring.</p></article>
+        </div>
+
+      </section>
+
+      <section class="section reveal">
+        <h2>WCAG 2.2 Level AA Adherence</h2>
+        <p class="section-lede">These are the WCAG standards Mealchemy is aiming to meet, with the design guideline we will follow for each one.</p>
+        <div class="wcag-grid">
+          <article class="wcag-card">
+            <span>1.4.3</span>
+            <h3>Minimum Contrast: Text</h3>
+            <div class="wcag-rule"><strong>WCAG Standard</strong><p>Normal text requires 4.5:1 contrast. Large text requires 3:1.</p></div>
+            <div class="wcag-guideline"><strong>Mealchemy Guideline</strong><p>Use only approved text/background pairings from the contrast table. Muted text is reserved for non-actionable supporting copy on light backgrounds.</p></div>
+          </article>
+          <article class="wcag-card">
+            <span>1.4.11</span>
+            <h3>Non-Text Contrast</h3>
+            <div class="wcag-rule"><strong>WCAG Standard</strong><p>Meaningful icons, focus indicators, and interactive component boundaries require 3:1 contrast against adjacent colours.</p></div>
+            <div class="wcag-guideline"><strong>Mealchemy Guideline</strong><p>Buttons, icons, focus rings, and input borders must use contrast-safe maroon, gold, or semantic colours. Decorative dividers must not be the only source of meaning.</p></div>
+          </article>
+          <article class="wcag-card">
+            <span>1.4.1</span>
+            <h3>Use of Colour</h3>
+            <div class="wcag-rule"><strong>WCAG Standard</strong><p>Colour must not be the only way information is communicated.</p></div>
+            <div class="wcag-guideline"><strong>Mealchemy Guideline</strong><p>Pair every colour state with text, a number, or an icon. Pantry status, form validation, and match badges must all remain understandable without colour alone.</p></div>
+          </article>
+          <article class="wcag-card">
+            <span>2.5.5</span>
+            <h3>Target Size</h3>
+            <div class="wcag-rule"><strong>WCAG Standard</strong><p>Interactive targets should be at least 44x44 CSS pixels.</p></div>
+            <div class="wcag-guideline"><strong>Mealchemy Guideline</strong><p>Keep primary buttons at 48dp, bottom navigation at 64dp, and icon buttons at no less than 44dp.</p></div>
+          </article>
+          <article class="wcag-card">
+            <span>1.3.1</span>
+            <h3>Info and Relationships</h3>
+            <div class="wcag-rule"><strong>WCAG Standard</strong><p>Visual structure and relationships must also be available programmatically.</p></div>
+            <div class="wcag-guideline"><strong>Mealchemy Guideline</strong><p>Use Flutter Semantics labels for meaningful controls and status information. Exclude decorative imagery from the accessibility tree.</p></div>
+          </article>
+          <article class="wcag-card">
+            <span>1.3.5</span>
+            <h3>Identify Input Purpose</h3>
+            <div class="wcag-rule"><strong>WCAG Standard</strong><p>Inputs should programmatically identify their purpose so assistive tools can present the right keyboard or autofill support.</p></div>
+            <div class="wcag-guideline"><strong>Mealchemy Guideline</strong><p>Give every form field a visible label, plus the correct Flutter keyboardType and autofillHints where relevant.</p></div>
+          </article>
+          <article class="wcag-card">
+            <span>1.4.4</span>
+            <h3>Resize Text</h3>
+            <div class="wcag-rule"><strong>WCAG Standard</strong><p>Text must remain readable and functional up to 200% scaling without loss of content or functionality.</p></div>
+            <div class="wcag-guideline"><strong>Mealchemy Guideline</strong><p>Use flexible layouts that respect Flutter text scaling. Test at 1.0x, 1.3x, and 2.0x before release.</p></div>
+          </article>
+          <article class="wcag-card">
+            <span>2.1.1</span>
+            <h3>Keyboard</h3>
+            <div class="wcag-rule"><strong>WCAG Standard</strong><p>All functionality must be operable with a keyboard, with no keyboard traps.</p></div>
+            <div class="wcag-guideline"><strong>Mealchemy Guideline</strong><p>Ensure every action is keyboard reachable on tablet and desktop layouts, with a visible 3px primary-colour focus ring.</p></div>
+          </article>
+          <article class="wcag-card">
+            <span>3.3.1</span>
+            <h3>Error Identification</h3>
+            <div class="wcag-rule"><strong>WCAG Standard</strong><p>Detected errors must be identified and described in text.</p></div>
+            <div class="wcag-guideline"><strong>Mealchemy Guideline</strong><p>Use specific written error messages, such as "Incorrect password. Try again.", instead of generic error labels.</p></div>
+          </article>
+          <article class="wcag-card">
+            <span>3.3.2</span>
+            <h3>Labels or Instructions</h3>
+            <div class="wcag-rule"><strong>WCAG Standard</strong><p>Form fields must include labels or instructions.</p></div>
+            <div class="wcag-guideline"><strong>Mealchemy Guideline</strong><p>Avoid placeholder-only fields. Use persistent visible labels so input purpose remains clear before and after typing.</p></div>
+          </article>
+        </div>
+
+      </section>
+
+      <section class="section reveal">
+        <h2>Colour Independence Examples</h2>
+        <p class="section-lede">State is communicated with both colour and text, so users do not need to rely on colour alone.</p>
+        <div class="state-examples">
+          <article><span class="state-dot fresh"></span><strong>Fresh</strong><p>Green dot plus label for usable pantry items.</p></article>
+          <article><span class="state-dot low"></span><strong>Low</strong><p>Orange dot plus label for low-stock ingredients.</p></article>
+          <article><span class="state-dot expired"></span><strong>Expired</strong><p>Red dot plus label for expired pantry items.</p></article>
+          <article class="error-example"><strong>Form validation</strong><p><span>!</span> Incorrect password. Try again.</p></article>
+        </div>
+
+      </section>
+
+      <section class="section reveal">
+        <h2>Contrast Table</h2>
+        <p class="section-lede">A contrast ratio compares how different the foreground and background colours are. Higher ratios are easier to read; WCAG AA normally requires 4.5:1 for body text and 3:1 for large text.</p>
+        <div class="contrast-examples">
+          <article class="contrast-sample-one"><small>1</small><strong>13.2:1</strong><span>White on Primary Dark</span></article>
+          <article class="contrast-sample-two"><small>2</small><strong>12.8:1</strong><span>Primary Dark on Background Light</span></article>
+          <article class="contrast-sample-three"><small>3</small><strong>19.1:1</strong><span>Text Light on Background Light</span></article>
+          <article class="contrast-sample-four"><small>4</small><strong>5.8:1</strong><span>Gold on Primary</span></article>
+          <article class="contrast-sample-five"><small>5</small><strong>4.6:1</strong><span>Muted on Background Light</span></article>
+        </div>
+
+        <table class="token-table">
+          <tr><th>#</th><th>Foreground</th><th>Background</th><th>Ratio</th><th>Status</th></tr>
+          <tr><td>1</td><td>#FFFFFF White</td><td>#570013 Primary Dark</td><td>13.2:1</td><td><span class="badge pass">Pass AA/AAA</span></td></tr>
+          <tr><td>2</td><td>#570013 Primary Dark</td><td>#FEF9F1 Background Light</td><td>12.8:1</td><td><span class="badge pass">Pass AA/AAA</span></td></tr>
+          <tr><td>3</td><td>#1D1C17 Text Light</td><td>#FEF9F1 Background Light</td><td>19.1:1</td><td><span class="badge pass">Pass AA/AAA</span></td></tr>
+          <tr><td>4</td><td>#D4AF37 Gold</td><td>#5C0018 Primary</td><td>5.8:1</td><td><span class="badge pass">Pass AA</span></td></tr>
+          <tr><td>5</td><td>#6B7280 Muted</td><td>#FEF9F1 Background Light</td><td>4.6:1</td><td><span class="badge warn">Large text only</span></td></tr>
+        </table>
+      </section>
+
+      <section class="section reveal">
+        <h2>Testing Approach</h2>
+        <p class="section-lede">Accessibility will be checked using Flutter accessibility testing, semantic label review, keyboard navigation checks, contrast-ratio checks, and Lighthouse accessibility testing in the browser. These tests support the WCAG 2.2 Level AA guidelines listed above.</p>
+      </section>
+      
+    </main>
+    <footer class="site-footer"><div class="footer-inner"><strong>Mealchemy</strong><span>Accessibility section</span></div></footer>
+    <script src="js/app.js"></script>
+  </body>
+</html>

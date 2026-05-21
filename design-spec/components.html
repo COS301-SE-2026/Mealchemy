@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>UI Components | Mealchemy</title>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+  </head>
+  <body>
+
+    <header class="site-header"><nav class="nav-shell" aria-label="Design specification navigation"><a class="brand-mark" href="index.html"><img class="nav-logo" src="assets/logos/logo-mark.png" alt="" aria-hidden="true"><span>Mealchemy</span></a><div class="nav-links"><a href="colours.html">Colours</a><a href="typography.html">Type</a><a href="logo.html">Logo</a><a href="principles.html">Design Principles</a><a href="components.html">Components</a><a href="spacing.html">Spacing</a><a href="accessibility.html">Accessibility</a><a href="wireframes.html">Wireframes</a></div></nav></header>
+    <main class="page">
+        
+      <section class="section reveal">
+        <div class="section-heading"><div><p class="section-kicker">05 UI Components</p><h1>UI Component Styling</h1></div><p class="section-lede">Components: the building blocks per page. Elevated buttons, input decorations, bottom navigation, cards, filter tags, and icon-button rules.</p></div>
+        <div class="component-grid">
+
+          <article class="component-card">
+            <h3>App Bar</h3>
+            <p>App bars have no elevation, centre the title, and switch foreground/background colours between light and dark mode.</p>
+            <div class="app-bar-demo"><span>‹</span><strong>Meal Plan</strong><span>⋯</span></div>
+          </article>
+
+          <article class="component-card">
+            <h3>Elevated Buttons</h3>
+            <p>Elevated buttons use the primary maroon fill for key actions, gold for secondary actions, and muted styling for low-emphasis actions.</p>
+            <div class="button-row"><button class="btn btn-primary">Save plan</button><button class="btn btn-secondary">Add meal</button><button class="btn btn-muted">Skip</button></div>
+          </article>
+
+          <article class="component-card">
+            <h3>Input Decoration</h3>
+            <p>Inputs use surface fill, 16px horizontal padding, primary focus borders, and error borders for validation.</p>
+            <label class="field-label" for="recipe-name">Recipe name</label>
+            <input class="field" id="recipe-name" placeholder="e.g. Roasted tomato pasta">
+            <div style="height:12px"></div>
+            <label class="field-label" for="servings">Servings</label>
+            <input class="field error" id="servings" value="Missing servings" aria-describedby="servings-error">
+            <p class="field-error" id="servings-error">Add the number of servings before saving.</p>
+          </article>
+
+          <article class="component-card">
+            <h3>Bottom Navigation</h3>
+            <p>The selected item uses primary maroon, while unselected items use muted text to keep focus clear.</p>
+            <div class="bottom-nav-demo"><a class="active" href="#">Home</a><a href="#">Discover</a><a href="#">Vault</a><a href="#">Pantry</a></div>
+          </article>
+
+          <article class="component-card">
+            <h3>Cards</h3>
+            <p>Cards are flat, use a 16px radius, surface fill, and grouped content spacing.</p>
+            <div class="mini-card"><strong>Roasted tomato pasta</strong><span>35 min · pantry friendly</span></div>
+          </article>
+
+          <article class="component-card">
+            <h3>Filter Tags</h3>
+            <p>Filter tags are small pill-shaped labels used to select or show categories such as meal type, speed, or dietary preference.</p>
+            <div class="filter-tag-row"><span class="filter-tag">Dinner</span><span class="filter-tag">Quick</span><span class="filter-tag">Vegetarian</span><span class="filter-tag">High protein</span></div>
+          </article>
+
+          <article class="component-card">
+            <h3>Icons</h3>
+            <p>Material-style outlined icons aid context while keeping the interface simple and restrained.</p>
+            <div class="icon-button-row"><button>＋</button><button>⌕</button><button>♡</button><button>↗</button><button>⋯</button></div>
+          </article>
+
+        </div>
+      </section>
+      <section class="section reveal">
+        <div class="component-preview-row">
+          <div class="phone-frame">
+            <h3>Planner</h3>
+            <div class="card"><strong>Roasted tomato pasta</strong><p>35 min · pantry friendly</p></div>
+            <div style="height:16px"></div>
+            <div class="bottom-nav-demo"><a class="active" href="#">Home</a><a href="#">Discover</a><a href="#">Vault</a><a href="#">Pantry</a></div>
+          </div>
+          <p class="gold-note component-note">Component preview: this mobile-style card shows how recipe cards and bottom navigation sit together in the product UI.</p>
+        </div>
+      </section>
+      
+    </main>
+    <footer class="site-footer"><div class="footer-inner"><strong>Mealchemy</strong><span>Components section</span></div></footer>
+    <script src="js/app.js"></script>
+  </body>
+</html>
