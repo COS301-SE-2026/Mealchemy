@@ -19,6 +19,14 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// Lock all dependency configurations to make versions predictable
+// This satisfies SonarCloud
+subprojects {
+    dependencyLocking {
+        lockAllConfigurations()
+    }
+}
+
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
