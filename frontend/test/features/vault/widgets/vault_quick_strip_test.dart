@@ -60,5 +60,15 @@ void main() {
       ]));
       expect(find.byIcon(Icons.restaurant_rounded), findsOneWidget);
     });
+
+    //Tapping a recipe thumbnail navigates to the recipe detail screen
+    testWidgets('tapping a thumbnail navigates to recipe detail', (tester) async {
+      await tester.pumpWidget(buildWidget([
+        const Recipe(recipeId: 1, title: 'Pasta Vera', cuisineType: 'Italian'),
+      ]));
+      await tester.tap(find.byType(GestureDetector).first);
+      await tester.pumpAndSettle();
+      expect(find.text('Recipe Detail'), findsOneWidget);
+    });
   });
 }
