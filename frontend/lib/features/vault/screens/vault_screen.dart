@@ -29,7 +29,7 @@ class VaultScreen extends ConsumerWidget {
         onRouteSelected: (route) => context.go(route),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push(AppRoutes.addRecipe),
+        onPressed: () => context.go(AppRoutes.addRecipe),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textDark,
         child: const Icon(Icons.add),
