@@ -21,6 +21,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import jakarta.servlet.ServletException;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import org.springframework.security.test.context.support.WithMockUser;
 
 /* Importing classes */
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,6 +30,7 @@ import com.mealchemy.vault.dto.VaultFolderRecipeRequest;
 import com.mealchemy.vault.dto.VaultFolderRecipeResponse;
 import com.mealchemy.vault.service.VaultFolderRecipeService;
 
+@WithMockUser
 @WebMvcTest(VaultFolderRecipeController.class)
 public class VaultFolderRecipeControllerTest
 {
@@ -61,7 +64,7 @@ public class VaultFolderRecipeControllerTest
     }
 
     // GET /recipefolders/recipes/{folderId}
-
+    
     @Test
     void getRecipesByFolderId_returns200_withList() throws Exception
     {
@@ -83,7 +86,6 @@ public class VaultFolderRecipeControllerTest
     }
 
     // GET /recipefolders/folders/{recipeId}
-
     @Test
     void getFoldersByRecipeId_returns200_withList() throws Exception
     {
@@ -105,7 +107,6 @@ public class VaultFolderRecipeControllerTest
     }
 
     // GET /recipefolders/{id}
-
     @Test
     void getFolderRecipeById_returns200_whenFound() throws Exception
     {
@@ -126,13 +127,13 @@ public class VaultFolderRecipeControllerTest
     }
 
     // POST /recipefolders
-
     @Test
     void createVaultFolderRecipe_returns200_withCreatedRecord() throws Exception
     {
         when(vaultFolderRecipeService.createVaultFolderRecipe(any(VaultFolderRecipeRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/recipefolders")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -140,38 +141,38 @@ public class VaultFolderRecipeControllerTest
     }
 
     // PUT /recipefolders/{id}
-
     @Test
     void updateVaultFolderRecipe_returns200_whenFound() throws Exception
     {
         when(vaultFolderRecipeService.updateVaultFolderRecipe(eq(1), any(VaultFolderRecipeRequest.class))).thenReturn(response);
 
         mockMvc.perform(put("/recipefolders/1")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.folderId").value(1));
     }
-
     @Test
     void updateVaultFolderRecipe_returns500_whenNotFound() throws Exception
     {
         when(vaultFolderRecipeService.updateVaultFolderRecipe(eq(99), any(VaultFolderRecipeRequest.class))).thenThrow(new RuntimeException("No record found"));
 
         assertThrows(ServletException.class, () -> mockMvc.perform(put("/recipefolders/99")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof RuntimeException)));
     }
 
     // DELETE /recipefolders/{id}
-
     @Test
     void deleteVaultFolderRecipe_returns200() throws Exception
     {
         doNothing().when(vaultFolderRecipeService).deleteVaultFolderRecipe(1);
 
         mockMvc.perform(delete("/recipefolders/1"))
+                .with(csrf())
                 .andExpect(status().isOk());
     }
 }

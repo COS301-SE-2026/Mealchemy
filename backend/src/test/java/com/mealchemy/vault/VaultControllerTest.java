@@ -21,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import jakarta.servlet.ServletException;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import com.mealchemy.config.JwtUtil;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import org.springframework.security.test.context.support.WithMockUser;
 
 /* Importing classes */
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,6 +31,7 @@ import com.mealchemy.vault.dto.VaultResponse;
 import com.mealchemy.vault.service.VaultService;
 import com.mealchemy.shared.enums.VaultType;
 
+@WithMockUser
 @WebMvcTest(VaultController.class)
 public class VaultControllerTest
 {
@@ -64,7 +67,6 @@ public class VaultControllerTest
     }
 
     // GET /vaults/owner/{ownerId}
-
     @Test
     void getVaultsByOwnerId_returns200_withList() throws Exception
     {
@@ -86,7 +88,6 @@ public class VaultControllerTest
     }
 
     // GET /vaults/{id}
-
     @Test
     void getVault_returns200_whenFound() throws Exception
     {
@@ -107,13 +108,13 @@ public class VaultControllerTest
     }
 
     // POST /vaults
-
     @Test
     void createVault_returns200_withCreatedVault() throws Exception
     {
         when(vaultService.createVault(any(VaultRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/vaults")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -121,13 +122,13 @@ public class VaultControllerTest
     }
 
     // PUT /vaults/{id}
-
     @Test
     void updateVault_returns200_whenFound() throws Exception
     {
         when(vaultService.updateVault(eq(1), any(VaultRequest.class))).thenReturn(response);
 
         mockMvc.perform(put("/vaults/1")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -140,19 +141,20 @@ public class VaultControllerTest
         when(vaultService.updateVault(eq(99), any(VaultRequest.class))).thenThrow(new RuntimeException("Vault not found."));
 
         assertThrows(ServletException.class, () -> mockMvc.perform(put("/vaults/99")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof RuntimeException)));
     }
 
     // DELETE /vaults/{id}
-
     @Test
     void deleteVault_returns200() throws Exception
     {
         doNothing().when(vaultService).deleteVault(1);
 
         mockMvc.perform(delete("/vaults/1"))
+                .with(csrf())
                 .andExpect(status().isOk());
     }
 }

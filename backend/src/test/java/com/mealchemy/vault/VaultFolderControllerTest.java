@@ -21,6 +21,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import jakarta.servlet.ServletException;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import org.springframework.security.test.context.support.WithMockUser;
 
 /* Importing classes */
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,6 +30,7 @@ import com.mealchemy.vault.dto.VaultFolderRequest;
 import com.mealchemy.vault.dto.VaultFolderResponse;
 import com.mealchemy.vault.service.VaultFolderService;
 
+@WithMockUser
 @WebMvcTest(VaultFolderController.class)
 public class VaultFolderControllerTest
 {
@@ -61,7 +64,6 @@ public class VaultFolderControllerTest
     }
 
     // GET /folders/vault/{vaultId}
-
     @Test
     void getVaultFolderByVaultId_returns200_withList() throws Exception
     {
@@ -83,7 +85,6 @@ public class VaultFolderControllerTest
     }
 
     // GET /folders/folder/name/{name}
-
     @Test
     void getVaultFolderByName_returns200_whenFound() throws Exception
     {
@@ -104,7 +105,6 @@ public class VaultFolderControllerTest
     }
 
     // GET /folders/folder/{id}
-
     @Test
     void getVaultFolderById_returns200_whenFound() throws Exception
     {
@@ -125,13 +125,13 @@ public class VaultFolderControllerTest
     }
 
     // POST /folders
-
     @Test
     void createVaultFolder_returns200_withCreatedFolder() throws Exception
     {
         when(vaultFolderService.createVaultFolder(any(VaultFolderRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/folders")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -139,38 +139,38 @@ public class VaultFolderControllerTest
     }
 
     // PUT /folders/{id}
-
     @Test
     void updateVaultFolder_returns200_whenFound() throws Exception
     {
         when(vaultFolderService.updateVaultFolder(eq(1), any(VaultFolderRequest.class))).thenReturn(response);
 
         mockMvc.perform(put("/folders/1")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.folderName").value("General"));
     }
-
     @Test
     void updateVaultFolder_returns500_whenNotFound() throws Exception
     {
         when(vaultFolderService.updateVaultFolder(eq(99), any(VaultFolderRequest.class))).thenThrow(new RuntimeException("Folder not found."));
 
         assertThrows(ServletException.class, () -> mockMvc.perform(put("/folders/99")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof RuntimeException)));
     }
 
     // DELETE /folders/{id}
-
     @Test
     void deleteVaultFolder_returns200() throws Exception
     {
         doNothing().when(vaultFolderService).deleteVaultFolder(1);
 
         mockMvc.perform(delete("/folders/1"))
+                .with(csrf())
                 .andExpect(status().isOk());
     }
 }
