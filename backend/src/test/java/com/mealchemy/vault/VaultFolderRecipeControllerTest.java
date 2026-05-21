@@ -171,8 +171,7 @@ public class VaultFolderRecipeControllerTest
     {
         doNothing().when(vaultFolderRecipeService).deleteVaultFolderRecipe(1);
 
-        mockMvc.perform(delete("/recipefolders/1"))
-                .with(csrf())
+        mockMvc.perform(delete("/recipefolders/1").with(csrf()))
                 .andExpect(status().isOk());
     }
 }

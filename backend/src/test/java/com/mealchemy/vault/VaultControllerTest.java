@@ -153,8 +153,7 @@ public class VaultControllerTest
     {
         doNothing().when(vaultService).deleteVault(1);
 
-        mockMvc.perform(delete("/vaults/1"))
-                .with(csrf())
+        mockMvc.perform(delete("/vaults/1").with(csrf()))
                 .andExpect(status().isOk());
     }
 }

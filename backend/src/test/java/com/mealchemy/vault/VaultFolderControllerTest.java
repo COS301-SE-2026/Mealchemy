@@ -169,8 +169,7 @@ public class VaultFolderControllerTest
     {
         doNothing().when(vaultFolderService).deleteVaultFolder(1);
 
-        mockMvc.perform(delete("/folders/1"))
-                .with(csrf())
+        mockMvc.perform(delete("/folders/1").with(csrf()))
                 .andExpect(status().isOk());
     }
 }
