@@ -53,17 +53,26 @@ class _VaultFolderCardState extends ConsumerState<VaultFolderCard>
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
   @override
   Widget build(BuildContext context) {
-    final recipesAsync = ref.watch(
-      folderRecipesProvider(widget.folder.folderId),
-    );
+    final recipesAsync =
+        ref.watch(folderRecipeDisplayProvider(widget.folder.folderId));
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -135,7 +144,7 @@ class _VaultFolderCardState extends ConsumerState<VaultFolderCard>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.folder.name,
+                            widget.folder.folderName,
                             style: AppTextStyles.title.copyWith(
                               color: AppColors.textLight,
                               fontWeight: FontWeight.w600,
@@ -263,7 +272,7 @@ class _FolderRecipeRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: InkWell(
-        onTap: () => context.go(AppRoutes.login, extra: recipe),
+        onTap: () => context.go('/recipe/${recipe.recipeId}'),
         borderRadius: BorderRadius.circular(10),
         child: Container(
           padding: const EdgeInsets.all(10),
