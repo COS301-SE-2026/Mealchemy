@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 class VaultFolder {
   final int folderId;
   final int vaultId;
@@ -20,27 +19,4 @@ class VaultFolder {
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
-=======
-class VaultFolder {
-  final int folderId;
-  final int vaultId;
-  final String name;
-  final DateTime createdAt;
-
-  const VaultFolder({
-    required this.folderId,
-    required this.vaultId,
-    required this.name,
-    required this.createdAt,
-  });
-
-  factory VaultFolder.fromJson(Map<String, dynamic> json) {
-    return VaultFolder(
-      folderId: json['folder_id'],
-      vaultId: json['vault_id'],
-      name: json['name'],
-      createdAt: DateTime.parse(json['created_at']),
-    );
-  }
->>>>>>> d423b9941270c051a4c9d3eea45e2ad7fcaf0c4f
 }

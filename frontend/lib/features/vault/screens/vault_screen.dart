@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:go_router/go_router.dart'; 
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/core/shared_widgets/Organisms/app_navbar.dart';
@@ -28,7 +28,7 @@ class VaultScreen extends ConsumerWidget {
         onRouteSelected: (route) => context.go(route),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+         onPressed: () => context.go(AppRoutes.addRecipe),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textDark,
         child: const Icon(Icons.add),

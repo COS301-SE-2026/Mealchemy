@@ -108,15 +108,7 @@ class _LoginFormState extends State<LoginForm> {
               label: 'Email Address',
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
-<<<<<<< HEAD
-              leftIcon: Icons.email_outlined,
-              errorText: _emailError,
-              onChanged: (_) {
-                if (_emailError != null) setState(() => _emailError = null);
-              },
-=======
               prefixIcon: Icons.email_outlined,
->>>>>>> d423b9941270c051a4c9d3eea45e2ad7fcaf0c4f
             ),
             const SizedBox(height: 16),
 
