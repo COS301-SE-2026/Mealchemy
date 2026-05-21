@@ -13,10 +13,10 @@ class VaultFolder {
 
   factory VaultFolder.fromJson(Map<String, dynamic> json) {
     return VaultFolder(
-      folderId: json['folder_id'] as int,
-      vaultId: json['vault_id'] as int,
-      name: json['name'] as String,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      folderId: json['folderId'] as int,
+      vaultId: json['vaultId'] as int,
+      name: json['folderName'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }
 }
