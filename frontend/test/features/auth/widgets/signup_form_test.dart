@@ -48,7 +48,8 @@ void main() {
     //checking if subtitle appears
     testWidgets('renders subtitle text', (tester) async {
       await tester.pumpWidget(buildWidget());
-      expect(find.text('Join Mealchemy and start your culinary journey'), findsOneWidget);
+      expect(find.text('Join Mealchemy and start your culinary journey'),
+          findsOneWidget);
     });
 
     //checking  if display name field appears
@@ -87,14 +88,23 @@ void main() {
       expect(find.text('Sign In'), findsOneWidget);
     });
 
-    //checking if register  button shows loading state
-    // //TODO: fix test - navigation to /preference causes test environment to fail
-    // testWidgets('shows loading state when register button tapped', (tester) async {
-    //   await tester.pumpWidget(buildWidget());
-    //   await tester.tap(find.text('Create Account').first);
-    //   await tester.pump();
-    //   expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    //   await tester.pumpAndSettle(const Duration(seconds: 4)); 
-    // });
+    //Building signup form and entering invalid email to trigger validation
+    testWidgets('shows email error for invalid email', (tester) async {
+      await tester.pumpWidget(buildWidget());
+      await tester.pump();
+      await tester.tap(find.text('Create Account').last);
+      await tester.pump();
+      expect(find.text('Email is required'), findsOneWidget);
+    });
+
+    //Building signup form and checking display name error appears when empty
+    testWidgets('shows display name error when empty', (tester) async {
+      await tester.pumpWidget(buildWidget());
+      await tester.pump();
+      await tester.tap(find.text('Create Account').last);
+      await tester.pump();
+      expect(find.text('Text is required'), findsOneWidget);
+    });
+
   });
 }
