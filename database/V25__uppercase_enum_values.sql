@@ -8,10 +8,6 @@
 ALTER TYPE preferred_unit_enum RENAME VALUE 'metric'   TO 'METRIC';
 ALTER TYPE preferred_unit_enum RENAME VALUE 'imperial'  TO 'IMPERIAL';
 
--- vault_type_enum
-ALTER TYPE vault_type_enum RENAME VALUE 'private' TO 'PRIVATE';
-ALTER TYPE vault_type_enum RENAME VALUE 'shared'  TO 'SHARED';
-ALTER TYPE vault_type_enum RENAME VALUE 'global'  TO 'GLOBAL';
 
 -- pantry_category_enum
 ALTER TYPE pantry_category_enum RENAME VALUE 'produce'             TO 'PRODUCE';
