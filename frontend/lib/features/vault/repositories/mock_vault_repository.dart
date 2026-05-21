@@ -43,13 +43,13 @@ class MockVaultRepository implements VaultRepository {
 
   @override
   Future<List<VaultFolder>> getFolders() async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    // await Future.delayed(const Duration(milliseconds: 500));
     return _folders;
   }
 
   @override
   Future<VaultFolder> createFolder(String name) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    // await Future.delayed(const Duration(milliseconds: 300));
 
     return VaultFolder(
       folderId: 99,
@@ -61,7 +61,7 @@ class MockVaultRepository implements VaultRepository {
 
   @override
   Future<List<Recipe>> getRecipesInFolder(int folderId) async {
-    await Future.delayed(const Duration(milliseconds: 400));
+    // await Future.delayed(const Duration(milliseconds: 400));
     //Returns mock recipes for vault display
     return _recipes;
   }

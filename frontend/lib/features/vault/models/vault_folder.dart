@@ -4,7 +4,7 @@ class VaultFolder {
   final String name;
   final DateTime createdAt;
 
-  const VaultFolder({
+  VaultFolder({
     required this.folderId,
     required this.vaultId,
     required this.name,
