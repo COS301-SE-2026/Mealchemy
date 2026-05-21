@@ -305,7 +305,8 @@ jobs:
         run: |
           import re, sys
 
-          pattern = re.compile(r'.*\.(g|freezed)\.dart$')
+          # Excludes generated files and API repository files
+          pattern = re.compile(r'.*\.(g|freezed)\.dart$|.*/api_.*_repository\.dart$')
           path = 'coverage/lcov.info'
 
           out_lines = []
