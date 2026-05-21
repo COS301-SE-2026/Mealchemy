@@ -85,6 +85,8 @@ void main() {
     //checking if login button shows loading state
     testWidgets('shows loading state when login button tapped', (tester) async {
       await tester.pumpWidget(buildWidget());
+      await tester.enterText(find.byType(TextField).at(0), 'chef@mealchemy.com');
+      await tester.enterText(find.byType(TextField).at(1), 'Password123!');
       await tester.tap(find.text('Log In'));
       await tester.pump();
       expect(find.byType(CircularProgressIndicator), findsOneWidget);

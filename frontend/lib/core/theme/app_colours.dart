@@ -23,7 +23,7 @@ class AppColors {
   static const Color inputBorder = Color(0xFFE0BFBF);
 
   //Text
-  static const Color textLight = Color(0xFF1D1C17);
+  static const Color textLight = Color.fromARGB(255, 14, 13, 11);
   static const Color textDark = Color(0xFFFFFFFF);
   static const Color textMuted = Color(0xFF6B7280);
 

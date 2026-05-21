@@ -56,20 +56,20 @@ class MockRecipeRepository implements RecipeRepository {
 
   @override
   Future<List<Recipe>> getRecipes() async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    // await Future.delayed(const Duration(milliseconds: 500));
     return _recipes;
   }
 
   @override
   Future<Recipe> getRecipeById(int id) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    // await Future.delayed(const Duration(milliseconds: 300));
     return _recipes.firstWhere((r) => r.recipeId == id);
   }
 
   @override
   Future<void> addRecipe(Recipe recipe) async {
     //mock only, the data isnt saved
-    await Future.delayed(const Duration(milliseconds: 300));
+    // await Future.delayed(const Duration(milliseconds: 300));
   }
 
   @override

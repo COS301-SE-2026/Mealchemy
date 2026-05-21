@@ -5,6 +5,7 @@ import 'package:mealchemy/core/shared_widgets/atoms/app_card.dart';
 import 'package:mealchemy/core/shared_widgets/atoms/app_text_field.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
+import 'package:mealchemy/core/utils/validators.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -14,27 +15,39 @@ class LoginForm extends StatefulWidget {
 }
 
 class _LoginFormState extends State<LoginForm> {
-  // Input controllers for the email and password fields 
-  final _emailController    = TextEditingController();
+  // Input controllers for the email and password fields
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   bool _isLoading = false;
+  //Validation error variables
+  String? _emailError;
+  String? _passwordError;
 
   @override
   void dispose() {
-    //Frees memory once the widget is romoved 
+    //Frees memory once the widget is romoved
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  //On click login button logic 
+  bool _validate() {
+    setState(() {
+      _emailError = Validators.email(_emailController.text);
+      _passwordError = Validators.password(_passwordController.text);
+    });
+    return _emailError == null && _passwordError == null;
+  }
+
+  //On click login button logic
   void _handleLogin() {
+    if (!_validate()) return;
     setState(() => _isLoading = true);
     Future.delayed(const Duration(seconds: 1), () {
       if (mounted) {
         setState(() => _isLoading = false);
-        context.go('/dashboard');
+        context.go('/vault');
       }
     });
   }
@@ -69,7 +82,6 @@ class _LoginFormState extends State<LoginForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-
             //Welcome Back heading
             Text(
               'Welcome Back',
@@ -108,7 +120,7 @@ class _LoginFormState extends State<LoginForm> {
                   'Password',
                   style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.textLight,
-                    fontWeight: FontWeight.w500,
+                    // fontWeight: FontWeight.w500,
                   ),
                 ),
                 AppButton.text(
@@ -124,6 +136,12 @@ class _LoginFormState extends State<LoginForm> {
             AppTextField.private(
               hint: '........',
               controller: _passwordController,
+              onChanged: (_) {
+                if (_passwordError != null){
+                  setState(() => _passwordError = null);
+                }
+                  
+              },
             ),
             const SizedBox(height: 24),
 
@@ -148,7 +166,7 @@ class _LoginFormState extends State<LoginForm> {
               onPressed: () {},
               isFullWidth: true,
               isRounded: true,
-              // leftIcon: Icons.g_mobiledata, 
+              // leftIcon: Icons.g_mobiledata,
               customColor: AppColors.accentMuted,
               customBorderColor: AppColors.accent,
             ),
