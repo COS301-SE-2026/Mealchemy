@@ -19,7 +19,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import jakarta.servlet.ServletException;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import com.mealchemy.config.JwtUtil;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -103,8 +102,8 @@ public class VaultControllerTest
     {
         when(vaultService.getVault(99)).thenThrow(new RuntimeException("Vault not found."));
 
-        assertThrows(ServletException.class, () -> mockMvc.perform(get("/vaults/99"))
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof RuntimeException)));
+        mockMvc.perform(get("/vaults/99"))
+                .andExpect(status().isInternalServerError()) check.
     }
 
     // POST /vaults
@@ -140,11 +139,11 @@ public class VaultControllerTest
     {
         when(vaultService.updateVault(eq(99), any(VaultRequest.class))).thenThrow(new RuntimeException("Vault not found."));
 
-        assertThrows(ServletException.class, () -> mockMvc.perform(put("/vaults/99")
+        mockMvc.perform(put("/vaults/99")
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof RuntimeException)));
+                .andExpect(status().isInternalServerError());
     }
 
     // DELETE /vaults/{id}

@@ -20,7 +20,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import jakarta.servlet.ServletException;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -122,8 +121,8 @@ public class VaultFolderRecipeControllerTest
     {
         when(vaultFolderRecipeService.getFolderRecipeById(99)).thenThrow(new RuntimeException("No record found"));
 
-        assertThrows(ServletException.class, () -> mockMvc.perform(get("/recipefolders/99"))
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof RuntimeException)));
+        mockMvc.perform(get("/recipefolders/99"))
+                .andExpect(status().isInternalServerError());
     }
 
     // POST /recipefolders
@@ -158,11 +157,11 @@ public class VaultFolderRecipeControllerTest
     {
         when(vaultFolderRecipeService.updateVaultFolderRecipe(eq(99), any(VaultFolderRecipeRequest.class))).thenThrow(new RuntimeException("No record found"));
 
-        assertThrows(ServletException.class, () -> mockMvc.perform(put("/recipefolders/99")
+        mockMvc.perform(put("/recipefolders/99")
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof RuntimeException)));
+                .andExpect(status().isInternalServerError());
     }
 
     // DELETE /recipefolders/{id}

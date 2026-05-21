@@ -20,7 +20,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import jakarta.servlet.ServletException;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -100,8 +99,8 @@ public class VaultFolderControllerTest
     {
         when(vaultFolderService.getVaultFolderByName("Nonexistent")).thenThrow(new RuntimeException("Folder not found."));
 
-        assertThrows(ServletException.class, () -> mockMvc.perform(get("/folders/folder/name/Nonexistent"))
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof RuntimeException)));
+        mockMvc.perform(get("/folders/folder/name/Nonexistent"))
+                .andExpect(status().isInternalServerError());
     }
 
     // GET /folders/folder/{id}
@@ -120,8 +119,8 @@ public class VaultFolderControllerTest
     {
         when(vaultFolderService.getVaultFolderById(99)).thenThrow(new RuntimeException("Folder not found."));
 
-        assertThrows(ServletException.class, () -> mockMvc.perform(get("/folders/folder/99"))
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof RuntimeException)));
+        mockMvc.perform(get("/folders/folder/99"))
+                .andExpect(status().isInternalServerError());
     }
 
     // POST /folders
@@ -156,11 +155,11 @@ public class VaultFolderControllerTest
     {
         when(vaultFolderService.updateVaultFolder(eq(99), any(VaultFolderRequest.class))).thenThrow(new RuntimeException("Folder not found."));
 
-        assertThrows(ServletException.class, () -> mockMvc.perform(put("/folders/99")
+        mockMvc.perform(put("/folders/99")
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof RuntimeException)));
+                .andExpect(status().isInternalServerError());
     }
 
     // DELETE /folders/{id}
