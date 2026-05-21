@@ -36,6 +36,9 @@ public class VaultFolderRecipeControllerTest
     @MockBean
     private VaultFolderRecipeService vaultFolderRecipeService;
 
+    @MockBean   
+    private JwtUtil jwtUtil;
+    
     @Autowired
     private ObjectMapper objectMapper;
 

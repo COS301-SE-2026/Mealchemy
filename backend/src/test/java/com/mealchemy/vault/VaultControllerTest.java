@@ -37,6 +37,9 @@ public class VaultControllerTest
     @MockBean
     private VaultService vaultService;
 
+    @MockBean
+    private JwtUtil jwtUtil;
+    
     @Autowired
     private ObjectMapper objectMapper;
 

@@ -36,6 +36,9 @@ public class VaultFolderControllerTest
     @MockBean
     private VaultFolderService vaultFolderService;
 
+    @MockBean
+    private JwtUtil jwtUtil;
+    
     @Autowired
     private ObjectMapper objectMapper;
 
