@@ -42,6 +42,10 @@ void main() {
               path: '/recipe/add',
               builder: (context, state) => const Scaffold(body: Text('Add Recipe')),
             ),
+            GoRoute(
+              path: '/recipe/:id',
+              builder: (context, state) => const Scaffold(body: Text('Recipe Detail')),
+            ),
           ],
         ),
       ),
@@ -96,6 +100,26 @@ void main() {
       await tester.pumpWidget(buildWidget());
       await tester.pump(const Duration(milliseconds: 600));
       expect(find.byType(VaultQuickStrip), findsOneWidget);
+    });
+
+    //Tapping floating action button navigates to add recipe screen
+    testWidgets('tapping FAB navigates to add recipe', (tester) async {
+      await tester.pumpWidget(buildWidget());
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      expect(find.text('Add Recipe'), findsOneWidget);
+    });
+
+    // Tapping logout button navigates back to login screen.
+    testWidgets('tapping logout navigates to login', (tester) async {
+      await tester.pumpWidget(buildWidget());
+      await tester.pump(const Duration(milliseconds: 600));
+
+      await tester.tap(find.byTooltip('Log out'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Login'), findsOneWidget);
     });
   });
 }
