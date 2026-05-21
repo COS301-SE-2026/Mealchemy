@@ -49,7 +49,7 @@ public class VaultFolderRecipeControllerIntegrationTest
     private VaultFolder savedFolder;
     private VaultFolderRecipe savedFolderRecipe;
 
-    private static final int RECIPE_ID = 42;
+    private static final int RECIPE_ID = 5;
 
     @BeforeEach
     void setUp()
@@ -137,7 +137,7 @@ public class VaultFolderRecipeControllerIntegrationTest
     {
         VaultFolderRecipeRequest request = new VaultFolderRecipeRequest();
         request.setFolderId(savedFolder.getFolderId());
-        request.setRecipeId(99);
+        request.setRecipeId(1);
 
         mockMvc.perform(post("/recipefolders")
                         .with(csrf())
@@ -146,7 +146,7 @@ public class VaultFolderRecipeControllerIntegrationTest
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", notNullValue()))
                 .andExpect(jsonPath("$.folderId", is(savedFolder.getFolderId())))
-                .andExpect(jsonPath("$.recipeId", is(99)))
+                .andExpect(jsonPath("$.recipeId", is(1)))
                 .andExpect(jsonPath("$.addedAt", notNullValue()));
     }
 
@@ -156,7 +156,7 @@ public class VaultFolderRecipeControllerIntegrationTest
     {
         VaultFolderRecipeRequest request = new VaultFolderRecipeRequest();
         request.setFolderId(savedFolder.getFolderId());
-        request.setRecipeId(77);
+        request.setRecipeId(2);
 
         mockMvc.perform(put("/recipefolders/{id}", savedFolderRecipe.getId())
                         .with(csrf())
@@ -164,7 +164,7 @@ public class VaultFolderRecipeControllerIntegrationTest
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(savedFolderRecipe.getId())))
-                .andExpect(jsonPath("$.recipeId", is(77)));
+                .andExpect(jsonPath("$.recipeId", is(2)));
     }
 
     @Test
