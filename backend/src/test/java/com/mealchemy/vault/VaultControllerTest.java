@@ -103,7 +103,7 @@ public class VaultControllerTest
         when(vaultService.getVault(99)).thenThrow(new RuntimeException("Vault not found."));
 
         mockMvc.perform(get("/vaults/99"))
-                .andExpect(status().isInternalServerError()) check.
+                .andExpect(status().isInternalServerError());
     }
 
     // POST /vaults
