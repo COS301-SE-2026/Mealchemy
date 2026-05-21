@@ -1,29 +1,53 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mealchemy/core/providers/api_service_provider.dart';
+import 'package:mealchemy/features/auth/providers/auth_provider.dart';
+import 'package:mealchemy/features/recipe/models/recipe.dart';
+import 'package:mealchemy/features/recipe/repositories/mock_recipe_repository.dart';
 import 'package:mealchemy/features/vault/repositories/mock_vault_repository.dart';
 import '../repositories/api_vault_repository.dart';
 import '../repositories/vault_repository.dart';
+import '../models/vault.dart';
 import '../models/vault_folder.dart';
-import '../../recipe/models/recipe.dart';
+import '../models/vault_folder_recipe.dart';
 import '../../../core/constants/app_config.dart';
-import '../../../core/providers/api_service_provider.dart';
 
-//Flag to switch between mock and real API implementations
+// Flag to switch between mock and real API implementations
 final vaultRepositoryProvider = Provider<VaultRepository>((ref) {
-  const useMock = true;
+  const useMock = false;
   if (useMock) {
     return MockVaultRepository();
   }
   return ApiVaultRepository(ref.read(dioProvider));
 });
 
-//Vault folders provider 
-final vaultFoldersProvider = FutureProvider<List<VaultFolder>>((ref) {
-  
-  return ref.watch(vaultRepositoryProvider).getFolders();
+// Vaults provider
+final vaultsProvider = FutureProvider<List<Vault>>((ref) {
+  final userId = ref.watch(authProvider).userId;
+  if (userId == null) return Future.value([]);
+  return ref.watch(vaultRepositoryProvider).getVaultsByOwnerId(userId);
 });
 
-//Recipes in folder provider
+// Vault folders provider
+final vaultFoldersProvider =
+    FutureProvider.family<List<VaultFolder>, int>((ref, vaultId) {
+  return ref.watch(vaultRepositoryProvider).getFoldersByVaultId(vaultId);
+});
+
+// Raw folder recipes provider
 final folderRecipesProvider =
-    FutureProvider.family<List<Recipe>, int>((ref, folderId) {
-  return ref.watch(vaultRepositoryProvider).getRecipesInFolder(folderId);
+    FutureProvider.family<List<VaultFolderRecipe>, int>((ref, folderId) {
+  return ref.watch(vaultRepositoryProvider).getRecipesByFolderId(folderId);
+});
+
+// Display provider
+final folderRecipeDisplayProvider =
+    FutureProvider.family<List<Recipe>, int>((ref, folderId) async {
+  final folderRecipes = await ref.watch(folderRecipesProvider(folderId).future);
+  final mockRepo = MockRecipeRepository();
+
+  final recipes = await Future.wait(
+    folderRecipes.map((fr) => mockRepo.getRecipeById(fr.recipeId)),
+  );
+
+  return recipes;
 });
