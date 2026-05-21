@@ -45,9 +45,15 @@ final folderRecipeDisplayProvider =
   final folderRecipes = await ref.watch(folderRecipesProvider(folderId).future);
   final mockRepo = MockRecipeRepository();
 
-  final recipes = await Future.wait(
-    folderRecipes.map((fr) => mockRepo.getRecipeById(fr.recipeId)),
-  );
+  final recipes = <Recipe>[];
+  for (final fr in folderRecipes) {
+    try {
+      final recipe = await mockRepo.getRecipeById(fr.recipeId);
+      recipes.add(recipe);
+    } catch (_) {
+      
+    }
+  }
 
   return recipes;
 });
