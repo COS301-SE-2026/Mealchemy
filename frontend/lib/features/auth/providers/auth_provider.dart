@@ -4,7 +4,7 @@ import '../repositories/api_auth_repository.dart';
 import '../repositories/auth_repository.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/providers/api_service_provider.dart';
-
+import 'dart:convert';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return ApiAuthRepository(ref.read(dioProvider));
@@ -40,8 +40,16 @@ class AuthState {
       onboardingRequired: onboardingRequired ?? this.onboardingRequired,
     );
   }
-}
 
+  int? get userId {
+    if (token == null) return null;
+    final parts = token!.split('.');
+    final payload = parts[1];
+    final decoded = utf8.decode(base64Url.decode(base64Url.normalize(payload)));
+    final map = jsonDecode(decoded);
+    return int.tryParse(map['sub']);
+  }
+}
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _repository;
@@ -83,7 +91,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     final result = await _repository.register(email, password, displayName);
 
     if (result.success) {
-
       _ref.read(authInterceptorProvider).setToken(result.token);
 
       state = state.copyWith(
