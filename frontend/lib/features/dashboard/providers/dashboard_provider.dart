@@ -50,3 +50,9 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     );
   }
 }
+
+
+//Provider
+final dashboardProvider = StateNotifierProvider<DashboardNotifier, DashboardState>((ref) {
+  return DashboardNotifier();
+});

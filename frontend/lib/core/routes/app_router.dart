@@ -15,7 +15,7 @@ import '../../features/recipe/screens/add_recipe_screen.dart';
 final appRouter = GoRouter(
  
 
-    initialLocation: AppRoutes.login,
+    initialLocation: AppRoutes.dashboard,
     
     
     // Sets the first screen shown when the app launches. 
