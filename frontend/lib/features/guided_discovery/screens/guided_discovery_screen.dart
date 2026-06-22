@@ -11,6 +11,7 @@ import '../widgets/discovery_complete_state.dart';
 import '../widgets/discovery_header.dart';
 import '../widgets/discovery_recipe_card.dart';
 import '../widgets/swipe_action_button.dart';
+import '../widgets/recipe_preview_sheet.dart';
 
 //main Guided Discovery swipe screen
 class GuidedDiscoveryScreen extends ConsumerWidget {
@@ -82,12 +83,13 @@ class GuidedDiscoveryScreen extends ConsumerWidget {
                                                   onSwipeRight: notifier
                                                       .likeCurrentRecipe,
                                                   child: DiscoveryRecipeCard(
-                                                    recipe:
-                                                        state.currentRecipe!,
-                                                    currentIndex:
-                                                        state.currentIndex,
-                                                    totalRecipes:
-                                                        state.totalRecipes,
+                                                    recipe: state.currentRecipe!,
+                                                    currentIndex: state.currentIndex,
+                                                    totalRecipes: state.totalRecipes,
+                                                    onViewRecipe: () => _showRecipePreview(
+                                                      context,
+                                                      state.currentRecipe!,
+                                                    ),
                                                   ),
                                                 ),
                                               ),
@@ -162,6 +164,26 @@ class GuidedDiscoveryScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+//opens mock recipe preview sheet
+void _showRecipePreview(BuildContext context, recipe) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: AppColors.bgLight,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(28),
+      ),
+    ),
+    builder: (context) {
+      return FractionallySizedBox(
+        heightFactor: 0.86,
+        child: RecipePreviewSheet(recipe: recipe),
+      );
+    },
+  );
 }
 
 //handles left and right swipes on recipe card

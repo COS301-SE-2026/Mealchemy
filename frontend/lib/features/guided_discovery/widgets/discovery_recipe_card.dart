@@ -11,11 +11,13 @@ class DiscoveryRecipeCard extends StatelessWidget {
     required this.recipe,
     required this.currentIndex,
     required this.totalRecipes,
+    this.onViewRecipe,
   });
 
   final DiscoveryRecipe recipe;
   final int currentIndex;
   final int totalRecipes;
+  final VoidCallback? onViewRecipe;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +71,7 @@ class DiscoveryRecipeCard extends StatelessWidget {
                   recipe: recipe,
                   currentIndex: currentIndex,
                   totalRecipes: totalRecipes,
+                  onViewRecipe: onViewRecipe,
                 ),
               ],
             ),
@@ -85,11 +88,13 @@ class _RecipeInfo extends StatelessWidget {
     required this.recipe,
     required this.currentIndex,
     required this.totalRecipes,
+    required this.onViewRecipe,
   });
 
   final DiscoveryRecipe recipe;
   final int currentIndex;
   final int totalRecipes;
+  final VoidCallback? onViewRecipe;
 
   @override
   Widget build(BuildContext context) {
@@ -181,11 +186,21 @@ class _RecipeInfo extends StatelessWidget {
                 totalRecipes: totalRecipes,
               ),
               const Spacer(),
-              Text(
-                'View Full Recipe ->',
-                style: AppTextStyles.label.copyWith(
-                  color: AppColors.accentMuted,
-                  fontSize: 10,
+              InkWell(
+                onTap: onViewRecipe,
+                borderRadius: BorderRadius.circular(999),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 4,
+                  ),
+                  child: Text(
+                    'View Full Recipe ->',
+                    style: AppTextStyles.label.copyWith(
+                      color: AppColors.accentMuted,
+                      fontSize: 10,
+                    ),
+                  ),
                 ),
               ),
             ],

@@ -13,6 +13,9 @@ class DiscoveryRecipe {
     required this.fatGrams,
     required this.tags,
     required this.ingredients,
+    required this.description,
+    required this.steps,
+    required this.matchReason,
   });
 
   //properties
@@ -28,4 +31,7 @@ class DiscoveryRecipe {
   final int fatGrams;
   final List<String> tags;
   final List<String> ingredients;
+  final String description;
+  final List<String> steps;
+  final String matchReason;
 }
