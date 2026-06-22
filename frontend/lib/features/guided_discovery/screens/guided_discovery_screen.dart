@@ -61,11 +61,12 @@ class GuidedDiscoveryScreen extends ConsumerWidget {
                               Expanded(
                                 child: state.isComplete
                                     ? DiscoveryCompleteState(
-                                        likedCount: state.likedRecipeIds.length,
-                                        dislikedCount:
-                                            state.dislikedRecipeIds.length,
-                                        onReset: notifier.resetDiscovery,
-                                      )
+                                      likedCount: state.likedRecipeIds.length,
+                                      dislikedCount: state.dislikedRecipeIds.length,
+                                      tasteSignals: state.topTasteSignals,
+                                      recommendedRecipe: state.recommendedRecipe,
+                                      onReset: notifier.resetDiscovery,
+                                    )
                                     : Column(
                                         children: [
                                           Expanded(

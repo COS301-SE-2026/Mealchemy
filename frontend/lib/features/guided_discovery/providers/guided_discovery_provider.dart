@@ -64,6 +64,62 @@ class GuidedDiscoveryState {
     return currentIndex.clamp(0, recipes.length);
   }
 
+  //recipes user liked
+  List<DiscoveryRecipe> get likedRecipes {
+    return allRecipes.where((recipe) {
+      return likedRecipeIds.contains(recipe.id);
+    }).toList();
+  }
+
+  //recipes user disliked
+  List<DiscoveryRecipe> get dislikedRecipes {
+    return allRecipes.where((recipe) {
+      return dislikedRecipeIds.contains(recipe.id);
+    }).toList();
+  }
+
+  //mock heuristic taste tags based on liked recipes
+  List<String> get topTasteSignals {
+    final tagCounts = <String, int>{};
+
+    for (final recipe in likedRecipes) {
+      for (final tag in recipe.tags) {
+        tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
+      }
+    }
+
+    final sortedTags = tagCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return sortedTags.map((entry) => entry.key).take(3).toList();
+  }
+
+  //mock recommended recipe based on liked recipe tags
+  DiscoveryRecipe? get recommendedRecipe {
+    if (recipes.isEmpty) return null;
+
+    final likedIds = likedRecipeIds.toSet();
+    final dislikedIds = dislikedRecipeIds.toSet();
+    final tasteSignals = topTasteSignals.toSet();
+
+    final unreviewedRecipes = allRecipes.where((recipe) {
+      return !likedIds.contains(recipe.id) && !dislikedIds.contains(recipe.id);
+    }).toList();
+
+    if (unreviewedRecipes.isEmpty) {
+      return likedRecipes.isNotEmpty ? likedRecipes.first : allRecipes.first;
+    }
+
+    unreviewedRecipes.sort((a, b) {
+      final aScore = a.tags.where(tasteSignals.contains).length;
+      final bScore = b.tags.where(tasteSignals.contains).length;
+
+      return bScore.compareTo(aScore);
+    });
+
+    return unreviewedRecipes.first;
+  }
+
   GuidedDiscoveryState copyWith({
     List<DiscoveryRecipe>? allRecipes,
     int? currentIndex,
