@@ -10,6 +10,7 @@ import '../../features/pantry/screens/add_ingredient_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
 import '../../features/recipe/screens/recipe_detail_screen.dart';
 import '../../features/recipe/screens/add_recipe_screen.dart';
+import '../../features/guided_discovery/screens/guided_discovery_screen.dart';
 
 
 final appRouter = GoRouter(
@@ -29,6 +30,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.dashboard,
       builder: (context, state) => const DashboardScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.guidedDiscovery,
+      builder: (context, state) => const GuidedDiscoveryScreen(),
     ),
     GoRoute(
       path: AppRoutes.pantry,
