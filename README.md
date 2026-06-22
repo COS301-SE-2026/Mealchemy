@@ -50,12 +50,17 @@
 | Section | Link |
 |---|---|
 | Introduction | [Introduction](https://github.com/COS301-SE-2026/Mealchemy/wiki/Introduction) |
-| Functional Requirements | [Functional Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Functional-Requirements) |
-| Domain Model | [Domain Model](https://github.com/COS301-SE-2026/Mealchemy/wiki/Domain-model) |
-| Architectural Diagram | [Architectural Diagram](https://github.com/COS301-SE-2026/Mealchemy/wiki/Architectural-Diagram) |
-| Quality Requirements | [Quality Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Quality-Requirements) |
-| Use Cases | [Use Cases](https://github.com/COS301-SE-2026/Mealchemy/wiki/Use-Cases) |
 | User Stories and User Characteristics | [User Stories](https://github.com/COS301-SE-2026/Mealchemy/wiki/User-Stories-User-Characteristics) |
+| Functional Requirements | [Functional Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Functional-Requirements) |
+| API Service Contract | [API Service Contracts](https://github.com/COS301-SE-2026/Mealchemy/wiki/API-Service-Contract) |
+| Domain Model | [Domain Model](https://github.com/COS301-SE-2026/Mealchemy/wiki/Domain-model) |
+| Quality Requirements | [Quality Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Quality-Requirements) |
+| Architectural Patterns | [Architectural Patterns](https://github.com/COS301-SE-2026/Mealchemy/wiki/Architectural-Patterns) |
+| Design Patterns  | [Design Patterns](https://github.com/COS301-SE-2026/Mealchemy/wiki/Design-Patterns) |
+| Architectural Constraints | [Architectural Constraints](https://github.com/COS301-SE-2026/Mealchemy/wiki/Architectural-Constraints) |
+| Architectural Diagram | [Architectural Diagram](https://github.com/COS301-SE-2026/Mealchemy/wiki/Architectural-Diagram) |
+| Technology Requirements | [Technology Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Technology-Requirements) |
+| Use Cases | [Use Cases](https://github.com/COS301-SE-2026/Mealchemy/wiki/Use-Cases) |
 
 ---
 
