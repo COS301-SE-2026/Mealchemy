@@ -1,27 +1,19 @@
-// Holds everything related to the logged-in user (JWT + auth status).
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
-import '../repositories/mock_auth_repository.dart';
 import '../repositories/api_auth_repository.dart';
 import '../repositories/auth_repository.dart';
-import '../../../core/constants/app_config.dart';
+import '../../../core/providers/api_service_provider.dart';
+import 'dart:convert';
 
-//Switch between mock and real API implementations based on config 
-//Will be removed before deployement
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  if (AppConfig.useMockData) {
-    return MockAuthRepository();
-  }
-  return ApiAuthRepository(Dio());
+  return ApiAuthRepository(ref.read(dioProvider));
 });
 
-//Auth state this holds the current auth states 
 class AuthState {
   final bool isLoggedIn;
   final bool isLoading;
   final String? errorMessage;
   final String? token;
-    final bool onboardingRequired;
+  final bool onboardingRequired;
 
   const AuthState({
     this.isLoggedIn = false,
@@ -46,13 +38,22 @@ class AuthState {
       onboardingRequired: onboardingRequired ?? this.onboardingRequired,
     );
   }
+
+  int? get userId {
+    if (token == null) return null;
+    final parts = token!.split('.');
+    final payload = parts[1];
+    final decoded = utf8.decode(base64Url.decode(base64Url.normalize(payload)));
+    final map = jsonDecode(decoded);
+    return int.tryParse(map['sub']);
+  }
 }
 
-//Auth Notifier this holds the logic for handling login/signup/logout
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _repository;
+  final Ref _ref;
 
-  AuthNotifier(this._repository) : super(const AuthState());
+  AuthNotifier(this._repository, this._ref) : super(const AuthState());
 
   Future<bool> login(String email, String password) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
@@ -60,6 +61,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     final result = await _repository.login(email, password);
 
     if (result.success) {
+      _ref.read(authInterceptorProvider).setToken(result.token);
+
       state = state.copyWith(
         isLoading: false,
         isLoggedIn: true,
@@ -86,6 +89,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     final result = await _repository.register(email, password, displayName);
 
     if (result.success) {
+      _ref.read(authInterceptorProvider).setToken(result.token);
+
       state = state.copyWith(
         isLoading: false,
         isLoggedIn: true,
@@ -104,10 +109,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> logout() async {
     await _repository.logout();
+
+    _ref.read(authInterceptorProvider).setToken(null);
     state = const AuthState();
   }
 }
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier(ref.watch(authRepositoryProvider));
+  return AuthNotifier(ref.watch(authRepositoryProvider), ref);
 });

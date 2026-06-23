@@ -12,12 +12,12 @@ void main() {
         'created_at': '2026-01-01T00:00:00.000',
       });
       expect(folder.folderId, 1);
-       expect(folder.vaultId, 1);
-      expect(folder.name, 'Breakfast');
+      expect(folder.vaultId, 1);
+      expect(folder.folderName, 'Breakfast');
     });
 
-    //Testing fromJson parses date 
-    test('parses createdAt date correctly', ( ) {
+    //Testing fromJson parses date
+    test('parses createdAt date correctly', () {
       final folder = VaultFolder.fromJson({
         'folder_id': 2,
         'vault_id': 1,
@@ -34,12 +34,12 @@ void main() {
       final folder = VaultFolder(
         folderId: 3,
         vaultId: 2,
-        name: 'Lunch',
+        folderName: 'Lunch',
         createdAt: DateTime(2026, 1, 1),
-      );  
+      );
       expect(folder.folderId, 3);
       expect(folder.vaultId, 2);
-      expect(folder.name, 'Lunch');
+      expect(folder.folderName, 'Lunch');
     });
   });
 }
