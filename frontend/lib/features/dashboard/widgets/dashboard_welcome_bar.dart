@@ -8,8 +8,7 @@ class DashboardWelcomeBar extends ConsumerWidget {
   const DashboardWelcomeBar({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(dashboardProvider).currentUser;
-    final name = user?.displayName ?? '';
+    final name = ref.watch(dashboardProvider).displayName ;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),

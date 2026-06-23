@@ -8,6 +8,7 @@ import 'package:mealchemy/features/dashboard/providers/dashboard_provider.dart';
 import 'package:mealchemy/features/dashboard/widgets/dashboard_welcome_bar.dart';
 import 'package:mealchemy/features/dashboard/widgets/dashboard_cards_row.dart';
 import 'package:mealchemy/features/dashboard/widgets/recommended_recipes_section.dart';
+import 'package:mealchemy/features/dashboard/widgets/trending_recipes_section.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -51,8 +52,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
               const SizedBox(height: 28),
 
-              /// recommended for You section
-              //trending Recipes section
+              const TrendingRecipesSection(),
+
+              const SizedBox(height: 32),
             ],
           ),
         ),

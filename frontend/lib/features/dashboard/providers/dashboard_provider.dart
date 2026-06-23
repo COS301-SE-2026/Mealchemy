@@ -1,96 +1,105 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mealchemy/features/auth/models/user.dart';
+import 'package:mealchemy/core/constants/app_config.dart';
 import 'package:mealchemy/features/dashboard/models/dashboard_recipe_card_data.dart';
 import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
+import 'package:mealchemy/features/dashboard/models/trending_recipe_data.dart';
+import 'package:mealchemy/features/dashboard/repositories/api_dashboard_repository.dart';
+import 'package:mealchemy/features/dashboard/repositories/dashboard_repository.dart';
+import 'package:mealchemy/features/dashboard/repositories/mock_dashboard_repository.dart';
 
+
+// Switch back to normal provider pattern used 
+final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
+  if (AppConfig.useMockData) {
+    return MockDashboardRepository();
+  }
+  return ApiDashboardRepository();
+});
 //State
+// State
 class DashboardState {
   final bool isLoading;
   final String? errorMessage;
-  final User? currentUser;
+  final String displayName;
+  final int pantryItemCount;
   final int smartSuggestionItemsAway;
   final int smartSuggestionRecipeCount;
   final List<DashboardRecipeCardData> recommendedRecipes;
-
+  final List<TrendingRecipeData> trendingRecipes;
+ 
   const DashboardState({
     this.isLoading = false,
     this.errorMessage,
-    this.currentUser,
+    this.displayName = '',
+    this.pantryItemCount = 0,
     this.smartSuggestionItemsAway = 0,
     this.smartSuggestionRecipeCount = 0,
     this.recommendedRecipes = const [],
+    this.trendingRecipes = const [],
   });
-
+ 
   DashboardState copyWith({
     bool? isLoading,
     String? errorMessage,
-    User? currentUser,
+    String? displayName,
+    int? pantryItemCount,
     int? smartSuggestionItemsAway,
     int? smartSuggestionRecipeCount,
     List<DashboardRecipeCardData>? recommendedRecipes,
+    List<TrendingRecipeData>? trendingRecipes,
   }) {
     return DashboardState(
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
-      currentUser: currentUser ?? this.currentUser,
+      displayName: displayName ?? this.displayName,
+      pantryItemCount: pantryItemCount ?? this.pantryItemCount,
       smartSuggestionItemsAway:
           smartSuggestionItemsAway ?? this.smartSuggestionItemsAway,
       smartSuggestionRecipeCount:
           smartSuggestionRecipeCount ?? this.smartSuggestionRecipeCount,
       recommendedRecipes: recommendedRecipes ?? this.recommendedRecipes,
+      trendingRecipes: trendingRecipes ?? this.trendingRecipes,
     );
   }
 }
-
-//Notifier
+ 
+// Notifier
 class DashboardNotifier extends StateNotifier<DashboardState> {
-  DashboardNotifier(this._ref) : super(const DashboardState());
-
-  final Ref _ref;
+  DashboardNotifier(this._repository) : super(const DashboardState());
+ 
+  final DashboardRepository _repository;
+ 
   Future<void> loadDashboard() async {
-    //Replace with real API call later
-    await Future.delayed(const Duration(milliseconds: 600));
     state = state.copyWith(isLoading: true, errorMessage: null);
-    final recipes = await _ref.read(recipesProvider.future);
-    final mockSuggestionOverlay = [
-      (matchPercent: 92, tag: 'HIGH PROTEIN', rating: 4.9),
-      (matchPercent: 85, tag: 'HIGH PROTEIN', rating: 4.7),
-    ];
-
-    final recommended = recipes
-        .take(mockSuggestionOverlay.length)
-        .toList()
-        .asMap()
-        .entries
-        .map((entry) {
-      final overlay = mockSuggestionOverlay[entry.key];
-      return DashboardRecipeCardData(
-        recipe: entry.value,
-        matchPercent: overlay.matchPercent,
-        tag: overlay.tag,
-        rating: overlay.rating,
+ 
+    try {
+      final displayName = await _repository.getDisplayName();
+      final pantryItemCount = await _repository.getPantryItemCount();
+      final itemsAway = await _repository.getSmartSuggestionItemsAway();
+      final recipeCount = await _repository.getSmartSuggestionRecipeCount();
+      final recommended = await _repository.getRecommendedRecipes();
+      final trending = await _repository.getTrendingRecipes();
+ 
+      state = state.copyWith(
+        isLoading: false,
+        displayName: displayName,
+        pantryItemCount: pantryItemCount,
+        smartSuggestionItemsAway: itemsAway,
+        smartSuggestionRecipeCount: recipeCount,
+        recommendedRecipes: recommended,
+        trendingRecipes: trending,
       );
-    }).toList();
-
-    state = state.copyWith(
-      isLoading: false,
-      currentUser: const User(
-        userId: 1,
-        email: 'mutombo@mealchemy.com',
-        displayName: 'Mutombo',
-        role: 'user',
-      ),
-      //smart suggestion data will come from the reicipe suggestion
-      //repository once that feature is built
-      smartSuggestionItemsAway: 3,
-      smartSuggestionRecipeCount: 10,
-      recommendedRecipes: recommended,
-    );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to load dashboard. Please try again.',
+      );
+    }
   }
 }
-
-//Provider
+ 
+// Provider
 final dashboardProvider =
     StateNotifierProvider<DashboardNotifier, DashboardState>((ref) {
-  return DashboardNotifier(ref);
+  return DashboardNotifier(ref.watch(dashboardRepositoryProvider));
 });
