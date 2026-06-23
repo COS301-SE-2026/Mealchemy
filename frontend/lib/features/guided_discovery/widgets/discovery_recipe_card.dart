@@ -56,6 +56,17 @@ class DiscoveryRecipeCard extends StatelessWidget {
                         recipe.imageUrl,
                         fit: BoxFit.cover,
                         alignment: Alignment.center,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: AppColors.surfaceMuted,
+                            alignment: Alignment.center,
+                            child: const Icon(
+                              Icons.restaurant,
+                              color: AppColors.textMuted,
+                              size: 42,
+                            ),
+                          );
+                        },
                       ),
                       Positioned(
                         left: 14,

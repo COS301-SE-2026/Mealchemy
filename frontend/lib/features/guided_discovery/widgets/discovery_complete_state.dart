@@ -177,6 +177,17 @@ class _RecommendedRecipeCard extends StatelessWidget {
             child: Image.network(
               recipe.imageUrl,
               fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: AppColors.surfaceMuted,
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    Icons.restaurant,
+                    color: AppColors.textMuted,
+                    size: 36,
+                  ),
+                );
+              },
             ),
           ),
           Expanded(

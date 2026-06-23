@@ -28,16 +28,29 @@ class DiscoveryHeader extends StatelessWidget {
             children: [
               IconButton(
                 onPressed: () {},
-                icon: const Icon(Icons.add, color: AppColors.textLight),
+                icon: const Icon(
+                  Icons.add,
+                  color: AppColors.textLight,
+                ),
               ),
               Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    _DiscoveryTab(label: 'Discover', selected: true),
-                    SizedBox(width: 32),
-                    _DiscoveryTab(label: 'Sizzles', selected: false),
-                  ],
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      _DiscoveryTab(
+                        label: 'Discover',
+                        selected: true,
+                      ),
+                      SizedBox(width: 24),
+                      _DiscoveryTab(
+                        label: 'Sizzles',
+                        selected: false,
+                      ),
+                    ],
+                  ),
                 ),
               ),
               IconButton(
@@ -90,6 +103,7 @@ class _DiscoveryTab extends StatelessWidget {
       children: [
         Text(
           label,
+          maxLines: 1,
           style: AppTextStyles.heading2.copyWith(
             color: selected ? AppColors.textLight : AppColors.textMuted,
             fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
