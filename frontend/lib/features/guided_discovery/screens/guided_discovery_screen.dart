@@ -62,12 +62,14 @@ class GuidedDiscoveryScreen extends ConsumerWidget {
                               Expanded(
                                 child: state.isComplete
                                     ? DiscoveryCompleteState(
-                                      likedCount: state.likedRecipeIds.length,
-                                      dislikedCount: state.dislikedRecipeIds.length,
-                                      tasteSignals: state.topTasteSignals,
-                                      recommendedRecipe: state.recommendedRecipe,
-                                      onReset: notifier.resetDiscovery,
-                                    )
+                                        likedCount: state.likedRecipeIds.length,
+                                        dislikedCount:
+                                            state.dislikedRecipeIds.length,
+                                        tasteSignals: state.topTasteSignals,
+                                        recommendedRecipe:
+                                            state.recommendedRecipe,
+                                        onReset: notifier.resetDiscovery,
+                                      )
                                     : Column(
                                         children: [
                                           Expanded(
@@ -83,10 +85,14 @@ class GuidedDiscoveryScreen extends ConsumerWidget {
                                                   onSwipeRight: notifier
                                                       .likeCurrentRecipe,
                                                   child: DiscoveryRecipeCard(
-                                                    recipe: state.currentRecipe!,
-                                                    currentIndex: state.currentIndex,
-                                                    totalRecipes: state.totalRecipes,
-                                                    onViewRecipe: () => _showRecipePreview(
+                                                    recipe:
+                                                        state.currentRecipe!,
+                                                    currentIndex:
+                                                        state.currentIndex,
+                                                    totalRecipes:
+                                                        state.totalRecipes,
+                                                    onViewRecipe: () =>
+                                                        _showRecipePreview(
                                                       context,
                                                       state.currentRecipe!,
                                                     ),
@@ -278,7 +284,12 @@ class _SwipeableRecipeCardState extends State<_SwipeableRecipeCard> {
         duration: Duration(milliseconds: _isAnimatingOut ? 180 : 120),
         curve: Curves.easeOutCubic,
         transform: Matrix4.identity()
-          ..translate(_dragOffset.dx, _dragOffset.dy)
+          ..translateByDouble(
+            _dragOffset.dx,
+            _dragOffset.dy,
+            0,
+            1,
+          )
           ..rotateZ(_rotation),
         child: Stack(
           children: [
