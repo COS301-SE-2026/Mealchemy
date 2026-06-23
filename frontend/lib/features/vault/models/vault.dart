@@ -3,21 +3,20 @@ class Vault {
   final int? ownerId;
   final String vaultType;
   final String name;
-  final DateTime createdAt;
 
-  const Vault(
-      {required this.vaultId,
-      this.ownerId,
-      required this.vaultType,
-      required this.name,
-      required this.createdAt});
+  const Vault({
+    required this.vaultId,
+    this.ownerId,
+    required this.vaultType,
+    required this.name,
+  });
 
   factory Vault.fromJson(Map<String, dynamic> json) {
     return Vault(
-        vaultId: json['vaultId'],
-        ownerId: json['ownerId'],
-        vaultType: json['vaultType'],
-        name: json['name'],
-        createdAt: DateTime.parse(json['createdAt'] as String));
+      vaultId: json['vault_id'],
+      ownerId: json['owner_id'],
+      vaultType: json['vault_type'],
+      name: json['name'],
+    );
   }
 }

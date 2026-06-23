@@ -52,26 +52,17 @@ class _VaultFolderCardState extends ConsumerState<VaultFolderCard>
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
   @override
   Widget build(BuildContext context) {
-    final recipesAsync =
-        ref.watch(folderRecipeDisplayProvider(widget.folder.folderId));
+    final recipesAsync = ref.watch(
+      folderRecipesProvider(widget.folder.folderId),
+    );
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -143,7 +134,7 @@ class _VaultFolderCardState extends ConsumerState<VaultFolderCard>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.folder.folderName,
+                            widget.folder.name,
                             style: AppTextStyles.title.copyWith(
                               color: AppColors.textLight,
                               fontWeight: FontWeight.w600,

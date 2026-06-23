@@ -10,6 +10,6 @@ class AppRoutes {
   static const String addIngredient = '/pantry/add';
   static const String showcase = '/component_showcase';
   static const String signup = '/signup';
-  static const String addRecipe = '/add-recipe';
+  static const String addRecipe = '/recipe/add';
   static const String recipeDetail = '/recipe/:id';
 }

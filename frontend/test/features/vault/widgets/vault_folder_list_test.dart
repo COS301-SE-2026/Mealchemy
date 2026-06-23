@@ -13,13 +13,13 @@ void main() {
     VaultFolder(
       folderId: 1,
       vaultId: 1,
-      folderName: 'Breakfast',
+      name: 'Breakfast',
       createdAt: DateTime(2026, 1, 1),
     ),
     VaultFolder(
       folderId: 2,
       vaultId: 1,
-      folderName: 'Dinner',
+      name: 'Dinner',
       createdAt: DateTime(2026, 1, 2),
     ),
   ];

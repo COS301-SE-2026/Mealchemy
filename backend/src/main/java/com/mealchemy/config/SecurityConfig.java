@@ -30,11 +30,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/register").permitAll()
                 .requestMatchers("/auth/login").permitAll()
-                .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/vaults/**").permitAll()
-                .requestMatchers("/folders/**").permitAll()
-                .requestMatchers("/recipefolders/**").permitAll()
-
+                .requestMatchers("/actuator/**").permitAll()  // ← add this
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

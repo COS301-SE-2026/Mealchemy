@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mealchemy/core/shared_widgets/atoms/app_button.dart';
 import 'package:mealchemy/core/shared_widgets/atoms/app_card.dart';
@@ -7,28 +6,27 @@ import 'package:mealchemy/core/shared_widgets/atoms/app_text_field.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/core/utils/validators.dart';
-import '../providers/auth_provider.dart';
 
-class LoginForm extends ConsumerStatefulWidget {
+class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
 
   @override
-  ConsumerState<LoginForm> createState() => _LoginFormState();
+  State<LoginForm> createState() => _LoginFormState();
 }
 
-class _LoginFormState extends ConsumerState<LoginForm> {
+class _LoginFormState extends State<LoginForm> {
   // Input controllers for the email and password fields
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   bool _isLoading = false;
-  // Validation error variables
+  //Validation error variables
   String? _emailError;
   String? _passwordError;
 
   @override
   void dispose() {
-    // Frees memory once the widget is removed
+    //Frees memory once the widget is romoved
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -42,29 +40,19 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     return _emailError == null && _passwordError == null;
   }
 
-  // On click login button logic
-  Future<void> _handleLogin() async {
+  //On click login button logic
+  void _handleLogin() {
     if (!_validate()) return;
-
     setState(() => _isLoading = true);
-
-    final success = await ref.read(authProvider.notifier).login(
-      _emailController.text.trim(),
-      _passwordController.text,
-    );
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    if (success) {
-      context.go('/vault');
-    } else {
-      final error = ref.read(authProvider).errorMessage;
-      setState(() => _emailError = error);
-    }
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        context.go('/vault');
+      }
+    });
   }
 
-  // OR CONTINUE WITH divider row
+  //OR CONTINUE WITH divider row
   Widget _buildDivider() {
     return Row(
       children: [
@@ -94,7 +82,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Welcome Back heading
+            //Welcome Back heading
             Text(
               'Welcome Back',
               textAlign: TextAlign.center,
@@ -104,7 +92,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             ),
             const SizedBox(height: 8),
 
-            // Subtitle
+            //Subtitle
             Text(
               'Sign in to access your digital pantry',
               textAlign: TextAlign.center,
@@ -114,7 +102,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             ),
             const SizedBox(height: 32),
 
-            // Email input field
+            //Email input field
             AppTextField.standard(
               hint: 'chef@mealchemy.com',
               label: 'Email Address',
@@ -124,7 +112,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             ),
             const SizedBox(height: 16),
 
-            // Password label and forgot password link row
+            //Password label and forgot password link row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -132,6 +120,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                   'Password',
                   style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.textLight,
+                    // fontWeight: FontWeight.w500,
                   ),
                 ),
                 AppButton.text(
@@ -143,19 +132,20 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             ),
             const SizedBox(height: 6),
 
-            // Password input field
+            //Password input field(hinding the text)
             AppTextField.private(
               hint: '........',
               controller: _passwordController,
               onChanged: (_) {
-                if (_passwordError != null) {
+                if (_passwordError != null){
                   setState(() => _passwordError = null);
                 }
+                  
               },
             ),
             const SizedBox(height: 24),
 
-            // Login button with loading state
+            //Login button with loading state
             AppButton.primary(
               label: 'Log In',
               onPressed: _isLoading ? null : _handleLogin,
@@ -166,16 +156,17 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             ),
             const SizedBox(height: 24),
 
-            // OR CONTINUE WITH divider
+            //OR CONTINUE WITH divider
             _buildDivider(),
             const SizedBox(height: 24),
 
-            // Google sign in button
+            //Google sign in button
             AppButton.outlined(
               label: 'Sign in with Google',
               onPressed: () {},
               isFullWidth: true,
               isRounded: true,
+              // leftIcon: Icons.g_mobiledata,
               customColor: AppColors.accentMuted,
               customBorderColor: AppColors.accent,
             ),
