@@ -152,10 +152,10 @@ jobs:
           JWT_EXPIRATION_MS: ${{ secrets.JWT_EXPIRATION_MS }}
         run: ./mvnw verify --no-transfer-progress -DfailIfNoTests=true
 
-      #sha is v5.5.4
+      #sha is v7.0.0
       - name: Upload coverage to Codecov
         if: ${{ env.ACT != 'true' }}
-        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: backend
@@ -346,10 +346,10 @@ jobs:
               print(f'Coverage {pct:.1f}% is below the 80% threshold')
               sys.exit(1)
              
-#code coverage v5.5.4
+#code coverage v7.0.0
       - name: Upload coverage to Codecov
         if: ${{ env.ACT != 'true' }}
-        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: frontend
