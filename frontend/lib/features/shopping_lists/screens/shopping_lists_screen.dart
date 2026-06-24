@@ -7,11 +7,11 @@ import '../../../core/shared_widgets/Organisms/app_navbar.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/shopping_list.dart';
-import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
+import '../providers/shopping_list_provider.dart';
 import '../widgets/shopping_list_row.dart';
 import '../widgets/shopping_section_header.dart';
 
-//main Shopping Lists overview screen
+//main overview screen
 class ShoppingListsScreen extends ConsumerWidget {
   const ShoppingListsScreen({super.key});
 
@@ -22,7 +22,12 @@ class ShoppingListsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.bgLight,
       body: shoppingLists.when(
-        data: (state) => _ShoppingListsContent(state: state),
+        data: (state) => _ShoppingListsContent(
+          state: state,
+          onSearchChanged: (query) {
+            ref.read(shoppingListsProvider.notifier).updateSearchQuery(query);
+          },
+        ),
         loading: () => const Center(
           child: CircularProgressIndicator(
             color: AppColors.primary,
@@ -52,36 +57,44 @@ class ShoppingListsScreen extends ConsumerWidget {
   }
 }
 
-//loaded content for Shopping Lists overview screen
+//loaded content for shopping lists overview screen
 class _ShoppingListsContent extends StatelessWidget {
   const _ShoppingListsContent({
     required this.state,
+    required this.onSearchChanged,
   });
 
   final ShoppingListsState state;
+  final ValueChanged<String> onSearchChanged;
 
   @override
   Widget build(BuildContext context) {
-    final groupedLists = state.groupedLists;
+    final groupedLists = state.groupedFilteredLists;
+    final listWidgets = state.filteredLists.isEmpty
+        ? <Widget>[const _EmptySearchState()]
+        : _buildSections(
+            context: context,
+            groupedLists: groupedLists,
+          );
 
     return SafeArea(
       bottom: false,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(24, 22, 24, 96),
         children: [
-          const _ShoppingListsTopBar(),
+          _ShoppingListsTopBar(
+            searchQuery: state.searchQuery,
+            onSearchChanged: onSearchChanged,
+          ),
           const SizedBox(height: 26),
           const _ShoppingListsTitle(),
           const SizedBox(height: 30),
           ShoppingSectionHeader(
             title: 'Lists',
-            trailing: '${state.lists.length} lists',
+            trailing: '${state.filteredLists.length} lists',
           ),
           const SizedBox(height: 34),
-          ..._buildSections(
-            context: context,
-            groupedLists: groupedLists,
-          ),
+          ...listWidgets,
         ],
       ),
     );
@@ -130,15 +143,110 @@ class _ShoppingListsContent extends StatelessWidget {
 }
 
 //top icon row for search/add/camera actions
-class _ShoppingListsTopBar extends StatelessWidget {
-  const _ShoppingListsTopBar();
+class _ShoppingListsTopBar extends StatefulWidget {
+  const _ShoppingListsTopBar({
+    required this.searchQuery,
+    required this.onSearchChanged,
+  });
+
+  final String searchQuery;
+  final ValueChanged<String> onSearchChanged;
+
+  @override
+  State<_ShoppingListsTopBar> createState() => _ShoppingListsTopBarState();
+}
+
+class _ShoppingListsTopBarState extends State<_ShoppingListsTopBar> {
+  late final TextEditingController _searchController;
+  var _searchOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController(text: widget.searchQuery);
+  }
+
+  @override
+  void didUpdateWidget(covariant _ShoppingListsTopBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.searchQuery != _searchController.text) {
+      _searchController.text = widget.searchQuery;
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  //clears search, closes search field
+  void _clearSearch() {
+    _searchController.clear();
+    widget.onSearchChanged('');
+
+    setState(() {
+      _searchOpen = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_searchOpen) {
+      return TextField(
+        controller: _searchController,
+        autofocus: true,
+        onChanged: widget.onSearchChanged,
+        style: AppTextStyles.body.copyWith(
+          color: AppColors.textLight,
+        ),
+        decoration: InputDecoration(
+          hintText: 'Search lists',
+          hintStyle: AppTextStyles.body.copyWith(
+            color: AppColors.textMuted,
+          ),
+          prefixIcon: const Icon(
+            Icons.search,
+            color: AppColors.textMuted,
+          ),
+          suffixIcon: IconButton(
+            onPressed: _clearSearch,
+            icon: const Icon(
+              Icons.close,
+              color: AppColors.textLight,
+            ),
+          ),
+          filled: true,
+          fillColor: AppColors.surfaceLight,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: const BorderSide(
+              color: AppColors.divider,
+            ),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(
+              color: AppColors.primary,
+            ),
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      );
+    }
+
     return Row(
       children: [
         IconButton(
-          onPressed: () {},
+          onPressed: () {
+            setState(() {
+              _searchOpen = true;
+            });
+          },
           icon: const Icon(
             Icons.search,
             color: AppColors.textLight,
@@ -171,7 +279,7 @@ class _ShoppingListsTopBar extends StatelessWidget {
   }
 }
 
-//large title row for Shopping Lists heading
+//title row for shopping lists heading
 class _ShoppingListsTitle extends StatelessWidget {
   const _ShoppingListsTitle();
 
@@ -197,6 +305,25 @@ class _ShoppingListsTitle extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+//shown when search has no matching lists
+class _EmptySearchState extends StatelessWidget {
+  const _EmptySearchState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 40),
+      child: Text(
+        'No shopping lists found.',
+        textAlign: TextAlign.center,
+        style: AppTextStyles.body.copyWith(
+          color: AppColors.textMuted,
+        ),
+      ),
     );
   }
 }

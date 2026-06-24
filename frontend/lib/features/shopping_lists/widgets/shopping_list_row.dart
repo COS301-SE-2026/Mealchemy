@@ -148,7 +148,8 @@ class _ListText extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          list.subtitle,
+          //dynamic subtitles
+          list.displaySubtitle,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: AppTextStyles.bodySmall.copyWith(

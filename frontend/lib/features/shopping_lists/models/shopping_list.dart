@@ -23,6 +23,15 @@ class ShoppingList {
 
   int get itemCount => items.length;
 
+  //returns subtitle text from latest item count
+  String get displaySubtitle {
+    if (section == 'FROM YOUR RECIPES') {
+      return '$itemCount items · Ready to shop';
+    }
+
+    return '$itemCount items added by you';
+  }
+
   ShoppingList copyWith({
     String? id,
     String? title,

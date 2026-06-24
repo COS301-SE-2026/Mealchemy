@@ -4,6 +4,7 @@ import '../../../core/constants/app_config.dart';
 import '../models/shopping_list.dart';
 import '../repositories/mock_shopping_list_repository.dart';
 import '../repositories/shopping_list_repository.dart';
+import '../models/shopping_list_item.dart';
 
 //select mock/API
 final shoppingListRepositoryProvider = Provider<ShoppingListRepository>((ref) {
@@ -21,13 +22,16 @@ final shoppingListsProvider =
   ShoppingListsNotifier.new,
 );
 
-//current state of Shopping Lists flow. tracks lists and item checked states
+//current state of shopping list, tracks lists and item checked states
 class ShoppingListsState {
-  const ShoppingListsState({
+    const ShoppingListsState({
     required this.lists,
+    this.searchQuery = '',
   });
 
   final List<ShoppingList> lists;
+  //search functionality
+  final String searchQuery;
 
   //returns one list by id
   ShoppingList? getListById(String id) {
@@ -50,16 +54,44 @@ class ShoppingListsState {
     return grouped;
   }
 
-  ShoppingListsState copyWith({
+  //returns lists filtered by search query
+  List<ShoppingList> get filteredLists {
+    final cleanedQuery = searchQuery.trim().toLowerCase();
+
+    if (cleanedQuery.isEmpty) {
+      return lists;
+    }
+
+    return lists.where((list) {
+      return list.title.toLowerCase().contains(cleanedQuery) ||
+          list.displaySubtitle.toLowerCase().contains(cleanedQuery);
+    }).toList();
+  }
+
+  //groups filtered lists by section label
+  Map<String, List<ShoppingList>> get groupedFilteredLists {
+    final grouped = <String, List<ShoppingList>>{};
+
+    for (final list in filteredLists) {
+      grouped.putIfAbsent(list.section, () => []);
+      grouped[list.section]!.add(list);
+    }
+
+    return grouped;
+  }
+
+    ShoppingListsState copyWith({
     List<ShoppingList>? lists,
+    String? searchQuery,
   }) {
     return ShoppingListsState(
       lists: lists ?? this.lists,
+      searchQuery: searchQuery ?? this.searchQuery,
     );
   }
 }
 
-//handles shopping list interactions and updates state
+//handles shopping list interactions, updates state
 class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
   late final ShoppingListRepository _repository;
 
@@ -98,7 +130,53 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     );
   }
 
-  //resets shopping lists to original mock/API data
+  //adds new item
+  void addItemToList({
+    required String listId,
+    required String name,
+    required String quantity,
+    required String category,
+  }) {
+    final current = state.valueOrNull;
+    final cleanedName = name.trim();
+    final cleanedQuantity = quantity.trim();
+    final cleanedCategory = category.trim().toUpperCase();
+
+    if (current == null || cleanedName.isEmpty || cleanedCategory.isEmpty) {
+      return;
+    }
+
+    final newItem = ShoppingListItem(
+      id: cleanedName.toLowerCase().replaceAll(' ', '-'),
+      name: cleanedName,
+      quantity: cleanedQuantity.isEmpty ? '-' : cleanedQuantity,
+      category: cleanedCategory,
+    );
+
+    final updatedLists = current.lists.map((list) {
+      if (list.id != listId) return list;
+
+      return list.copyWith(
+        items: [...list.items, newItem],
+      );
+    }).toList();
+
+    state = AsyncData(
+      current.copyWith(lists: updatedLists),
+    );
+  }
+
+  //updates search query
+  void updateSearchQuery(String query) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    state = AsyncData(
+      current.copyWith(searchQuery: query),
+    );
+  }
+
+  //resets
   Future<void> resetShoppingLists() async {
     state = const AsyncLoading();
 

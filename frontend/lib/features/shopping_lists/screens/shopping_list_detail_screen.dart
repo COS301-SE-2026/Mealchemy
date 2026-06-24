@@ -10,6 +10,7 @@ import '../providers/shopping_list_provider.dart';
 import '../widgets/shopping_bottom_action_bar.dart';
 import '../widgets/shopping_item_row.dart';
 import '../widgets/shopping_section_header.dart';
+import '../../../core/routes/app_routes.dart';
 
 //detail screen for one shopping list
 class ShoppingListDetailScreen extends ConsumerWidget {
@@ -49,6 +50,18 @@ class ShoppingListDetailScreen extends ConsumerWidget {
                     itemId: itemId,
                   );
             },
+            onAddItem: ({
+              required name,
+              required quantity,
+              required category,
+            }) {
+              ref.read(shoppingListsProvider.notifier).addItemToList(
+                    listId: list.id,
+                    name: name,
+                    quantity: quantity,
+                    category: category,
+                  );
+            },
           );
         },
         loading: () => const Center(
@@ -74,10 +87,16 @@ class _ShoppingListDetailContent extends StatelessWidget {
   const _ShoppingListDetailContent({
     required this.list,
     required this.onToggleItem,
+    required this.onAddItem,
   });
 
   final ShoppingList list;
   final ValueChanged<String> onToggleItem;
+  final void Function({
+    required String name,
+    required String quantity,
+    required String category,
+  }) onAddItem;
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +110,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(28, 14, 28, 210),
             children: [
               _DetailTopBar(
-                onBack: () => context.pop(),
+                onBack: () => context.go(AppRoutes.shoppingLists),
               ),
               const SizedBox(height: 42),
               ShoppingSectionHeader(title: list.title),
@@ -105,7 +124,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
             bottom: 118,
             child: ShoppingBottomActionBar(
               onMicTap: () {},
-              onAddTap: () {},
+              onAddTap: () => _showAddItemDialog(context),
               onFilterTap: () {},
             ),
           ),
@@ -114,11 +133,105 @@ class _ShoppingListDetailContent extends StatelessWidget {
             right: 28,
             bottom: 42,
             child: _UpdatePantryButton(
-              onTap: () {},
+              onTap: () {
+                final checkedCount = list.items.where((item) => item.checked).length;
+
+                final message = checkedCount == 0
+                    ? 'No checked items to update.'
+                    : checkedCount == 1
+                        ? '1 item sent to pantry.'
+                        : '$checkedCount items sent to pantry.';
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(message),
+                    backgroundColor: AppColors.primary,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
             ),
           ),
         ],
       ),
+    );
+  }
+
+  //opens dialog to add temp mock shopping item
+  Future<void> _showAddItemDialog(BuildContext context) async {
+    final nameController = TextEditingController();
+    final quantityController = TextEditingController();
+    final categoryController = TextEditingController(text: 'Produce');
+
+    final result = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppColors.bgLight,
+          title: Text(
+            'Add Item',
+            style: AppTextStyles.heading2.copyWith(
+              color: AppColors.primary,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _AddItemField(
+                controller: nameController,
+                label: 'Item name',
+              ),
+              const SizedBox(height: 12),
+              _AddItemField(
+                controller: quantityController,
+                label: 'Quantity',
+              ),
+              const SizedBox(height: 12),
+              _AddItemField(
+                controller: categoryController,
+                label: 'Category',
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => context.pop(),
+              child: Text(
+                'Cancel',
+                style: AppTextStyles.button.copyWith(
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                context.pop({
+                  'name': nameController.text,
+                  'quantity': quantityController.text,
+                  'category': categoryController.text,
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.textDark,
+              ),
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+
+    nameController.dispose();
+    quantityController.dispose();
+    categoryController.dispose();
+
+    if (result == null) return;
+
+    onAddItem(
+      name: result['name'] ?? '',
+      quantity: result['quantity'] ?? '',
+      category: result['category'] ?? '',
     );
   }
 
@@ -254,6 +367,45 @@ class _UpdatePantryButton extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+//text field used inside add item dialog
+class _AddItemField extends StatelessWidget {
+  const _AddItemField({
+    required this.controller,
+    required this.label,
+  });
+
+  final TextEditingController controller;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      style: AppTextStyles.body.copyWith(
+        color: AppColors.textLight,
+      ),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: AppTextStyles.bodySmall.copyWith(
+          color: AppColors.tertiaryMuted,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderSide: const BorderSide(
+            color: AppColors.inputBorder,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: const BorderSide(
+            color: AppColors.primary,
+          ),
+          borderRadius: BorderRadius.circular(8),
         ),
       ),
     );
