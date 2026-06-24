@@ -13,16 +13,12 @@ import '../../features/recipe/screens/add_recipe_screen.dart';
 import '../../features/shopping_lists/screens/shopping_lists_screen.dart';
 import '../../features/shopping_lists/screens/shopping_list_detail_screen.dart';
 
-
 final appRouter = GoRouter(
- 
+  initialLocation: AppRoutes.login,
 
-    initialLocation: AppRoutes.shoppingLists,
-    
-    
-    // Sets the first screen shown when the app launches. 
-                                    // During development: change this to your screen (e.g. AppRoutes.pantry)
-                                    // Before committing: ALWAYS reset this back to AppRoutes.login
+  // Sets the first screen shown when the app launches.
+  // During development: change this to your screen (e.g. AppRoutes.pantry)
+  // Before committing: ALWAYS reset this back to AppRoutes.login
   routes: [
     GoRoute(
       path: AppRoutes.login,
