@@ -10,6 +10,7 @@ import '../../features/pantry/screens/add_ingredient_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
 import '../../features/recipe/screens/recipe_detail_screen.dart';
 import '../../features/recipe/screens/add_recipe_screen.dart';
+import '../../features/discovery/screens/discovery_screen.dart';
 
 
 final appRouter = GoRouter(
@@ -62,6 +63,10 @@ final appRouter = GoRouter(
         final id = int.parse(state.pathParameters['id']!);
         return RecipeDetailScreen(recipeId: id);
       },
+    ),
+    GoRoute(
+      path: AppRoutes.discovery,
+      builder: (context, state) => const DiscoveryScreen(),
     ),
   ],
 );

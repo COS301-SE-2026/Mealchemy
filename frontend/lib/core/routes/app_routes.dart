@@ -12,4 +12,5 @@ class AppRoutes {
   static const String signup = '/signup';
   static const String addRecipe = '/add-recipe';
   static const String recipeDetail = '/recipe/:id';
+  static const String discovery = '/discovery';
 }
