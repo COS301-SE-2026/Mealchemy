@@ -48,11 +48,16 @@ class DashboardPantryCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
                   children: [
-                    Text(
-                      '${state.pantryItemCount}',
-                      style: AppTextStyles.display.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w900,
+                    ShaderMask(
+                      blendMode: BlendMode.srcIn,
+                      shaderCallback: (bounds) =>
+                          AppColors.brand.createShader(bounds),
+                      child: Text(
+                        '${state.pantryItemCount}',
+                        style: AppTextStyles.display.copyWith(
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 6),

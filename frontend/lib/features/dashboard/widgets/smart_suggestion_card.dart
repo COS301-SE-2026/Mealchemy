@@ -12,7 +12,7 @@ class SmartSuggestionCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(dashboardProvider);
 
-    return AppCard.dark(
+    return AppCard.gradient(
       borderRadius: 20,
       padding: const EdgeInsets.all(16),
       child: Column(
