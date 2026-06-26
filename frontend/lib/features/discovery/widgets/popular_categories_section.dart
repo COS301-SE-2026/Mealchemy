@@ -72,7 +72,7 @@ class _CategoryItem extends StatelessWidget {
               shape: BoxShape.circle,
               border: isSelected
                   ? Border.all(color: AppColors.primary, width: 2.5)
-                  : Border.all(color: Colors.transparent, width: 2.5),
+                  : Border.all(color: AppColors.accentSoft, width: 1.5),
             ),
             child: Padding(
               padding: const EdgeInsets.all(2),

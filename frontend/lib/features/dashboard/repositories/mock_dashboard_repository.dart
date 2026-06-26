@@ -29,12 +29,11 @@ class MockDashboardRepository implements DashboardRepository {
     return const [
       DashboardRecipeCardData(
         recipe: Recipe(
-
           recipeId: 1,
           title:  'Saffron-Infused Risotto',
           prepTimeMins: 15,
           cookingTimeMins:  30,
-          photoUrl:  ' ',
+          photoUrl:  'https://images.unsplash.com/photo-1673439782150-8e14d276b5d4?w=400',
         ),
         matchPercent: 92,
          tag:  'HIGH PROTEIN',
@@ -48,7 +47,7 @@ class MockDashboardRepository implements DashboardRepository {
           prepTimeMins: 20,
           cookingTimeMins: 180,
 
-          photoUrl:  '',
+          photoUrl:  'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400',
         ),
         matchPercent: 85,
         tag: 'HIGH PROTEIN',
@@ -61,7 +60,7 @@ class MockDashboardRepository implements DashboardRepository {
           title: ' Avocado & Kale Superbowl',
           prepTimeMins: 15,
           cookingTimeMins: 25,
-          photoUrl: '',
+          photoUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400',
         ),
         matchPercent: 80,
         tag: 'PLANT BASED',
@@ -73,7 +72,7 @@ class MockDashboardRepository implements DashboardRepository {
            title: 'Butter Chicken ',
           prepTimeMins:  20,
           cookingTimeMins: 35,
-          photoUrl: '',
+          photoUrl: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400',
         ),
          matchPercent: 76,
 
@@ -86,7 +85,7 @@ class MockDashboardRepository implements DashboardRepository {
           title: 'Dark Chocolate & Gold Ganache ',
            prepTimeMins: 30,
           cookingTimeMins: 20,
-          photoUrl: '',
+          photoUrl: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400',
         ),
         matchPercent: 70,
          tag: 'INDULGENT ',
@@ -98,7 +97,7 @@ class MockDashboardRepository implements DashboardRepository {
           title: ' Miso Glazed Salmon',
           prepTimeMins: 10,
            cookingTimeMins: 15,
-          photoUrl: '',
+          photoUrl: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=400',
         ),
         matchPercent: 68,
         tag: ' HIGH PROTEIN',
@@ -114,7 +113,7 @@ class MockDashboardRepository implements DashboardRepository {
         recipe: Recipe(
           recipeId: 3,
           title: 'Avocado & Kale Superbowl ',
-          photoUrl: '',
+          photoUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400',
         ),
         trendType: TrendType.trendingNow,
          subtitle: '4.2k saves this week',
@@ -123,7 +122,7 @@ class MockDashboardRepository implements DashboardRepository {
         recipe: Recipe(
           recipeId: 5,
           title: 'Dark Chocolate & Gold Ganache',
-          photoUrl: '',
+          photoUrl: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400',
         ),
         trendType: TrendType.editorsChoice,
         subtitle: 'New seasonal favourite',
@@ -132,7 +131,7 @@ class MockDashboardRepository implements DashboardRepository {
         recipe: Recipe(
           recipeId: 4,
            title: 'Butter Chicken ',
-          photoUrl: '',
+          photoUrl: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400',
         ),
 
         trendType: TrendType.trendingNow,

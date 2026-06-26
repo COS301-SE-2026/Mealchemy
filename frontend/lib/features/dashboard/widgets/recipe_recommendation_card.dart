@@ -25,22 +25,18 @@ class RecipeRecommendationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => context.push(
-
         AppRoutes.recipeDetail.replaceFirst(':id', '${data.recipe.recipeId}'),
       ),
       child: ClipRRect(
-
         borderRadius: BorderRadius.circular(16),
         child: SizedBox(
-
           width: 180,
           child: Stack(
             fit: StackFit.expand,
             children: [
-
               //image of the recipe
               _RecipeImage(photoUrl: data.recipe.photoUrl),
-              //dark gradent overlay to make text more readable 
+              //dark gradent overlay to make text more readable
               const DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -62,10 +58,14 @@ class RecipeRecommendationCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     //Match badge top left
-                    AppMatchBadge(
-                      percent: data.matchPercent,
-                       size: BadgeSize.small,
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: AppMatchBadge(
+                        percent: data.matchPercent,
+                        size: BadgeSize.small,
+                      ),
                     ),
+
                     const Spacer(),
                     //Category tag
                     Container(
@@ -86,49 +86,45 @@ class RecipeRecommendationCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    //recipe title 
+                    //recipe title
                     Text(
                       data.recipe.title,
                       style: AppTextStyles.bodyBold.copyWith(
-                         color: AppColors.textDark,
+                        color: AppColors.textDark,
                       ),
                       maxLines: 2,
-                       overflow:  TextOverflow.ellipsis,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-                    //time and rating row 
+                    //time and rating row
                     Row(
                       children: [
-
                         Icon(
                           Icons.access_time,
                           size: 12,
-                          color:  AppColors.textDark.withValues(alpha: 0.8),
-                        ), 
+                          color: AppColors.textDark.withValues(alpha: 0.8),
+                        ),
                         const SizedBox(width: 4),
                         Text(
-                           _timeLabel,
+                          _timeLabel,
                           style: AppTextStyles.caption.copyWith(
-                             color: AppColors.textDark.withValues(alpha: 0.8),
+                            color: AppColors.textDark.withValues(alpha: 0.8),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Icon(
                           Icons.star,
-                            size: 12,
-                           color: AppColors.accent,
+                          size: 12,
+                          color: AppColors.accent,
                         ),
                         const SizedBox(width: 4),
                         Text(
-
-                           '${data.rating}',
+                          '${data.rating}',
                           style: AppTextStyles.caption.copyWith(
-
-                             color: AppColors.textDark.withValues(alpha: 0.8),
+                            color: AppColors.textDark.withValues(alpha: 0.8),
                           ),
                         ),
                       ],
-
                     ),
                   ],
                 ),
