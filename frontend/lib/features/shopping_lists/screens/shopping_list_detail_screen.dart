@@ -195,7 +195,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () => context.pop(),
+              onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'Cancel',
                 style: AppTextStyles.button.copyWith(
@@ -205,7 +205,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () {
-                context.pop({
+                Navigator.of(context).pop({
                   'name': nameController.text,
                   'quantity': quantityController.text,
                   'category': categoryController.text,
@@ -222,9 +222,12 @@ class _ShoppingListDetailContent extends StatelessWidget {
       },
     );
 
-    nameController.dispose();
-    quantityController.dispose();
-    categoryController.dispose();
+    //dispose controllers after dialogue finished closing
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      nameController.dispose();
+      quantityController.dispose();
+      categoryController.dispose();
+    });
 
     if (result == null) return;
 
