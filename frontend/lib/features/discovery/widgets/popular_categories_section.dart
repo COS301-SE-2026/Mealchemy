@@ -77,16 +77,7 @@ class _CategoryItem extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(2),
               child: ClipOval(
-                child: Image.network(
-                  category.imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      Container(color: AppColors.surfaceLight),
-                  loadingBuilder: (_, child, progress) {
-                    if (progress == null) return child;
-                    return Container(color: AppColors.surfaceLight);
-                  },
-                ),
+                child: _CategoryImage(imageUrl: category.imageUrl),
               ),
             ),
           ),
@@ -105,3 +96,45 @@ class _CategoryItem extends StatelessWidget {
     );
   }
 }
+
+class _CategoryImage extends StatelessWidget {
+  const _CategoryImage({this.imageUrl});
+ 
+  final String? imageUrl;
+ 
+  @override
+  Widget build(BuildContext context) {
+    if (imageUrl == null || imageUrl!.isEmpty) {
+      return _GradientPlaceholder();
+    }
+ 
+    return Image.network(
+      imageUrl!,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => _GradientPlaceholder(),
+      loadingBuilder: (_, child, progress) {
+        if (progress == null) return child;
+        return _GradientPlaceholder();
+      },
+    );
+  }
+}
+ 
+class _GradientPlaceholder extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppColors.brand,
+      ),
+      child: const Center(
+        child: Icon(
+          Icons.soup_kitchen_outlined,
+          color: AppColors.textDark,
+          size: 26,
+        ),
+      ),
+    );
+  }
+}
+ 

@@ -5,6 +5,7 @@ import 'package:mealchemy/core/shared_widgets/Molecules/app_page_filter.dart';
 import 'package:mealchemy/core/shared_widgets/Organisms/app_navbar.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_section_header.dart';
 import 'package:mealchemy/features/discovery/widgets/popular_categories_section.dart';
+import 'package:mealchemy/features/discovery/providers/discovery_provider.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/core/routes/app_routes.dart';
@@ -26,43 +27,49 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(
+      () => ref.read(discoveryProvider.notifier).loadDiscovery(),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: AppColors.bgLight,
-        body: SafeArea(
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const SizedBox(height: 16),
-            Padding(
-              padding: const  EdgeInsets.symmetric(horizontal: 20),
-              child: AppSectionHeader(
-                title: 'Discover',
-                size: SectionHeaderSize.large,
-                weight: SectionHeaderWeight.bold,
-              ),
+      backgroundColor: AppColors.bgLight,
+      body: SafeArea(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: AppSectionHeader(
+              title: 'Discover',
+              size: SectionHeaderSize.large,
+              weight: SectionHeaderWeight.bold,
             ),
-            //Fillter bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: AppPageFilter(
-                  options: _filters,
-                  selectedIndex: _selectedFilterIndex,
-                  onSelected: (i) => _selectedFilterIndex = i),
-            ),
+          ),
+          //Fillter bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: AppPageFilter(
+                options: _filters,
+                selectedIndex: _selectedFilterIndex,
+                onSelected: (i) => _selectedFilterIndex = i),
+          ),
 
-            //Popular Categories Section
-            const SizedBox(height: 28),
- 
-              const PopularCategoriesSection(),
- 
-              const SizedBox(height: 32),
-          ]),
-        ),
-        bottomNavigationBar: AppNavbar(
+          //Popular Categories Section
+          const SizedBox(height: 28),
+
+          const PopularCategoriesSection(),
+
+          const SizedBox(height: 32),
+        ]),
+      ),
+      bottomNavigationBar: AppNavbar(
         currentRoute: AppRoutes.discovery,
         onRouteSelected: (route) => context.go(route),
       ),
-        );
-
+    );
   }
 }
