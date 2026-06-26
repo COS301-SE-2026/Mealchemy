@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_page_filter.dart';
 import 'package:mealchemy/core/shared_widgets/Organisms/app_navbar.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_section_header.dart';
+import 'package:mealchemy/features/discovery/widgets/popular_categories_section.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/core/routes/app_routes.dart';
@@ -48,6 +49,13 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                   selectedIndex: _selectedFilterIndex,
                   onSelected: (i) => _selectedFilterIndex = i),
             ),
+
+            //Popular Categories Section
+            const SizedBox(height: 28),
+ 
+              const PopularCategoriesSection(),
+ 
+              const SizedBox(height: 32),
           ]),
         ),
         bottomNavigationBar: AppNavbar(

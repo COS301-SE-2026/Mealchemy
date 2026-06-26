@@ -16,26 +16,26 @@ final discoveryRepositoryProvider = Provider<DiscoveryRepository>((ref) {
 //State
 
 class DiscoveryState {
-  final bool isloading;
+  final bool isLoading;
   final String? errorMessage;
   final List<DiscoveryCategory> categories;
-  final int selectedCategoryId;
+  final int? selectedCategoryId;
 
   const DiscoveryState({
-    this.isloading = false,
+    this.isLoading = false,
     this.errorMessage,
     this.categories = const [],
-    this.selectedCategoryId = 0,
+    this.selectedCategoryId ,
   });
 
   DiscoveryState copyWith({
-    bool? isloading,
+    bool? isLoading,
     String? errorMessage,
     List<DiscoveryCategory>? categories,
     int? selectedCategoryId,
   }) {
     return DiscoveryState(
-      isloading: isloading ?? this.isloading,
+      isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
       categories: categories ?? this.categories,
       selectedCategoryId: selectedCategoryId ?? this.selectedCategoryId,
@@ -49,17 +49,17 @@ class DiscoveryNotifier extends StateNotifier<DiscoveryState> {
   final DiscoveryRepository _repository;
 
   Future<void> loadDiscovery() async {
-    state = state.copyWith(isloading: true, errorMessage: null);
+    state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final categories = await _repository.getCategories();
       state = state.copyWith(
-        isloading: false,
+        isLoading: false,
         categories: categories,
         selectedCategoryId: categories.isNotEmpty ? categories.first.id : null,
       );
     } catch (e) {
       state = state.copyWith(
-        isloading: false,
+        isLoading: false,
         errorMessage: 'Failed to load discovery. Please try again.',
       );
     }
