@@ -47,32 +47,46 @@ class AppMatchBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: _padding,
-      decoration: BoxDecoration(
-        color: AppColors.accent,
+    return ClipRRect(
         borderRadius: BorderRadius.circular(100),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.check_circle,
-            size: _iconSize,
-            color: AppColors.textDark,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '$percent% Match',
-            style: AppTextStyles.label.copyWith(
-              color: AppColors.textDark,
-              fontSize: _fontSize,
-              fontWeight: FontWeight.w700,
+        child: Container(
+          padding: _padding,
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(100),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.15),
+              width: 0.8,
             ),
           ),
-        ],
-      ),
-    );
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: _iconSize,
+                height: _iconSize,
+                decoration: const BoxDecoration(
+                  color: AppColors.accent,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.check,
+                  size: _iconSize * 0.65,
+                  color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '$percent% Match',
+                style: AppTextStyles.label.copyWith(
+                  color: AppColors.textDark,
+                  fontSize: _fontSize,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ));
   }
 }
 
