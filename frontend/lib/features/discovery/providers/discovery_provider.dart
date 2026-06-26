@@ -4,7 +4,7 @@ import 'package:mealchemy/features/discovery/models/discovery_category.dart';
 import 'package:mealchemy/features/discovery/repositories/api_discovery_repository.dart';
 import 'package:mealchemy/features/discovery/repositories/discovery_repository.dart';
 import 'package:mealchemy/features/discovery/repositories/mock_discovery_repository.dart';
-
+import 'package:mealchemy/features/discovery/models/explore_item.dart';
 //Switch between the mock and API repository based on the app configuration
 final discoveryRepositoryProvider = Provider<DiscoveryRepository>((ref) {
   if (AppConfig.useMockData) {
@@ -20,12 +20,14 @@ class DiscoveryState {
   final String? errorMessage;
   final List<DiscoveryCategory> categories;
   final int? selectedCategoryId;
+  final List<ExploreItem> exploreItems;
 
   const DiscoveryState({
     this.isLoading = false,
     this.errorMessage,
     this.categories = const [],
     this.selectedCategoryId ,
+    this.exploreItems = const [],
   });
 
   DiscoveryState copyWith({
@@ -33,12 +35,14 @@ class DiscoveryState {
     String? errorMessage,
     List<DiscoveryCategory>? categories,
     int? selectedCategoryId,
+    List<ExploreItem>? exploreItems,
   }) {
     return DiscoveryState(
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
       categories: categories ?? this.categories,
       selectedCategoryId: selectedCategoryId ?? this.selectedCategoryId,
+      exploreItems: exploreItems ?? this.exploreItems,
     );
   }
 }
@@ -52,10 +56,12 @@ class DiscoveryNotifier extends StateNotifier<DiscoveryState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final categories = await _repository.getCategories();
+      final exploreItems = await _repository.getExploreItems();
       state = state.copyWith(
         isLoading: false,
         categories: categories,
         selectedCategoryId: categories.isNotEmpty ? categories.first.id : null,
+        exploreItems: exploreItems,
       );
     } catch (e) {
       state = state.copyWith(
