@@ -23,6 +23,7 @@ class DashboardPantryCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(dashboardProvider);
+    final remaining = state.pantryItemCount - _previewIcons.length;
 
     return AppCard.light(
       borderRadius: 20,
@@ -30,6 +31,7 @@ class DashboardPantryCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Title label only
           Text(
             'IN YOUR PANTRY',
             style: AppTextStyles.label.copyWith(
@@ -38,39 +40,39 @@ class DashboardPantryCard extends ConsumerWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 10),
+
+          const SizedBox(height: 6),
+
+          // Count + Ingredients + button on same row
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Expanded(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    ShaderMask(
-                      blendMode: BlendMode.srcIn,
-                      shaderCallback: (bounds) =>
-                          AppColors.brand.createShader(bounds),
-                      child: Text(
-                        '${state.pantryItemCount}',
-                        style: AppTextStyles.display.copyWith(
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Ingredients',
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                  ],
+              // 42
+              ShaderMask(
+                blendMode: BlendMode.srcIn,
+                shaderCallback: (bounds) =>
+                    AppColors.brand.createShader(bounds),
+                child: Text(
+                  '${state.pantryItemCount}',
+                  style: AppTextStyles.display.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color:AppColors.surfaceWhite,
+                  ),
                 ),
               ),
-              const SizedBox(width: 8),
+
+              const SizedBox(width: 6),
+              //Ingredients label small and primary coloured
+              Text(
+                'Ingredients',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+
+              const Spacer(),
+              // add button
               AppIconButton.primary(
                 icon: Icons.add,
                 onPressed: () => context.push(AppRoutes.addIngredient),
@@ -78,7 +80,9 @@ class DashboardPantryCard extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
+
+          //OverLapping icon circls and the number of items
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -93,9 +97,13 @@ class DashboardPantryCard extends ConsumerWidget {
                       child: Container(
                         width: _circleSize,
                         height: _circleSize,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           color: AppColors.primary,
                           shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.primaryLight,
+                            width: 2,
+                          ),
                         ),
                         child: Icon(
                           _previewIcons[index],
@@ -108,12 +116,29 @@ class DashboardPantryCard extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                '+${state.pantryItemCount - _previewIcons.length}',
-                style: AppTextStyles.bodyBold.copyWith(
-                  color: AppColors.textMuted,
+              if (remaining > 0)
+                Container(
+                  width: _circleSize,
+                  height: _circleSize,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.primaryLight,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '+$remaining',
+                      style: AppTextStyles.label.copyWith(
+                        color: AppColors.textDark,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
             ],
           ),
         ],

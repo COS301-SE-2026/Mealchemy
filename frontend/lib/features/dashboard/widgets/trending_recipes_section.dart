@@ -27,16 +27,16 @@ class TrendingRecipesSection extends ConsumerWidget {
             trailing: 'View all',
           ),
         ),
-
-        const SizedBox(height: 8),
-
+        const SizedBox(height: 12),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
             children: List.generate(trending.length, (index) {
-              return _TrendingRecipeTile(
-                data: trending[index],
-                showDivider: index < trending.length - 1,
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: index < trending.length - 1 ? 12 : 0,
+                ),
+                child: _TrendingTile(data: trending[index]),
               );
             }),
           ),
@@ -46,21 +46,16 @@ class TrendingRecipesSection extends ConsumerWidget {
   }
 }
 
-class _TrendingRecipeTile extends StatelessWidget {
-  const _TrendingRecipeTile({
-    required this.data,
-    this.showDivider = true,
-  });
-
+class _TrendingTile extends StatelessWidget {
+  const _TrendingTile({required this.data});
   final TrendingRecipeData data;
-  final bool showDivider;
 
   String get _badgeLabel {
     switch (data.trendType) {
       case TrendType.trendingNow:
         return 'TRENDING NOW';
       case TrendType.editorsChoice:
-        return 'EDITOR\'S CHOICE';
+        return "EDITOR'S CHOICE";
     }
   }
 
@@ -68,6 +63,7 @@ class _TrendingRecipeTile extends StatelessWidget {
     switch (data.trendType) {
       case TrendType.trendingNow:
         return Icons.trending_up;
+
       case TrendType.editorsChoice:
         return Icons.workspace_premium_outlined;
     }
@@ -75,99 +71,123 @@ class _TrendingRecipeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        InkWell(
-          onTap: () => context.push(
-            AppRoutes.recipeDetail.replaceFirst(':id', '${data.recipe.recipeId}'),
-          ),
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: SizedBox(
-                    width: 64,
-                    height: 64,
-                    child: _ThumbnailImage(photoUrl: data.recipe.photoUrl),
-                  ),
-                ),
+    return GestureDetector(
+      onTap: () => context.push(
+        AppRoutes.recipeDetail.replaceFirst(':id', '${data.recipe.recipeId}'),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceWhite,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: SizedBox(
+                width: 72,
+                height: 72,
+                child: _ThumbnailImage(photoUrl: data.recipe.photoUrl),
+              ),
+            ),
+            const SizedBox(width: 12),
 
-                const SizedBox(width: 14),
-
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            //text contet
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  //Badge
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          Icon(_badgeIcon, size: 11, color: AppColors.accent),
-                          const SizedBox(width: 4),
-                          Text(
-                            _badgeLabel,
-                            style: AppTextStyles.label.copyWith(
-                              color: AppColors.accent,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ],
+                      Icon(
+                        _badgeIcon,
+                        size: 11,
+                        color: AppColors.accent,
                       ),
-
-                      const SizedBox(height: 4),
-
+                      const SizedBox(width: 4),
                       Text(
-                        data.recipe.title,
-                        style: AppTextStyles.bodyBold.copyWith(
-                          color: AppColors.textLight,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-
-                      const SizedBox(height: 2),
-
-                      Text(
-                        data.subtitle,
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.textMuted,
+                        _badgeLabel,
+                        style: AppTextStyles.label.copyWith(
+                          color: AppColors.accent,
+                          letterSpacing: 0.8,
                         ),
                       ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 4),
 
-                const SizedBox(width: 8),
 
-                Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
-              ],
+                  //the recipe tittle 
+                  Text(
+                    data.recipe.title,
+                    style: AppTextStyles.bodyBold.copyWith(
+                      color: AppColors.textLight,
+
+                    ),
+                    maxLines: 2,
+
+                     overflow: TextOverflow.ellipsis,
+                  ),
+
+                  const SizedBox(height: 2),
+                  //subtitle
+                  Text(
+                    data.subtitle,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.chevron_right,
+               color: AppColors.textMuted,
+               size: 20,
+            ),
 
-        if (showDivider)
-          Divider(height: 1, color: AppColors.divider),
-      ],
+          ],
+        ),
+      ),
     );
   }
 }
 
 class _ThumbnailImage extends StatelessWidget {
   const _ThumbnailImage({this.photoUrl});
-
   final String? photoUrl;
 
   @override
   Widget build(BuildContext context) {
     if (photoUrl == null || photoUrl!.isEmpty) {
-      return Container(color: AppColors.primaryLight);
+      return Container(
+        decoration: const BoxDecoration(gradient: AppColors.brand),
+        child: const Icon(
+          Icons.soup_kitchen_outlined,
+
+          color: AppColors.textDark,
+          size: 28,
+        ),
+      );
     }
 
     return Image.network(
       photoUrl!,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Container(color: AppColors.primaryLight),
+      errorBuilder: (_, __, ___) => Container(
+        decoration: const BoxDecoration(gradient: AppColors.brand),
+      ),
+      
       loadingBuilder: (_, child, progress) {
         if (progress == null) return child;
         return Container(color: AppColors.surfaceLight);
