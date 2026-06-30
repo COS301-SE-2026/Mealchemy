@@ -39,3 +39,16 @@ CREATE TRIGGER trg_pantry_ingredients_updated_at
     BEFORE UPDATE ON pantry_ingredients
     FOR EACH ROW
     EXECUTE FUNCTION set_updated_at();
+
+-- user_preference_weights
+CREATE TRIGGER trg_user_preference_weights_updated_at
+    BEFORE UPDATE ON user_preference_weights
+    FOR EACH ROW
+    EXECUTE FUNCTION set_updated_at();
+
+
+-- user_cuisine_affinities
+CREATE TRIGGER trg_user_cuisine_affinities_updated_at
+    BEFORE UPDATE ON user_cuisine_affinities
+    FOR EACH ROW
+    EXECUTE FUNCTION set_updated_at();

@@ -13,3 +13,6 @@
 
 INSERT INTO vaults (owner_id, vault_type, name)
 VALUES (NULL, 'GLOBAL'::vault_type_enum, 'Global');
+WHERE NOT EXISTS (
+    SELECT 1 FROM vaults WHERE vault_type = 'global'
+);

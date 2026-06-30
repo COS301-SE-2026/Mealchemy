@@ -13,8 +13,9 @@ WITH inserted_user AS (
     VALUES (
         'admin@mealchemy.com',
         '$2b$12$FCqc84bIoMfMKxomm9E66OVKA.VPdvbQm6QwJc3k5G1.JQ6GNlE5m', -- NOSONAR
-        (SELECT role_id FROM roles WHERE role_name = 'admin')
+        ARRAY['admin']::user_role_enum[]
     )
+    ON CONFLICT (email) DO NOTHING
     RETURNING user_id
 ),
 inserted_profile AS (

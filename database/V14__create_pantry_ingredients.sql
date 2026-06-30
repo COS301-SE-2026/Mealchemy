@@ -8,18 +8,13 @@
 -- =============================================================================
 
 CREATE TABLE pantry_ingredients (
-    p_ingredient_id            SERIAL              PRIMARY KEY,
-    user_id                    INT                 NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    name                       VARCHAR(200)        NOT NULL,
-    category                   pantry_category_enum,
-    quantity                   DECIMAL(10,3),
-    unit                       VARCHAR(30),
-    is_out_of_stock            BOOLEAN             NOT NULL DEFAULT FALSE,
-    
-    price_paid_zar_cents      INTEGER, -- Stored in ZAR cents. R19.99 = 1999.
-
-    created_at                 TIMESTAMPTZ         NOT NULL DEFAULT NOW(),
-    updated_at                 TIMESTAMPTZ         NOT NULL DEFAULT NOW()
+    p_ingredient_id     SERIAL           PRIMARY KEY,
+    user_id             INT              NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    ing_id              INT              NOT NULL REFERENCES ingredient_catalogue(ing_id),
+    quantity            DECIMAL(10,3)    NOT NULL,
+    unit                VARCHAR(30),
+    created_at          TIMESTAMPTZ      NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ      NOT NULL DEFAULT NOW()
 );
 
 -- Index for fast retrieval of all pantry items for a given user.
