@@ -11,7 +11,7 @@ CREATE TABLE user_profile (
     user_id         INT                 NOT NULL UNIQUE REFERENCES users(user_id) ON DELETE CASCADE, -- ON DELETE CASCADE: removing a user removes their profile. Unique - enforces 1:1
     display_name    VARCHAR(80),
     avatar_url      TEXT,
-    preferred_unit  preferred_unit_enum NOT NULL DEFAULT 'metric',
+    preferred_unit  preferred_unit_enum NOT NULL DEFAULT 'METRIC',
     equipment       JSONB               NOT NULL DEFAULT '[]'::jsonb, -- Array of available cooking appliances that user has. eg) ["oven", "airfryer", "blender", "stovetop"]
     updated_at      TIMESTAMPTZ         NOT NULL DEFAULT NOW(),
 
