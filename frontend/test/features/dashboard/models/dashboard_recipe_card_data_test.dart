@@ -14,7 +14,7 @@ void main() {
       );
 
       expect(data.recipe.recipeId, 1);
-      expect(data.recipe.title, 'Saffron Risotto ');
+      expect(data.recipe.title, 'Saffron Risotto');
       expect(data.matchPercent, 92);
       expect(data.tag, 'HIGH PROTEIN ');
       expect(data.rating, 4.9);
