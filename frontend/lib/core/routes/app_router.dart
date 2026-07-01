@@ -12,16 +12,18 @@ import '../../features/recipe/screens/recipe_detail_screen.dart';
 import '../../features/recipe/screens/add_recipe_screen.dart';
 import '../../features/discovery/screens/discovery_screen.dart';
 
+import '../../features/shopping_lists/screens/shopping_lists_screen.dart';
+import '../../features/shopping_lists/screens/shopping_list_detail_screen.dart';
+import '../../features/guided_discovery/screens/guided_discovery_screen.dart';
 
 final appRouter = GoRouter(
- 
-
-    initialLocation: AppRoutes.dashboard,
-    
-    
+  initialLocation: AppRoutes.login,
     // Sets the first screen shown when the app launches. 
                                     // During development: change this to your screen (e.g. AppRoutes.pantry)
                                     // Before committing: ALWAYS reset this back to AppRoutes.login
+  // Sets the first screen shown when the app launches.
+  // During development: change this to your screen (e.g. AppRoutes.pantry)
+  // Before committing: ALWAYS reset this back to AppRoutes.login
   routes: [
     GoRoute(
       path: AppRoutes.login,
@@ -30,6 +32,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.dashboard,
       builder: (context, state) => const DashboardScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.guidedDiscovery,
+      builder: (context, state) => const GuidedDiscoveryScreen(),
     ),
     GoRoute(
       path: AppRoutes.pantry,
@@ -54,6 +60,17 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.addRecipe,
       builder: (context, state) => const AddRecipeScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.shoppingLists,
+      builder: (context, state) => const ShoppingListsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.shoppingListDetail,
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return ShoppingListDetailScreen(listId: id);
+      },
     ),
     GoRoute(
       //note this has a parameter. to see screen: initialLocation: '/recipe/1',

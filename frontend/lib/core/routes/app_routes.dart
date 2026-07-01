@@ -3,6 +3,7 @@
 class AppRoutes {
   static const String login = '/login';
   static const String dashboard = '/dashboard';
+  static const String guidedDiscovery = '/guided-discovery';
   static const String pantry = '/pantry';
   static const String vault = '/vault';
   static const String preference = '/preference';
@@ -13,4 +14,6 @@ class AppRoutes {
   static const String addRecipe = '/add-recipe';
   static const String recipeDetail = '/recipe/:id';
   static const String discovery = '/discovery';
+  static const String shoppingLists = '/shopping-lists';
+  static const String shoppingListDetail = '/shopping-lists/:id';
 }
