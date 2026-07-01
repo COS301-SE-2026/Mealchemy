@@ -16,7 +16,7 @@ void main() {
       expect(data.recipe.recipeId, 1);
       expect(data.recipe.title, 'Saffron Risotto');
       expect(data.matchPercent, 92);
-      expect(data.tag, 'HIGH PROTEIN ');
+      expect(data.tag, 'HIGH PROTEIN');
       expect(data.rating, 4.9);
     });
 
@@ -24,7 +24,7 @@ void main() {
       const data = DashboardRecipeCardData(
         recipe: Recipe(recipeId: 1, title: 'Test'),
         matchPercent: 76,
-        tag: 'COMFORT FOOD ',
+        tag: 'COMFORT FOOD',
         rating: 4.2,
       );
       expect(data.matchPercent, 76);
@@ -42,7 +42,7 @@ void main() {
     test('recipe reference is preserved correctly', () {
       const recipe = Recipe(
         recipeId: 5,
-        title: ' Miso Glazed  Salmon',
+        title: 'Miso Glazed  Salmon',
         prepTimeMins: 10,
         cookingTimeMins: 15,
         photoUrl: 'https://example.com/salmon.jpg',
@@ -50,7 +50,7 @@ void main() {
       const data = DashboardRecipeCardData(
         recipe: recipe,
         matchPercent: 68,
-        tag: ' HIGH PROTEIN',
+        tag: 'HIGH PROTEIN',
         rating: 4.4,
       );
 
