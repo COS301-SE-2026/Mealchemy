@@ -47,18 +47,6 @@ class AppSectionHeader extends StatelessWidget {
     }
   }
 
-  // bar thickness scaled to the text size
-  double get _barThickness {
-    switch (size) {
-      case SectionHeaderSize.small:
-        return 1.5;
-      case SectionHeaderSize.medium:
-        return 2;
-      case SectionHeaderSize.large:
-        return 2.5;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Row(

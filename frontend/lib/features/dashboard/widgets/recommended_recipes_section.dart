@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_section_header.dart';
-import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/features/dashboard/providers/dashboard_provider.dart';
 import 'package:mealchemy/features/dashboard/widgets/recipe_recommendation_card.dart';
 

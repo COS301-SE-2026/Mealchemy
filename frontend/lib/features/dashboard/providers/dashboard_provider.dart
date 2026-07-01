@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/constants/app_config.dart';
 import 'package:mealchemy/features/dashboard/models/dashboard_recipe_card_data.dart';
-import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
 import 'package:mealchemy/features/dashboard/models/trending_recipe_data.dart';
 import 'package:mealchemy/features/dashboard/repositories/api_dashboard_repository.dart';
 import 'package:mealchemy/features/dashboard/repositories/dashboard_repository.dart';
