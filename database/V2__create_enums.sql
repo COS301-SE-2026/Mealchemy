@@ -19,7 +19,14 @@ CREATE TYPE preferred_unit_enum AS ENUM (
 );
 
 -- User's role: admin, general (different privileges)
-CREATE TYPE user_role AS ENUM (
+CREATE TYPE user_role_enum AS ENUM (
     'ADMIN',
     'USER'
+);
+
+-- Flagged recipes possible statuses
+CREATE TYPE flagged_status_enum AS ENUM (
+    'PENDING',
+    'REVIEWED',
+    'RESOLVED'
 );

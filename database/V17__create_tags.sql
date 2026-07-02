@@ -1,10 +1,8 @@
 -- =============================================================================
--- V16__create_preference_lookup_tables.sql
+-- V17__create_tags.sql
 -- 
--- Served to Flutter via GET /api/preferences/options
--- Lookup tables for USER_PREFERENCES jsonb arrays.
--- value field is what gets written into the user's jsonb arrays
--- label field is display-only for the Flutter UI
+-- Lookup table for dietary and lifestyle tags that can be applied to recipes
+-- Tags mirror DIETARY_RESTRICTION_OPTIONS values where applicable.
 -- =============================================================================
 
 CREATE TABLE tags (
@@ -13,3 +11,6 @@ CREATE TABLE tags (
     is_active   BOOLEAN     NOT NULL DEFAULT TRUE
 );
 
+COMMENT ON TABLE tags   IS 'Dietary and lifestyle tags applied to recipes. Used in the hard filter phase of the recommendation engine.';
+COMMENT ON COLUMN tags.tag_name     IS 'eg.) vegan, halal, gluten free - Mirrors applicable dietary_restriction_options.value.';
+COMMENT ON COLUMN tags.is_active IS 'False - hide a tage without deleting existing recipe_tags rows.'
