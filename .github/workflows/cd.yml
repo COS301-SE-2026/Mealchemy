@@ -28,7 +28,7 @@ name: CD
   # steps:
     #same as above upto CLI
     # Configure docker for artifact registry. uses Wif credentials obtained
-    #build backend docker image. tags with github sha and latest
+    #build backend docker image. tags with github sha
     #check backend image size. warns at 500MG, fails at 700MG. runs before push.
     #push backend image. pushes both tags
 
@@ -204,7 +204,6 @@ jobs:
             --cache-from "${{ env.BACKEND_IMAGE }}:latest" \
             -f infrastructure/Dockerfile.backend \
             -t "${{ env.BACKEND_IMAGE }}:${{ github.sha }}" \
-            -t "${{ env.BACKEND_IMAGE }}:latest" \
             .
 
       # Image-size gate for Artefact Registry
@@ -233,7 +232,6 @@ jobs:
           BACKEND_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/backend
         run: |
           docker push "${{ env.BACKEND_IMAGE }}:${{ github.sha }}"
-          docker push "${{ env.BACKEND_IMAGE }}:latest"
 
   # ------------------------------ BUILD ENGINE ---------------------------------------------------------
   # Parallel with build-backend
@@ -272,7 +270,6 @@ jobs:
             --cache-from "${{ env.ENGINE_IMAGE }}:latest" \
             -f infrastructure/Dockerfile.engine \
             -t "${{ env.ENGINE_IMAGE }}:${{ github.sha }}" \
-            -t "${{ env.ENGINE_IMAGE }}:latest" \
             .
 
       # Warn at 400 MB, fail at 600 MB
@@ -295,7 +292,6 @@ jobs:
           ENGINE_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/engine
         run: |
           docker push "${{ env.ENGINE_IMAGE }}:${{ github.sha }}"
-          docker push "${{ env.ENGINE_IMAGE }}:latest"
 
   # ------------------------------ DEPLOY BACKEND -------------------------------------------------------
   # Outputs the live backend URL so deploy-engine can pass it as BACKEND_URL
