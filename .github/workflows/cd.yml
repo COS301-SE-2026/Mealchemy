@@ -1,0 +1,395 @@
+name: CD
+
+
+#---------notes---------
+# this is build and deploy. 
+# ci has to pass first for this to run. Runs on merge (pr accpeted)
+# push to deploymnet = builds and deploys to staging
+# push tomain =builds and deploys to production
+# - occurs on merge into main or deployment therefore ci.yml should pass first
+
+#-------jobs--------- in detail comments in sections
+# migrate 
+  # Runs Flyway against the real target database before any new image is deployed.
+  # Uses the non-pooled Neon connection so advisory locks work for the full migration.
+  # The deploy job only starts if this succeeds a migration failure leaves the current backend container serving traffic untouched.
+
+# deploy
+  #depends on migrate succeeding
+
+#deploy-landing-page
+  # independent from backend and engine.
+  # fixed from depth 2 to github event before. has 0's placeholders as no before comit to compare on first comit.
+
+#------------------------------------------------------------------------------------------------------------
+
+
+on:
+  push:
+    branches:
+      - deployment
+      - main
+
+#identifiers
+env:
+  GCP_PROJECT_ID: mealchemy
+  GCP_PROJECT_NUMBER: "309582551982"
+  GCP_REGION: europe-west3
+  AR_REPOSITORY: mealchemy
+  WIF_POOL_ID: github-pool
+  WIF_PROVIDER_ID: github-provider
+  CD_SA_EMAIL: cd-deployer@mealchemy.iam.gserviceaccount.com
+  RUNTIME_SA_EMAIL: mealchemy-backend-runtime@mealchemy.iam.gserviceaccount.com
+  ENGINE_RUNTIME_SA_EMAIL: mealchemy-engine-runtime@mealchemy.iam.gserviceaccount.com
+
+
+
+jobs:
+  #------------------------------ MIGRATE ------------------------------
+
+  migrate:
+    name: Migrate DB (${{ github.ref_name == 'main' && 'production' || 'staging' }})
+    runs-on: ubuntu-latest
+    #added environment gate here instead of deploy job
+    #deploy job already depends on migration
+    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+
+    permissions:
+      contents: read
+      id-token: write
+      #write for id token lets job mint OIDC token to WIF
+    steps:
+      - name: Checkout code
+      #sha tag v4.1.1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+
+        #names environment based on branch, later steps use to pick secrets/services depending
+      - name: Set environment name
+        id: env
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "name=prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=staging" >> "$GITHUB_OUTPUT"
+          fi
+
+        #where WIF used. passed pool path to cd_sa_email
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: >-
+            projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.WIF_POOL_ID }}/providers/${{ env.WIF_PROVIDER_ID }}
+          service_account: ${{ env.CD_SA_EMAIL }}
+
+            #installs gcloud command line tool on runner
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+
+
+      #fetches non-pooled url secret into shell varible passed directly to docker
+      #ensures not in github output or actions log
+      #::add-mask:: redacts value from logs so password doesnt show.
+      #applied for db user, db password.
+      - name: Run Flyway migrations
+        env:
+          ENV: ${{ steps.env.outputs.name }}
+        run: |
+          MIGRATE_URL=$(gcloud secrets versions access latest --secret="mealchemy-migrate-url-${ENV}")
+          echo "::add-mask::${MIGRATE_URL}"
+          DB_USER=$(gcloud secrets versions access latest --secret="mealchemy-db-username-${ENV}")
+          echo "::add-mask::${DB_USER}"
+          DB_PASSWORD=$(gcloud secrets versions access latest --secret="mealchemy-db-password-${ENV}")
+          echo "::add-mask::${DB_PASSWORD}"
+
+          docker run --rm \
+            -v "$(pwd)/database:/flyway/sql" \
+            -e FLYWAY_URL="${MIGRATE_URL}" \
+            -e FLYWAY_USER="${DB_USER}" \
+            -e FLYWAY_PASSWORD="${DB_PASSWORD}" \
+            flyway/flyway:10 \
+            -locations="filesystem:/flyway/sql" \
+            migrate
+
+  # ------------------------------ DEPLOY ----------------------------------------------------------------
+
+  #blocked if migrate job fails. Traffic will keep serving on current running backend.
+
+  deploy:
+    name: Build & Deploy (${{ github.ref_name == 'main' && 'production' || 'staging' }})
+    runs-on: ubuntu-latest
+    needs: migrate
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+      #sha tag v4.1.1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - name: Set environment name
+        id: env
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "name=prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=staging" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: >-
+            projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.WIF_POOL_ID }}/providers/${{ env.WIF_PROVIDER_ID }}
+          service_account: ${{ env.CD_SA_EMAIL }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+
+      #Configure Docker to push to Artifact Registry
+      #docker push doesnt need another login step because local Docker CLI on this runner will authenticate against Artifact Registry using WIF credentials just obtained.
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker "${{ env.GCP_REGION }}-docker.pkg.dev" --quiet
+
+      # --cache-from tries to reuse layers from previously pushed latest images as starting poijnt to speed up build. only changed layers get rebuilt
+      #--pull always fetches latest base image, instead of stale local cashe
+      - name: Build backend Docker image
+        env:
+          BACKEND_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/backend
+        run: |
+          docker build --pull \
+            --cache-from "${{ env.BACKEND_IMAGE }}:latest" \
+            -f infrastructure/Dockerfile.backend \
+            -t "${{ env.BACKEND_IMAGE }}:${{ github.sha }}" \
+            -t "${{ env.BACKEND_IMAGE }}:latest" \
+            .
+
+      # Image-size gate for Artefact Registry
+      # over 700mb failure. 500-700 visible warning but job continues
+      #free tier only give 0.5mb, aim is to catch bloat/image size being too big to avoid incurring fees
+
+      - name: Check backend image size
+        env:
+          BACKEND_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/backend
+        run: |
+          SIZE=$(docker image inspect "${BACKEND_IMAGE}:${{ github.sha }}" --format '{{.Size}}')
+          SIZE_MB=$((SIZE / 1024 / 1024))
+          echo "Backend image size: ${SIZE_MB} MB (uncompressed)"
+          if [ "$SIZE_MB" -gt "700" ]; then
+            echo "::error::Backend image (${SIZE_MB} MB) exceeds 700 MB limit, push blocked."
+            exit 1
+          elif [ "$SIZE_MB" -gt "500" ]; then
+            echo "::warning::Backend image (${SIZE_MB} MB) exceeds 500 MB warn threshold."
+          fi
+        #push to send built image to artifact registry
+      - name: Push backend image
+        env:
+          BACKEND_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/backend
+        run: |
+          docker push "${{ env.BACKEND_IMAGE }}:${{ github.sha }}"
+          docker push "${{ env.BACKEND_IMAGE }}:latest"
+
+      #Build engine image ----------------------------------------------------------------
+      - name: Build engine Docker image
+        env:
+          ENGINE_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/engine
+        run: |
+          docker build --pull \
+            --cache-from "${{ env.ENGINE_IMAGE }}:latest" \
+            -f infrastructure/Dockerfile.engine \
+            -t "${{ env.ENGINE_IMAGE }}:${{ github.sha }}" \
+            -t "${{ env.ENGINE_IMAGE }}:latest" \
+            .
+
+      # Warn at 400 MB, fail at 600 MB
+      - name: Check engine image size
+        env:
+          ENGINE_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/engine
+        run: |
+          SIZE=$(docker image inspect "${ENGINE_IMAGE}:${{ github.sha }}" --format '{{.Size}}')
+          SIZE_MB=$((SIZE / 1024 / 1024))
+          echo "Engine image size: ${SIZE_MB} MB (uncompressed)"
+          if [ "$SIZE_MB" -gt "600" ]; then
+            echo "::error::Engine image (${SIZE_MB} MB) exceeds 600 MB limit, push blocked."
+            exit 1
+          elif [ "$SIZE_MB" -gt "400" ]; then
+            echo "::warning::Engine image (${SIZE_MB} MB) exceeds 400 MB warn threshold."
+          fi
+
+      - name: Push engine image
+        env:
+          ENGINE_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/engine
+        run: |
+          docker push "${{ env.ENGINE_IMAGE }}:${{ github.sha }}"
+          docker push "${{ env.ENGINE_IMAGE }}:latest"
+
+      # Deploy backend to Cloud Run ----------------------------------------------------
+      # Secrets are injected from Secret Manager at runtime, not already in image
+      
+      - name: Deploy backend to Cloud Run
+        env:
+          ENV: ${{ steps.env.outputs.name }}
+          BACKEND_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/backend
+        run: |
+          SECRETS="SPRING_DATASOURCE_URL=mealchemy-db-url-${ENV}:latest,"
+          SECRETS+="SPRING_DATASOURCE_USERNAME=mealchemy-db-username-${ENV}:latest,"
+          SECRETS+="SPRING_DATASOURCE_PASSWORD=mealchemy-db-password-${ENV}:latest,"
+          SECRETS+="JWT_SECRET=mealchemy-jwt-secret:latest"
+        
+
+          gcloud run deploy "mealchemy-backend-${ENV}" \
+            --image "${BACKEND_IMAGE}:${{ github.sha }}" \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --service-account "${{ env.RUNTIME_SA_EMAIL }}" \
+            --set-secrets "${SECRETS}" \
+            --set-env-vars "SPRING_FLYWAY_ENABLED=false,JWT_EXPIRATION_MS=86400000" \
+            --allow-unauthenticated \
+            --min-instances 0 \
+            --max-instances 3 \
+            --memory 512Mi \
+            --cpu 1 \
+            --port 8080 \
+            --timeout 60 \
+            --no-traffic
+
+          # Shift 100% of traffic to the new revision only after deploy succeeds
+        
+          gcloud run services update-traffic "mealchemy-backend-${ENV}" \
+            --to-latest \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}"
+
+        #--memory 512Mi caps each running container instance at 512 megabytes
+        #--allow-unauthenticated backend is public facing service reachable without gcp level auth token. application auth still applies on requests. This flag is for network reachability not app secruity
+        # --min-instances 0 - scales to 0 when idle. No costs while no one is using but cold start hapen after idle periods
+        # --max-instances 3 - a ceiling to ensure traffic spike or runaway bug from scaling infinitnly and using free tier compute
+        # cloud run expects conatiner to listen on port 8080
+        #requests taking loger 60s are killed. 
+        #--no-traffic flag - new revision is deployed and running but receives zero live traffic.
+        #two step deploy, deploy succeeds then traffic switch. 
+
+
+
+      # Fetch backend url for engine
+      #this is new deployed version link
+    
+      - name: Get backend Cloud Run URL
+        id: backend_url
+        env:
+          ENV: ${{ steps.env.outputs.name }}
+        run: |
+          URL=$(gcloud run services describe "mealchemy-backend-${ENV}" \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --format="value(status.url)")
+          echo "url=${URL}" >> "$GITHUB_OUTPUT"
+
+      # Deploy engine to Cloud Run
+      # --no-allow-unauthenticated flag as engine not public reachable. backend calls it only
+      # Uses ENGINE_RUNTIME_SA_EMAIL, a separate SA with no db secret access. ensures engine never touches db
+      - name: Deploy engine to Cloud Run
+        env:
+          ENV: ${{ steps.env.outputs.name }}
+          ENGINE_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/engine
+        run: |
+          gcloud run deploy "mealchemy-engine-${ENV}" \
+            --image "${ENGINE_IMAGE}:${{ github.sha }}" \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --service-account "${{ env.ENGINE_RUNTIME_SA_EMAIL }}" \
+            --set-env-vars "BACKEND_URL=${{ steps.backend_url.outputs.url }}" \
+            --no-allow-unauthenticated \
+            --min-instances 0 \
+            --max-instances 2 \
+            --memory 512Mi \
+            --cpu 1 \
+            --port 8000 \
+            --timeout 60 \
+            --no-traffic
+
+          gcloud run services update-traffic "mealchemy-engine-${ENV}" \
+            --to-latest \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}"
+
+      # Grant the backend runtime SA invoker access on the engine so the backend can call it.
+      # RUNTIME_SA (backend) gets run.invoker on the engine service.
+      # ENGINE_RUNTIME_SA (engine) has no db secret access.
+      - name: Grant backend runtime SA invoker access on engine
+        env:
+          ENV: ${{ steps.env.outputs.name }}
+        run: |
+          gcloud run services add-iam-policy-binding "mealchemy-engine-${ENV}" \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --member="serviceAccount:${{ env.RUNTIME_SA_EMAIL }}" \
+            --role="roles/run.invoker"
+
+      - name: Print deployed service URLs
+        env:
+          ENV: ${{ steps.env.outputs.name }}
+        run: |
+          BACKEND_URL=$(gcloud run services describe "mealchemy-backend-${ENV}" \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --format="value(status.url)")
+          ENGINE_URL=$(gcloud run services describe "mealchemy-engine-${ENV}" \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --format="value(status.url)")
+          echo "Environment : ${ENV}"
+          echo "Backend URL : ${BACKEND_URL}"
+          echo "Engine URL  : ${ENGINE_URL} (private)"
+          echo "Flutter app : flutter run --dart-define=BACKEND_URL=${BACKEND_URL}"
+
+  #-------------------------------Firebase hosting---------------------------
+
+  # Deploys the static landing-page/ directory to Firebase Hosting.
+  # Only runs when files under landing-page/ changed in this push.
+  # HEAD~1 with fetch-depth: 2 misses multi-commit pushes, fixed with before/after comparison
+
+  deploy-landing-page:
+    name: Deploy landing page
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          fetch-depth: 0
+
+      - name: Check if landing page changed
+        id: changes
+        run: |
+          BEFORE="${{ github.event.before }}"
+          AFTER="${{ github.sha }}"
+       
+          if [ "${BEFORE}" = "0000000000000000000000000000000000000000" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only "${BEFORE}" "${AFTER}" | grep -q '^landing-page/'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+      #before holds comit the branch pointed to rght before push happenend. 0's are placeholders as no before comit for first comit.
+      # Warn at 500 KB, fail at 2 MB
+      - name: Check landing page size
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          SIZE=$(du -sb landing-page/ | cut -f1)
+          SIZE_KB=$((SIZE / 1024))
+          echo "Landing page size: ${SIZE_KB} KB"
+          if [ "$SIZE_KB" -gt "2048" ]; then
+            echo "::error::Landing page (${SIZE_KB} KB) exceeds 2 MB hard limit."
+            exit 1
+          elif [ "$SIZE_KB" -gt "500" ]; then
+            echo "::warning::Landing page (${SIZE_KB} KB) exceeds 500 KB warn threshold."
+          fi
+
+      - name: Deploy to Firebase Hosting
+        if: steps.changes.outputs.changed == 'true'
+        run: npx firebase-tools deploy --only hosting --token "${{ secrets.FIREBASE_TOKEN }}" --project mealchemy-firebase

@@ -1,6 +1,13 @@
 
 #----notes -------------------------------------------------------------------
 # This is the script that from a fresh clone of repo, deployment can be replicated
+
+# upload file onto cloud shell terminal.
+#use commnad to make executable : 
+#       chmod +x ~/gcp-setup.sh
+#tuse commnad to run executable :
+#       ~/gcp-setup.sh
+
 #----api explanation----
 # run.googleapis.com - cloud run serverless containers. Hosts both backend and engine containers
 # artifactregistry.googleapis.com - docker image storage. Images from Ci go here before Cloud Run can deploy it
