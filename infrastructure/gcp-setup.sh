@@ -59,7 +59,7 @@ set -euo pipefail
 PROJECT_ID="mealchemy"
 PROJECT_NUMBER="309582551982"
 REGION="europe-west3"
-GITHUB_ORG="cos301-se-2026"
+GITHUB_ORG="COS301-SE-2026"
 GITHUB_REPO="Mealchemy"
 
 #name of artifact registery
