@@ -2,16 +2,14 @@
 -- V13__create_recipe_ingredients.sql
 --
 -- Each row is one ingredient line in a recipe, eg.) "200g chicken breast"
---
--- name_raw stores the ingredient exactly as the user typed it - avoids restricting the user
--- at upload time, and enables fuzzy matching against pantry_ingredients
+-- References an ingredient from the ingredient catalogue - where you can find all ingredient information
 -- =============================================================================
 
 CREATE TABLE recipe_ingredients (
     ingredient_id   SERIAL          PRIMARY KEY,
     recipe_id       INT             NOT NULL REFERENCES recipes(recipe_id) ON DELETE CASCADE,
     ing_id          INT             NOT NULL REFERENCES ingredient_catalogue(ing_id),
-    quantity        DECIMAL(10,3)   NOT NULL,
+    quantity        DECIMAL(10,3),
     unit            VARCHAR(30),
 
     -- Controls the display order of ingredients in the recipe view

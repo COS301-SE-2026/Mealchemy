@@ -10,11 +10,11 @@
 CREATE TABLE user_preference_weights (
     weight_id       SERIAL          PRIMARY KEY,
     user_id         INT             NOT NULL UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
-    pantry_match    DECIMAL(5,4)    NOT NULL,
-    cuisine         DECIMAL(5,4)    NOT NULL,   
-    nutrition       DECIMAL(5,4)    NOT NULL,
-    freshness       DECIMAL(5,4)    NOT NULL,
-    novelty         DECIMAL(5,4)    NOT NULL,
+    pantry_match    DECIMAL(5,4)    NOT NULL DEFAULT 0.4000,
+    cuisine         DECIMAL(5,4)    NOT NULL DEFAULT 0.2500,   
+    nutrition       DECIMAL(5,4)    NOT NULL DEFAULT 0.1000,
+    freshness       DECIMAL(5,4)    NOT NULL DEFAULT 0.1500,
+    novelty         DECIMAL(5,4)    NOT NULL DEFAULT 0.1000,
     updated_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 );
 

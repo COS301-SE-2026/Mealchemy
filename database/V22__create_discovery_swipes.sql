@@ -6,11 +6,11 @@
 -- =============================================================================
 
 CREATE TABLE discovery_swipes (
-    swipe_id            SERIAL          PRIMARY KEY,
-    user_id             INT             NOT NULL REFERENCES users(user_id)      ON DELETE CASCADE,
-    recipe_id           INT             NOT NULL REFERENCES recipes(recipe_id)  ON DELETE CASCADE,
-    action              VARCHAR(10)     NOT NULL,
-    swiped_at           TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    swipe_id            SERIAL              PRIMARY KEY,
+    user_id             INT                 NOT NULL REFERENCES users(user_id)      ON DELETE CASCADE,
+    recipe_id           INT                 NOT NULL REFERENCES recipes(recipe_id)  ON DELETE CASCADE,
+    action              swipe_action_enum   NOT NULL,
+    swiped_at           TIMESTAMPTZ         NOT NULL DEFAULT NOW(),
     weights_snapshot    JSONB
 );
 

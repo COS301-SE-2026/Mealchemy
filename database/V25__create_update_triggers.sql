@@ -1,5 +1,5 @@
 -- =============================================================================
--- V17__create_updated_at_triggers.sql
+-- V25__create_updated_at_triggers.sql
 --
 -- PostgreSQL trigger that automatically sets updated_at = NOW() on every UPDATE, for all tables that have an updated_at column.
 --

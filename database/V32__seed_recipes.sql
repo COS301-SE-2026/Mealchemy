@@ -1,5 +1,5 @@
 -- =============================================================================
--- V20__seed_recipes.sql
+-- V32__seed_recipes.sql
 --
 -- Seeds 5 recipes owned by the admin account.
 --

@@ -1,5 +1,5 @@
 -- =============================================================================
--- V22__seed_recipe_steps.sql
+-- V34__seed_recipe_steps.sql
 --
 -- Seeds all steps for all 5 recipes in the correct numbered order
 -- The UNIQUE constraint on (recipe_id, step_nr) prevents duplicate step numbers

@@ -17,8 +17,8 @@ CREATE TABLE flagged_recipes (
 
 CREATE INDEX idx_flagged_recipe_id ON flagged_recipes(recipe_id);
 
-COMMENT ON TABLE flagged_recipes                    IS 'Shows the recipes that have been flagged by a user as a violation of community guideline in the global repository.';
-COMMENT ON COLUMN flagged_recipes.recipe_id         IS 'The recipe being flagged.';
-COMMENT ON COLUMN flagged_recipes.flagged_by_user   IS 'Which user flagged the recipe.';
-COMMENT ON COLUMN flagged_recipes.reason            IS 'Why the user flagged the recipe eg.) Inappropriate language.';
-COMMENT ON COLUMN flagged_recipes.status            IS 'pending, reviewed, removed.';
+COMMENT ON TABLE flagged_recipes                        IS 'Shows the recipes that have been flagged by a user as a violation of community guideline in the global repository.';
+COMMENT ON COLUMN flagged_recipes.recipe_id             IS 'The recipe being flagged.';
+COMMENT ON COLUMN flagged_recipes.flagged_by_user_id    IS 'Which user flagged the recipe.';
+COMMENT ON COLUMN flagged_recipes.reason                IS 'Why the user flagged the recipe eg.) Inappropriate language.';
+COMMENT ON COLUMN flagged_recipes.status                IS 'pending, reviewed, removed.';

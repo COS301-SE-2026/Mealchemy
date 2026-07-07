@@ -1,5 +1,5 @@
 -- =============================================================================
--- V19__seed_admin_vault_and_folders.sql
+-- V31__seed_admin_vault_and_folders.sql
 --
 -- Creates the admin's private vault and a General folder inside it
 -- All 5 mock recipes will be placed in the General folder
@@ -9,7 +9,7 @@ WITH private_vault AS (
     INSERT INTO vaults (owner_id, vault_type, name)
     VALUES (
         (SELECT user_id FROM users WHERE email = 'admin@mealchemy.com'),
-        'private'::vault_type_enum,
+        'PRIVATE'::vault_type_enum,
         'My Vault'
     )
     RETURNING vault_id

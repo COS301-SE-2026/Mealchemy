@@ -6,11 +6,11 @@
 -- =============================================================================
 
 CREATE TABLE shopping_lists (
-    shopping_list_id    SERIAL          PRIMARY KEY,
-    user_id             INT             NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    name                VARCHAR(200)    NOT NULL,
-    status              VARCHAR(20),
-    created_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+    shopping_list_id    SERIAL                      PRIMARY KEY,
+    user_id             INT                         NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    name                VARCHAR(200)                NOT NULL,
+    status              shopping_list_status_enum   NOT NULL DEFAULT 'ACTIVE',
+    created_at          TIMESTAMPTZ                 NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_shopping_lists_user_id ON shopping_lists(user_id);

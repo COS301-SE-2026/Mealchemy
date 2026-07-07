@@ -1,5 +1,5 @@
 -- =============================================================================
--- V23__seed_vault_folder_recipes.sql
+-- V35__seed_vault_folder_recipes.sql
 --
 -- Places all 5 seeded recipes into the admin's General folder.
 -- =============================================================================

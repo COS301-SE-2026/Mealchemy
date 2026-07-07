@@ -8,13 +8,13 @@
 -- =============================================================================
 
 CREATE TABLE user_cuisine_affinities (
-    affinity_id     SERIAL      PRIMARY KEY,
-    user_id         INT         NOT NULL REFERENCES users(user_id)  ON DELETE CASCADE,
-    cuisine_value   VARCHAR(50) NOT NULL,
-    affinity_score  DECIMAL(4,3),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    affinity_id     SERIAL          PRIMARY KEY,
+    user_id         INT             NOT NULL REFERENCES users(user_id)  ON DELETE CASCADE,
+    cuisine_value   VARCHAR(50)     NOT NULL,
+    affinity_score  DECIMAL(4,3)    DEFAULT 0.500, -- scale from 0 to 1 therefore 5 is neutral
+    updated_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT user_cuisine_affinities_unique UNIQUE (user_id, cuisine_value); 
+    CONSTRAINT user_cuisine_affinities_unique UNIQUE (user_id, cuisine_value)
 );
 
 CREATE INDEX idx_user_cuisine_affinities_user_id ON user_cuisine_affinities(user_id);

@@ -4,6 +4,9 @@ package com.mealchemy.auth.model;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+import java.util.List;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "users")
@@ -20,10 +23,11 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;  //don't store raw text
 
-    @Column(name = "role_id", nullable = false)
-    private Integer roleId;
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "roles", nullable = false, columnDefinition = "user_role_enum[]")
+    private List<String> roles;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
     @Column(name = "deleted_at")
@@ -50,12 +54,12 @@ public class User {
         this.passwordHash = p;
     }
 
-    public Integer getRoleId() {
-        return roleId; 
+    public List<String> getRoles() {
+        return roles; 
     }
     
-    public void setRoleId(Integer roleId) {
-        this.roleId = roleId;
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
     }
 
     public OffsetDateTime getCreatedAt() {

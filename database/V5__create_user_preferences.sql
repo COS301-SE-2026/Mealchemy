@@ -1,5 +1,5 @@
 -- =============================================================================
--- V6__create_user_preferences.sql
+-- V5__create_user_preferences.sql
 --
 -- Food-related preferences collected on the onboarding preferences page
 -- One row per user (enforced by UNIQUE on user_id)
@@ -28,5 +28,5 @@ COMMENT ON COLUMN user_preferences.dietary_restrictions  IS 'jsonb array. eg.) [
 COMMENT ON COLUMN user_preferences.allergies             IS 'jsonb array. eg.) ["peanuts", "gluten"].';
 COMMENT ON COLUMN user_preferences.disliked_ingredients  IS 'jsonb array. eg.) ["olives", "anchovies"].';
 COMMENT ON COLUMN user_preferences.flavour_profile       IS 'jsonb array of cuisine style preferences. e.g. ["Mediterranean", "Chinese"].';
-COMMENT ON COLUMN user_preference.nutritional_goals      IS 'jsonb array of nutritional_goals, eg) ["low carb, high protein"]';
+COMMENT ON COLUMN user_preferences.nutritional_goals      IS 'jsonb array of nutritional_goals, eg) ["low carb, high protein"]';
 COMMENT ON COLUMN user_preferences.updated_at            IS 'Updated when user edits their preferences.';

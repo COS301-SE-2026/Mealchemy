@@ -28,5 +28,17 @@ CREATE TYPE user_role_enum AS ENUM (
 CREATE TYPE flagged_status_enum AS ENUM (
     'PENDING',
     'REVIEWED',
-    'RESOLVED'
+    'REMOVED'
+);
+
+-- Shopping list statuses
+CREATE TYPE shopping_list_status_enum AS ENUM (
+    'ACTIVE',
+    'COMPLETED'
+);
+
+-- Possible swipe actions
+CREATE TYPE swipe_action_enum AS ENUM (
+    'LIKED',
+    'DISLIKED'
 );

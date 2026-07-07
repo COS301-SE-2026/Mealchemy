@@ -1,5 +1,5 @@
 -- =============================================================================
--- V18__seed_admin.sql
+-- V30__seed_admin.sql
 --
 -- Seeds the default admin account
 -- Only the admin is seeded - other users will register through app (so passwords are correctly salted and hashed)
@@ -9,11 +9,11 @@
 -- =============================================================================
 
 WITH inserted_user AS (
-    INSERT INTO users (email, password_hash, role_id)
+    INSERT INTO users (email, password_hash, roles)
     VALUES (
         'admin@mealchemy.com',
         '$2b$12$FCqc84bIoMfMKxomm9E66OVKA.VPdvbQm6QwJc3k5G1.JQ6GNlE5m', -- NOSONAR
-        ARRAY['admin']::user_role_enum[]
+        ARRAY['ADMIN']::user_role_enum[]
     )
     ON CONFLICT (email) DO NOTHING
     RETURNING user_id
@@ -28,11 +28,12 @@ inserted_profile AS (
     FROM inserted_user
     RETURNING user_id
 )
-INSERT INTO user_preferences (user_id, dietary_restrictions, allergies, disliked_ingredients, flavour_profile)
+INSERT INTO user_preferences (user_id, dietary_restrictions, allergies, disliked_ingredients, flavour_profile, nutritional_goals)
 SELECT
     user_id,
     '[]'::jsonb,
     '[]'::jsonb,
     '[]'::jsonb,
-    '["italian", "asian", "mediterranean", "mexican"]'::jsonb
+    '["italian", "asian", "mediterranean", "mexican"]'::jsonb,
+    '[]'::jsonb
 FROM inserted_user;

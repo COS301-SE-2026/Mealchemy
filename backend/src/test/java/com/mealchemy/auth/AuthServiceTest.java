@@ -5,10 +5,8 @@ package com.mealchemy.auth;
 import com.mealchemy.auth.dto.AuthResponse;
 import com.mealchemy.auth.dto.LoginRequest;
 import com.mealchemy.auth.dto.RegisterRequest;
-import com.mealchemy.auth.model.Role;
 import com.mealchemy.auth.model.User;
 import com.mealchemy.auth.model.UserProfile;
-import com.mealchemy.auth.repository.RoleRepository;
 import com.mealchemy.auth.repository.UserProfileRepository;
 import com.mealchemy.auth.repository.UserRepository;
 import com.mealchemy.auth.service.AuthService;
@@ -29,6 +27,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,7 +39,6 @@ public class AuthServiceTest {
 
     // @Mock - create fake version of dependency
     @Mock private UserRepository userRepository;
-    @Mock private RoleRepository roleRepository;
     @Mock private UserProfileRepository userProfileRepository;
     @Mock private UserPreferencesRepository userPreferencesRepository;
     @Mock private VaultRepository vaultRepository;
@@ -54,7 +52,6 @@ public class AuthServiceTest {
     // reusable test data
     private RegisterRequest validRegisterRequest;
     private LoginRequest validLoginRequest;
-    private Role userRole;
     private User savedUser;
 
     @BeforeEach //runs before every test method
@@ -70,13 +67,10 @@ public class AuthServiceTest {
             "password123!"
         );
 
-        userRole = new Role();
-        userRole.setRoleName("user");
-
         savedUser = new User();
         savedUser.setEmail("test@test.com");
         savedUser.setPasswordHash("$2a$12$hashedpassword");
-        savedUser.setRoleId(1);
+        savedUser.setRoles(List.of("USER"));
     }
 
     // ========== Registration Testing ==========
@@ -100,25 +94,11 @@ public class AuthServiceTest {
         verify(userRepository, never()).save(any());
     }
 
-    @Test
-    void register_whenRoleNotFound_throwsIllegalStateException() {
-        // Arrange
-        when(userRepository.existsByEmail(anyString())).thenReturn(false);
-        when(roleRepository.findByRoleName("user")).thenReturn(Optional.empty()); //no role found
-
-        // Act and Assert
-        assertThrows(
-            IllegalStateException.class,
-            () -> authService.register(validRegisterRequest)
-        );
-    }
-
     // Happy path
     @Test
     void register_withValidRequest_returnsAuthResponseWithToken() {
         // Arrange
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
-        when(roleRepository.findByRoleName("user")).thenReturn(Optional.of(userRole));
         when(passwordEncoder.encode(anyString())).thenReturn("$2a$12$hashedpassword");
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
         when(userProfileRepository.save(any(UserProfile.class))).thenReturn(new UserProfile());
