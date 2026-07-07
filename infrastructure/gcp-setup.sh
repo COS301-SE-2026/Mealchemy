@@ -1,6 +1,7 @@
 
-#notes -------------------------------------------------------------------
-#api explanation:
+#----notes -------------------------------------------------------------------
+# This is the script that from a fresh clone of repo, deployment can be replicated
+#----api explanation----
 # run.googleapis.com - cloud run serverless containers. Hosts both backend and engine containers
 # artifactregistry.googleapis.com - docker image storage. Images from Ci go here before Cloud Run can deploy it
 # secretmanager.googleapis.com - the secret manager. Stores Db credetials and jwt secrte.
@@ -8,7 +9,7 @@
 # iamcredentials.googleapis.com - short lived credential creation. what WIF uses for a temp token instead of permanent key.
 # cloudresourcemanager.googleapis.com - project level resource management. Lets the script run IAM bindings at the project level
 # ----------------------------------------------------------------------------
-#addtioional security 
+#----addtioional security ----
   # - credentital are never hardcoded, echo statements at end of script with placeholders.
   # - follows least privilege rules.
   #     - two separate service accounts. CD_SA and RUNTIME_SA. This separates the idenentiy that changes the system from the identity that operates the system. This limits permissions with malicious attacks.
@@ -18,12 +19,13 @@
   #         provider-level --attribute-condition - happens when GCP receives any token claiming to be from gihub actions, checks repo org.
   #     - service-account-level binding. Checks if token's repository matches exact repo
 # ----------------------------------------------------------------------------
-#additional notes
+#----additional notes----
   # - GitHub proves its identity on every single run via a signed OIDC token.
   # -Gcp verifies that signature against hithub's published keys, checks repo, org conditions and then issues a short lived token. Menas no static credentials to leak or rotate.  
+  # added service account for engine so that db credentials are limited to backend service
     
 # ----------------------------------------------------------------------------
- #overall process
+ #----overall process----
 #  -enable apis
 #  -create artifcat reigstry repo with cleanup policy
 #  -create two service accounts
@@ -61,9 +63,11 @@ WIF_POOL="github-pool"
 WIF_PROVIDER="github-provider"
 CD_SA="cd-deployer"
 RUNTIME_SA="mealchemy-backend-runtime"
+ENGINE_SA="mealchemy-engine-runtime"
 #email gcp use to reference those service accounts
 CD_SA_EMAIL="${CD_SA}@${PROJECT_ID}.iam.gserviceaccount.com"
 RUNTIME_SA_EMAIL="${RUNTIME_SA}@${PROJECT_ID}.iam.gserviceaccount.com"
+ENGINE_SA_EMAIL="${ENGINE_SA}@${PROJECT_ID}.iam.gserviceaccount.com"
 
 gcloud config set project "${PROJECT_ID}"
 #---------------------------------------------------------------------------------------------
@@ -119,7 +123,16 @@ fi
 if ! gcloud iam service-accounts describe "${RUNTIME_SA_EMAIL}" \
     --project="${PROJECT_ID}" &>/dev/null; then
   gcloud iam service-accounts create "${RUNTIME_SA}" \
-    --display-name="Cloud Run Runtime"
+    --display-name="Cloud Run Backend Runtime"
+fi
+
+#ENGINE_SA is a separate identity for the engine container.
+#It intentionally has no access to db secrets
+#engine never touches databse, goes through backend.
+if ! gcloud iam service-accounts describe "${ENGINE_SA_EMAIL}" \
+    --project="${PROJECT_ID}" &>/dev/null; then
+  gcloud iam service-accounts create "${ENGINE_SA}" \
+    --display-name="Cloud Run Engine Runtime"
 fi
 
 #IAM roles
@@ -135,6 +148,10 @@ gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
   --role="roles/artifactregistry.writer"
 
 gcloud iam service-accounts add-iam-policy-binding "${RUNTIME_SA_EMAIL}" \
+  --member="serviceAccount:${CD_SA_EMAIL}" \
+  --role="roles/iam.serviceAccountUser"
+
+gcloud iam service-accounts add-iam-policy-binding "${ENGINE_SA_EMAIL}" \
   --member="serviceAccount:${CD_SA_EMAIL}" \
   --role="roles/iam.serviceAccountUser"
 
@@ -240,12 +257,21 @@ echo "echo -n 'YOUR_STRONG_JWT_SECRET_HERE' | gcloud secrets versions add mealch
 echo ""
 echo "# JWT_EXPIRATION_MS is not a secret - set as a plain env var in cd.yml"
 echo ""
+echo "# Firebase Hosting token (landing page deploy, separate from GCP):"
+echo "# The landing page deploys to a Firebase project that is not linked to this GCP project."
+echo "# Generate a long-lived CI token once and store it as a GitHub Actions secret:"
+echo "#   1. Run: npx firebase-tools login:ci"
+echo "#   2. Copy the printed token."
+echo "#   3. In GitHub: Settings, Secrets, Actions, New secret"
+echo "#      Name: FIREBASE_TOKEN   Value: <the token>"
+echo ""
 echo "cd.yml values (already configured, verify they match):"
-echo "  GCP_PROJECT_ID:     ${PROJECT_ID}"
-echo "  GCP_PROJECT_NUMBER: ${PROJECT_NUMBER}"
-echo "  GCP_REGION:         ${REGION}"
-echo "  AR_REPOSITORY:      ${AR_REPO}"
-echo "  WIF_POOL_ID:        ${WIF_POOL}"
-echo "  WIF_PROVIDER_ID:    ${WIF_PROVIDER}"
-echo "  CD_SA_EMAIL:        ${CD_SA_EMAIL}"
-echo "  RUNTIME_SA_EMAIL:   ${RUNTIME_SA_EMAIL}"
+echo "  GCP_PROJECT_ID:        ${PROJECT_ID}"
+echo "  GCP_PROJECT_NUMBER:    ${PROJECT_NUMBER}"
+echo "  GCP_REGION:            ${REGION}"
+echo "  AR_REPOSITORY:         ${AR_REPO}"
+echo "  WIF_POOL_ID:           ${WIF_POOL}"
+echo "  WIF_PROVIDER_ID:       ${WIF_PROVIDER}"
+echo "  CD_SA_EMAIL:           ${CD_SA_EMAIL}"
+echo "  RUNTIME_SA_EMAIL:      ${RUNTIME_SA_EMAIL}"
+echo "  ENGINE_RUNTIME_SA_EMAIL: ${ENGINE_SA_EMAIL}"
