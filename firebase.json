@@ -1,0 +1,12 @@
+{
+  "hosting": {
+    "public": "landing-page",
+    "ignore": [
+      "firebase.json",
+      "**/.*"
+    ],
+    "cleanUrls": true,
+    "trailingSlash": false
+  }
+}
+
