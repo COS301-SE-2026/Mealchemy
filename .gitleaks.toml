@@ -1,0 +1,5 @@
+[allowlist]
+  description = "Firebase client config, the API key is a public identifier embedded in the APK, and is not a secret"
+  paths = [
+    '''frontend/android/app/google-services\.json'''
+  ]
