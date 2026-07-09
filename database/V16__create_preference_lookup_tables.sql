@@ -30,9 +30,16 @@ COMMENT ON TABLE allergen_options IS 'valid options for user_preferences.allergi
 
 
 CREATE TABLE flavour_profile_options (
-     id            SERIAL   PRIMARY KEY,
-    value          TEXT     NOT NULL UNIQUE,
-    label          TEXT     NOT NULL
+    id            SERIAL   PRIMARY KEY,
+    value         TEXT     NOT NULL UNIQUE,
+    label         TEXT     NOT NULL
+);
+
+CREATE TABLE equipment_options (
+    id      SERIAL  PRIMARY KEY,
+    value   TEXT    NOT NULL UNIQUE,
+    label   TEXT    NOT NULL
 );
 
 COMMENT ON TABLE flavour_profile_options IS 'valid options for user_preferences.flavour profile jsonb array and user_cuisine_afinities.cuisine_value.';
+COMMENT ON TABLE equipment_options IS 'valid options for equipmnt that users have access to. (Used in recommendation algorithm)'

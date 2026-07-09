@@ -9,6 +9,7 @@
 -- 2. allergen_options - most common food allergy options user_preferences.allergies
 -- 3. flavour_profile_options - user_preferences.flavour_profile user_cuisine_affinities.cuisine_value
 -- 4. tags - recipe_tags and used for recommendation engine phase 1: hard filtering
+-- 5. equipment - user_profile.equipment
 -- =============================================================================
 
 -- 1. dietary_rstriction_options (written into the user_prefernces.dietary_restrictions array)
@@ -101,3 +102,24 @@ VALUES
     ('LOW_CARB',    TRUE),
     ('COMFORT_FOOD',TRUE)
 ON CONFLICT (tag_name) DO NOTHING;
+
+--------------------------------------------------------------------------------------------------------------
+
+-- 5. equipment_options - equipment users may have available to them in order to cook.
+
+INSERT INTO equipment_options (value, label)
+VALUES
+    ('OVEN', 'Oven'),
+    ('STOVETOP', 'Stovetop'),
+    ('MICROWAVE', 'Microwave'),
+    ('TOASTER', 'Toaster'),
+    ('AIR_FRYER', 'Air Fryer'),
+    ('BLENDER', 'Blender'),
+    ('FOOD_PROCESSOR', 'Food Processor'),
+    ('HAND_MIXER', 'Hand Mixer'),
+    ('STAND_MIXER', 'Stand Mixer'),
+    ('SLOW_COOKER', 'Slow Cooker'),
+    ('PRESSURE_COOKER', 'Pressure Cooker'),
+    ('RICE_COOKER', 'Rice Cooker'),
+    ('INSTANT_POT', 'Instant Pot')
+ON CONFLICT (value) DO NOTHING;
