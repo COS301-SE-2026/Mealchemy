@@ -9,7 +9,6 @@ import java.time.OffsetDateTime;
 import com.mealchemy.shared.enums.VaultType;
 
 public record VaultRequest(
-    @NotNull Integer ownerId,
     @NotBlank VaultType vaultType,
     @NotNull String name
 )
