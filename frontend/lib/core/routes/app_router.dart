@@ -10,13 +10,17 @@ import '../../features/pantry/screens/add_ingredient_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
 import '../../features/recipe/screens/recipe_detail_screen.dart';
 import '../../features/recipe/screens/add_recipe_screen.dart';
+import '../../features/discovery/screens/discovery_screen.dart';
+
 import '../../features/shopping_lists/screens/shopping_lists_screen.dart';
 import '../../features/shopping_lists/screens/shopping_list_detail_screen.dart';
 import '../../features/guided_discovery/screens/guided_discovery_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: AppRoutes.login,
-
+    // Sets the first screen shown when the app launches. 
+                                    // During development: change this to your screen (e.g. AppRoutes.pantry)
+                                    // Before committing: ALWAYS reset this back to AppRoutes.login
   // Sets the first screen shown when the app launches.
   // During development: change this to your screen (e.g. AppRoutes.pantry)
   // Before committing: ALWAYS reset this back to AppRoutes.login
@@ -76,6 +80,10 @@ final appRouter = GoRouter(
         final id = int.parse(state.pathParameters['id']!);
         return RecipeDetailScreen(recipeId: id);
       },
+    ),
+    GoRoute(
+      path: AppRoutes.discovery,
+      builder: (context, state) => const DiscoveryScreen(),
     ),
   ],
 );

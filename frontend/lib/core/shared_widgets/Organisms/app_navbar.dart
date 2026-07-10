@@ -32,9 +32,14 @@ class AppNavbar extends StatelessWidget {
 
   static const List<AppNavItem> defaultItems = [
     AppNavItem(
+      label: 'Home',
+      icon: Icons.home_outlined,
+      route: AppRoutes.dashboard,
+    ),
+    AppNavItem(
       label: 'Discover',
       icon: Icons.explore_outlined,
-      route: AppRoutes.dashboard,
+      route: AppRoutes.discovery,
     ),
     AppNavItem(
       label: 'Vault',
