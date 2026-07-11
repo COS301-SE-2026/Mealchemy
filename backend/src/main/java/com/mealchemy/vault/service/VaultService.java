@@ -24,33 +24,33 @@ public class VaultService
     // Get all vaults that beint to ownerId
     public List<VaultResponse> getVaultsByOwnerId(Integer ownerId)
     {
-        return vaultRepository.findByOwnerId(ownerId).stream().map(this::mapToResponseDto).collect(Collectors.toList());
+        return vaultRepository.findByOwnerId(ownerId).stream().map(VaultResponse::from).collect(Collectors.toList());
     }
 
     // Get a single vault using id
     public VaultResponse getVault(int id)
     {
         Vault vaultForReturn = vaultRepository.findById(id).orElseThrow(() -> new RuntimeException("Vault not found."));
-        return mapToResponseDto(vaultForReturn);
+        return VaultResponse.from(vaultForReturn);
     }
 
     // Post to create a new vault
-    public VaultResponse createVault(VaultRequest request)
+    public VaultResponse createVault(VaultRequest request, Integer ownerId)
     {
-        Vault vaultForReturn = mapRequestToEntity(request);
-        return mapToResponseDto(vaultRepository.save(vaultForReturn));
+        Vault vaultForReturn = mapRequestToEntity(request, ownerId);
+        return VaultResponse.from(vaultRepository.save(vaultForReturn));
     }
 
     // Put to update an existing vault
-    public VaultResponse updateVault(int id, VaultRequest request)
+    public VaultResponse updateVault(int id, VaultRequest request, Integer ownerId)
     {
         Vault vaultForReturn = vaultRepository.findById(id).orElseThrow(() -> new RuntimeException("Vault not found."));
 
-        vaultForReturn.setOwnerId(request.getOwnerId());
-        vaultForReturn.setVaultType(request.getVaultType());
-        vaultForReturn.setName(request.getName());
+        vaultForReturn.setOwnerId(ownerId);
+        vaultForReturn.setVaultType(request.vaultType());
+        vaultForReturn.setName(request.name());
 
-        return mapToResponseDto(vaultRepository.save(vaultForReturn));
+        return VaultResponse.from(vaultRepository.save(vaultForReturn));
     }
 
     // Delete a specific vault using id
@@ -61,26 +61,13 @@ public class VaultService
 
     /* Mapping functions */
 
-    private VaultResponse mapToResponseDto(Vault vaultIn)
-    {
-        VaultResponse response = new VaultResponse();
-
-        response.setVaultId(vaultIn.getVaultId());
-        response.setOwnerId(vaultIn.getOwnerId());
-        response.setVaultType(vaultIn.getVaultType());
-        response.setName(vaultIn.getName());
-        response.setCreatedAt(vaultIn.getCreatedAt());
-
-        return response;
-    }
-
-    private Vault mapRequestToEntity(VaultRequest request)
+    private Vault mapRequestToEntity(VaultRequest request, Integer ownerId)
     {
         Vault vault = new Vault();
 
-        vault.setOwnerId(request.getOwnerId());
-        vault.setVaultType(request.getVaultType());
-        vault.setName(request.getName());
+        vault.setOwnerId(ownerId);
+        vault.setVaultType(request.vaultType());
+        vault.setName(request.name());
 
         return vault;
     }
