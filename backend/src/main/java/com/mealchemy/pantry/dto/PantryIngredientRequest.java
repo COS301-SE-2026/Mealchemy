@@ -1,9 +1,9 @@
 // stucture of a pantry request
 
-package com.mealchemy.preference.dto;
+package com.mealchemy.pantry.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
+import java.math.BigDecimal;
     
 public record PantryIngredientRequest (
     //fields needed when adding or updating a pantry item (client -> backend) - userId comes from JWT

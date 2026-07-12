@@ -46,13 +46,15 @@ public class PreferenceServiceTest {
         existingPreferences.setAllergies(List.of("peanuts"));
         existingPreferences.setDislikedIngredients(List.of("coriander"));
         existingPreferences.setFlavourProfile(List.of("mediterranean"));
+        existingPreferences.setFlavourProfile(List.of("low_carb"));
 
         // simulates what flutter puts in PUT req
         updateRequest = new PreferenceRequest(
             List.of("vegan"),
             List.of("gluten"),
             List.of("anchovies"),
-            List.of("japanese")
+            List.of("japanese"),
+            List.of("high_fibre")
         );
     }
 
@@ -90,6 +92,7 @@ public class PreferenceServiceTest {
         assertEquals(List.of("peanuts"), response.allergies());
         assertEquals(List.of("coriander"), response.dislikedIngredients());
         assertEquals(List.of("mediterranean"), response.flavourProfile());
+        assertEquals(List.of("low_carb"), response.nutritionalGoals());
     }
 
     // ========== Update Preferences Testing ==========
@@ -129,6 +132,7 @@ public class PreferenceServiceTest {
         assertEquals(List.of("gluten"), response.allergies());
         assertEquals(List.of("anchovies"), response.dislikedIngredients());
         assertEquals(List.of("japanese"), response.flavourProfile());
+        assertEquals(List.of("low_carb"), response.nutritionalGoals());
 
         // Verify save was called once
         verify(userPreferencesRepository).save(any(UserPreferences.class));

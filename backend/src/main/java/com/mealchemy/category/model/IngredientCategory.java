@@ -3,10 +3,7 @@
 package com.mealchemy.category.model;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import java.time.OffsetDateTime;
-import java.math.BigDecimal;
 
 @Entity
 @Table(name = "ingredient_categories")
@@ -20,10 +17,10 @@ public class IngredientCategory {
     private String name;
 
     @Column(name = "pantry_shelf_life_days")
-    private Integer pantryShelfLifeInDays;
+    private Short pantryShelfLifeInDays;
 
     @Column(name = "fridge_shelf_life_days")
-    private Integer fridgeShelfLifeInDays;
+    private Short fridgeShelfLifeInDays;
 
     // Getters and setters
     public Integer getCategoryId() {
@@ -38,20 +35,20 @@ public class IngredientCategory {
         this.name = name;
     }
 
-    public Integer getPantryShelfLife() {
+    public Short getPantryShelfLife() {
         return pantryShelfLifeInDays;
     }
 
-    public void setPantryShelfLife(Integer shelfLife) {
+    public void setPantryShelfLife(Short shelfLife) {
         this.pantryShelfLifeInDays = shelfLife;
     }
 
-    public Integer getFridgeShelfLife() {
+    public Short getFridgeShelfLife() {
         return fridgeShelfLifeInDays;
     }
 
-    public void setFridgeShelfLife(Integer fridgeLife) {
-        this.fridgeShelfLifeInDays = shelfLife;
+    public void setPantryFridgeLife(Short fridgeLife) {
+        this.fridgeShelfLifeInDays = fridgeLife;
     }
 
 }

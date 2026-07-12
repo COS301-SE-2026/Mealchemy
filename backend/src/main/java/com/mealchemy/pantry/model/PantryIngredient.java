@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.OffsetDateTime;
 import java.math.BigDecimal;
+import java.util.Optional;
 
 @Entity
 @Table(name = "pantry_ingredients")

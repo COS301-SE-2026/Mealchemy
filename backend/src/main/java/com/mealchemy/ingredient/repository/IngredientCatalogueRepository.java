@@ -1,5 +1,7 @@
 // talks to ingredient_catalogue db table
 
+package com.mealchemy.ingredient.repository;
+
 import com.mealchemy.ingredient.model.IngredientCatalogue;
 import org.springframework.data.jpa.repository.JpaRepository;
 

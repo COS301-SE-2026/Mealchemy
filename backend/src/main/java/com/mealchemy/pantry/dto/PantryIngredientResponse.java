@@ -1,7 +1,8 @@
 package com.mealchemy.pantry.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 
 public record PantryIngredientResponse ( //records are immutable and auto generate constructors
    //exactly what client sees not necessarily same as what model has
@@ -10,7 +11,7 @@ public record PantryIngredientResponse ( //records are immutable and auto genera
    String name,
    String category,
    //freshness?
-   String quantity,
+   BigDecimal quantity,
    String unit,
    @JsonProperty("created_at") OffsetDateTime createdAt,
    @JsonProperty("updated_at") OffsetDateTime updatedAt

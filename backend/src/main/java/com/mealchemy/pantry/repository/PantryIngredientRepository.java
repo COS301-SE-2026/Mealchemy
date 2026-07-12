@@ -1,14 +1,14 @@
 package com.mealchemy.pantry.repository;
 
 import com.mealchemy.pantry.model.PantryIngredient;
+import com.mealchemy.pantry.dto.PantryIngredientResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-import java.util.Optional;
 import java.util.List;
 
-public class PantryIngredientRepository {
-    List<PantryIngredient> findByPIngredientId(Integer pIngredientId);
-
+public interface PantryIngredientRepository extends JpaRepository<PantryIngredient, Integer> {
     // user defined queries
 
     // pantry ingredients needed per user
@@ -23,7 +23,7 @@ public class PantryIngredientRepository {
             p.quantity,
             p.unit,
             p.createdAt,
-            p.updtaedAt
+            p.updatedAt
         )
         FROM PantryIngredient p
         JOIN IngredientCatalogue c ON p.ingId = c.ingId

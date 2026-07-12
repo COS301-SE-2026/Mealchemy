@@ -30,7 +30,7 @@ public class PreferenceService {
         UserPreferences userPreferences = userPreferencesRepository.findByUserId(userId)
                                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Preferences not found")); //need to send correct error code
 
-        return new PreferenceResponse(userPreferences.getDietaryRestrictions(), userPreferences.getAllergies(), userPreferences.getDislikedIngredients(), userPreferences.getFlavourProfile());
+        return new PreferenceResponse(userPreferences.getDietaryRestrictions(), userPreferences.getAllergies(), userPreferences.getDislikedIngredients(), userPreferences.getFlavourProfile(), userPreferences.getNutritionalGoals());
     }
 
     @Transactional
@@ -41,9 +41,10 @@ public class PreferenceService {
         userPreferences.setAllergies(request.allergies());
         userPreferences.setDislikedIngredients(request.dislikedIngredients());
         userPreferences.setFlavourProfile(request.flavourProfile());
+        userPreferences.setNutritionalGoals(request.nutritionalGoals());
         userPreferencesRepository.save(userPreferences);
 
-        return new PreferenceResponse(userPreferences.getDietaryRestrictions(), userPreferences.getAllergies(), userPreferences.getDislikedIngredients(), userPreferences.getFlavourProfile());
+        return new PreferenceResponse(userPreferences.getDietaryRestrictions(), userPreferences.getAllergies(), userPreferences.getDislikedIngredients(), userPreferences.getFlavourProfile(), userPreferences.getNutritionalGoals());
     }
 
 }
