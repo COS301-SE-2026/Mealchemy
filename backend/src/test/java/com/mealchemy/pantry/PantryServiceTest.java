@@ -163,7 +163,7 @@ public class PantryServiceTest {
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 
-    // Happy
+   
     @Test
     void updateIngredientManually_whenNotOwned_throwsForbidden() {
         // Arrange
@@ -179,14 +179,124 @@ public class PantryServiceTest {
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
+    // Happy
     @Test
-    void updateIngredientManually_withPositiveQuantity_returnPantryIngredientResponse() {
+    void updateIngredientManually_withPositiveQuantity_updateAndReturnPantryIngredientResponse() {
         // Arrange 
         when(pantryIngredientRepository.findById(1)).thenReturn(Optional.of(existingPantryIngredient));
+        when(pantryIngredientRepository.save(any(PantryIngredient.class))).thenReturn(existingPantryIngredient);
         when(ingredientCatalogueRepository.findById(2)).thenReturn(Optional.of(catalogueInstance));
         when(ingredientCategoryRepository.findById(5)).thenReturn(Optional.of(categoryInstance));
-        when(pantryIngredientRepository.save(any(PantryIngredient.class))).thenReturn(existingPantryIngredient);
+
+        // Act
+        Optional<PantryIngredientResponse> response = pantryService.updateIngredientManually(1, 1, createResponse);
+
+        // Assert
+        assertTrue(response.isPresent());
+        verify(pantryIngredientRepository, never()).delete(any());
+    }
+
+    @Test
+    void updateIngredientManually_withZeroQuantity_deletesIngredientAndReturnEmptyArray() {
+        // Arrange
+        // request with quantity of zero
+        PantryIngredientRequest request = new PantryIngredientRequest (
+            2,
+            BigDecimal.ZERO,
+            "g"
+        );
+
+        when(PantryIngredientRepository.findById(1)).thenReturn(Optional.of(existingPantryIngredient));
+
+        // Act
+        Optional<PantryIngredientResponse> response = pantryService.updateIngredientManually(1, 1, request);
+
+        // Assert
+        assertTrue(response.isEmpty());
+        verify(pantryIngredientRepository).delete(existingPantryIngredient);
+        verify(pantryIngredientRepository, never()).save(any());
     }
 
 
+    // ========== Deleting Ingredient Manually Testing ==========
+
+    // Negative
+    @Test
+    void removePantryIngredient_whenNotFound_throwNotFound() {
+        // Arrange
+        when(pantryIngredientRepository.findById(48)).thenReturn(Optional.empty());
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> pantryService.removePantryIngredient(1, 48)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void removePantryIngredient_whenNotOwned_throwsForbidden() {
+        // Arrange
+        existingPantryIngredient.setUserId(2);
+        when(pantryIngredientRepository.findById(1)).thenReturn(Optional.of(existingPantryIngredient));
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> pantryService.removePantryIngredient(1, 1)
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    // Happy
+    @Test 
+    void removePantryIngredient_sucessfulDelete() {
+        // Arrange
+        when(pantryIngredientRepository.findById(1)).thenReturn(Optional.of(existingPantryIngredient));
+
+        // Act 
+        pantryService.removePantryIngredient(1, 1);
+
+        verify(pantryIngredientRepository).delete(existingPantryIngredient);
+    }
+
+
+    // ========== Search Pantry By Ingredient Name Testing ==========
+
+    @Test searchPantry_returnsMatchingResponses() {
+        // Arrange
+        PantryIngredientResponse expected = new PantryIngredientResponse(
+            1,
+            2,
+            "Hummus",
+            "Legumes and Legume Products",
+            new BigDecimal("250"),
+            "g",
+            null,
+            null
+        );
+
+        when(pantryIngredientRepository.getIngredientByName(1, "hummus")).thenReturn(List.of(expected));
+
+        // Act 
+        List<PantryIngredientResponse> responses = pantryService.getIngredientByName(1, "hummus");
+
+        // Assert
+        assertEquals(1, responses.size());
+        assertEquals("Hummus", results.get(0).name());
+    }
+
+    @Test searchPantry_noMatchFound_returnEmptyArray() {
+        // Arrange
+        when(pantryIngredientRepository.getIngredientByName(1, "none")).thenReturn(List.of());
+
+        // Act
+        List<PantryIngredientResponse> responses = pantryService.getIngredientByName(1, "none");
+        
+        // Assert
+        assertNotNull(response);
+        assertTrue(responses.isEmpty());
+    }
 }
