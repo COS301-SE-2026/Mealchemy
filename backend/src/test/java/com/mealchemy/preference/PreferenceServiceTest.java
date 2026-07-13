@@ -1,4 +1,4 @@
-// unit testing for registration and login
+// unit testing for user preferences
 
 package com.mealchemy.preference;
 
