@@ -58,6 +58,76 @@ public class Recipe
     private OffsetDateTime updatedAt = OffsetDateTime.now();
 
     /* Getters */
+    
+    public int getRecipeId()
+    {
+        return recipeId;
+    }
+
+    public int getOwnerId()
+    {
+        return ownerId;
+    }
+
+    public String getTitle()
+    {
+        return title;
+    }
+
+    public String getDescription()
+    {
+        return description;
+    }
+
+    public String getCuisineType()
+    {
+        return cuisineType;
+    }
+
+    public int getPrepTimeMins()
+    {
+        return prepTimeMins;
+    }
+
+    public int getCookingTimeMins()
+    {
+        return cookingTimeMins;
+    }
+
+    public int getServingSize()
+    {
+        return servingSize;
+    }
+
+    public String getPhotoUrl()
+    {
+        return photoUrl;
+    }
+
+    public String getVideoUrl()
+    {
+        return videoUrl;
+    }
+
+    public String getExternalUrl()
+    {
+        return externalUrl;
+    }
+
+    public boolean getIsCommunityPublished()
+    {
+        return isCommunityPublished;
+    }
+
+    public OffsetDateTime getCreatedAt()
+    {
+        return createdAt;
+    }
+
+    public OffsetDateTime getUpdatedAt()
+    {
+        return updatedAt;
+    }
 
     /* Setters */
 }
