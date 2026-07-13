@@ -14,6 +14,8 @@ public interface PantryIngredientRepository extends JpaRepository<PantryIngredie
     // pantry ingredients needed per user
     List<PantryIngredient> findByUserId(Integer userId);
 
+    List<PantryIngredient> findByIngId(Integer ingId);
+
     @Query("""
         SELECT new com.mealchemy.pantry.dto.PantryIngredientResponse(
             p.pIngredientId,
@@ -31,5 +33,24 @@ public interface PantryIngredientRepository extends JpaRepository<PantryIngredie
         WHERE p.userId = :userId
     """)
     List<PantryIngredientResponse> findPantryIngredientsByUserId(@Param("userId") Integer userId);
+
+    
+    @Query("""
+        SELECT new com.mealchemy.pantry.dto.PantryIngredientResponse(
+            p.pIngredientId,
+            p.ingId,
+            c.name,
+            cat.name,
+            p.quantity,
+            p.unit,
+            p.createdAt,
+            p.updatedAt
+        )
+        FROM PantryIngredient p
+        JOIN IngredientCatalogue c ON p.ingId = c.ingId
+        JOIN IngredientCategory cat ON c.categoryId = cat.categoryId
+        WHERE p.userId = :userId AND LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%'))
+    """)
+    List<PantryIngredientResponse> getIngredientByName(@Param("userId") Integer userId, @Param("name") String name);
     
 }

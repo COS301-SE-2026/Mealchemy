@@ -144,4 +144,10 @@ public class PantryService {
     }
 
 
+    // GET - search for ingreient by name
+    public List<PantryIngredientResponse> findPantryIngredientsByName(Integer userId, String ingredientName) { //might update when full USDA is implemented
+        // personal query
+        return pantryIngredientRepository.getIngredientByName(userId, ingredientName);    
+    }
+
 }

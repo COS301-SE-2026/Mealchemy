@@ -49,4 +49,11 @@ public class PantryController {
         pantryService.removePantryIngredient(Integer.parseInt(userId), id);
         return ResponseEntity.noContent().build();
     }
+
+
+    // user searching for ingredient by name
+    @GetMapping("/search")
+    public ResponseEntity<List<PantryIngredientResponse>> searchPantryItem(@AuthenticationPrincipal String userId, @RequestParam("q") String query) {
+        return ResponseEntity.ok(pantryService.findPantryIngredientsByName(Integer.parseInt(userId), query));
+    }
 }
