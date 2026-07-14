@@ -54,4 +54,11 @@ public class RecipeController
     {
         return recipeService.createFromFullRecipe(request, Integer.parseInt(ownerId));
     }
+
+    // Put
+    @PutMapping("/edit/{id}")
+    public RecipeResponse updateRecipe(@PathVariable id, @Valid @RequestBody request, @AuthenticationPrincipal String ownerId)
+    {
+        return recipeService.updateRecipe(id, request, Integer.parseInt(ownerId));
+    }
 }
