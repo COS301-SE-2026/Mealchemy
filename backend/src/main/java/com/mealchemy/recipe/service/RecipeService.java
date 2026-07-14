@@ -4,6 +4,8 @@ package com.mealchemy.recipe.service;
 import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.*;
+import org.springframework.web.server.*;
+import org.springframework.http.*;
 
 /* Import classes */
 import com.mealchemy.recipe.model.Recipe;
@@ -70,12 +72,11 @@ public class RecipeService
     {
         Recipe recipeForReturn = recipeRepository.findById(id).orElseThrow(() -> new RuntimeException("Recipe not found."));
         
-        if (recipeForReturn.getOwnerId() != ownerId)
+        if (!recipeForReturn.getOwnerId().equals(ownerId))
         {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner of this recipe can edit it.");
         }
 
-        recipeForReturn.setOwnerId(ownerId);
         recipeForReturn.setTitle(request.title());
         recipeForReturn.setDescription(request.description());
         recipeForReturn.setCuisineType(request.cuisineType());
@@ -95,7 +96,7 @@ public class RecipeService
     {
         Recipe recipeForDeletion = recipeRepository.findById(id).orElseThrow(() -> new RuntimeException("Recipe not found."));
 
-        if (recipeForDeletion.getOwnerId() != ownerId)
+        if (!recipeForDeletion.getOwnerId().equals(ownerId))
         {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner of this recipe can delete it.");
         }
