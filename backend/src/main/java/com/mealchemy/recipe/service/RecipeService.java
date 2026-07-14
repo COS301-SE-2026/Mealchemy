@@ -83,7 +83,7 @@ public class RecipeService
         
         if (!recipeForReturn.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner of this recipe can edit it.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can edit it.");
         }
 
         recipeForReturn.setTitle(request.title());
@@ -107,7 +107,7 @@ public class RecipeService
 
         if (!recipeForDeletion.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner of this recipe can delete it.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can delete it.");
         }
 
         recipeRepository.deleteById(id);
