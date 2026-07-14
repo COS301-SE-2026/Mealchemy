@@ -15,6 +15,7 @@ import com.mealchemy.recipe.dto.RecipeIngredientRequest;
 import com.mealchemy.recipe.dto.RecipeIngredientResponse;
 import com.mealchemy.recipe.repository.RecipeIngredientRepository;
 import com.mealchemy.recipe.repository.RecipeRepository;
+import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 
 @Service
 public class RecipeIngredientService 
@@ -23,10 +24,13 @@ public class RecipeIngredientService
 
     private final RecipeRepository recipeRepository;
 
-    public RecipeIngredientService(RecipeIngredientRepository recipeIngredientRepository, RecipeRepository recipeRepository)
+    private final IngredientCatalogueRepository ingredientCatalogueRepository;
+
+    public RecipeIngredientService(RecipeIngredientRepository recipeIngredientRepository, RecipeRepository recipeRepository, IngredientCatalogueRepository ingredientCatalogueRepository)
     {
         this.recipeIngredientRepository = recipeIngredientRepository;
         this.recipeRepository = recipeRepository;
+        this.ingredientCatalogueRepository = ingredientCatalogueRepository;
     }
 
     // Create a new ingredient for a specific recipe
@@ -37,6 +41,11 @@ public class RecipeIngredientService
         if (!recipeToCheck.getOwnerId().equals(ownerId))
         {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its ingredients.");
+        }
+
+        if (!ingredientCatalogueRepository.existsById(request.ingId()))
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The ingredient you want to add does not exist.");
         }
 
         RecipeIngredient recipeIngredientForReturn = mapRequestToEntity(request, recipeToCheck);
@@ -59,6 +68,11 @@ public class RecipeIngredientService
         if (!recipeIngredientForReturn.getRecipe().getRecipeId().equals(recipeId))
         {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Ingredient must be part of the recipe.");
+        }
+
+        if (!ingredientCatalogueRepository.existsById(request.ingId()))
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The ingredient you want to change to does not exist.");
         }
 
         recipeIngredientForReturn.setIngId(request.ingId());
