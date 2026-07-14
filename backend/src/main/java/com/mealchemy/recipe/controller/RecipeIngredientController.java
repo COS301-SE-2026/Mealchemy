@@ -28,8 +28,17 @@ public class RecipeIngredientController
 
     // Post
     @PostMapping("/recipe/{recipeId}/create")
-    public RecipeIngredientResponse createRecipeIngredient(@Valid @RequestBody RecipeIngredientRequest request, @PathVariable Integer recipeId, @AuthenticationPrincipal String ownerId)
+    public RecipeIngredientResponse createRecipeIngredient(@Valid @RequestBody RecipeIngredientRequest request, @PathVariable Integer recipeId, 
+        @AuthenticationPrincipal String ownerId)
     {
-        return recipeService.createRecipeIngredient(request, recipeId, ownerId);
+        return recipeService.createRecipeIngredient(request, recipeId, Integer.parseInt(ownerId));
+    }
+
+    // Put
+    @PutMapping("/recipe/{recipeId}/step/{id}/edit")
+    public RecipeIngredientResponse updateRecipeIngredient(@PathVariable int id, @Valid @RequestBody RecipeIngredientResponse request, 
+        @PathVariable Integer recipeId, @AuthenticationPrincipal String ownerId)
+    {
+        return recipeService.updateRecipeIngredient(id, request, recipeId, Integer.parseInt(ownerId));
     }
 }
