@@ -35,10 +35,17 @@ public class RecipeIngredientController
     }
 
     // Put
-    @PutMapping("/recipe/{recipeId}/step/{id}/edit")
-    public RecipeIngredientResponse updateRecipeIngredient(@PathVariable int id, @Valid @RequestBody RecipeIngredientResponse request, 
+    @PutMapping("/recipe/{recipeId}/ingredient/{id}/edit")
+    public RecipeIngredientResponse updateRecipeIngredient(@PathVariable int id, @Valid @RequestBody RecipeIngredientRequest request, 
         @PathVariable Integer recipeId, @AuthenticationPrincipal String ownerId)
     {
         return recipeService.updateRecipeIngredient(id, request, recipeId, Integer.parseInt(ownerId));
+    }
+
+    // Delete
+    @DeleteMapping("/recipe/{recipeId}/ingredient/{id}/delete")
+    public void deleteRecipeIngredient(@PathVariable int id, @PathVariable Integer recipeId, @AuthenticationPrincipal String ownerId)
+    {
+        recipeService.deleteRecipeIngredient(id, recipeId, Integer.parseInt(ownerId));
     }
 }

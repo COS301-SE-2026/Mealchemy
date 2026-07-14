@@ -63,7 +63,7 @@ public class RecipeController
     }
 
     // Delete
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public void deleteRecipe(@PathVariable int id, @AuthenticationPrincipal String ownerId)
     {
         recipeService.deleteRecipe(id, Integer.parseInt(ownerId));
