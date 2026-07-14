@@ -7,6 +7,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.hibernate.annotations.ColumnTransformer;
 
 @Entity
 @Table(name = "users")
@@ -24,7 +25,8 @@ public class User {
     private String passwordHash;  //don't store raw text
 
     @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "roles", nullable = false, columnDefinition = "user_role_enum[]")
+    @ColumnTransformer(write = "?::user_role_enum[]")
+    @Column(name = "roles", nullable = false)
     private List<String> roles;
 
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
