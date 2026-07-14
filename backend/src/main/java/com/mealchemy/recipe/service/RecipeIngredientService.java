@@ -1,4 +1,4 @@
-import com.mealchemy.recipe.service;
+package com.mealchemy.recipe.service;
 
 /* Import libraries */
 

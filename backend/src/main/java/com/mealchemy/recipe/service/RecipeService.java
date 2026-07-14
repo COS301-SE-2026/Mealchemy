@@ -1,7 +1,7 @@
-import com.mealchemy.recipe.service;
+package com.mealchemy.recipe.service;
 
 /* Import libraries */
-import org.springframe.stereotype.Service;
+import org.springframework.stereotype.Service;
 import java.util.*;
 
 /* Import classes */
@@ -13,5 +13,5 @@ import com.mealchemy.recipe.repository.RecipeRepository;
 @Service
 public class RecipeService
 {
-    
+
 }
