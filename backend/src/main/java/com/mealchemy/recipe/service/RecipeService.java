@@ -12,6 +12,7 @@ import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.recipe.model.RecipeIngredient;
 import com.mealchemy.recipe.model.RecipeStep;
 import com.mealchemy.recipe.dto.RecipeRequest;
+import com.mealchemy.recipe.dto.RecipeFullRequest;
 import com.mealchemy.recipe.dto.RecipeResponse;
 import com.mealchemy.recipe.repository.RecipeRepository;
 
@@ -38,8 +39,16 @@ public class RecipeService
         return RecipeResponse.from(recipeForReturn);
     }
 
-    // Post to create a new recipe
+    // Post to create a new fresh recipe
     public RecipeResponse createRecipe(RecipeRequest request, Integer ownerId)
+    {
+        Recipe recipeForReturn = mapRequestToEntity(request, ownerId);
+
+        return RecipeResponse.from(recipeRepository.save(recipeForReturn));
+    }
+
+        // Post to create a new recipe from an existing one
+    public RecipeResponse createFromFullRecipe(RecipeFullRequest request, Integer ownerId)
     {
         Recipe recipeForReturn = mapRequestToEntity(request, ownerId);
 
@@ -107,6 +116,25 @@ public class RecipeService
     /* Mapping functions */
 
     private Recipe mapRequestToEntity(RecipeRequest request, Integer ownerId)
+    {
+        Recipe recipe = new Recipe();
+
+        recipe.setOwnerId(ownerId);
+        recipe.setTitle(request.title());
+        recipe.setDescription(request.description());
+        recipe.setCuisineType(request.cuisineType());
+        recipe.setPrepTimeMins(request.prepTimeMins());
+        recipe.setCookingTimeMins(request.cookingTimeMins());
+        recipe.setServingSize(request.servingSize());
+        recipe.setPhotoUrl(request.photoUrl());
+        recipe.setVideoUrl(request.videoUrl());
+        recipe.setExternalUrl(request.externalUrl());
+        recipe.setIsCommunityPublished(request.isCommunityPublished());
+
+        return recipe;
+    }
+
+    private Recipe mapRequestToEntity(RecipeFullRequest request, Integer ownerId)
     {
         Recipe recipe = new Recipe();
 
