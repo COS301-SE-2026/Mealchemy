@@ -64,4 +64,19 @@ public class RecipeIngredient
     }
 
     /* Setters */
+
+    public void setQuantity(BigDecimal quantityIn)
+    {
+        quantity = quantityIn;
+    }
+
+    public void setUnit(String unitIn)
+    {
+        unit = unitIn;
+    }
+
+    public void setSortOrder(int sortOrderIn)
+    {
+        sortOrder = sortOrderIn;
+    }
 }
