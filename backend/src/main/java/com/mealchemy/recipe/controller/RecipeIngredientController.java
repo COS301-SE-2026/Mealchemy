@@ -31,7 +31,7 @@ public class RecipeIngredientController
     public RecipeIngredientResponse createRecipeIngredient(@Valid @RequestBody RecipeIngredientRequest request, @PathVariable Integer recipeId, 
         @AuthenticationPrincipal String ownerId)
     {
-        return recipeService.createRecipeIngredient(request, recipeId, Integer.parseInt(ownerId));
+        return recipeIngredientService.createRecipeIngredient(request, recipeId, Integer.parseInt(ownerId));
     }
 
     // Put
@@ -39,13 +39,13 @@ public class RecipeIngredientController
     public RecipeIngredientResponse updateRecipeIngredient(@PathVariable int id, @Valid @RequestBody RecipeIngredientRequest request, 
         @PathVariable Integer recipeId, @AuthenticationPrincipal String ownerId)
     {
-        return recipeService.updateRecipeIngredient(id, request, recipeId, Integer.parseInt(ownerId));
+        return recipeIngredientService.updateRecipeIngredient(id, request, recipeId, Integer.parseInt(ownerId));
     }
 
     // Delete
     @DeleteMapping("/recipe/{recipeId}/ingredient/{id}/delete")
     public void deleteRecipeIngredient(@PathVariable int id, @PathVariable Integer recipeId, @AuthenticationPrincipal String ownerId)
     {
-        recipeService.deleteRecipeIngredient(id, recipeId, Integer.parseInt(ownerId));
+        recipeIngredientService.deleteRecipeIngredient(id, recipeId, Integer.parseInt(ownerId));
     }
 }
