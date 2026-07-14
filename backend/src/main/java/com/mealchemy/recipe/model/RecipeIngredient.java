@@ -33,5 +33,35 @@ public class RecipeIngredient
 
     /* Getters */
 
+    public int getIngredientId()
+    {
+        return ingredientId;
+    }
+
+    public int getRecipeId()
+    {
+        return recipeId;
+    }
+
+    public int getIngId()
+    {
+        return ingId;
+    }
+
+    public BigDecimal getQuantity()
+    {
+        return quantity;
+    }
+
+    public String getUnit()
+    {
+        return unit;
+    }
+
+    public int getSortOrder()
+    {
+        return sortOrder;
+    }
+
     /* Setters */
 }
