@@ -51,9 +51,11 @@ public class Recipe
     @Column(name = "is_community_published", nullable = false)
     private boolean isCommunityPublished = false;
 
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
+    @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt = OffsetDateTime.now();
 
