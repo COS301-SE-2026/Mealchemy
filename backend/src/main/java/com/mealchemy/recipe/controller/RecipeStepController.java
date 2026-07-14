@@ -41,4 +41,11 @@ public class RecipeStepController
     {
         return recipeStepService.updateRecipeStep(id, request, recipeId, Integer.parseInt(ownerId));
     }
+
+    // Delete
+    @DeleteMapping("/recipe/{recipeId}/step/{id}/delete")
+    public void deleteRecipeStep(@PathVariable int id, @PathVariable Integer recipeId, @AuthenticationPrincipal String ownerId)
+    {
+        recipeStepService.deleteRecipeStep(id, recipeId, Integer.parseInt(ownerId));
+    }
 }
