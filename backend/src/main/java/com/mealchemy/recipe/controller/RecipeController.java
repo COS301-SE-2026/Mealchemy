@@ -26,4 +26,11 @@ public class RecipeController
     }
 
     /* Mapping functions */
+
+    // Get
+    @GetMapping("/all")
+    public List<RecipeResponse> getAllRecipes()
+    {
+        return recipeService.getAllRecipes();
+    }
 }
