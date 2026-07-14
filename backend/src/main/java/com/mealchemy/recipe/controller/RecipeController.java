@@ -33,4 +33,11 @@ public class RecipeController
     {
         return recipeService.getAllRecipes();
     }
+
+    // Get
+    @GetMapping("/single/{id}")
+    public RecipeResponse getRecipeById(@PathVariable Integer id)
+    {
+        return recipeService.getRecipeById(id);
+    }
 }
