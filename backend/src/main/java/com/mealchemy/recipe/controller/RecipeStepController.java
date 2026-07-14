@@ -33,4 +33,12 @@ public class RecipeStepController
     {
         return recipeStepService.createRecipeStep(request, recipeId, Integer.parseInt(ownerId));
     }
+
+    // Put
+    @PutMapping("/recipe/{recipeId}/step/{id}/edit")
+    public RecipeStepResponse updateRecipeStep(@PathVariable int id, @Valid @RequestBody RecipeStepRequest request, 
+        @PathVariable Integer recipeId, @AuthenticationPrincipal String ownerId)
+    {
+        return recipeStepService.updateRecipeStep(id, request, recipeId, Integer.parseInt(ownerId));
+    }
 }
