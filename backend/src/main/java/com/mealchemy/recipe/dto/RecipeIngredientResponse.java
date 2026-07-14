@@ -2,15 +2,19 @@ package com.mealchemy.recipe.dto;
 
 /* Import libraries */
 
+import java.math.BigDecimal;
+
 /* Import classes */
 
+import com.mealchemy.recipe.model.RecipeIngredient;
+
 public record RecipeIngredientResponse(
-    int ingredientId,
-    int recipeId,
-    int ingId,
+    Integer ingredientId,
+    Integer recipeId,
+    Integer ingId,
     BigDecimal quantity,
     String unit,
-    int sortOrder
+    Integer sortOrder
 )
 {
     public static RecipeIngredientResponse from (RecipeIngredient recipeIngredient)

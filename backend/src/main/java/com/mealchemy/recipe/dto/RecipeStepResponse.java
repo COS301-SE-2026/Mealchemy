@@ -4,10 +4,12 @@ package com.mealchemy.recipe.dto;
 
 /* Import classes */
 
+import com.mealchemy.recipe.model.RecipeStep;
+
 public record RecipeStepResponse(
-    int stepId,
-    int recipeId,
-    int stepNr,
+    Integer stepId,
+    Integer recipeId,
+    Integer stepNr,
     String content
 )
 {
@@ -15,10 +17,10 @@ public record RecipeStepResponse(
     {
         return new RecipeStepResponse
         (
-            recipeStep.getStepId();
-            recipeStep.getRecipeId();
-            recipeStep.getStepNr();
-            recipeStep.getContent();
+            recipeStep.getStepId(),
+            recipeStep.getRecipeId(),
+            recipeStep.getStepNr(),
+            recipeStep.getContent()
         );
     }
 }
