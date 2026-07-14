@@ -91,8 +91,15 @@ public class RecipeService
     }
 
     // Delete a specific vault using id
-    public void deleteRecipe(int id)
+    public void deleteRecipe(int id, Integer ownerId)
     {
+        Recipe recipeForDeletion = recipeRepository.findById(id).orElseThrow(() -> new RuntimeException("Recipe not found."));
+
+        if (recipeForDeletion.getOwnerId() != ownerId)
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner of this recipe can delete it.");
+        }
+
         recipeRepository.deleteById(id);
     }
 
