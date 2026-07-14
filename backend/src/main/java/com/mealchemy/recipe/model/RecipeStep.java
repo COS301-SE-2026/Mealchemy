@@ -48,4 +48,14 @@ public class RecipeStep
     }
 
     /* Setters */
+
+    public void setStepNr(int stepNrIn)
+    {
+        stepNr = stepNrIn;
+    }
+
+    public void setContent(String contentIn)
+    {
+        content = contentIn;
+    }
 }
