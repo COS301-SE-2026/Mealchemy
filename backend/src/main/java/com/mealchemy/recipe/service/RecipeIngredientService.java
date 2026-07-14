@@ -8,6 +8,7 @@ import java.util.stream.*;
 
 /* Import classes */
 import com.mealchemy.recipe.model.RecipeIngredient;
+import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.recipe.dto.RecipeIngredientRequest;
 import com.mealchemy.recipe.dto.RecipeIngredientResponse;
 import com.mealchemy.recipe.repository.RecipeIngredientRepository;
@@ -38,18 +39,24 @@ public class RecipeIngredientService
         // Add logic to check if recipe owner
 
         RecipeIngredient recipeIngredientForReturn = recipeIngredientRepository.findById(id).orElseThrow(() -> new RuntimeException("Ingredient not found."));
+        
+        recipeIngredientForReturn.setIngId(request.ingId());
+        recipeIngredientForReturn.setQuantity(request.quantity());
+        recipeIngredientForReturn.setUnit(request.unit());
+        recipeIngredientForReturn.setSortOrder(request.sortOrder());
+
         return RecipeIngredientResponse.from(recipeIngredientRepository.save(recipeIngredientForReturn));
     }
 
     // Delete a specific step in an existing recipe
     public void deleteRecipeIngredient(int id, Recipe recipe)
     {
-        vaultRepository.deleteById(id);
+        recipeIngredientRepository.deleteById(id);
     }
 
     /* Mapping functions */
 
-    public RecipeIngredient mapRequestToEntity(RecipeIngredientRequest request, recipe)
+    public RecipeIngredient mapRequestToEntity(RecipeIngredientRequest request, Recipe recipe)
     {
         RecipeIngredient recipeIngredient = new RecipeIngredient();
 
