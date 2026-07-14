@@ -90,6 +90,12 @@ public class RecipeService
         return RecipeResponse.from(recipeRepository.save(recipeForReturn));
     }
 
+    // Delete a specific vault using id
+    public void deleteRecipe(int id)
+    {
+        recipeRepository.deleteById(id);
+    }
+
     /* Mapping functions */
 
     private Recipe mapRequestToEntity(RecipeRequest request, Integer ownerId)
