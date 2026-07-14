@@ -133,6 +133,11 @@ public class Recipe
 
     /* Setters */
 
+    public void setOwnerId(int ownerIdIn)
+    {
+        ownerId = ownerIdIn;
+    }
+
     public void setTitle(String titleIn)
     {
         title = titleIn;
