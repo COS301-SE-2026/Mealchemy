@@ -42,6 +42,10 @@ public class RecipeIngredientService
     }
 
     // Delete a specific step in an existing recipe
+    public void deleteRecipeIngredient(int id, Recipe recipe)
+    {
+        vaultRepository.deleteById(id);
+    }
 
     /* Mapping functions */
 
