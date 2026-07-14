@@ -25,4 +25,12 @@ public class RecipeStepController
     }
 
     /* Mapping functions */
+
+    // Post
+    @PostMapping("/recipe/{recipeId}/step/create")
+    public RecipeStepResponse createRecipeStep(@Valid @RequestBody RecipeStepRequest request, @PathVariable Integer recipeId, 
+        @AuthenticationPrincipal String ownerId)
+    {
+        return recipeStepService.createRecipeStep(request, recipeId, Integer.parseInt(ownerId));
+    }
 }
