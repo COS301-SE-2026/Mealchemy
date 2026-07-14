@@ -65,6 +65,31 @@ public class RecipeService
         return RecipeResponse.from(recipeRepository.save(recipeForReturn));
     }
 
+    // Put to update an existing recipe
+    public RecipeResponse updateRecipe(int id, RecipeRequest request, Integer ownerId)
+    {
+        Recipe recipeForReturn = recipeRepository.findById(id).orElseThrow(() -> new RuntimeException("Recipe not found."));
+        
+        if (recipeForReturn.getOwnerId() != ownerId)
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner of this recipe can edit it.");
+        }
+
+        recipeForReturn.setOwnerId(ownerId);
+        recipeForReturn.setTitle(request.title());
+        recipeForReturn.setDescription(request.description());
+        recipeForReturn.setCuisineType(request.cuisineType());
+        recipeForReturn.setPrepTimeMins(request.prepTimeMins());
+        recipeForReturn.setCookingTimeMins(request.cookingTimeMins());
+        recipeForReturn.setServingSize(request.servingSize());
+        recipeForReturn.setPhotoUrl(request.photoUrl());
+        recipeForReturn.setVideoUrl(request.videoUrl());
+        recipeForReturn.setExternalUrl(request.externalUrl());
+        recipeForReturn.setIsCommunityPublished(request.isCommunityPublished());
+
+        return RecipeResponse.from(recipeRepository.save(recipeForReturn));
+    }
+
     /* Mapping functions */
 
     private Recipe mapRequestToEntity(RecipeRequest request, Integer ownerId)
