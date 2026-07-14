@@ -40,4 +40,11 @@ public class RecipeController
     {
         return recipeService.getRecipeById(id);
     }
+
+    // Post
+    @PostMapping("/create")
+    public RecipeResponse createRecipe(@Valid @RequestBody RecipeRequest request, @AuthenticationPrincipal String ownerId)
+    {
+        return recipeService.createRecipe(request, Integer.parseInt(ownerId));
+    }
 }
