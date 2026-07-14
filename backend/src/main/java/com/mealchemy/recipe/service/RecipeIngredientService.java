@@ -22,10 +22,4 @@ public class RecipeIngredientService
         this.recipeIngredientRepository = recipeIngredientRepository;
     }
 
-    // Get all steps that belong to a recipe
-    public List<RecipeIngredientResponse> getStepsByRecipeId(int id)
-    {
-        return recipeIngredientRepository.findById(id).stream().map(RecipeIngredientResponse::from).collect(Collectors.toList());
-    }
-    
 }
