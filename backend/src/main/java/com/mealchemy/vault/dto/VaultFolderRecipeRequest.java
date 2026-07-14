@@ -3,11 +3,12 @@ package com.mealchemy.vault.dto;
 /* Import libraries */
 
 import java.time.OffsetDateTime;
+import jakarta.validation.constraints.*;
 
 /* Import classes */
 
 public record VaultFolderRecipeRequest(
-    @NotNull int folderId,
-    @NotNull int recipeId
+    @NotNull Integer folderId,
+    @NotNull Integer recipeId
 ){
 }

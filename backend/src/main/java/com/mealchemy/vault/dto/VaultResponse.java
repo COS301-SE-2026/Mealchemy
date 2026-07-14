@@ -9,7 +9,7 @@ import java.time.OffsetDateTime;
 import com.mealchemy.shared.enums.VaultType;
 
 public record VaultResponse(
-    int vaultId,
+    Integer vaultId,
     Integer ownerId,
     VaultType vaultType,
     String name,

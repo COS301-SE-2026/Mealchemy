@@ -4,8 +4,8 @@ package com.mealchemy.vault.dto;
 import java.time.OffsetDateTime;
 
 public record VaultFolderResponse(
-    int folderId,
-    int vaultId,
+    Integer folderId,
+    Integer vaultId,
     String folderName,
     OffsetDateTime createdAt
 )

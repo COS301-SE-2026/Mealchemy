@@ -3,6 +3,7 @@ package com.mealchemy.recipe.dto;
 /* Import libraries */
 
 import java.math.BigDecimal;
+import jakarta.validation.constraints.*;
 
 /* Import classes */
 

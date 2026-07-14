@@ -1,7 +1,13 @@
 package com.mealchemy.vault.dto;
 
+/* Import libraries */
+
+import jakarta.validation.constraints.*;
+
+/* Import classes */
+
 public record VaultFolderRequest(
-    @NotNull int vaultId,
+    @NotNull Integer vaultId,
     @NotBlank String folderName
 )
 {

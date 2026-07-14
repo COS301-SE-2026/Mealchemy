@@ -7,9 +7,9 @@ import java.time.OffsetDateTime;
 /* Import classes */
 
 public record VaultFolderRecipeResponse(
-    int id,
-    int folderId,
-    int recipeId,
+    Integer id,
+    Integer folderId,
+    Integer recipeId,
     OffsetDateTime addedAt
 )
 {
