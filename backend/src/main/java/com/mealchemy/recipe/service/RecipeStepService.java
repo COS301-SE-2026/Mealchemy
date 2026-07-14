@@ -69,6 +69,24 @@ public class RecipeStepService {
     }
 
     // Delete a specific step in an existing recipe
+    public void deleteRecipeStep(int id, Integer recipeId, Integer ownerId)
+    {
+        Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new RuntimeException("Recipe not found."));
+
+        if (!recipeToCheck.getOwnerId().equals(ownerId))
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its ingredients.");
+        }
+
+        RecipeStep recipeStepForReturn = recipeStepRepository.findById(id).orElseThrow(() -> new RuntimeException("Ingredient not found."));
+
+        if (!recipeStepForReturn.getRecipe().getRecipeId().equals(recipeId))
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Ingredient must be part of the recipe.");
+        }
+
+        recipeStepRepository.deleteById(id);
+    }
 
     /* Mapping functions */
 
