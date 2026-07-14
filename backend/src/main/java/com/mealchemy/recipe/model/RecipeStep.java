@@ -7,7 +7,7 @@ import jakarta.persistence.*;
 /* Import classes */
 
 @Entity
-@Table(name = recipe_steps)
+@Table(name = "recipe_steps")
 public class RecipeStep
 {
     /* Declaring fields */
@@ -16,8 +16,9 @@ public class RecipeStep
     @Column(name = "step_id")
     private int stepId;
 
-    @Column(name = "recipe_id", nullable = false)
-    private int recipeId;
+    @ManyToOne
+    @JoinColumn(name = "recipe_id", nullable = false)
+    private Recipe recipe;
 
     @Column(name = "step_nr", nullable = false)
     private int stepNr;
@@ -32,9 +33,9 @@ public class RecipeStep
         return stepId;
     }
 
-    public int getRecipeId()
+    public Recipe getRecipe()
     {
-        return recipeId;
+        return recipe;
     }
 
     public int getStepNr()
@@ -48,6 +49,11 @@ public class RecipeStep
     }
 
     /* Setters */
+
+    public void setRecipe(Recipe recipeIn)
+    {
+        recipe = recipeIn;
+    }
 
     public void setStepNr(int stepNrIn)
     {

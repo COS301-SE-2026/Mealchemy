@@ -4,6 +4,8 @@ package com.mealchemy.recipe.model;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+import java.util.*;
+import org.hibernate.annotations.*;
 
 /* Import Classes */
 
@@ -36,16 +38,16 @@ public class Recipe
     @Column(name = "cooking_time_mins", nullable = false)
     private int cookingTimeMins;
 
-    @Columns(name = "serving_size", nullable = false)
+    @Column(name = "serving_size", nullable = false)
     private int servingSize;
 
-    @Columns(name = "photo_url", nullable = true)
+    @Column(name = "photo_url", nullable = true)
     private String photoUrl;
 
-    @Columns(name = "video_url", nullable = true)
+    @Column(name = "video_url", nullable = true)
     private String videoUrl;
 
-    @Columns(name = "external_url", nullable = true)
+    @Column(name = "external_url", nullable = true)
     private String externalUrl;
 
     @Column(name = "is_community_published", nullable = false)
@@ -58,6 +60,12 @@ public class Recipe
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt = OffsetDateTime.now();
+
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RecipeIngredient> ingredients = new ArrayList<>();
+
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RecipeStep> steps = new ArrayList<>();
 
     /* Getters */
     
@@ -131,6 +139,16 @@ public class Recipe
         return updatedAt;
     }
 
+    public List<RecipeIngredient> getIngredients()
+    {
+        return ingredients;
+    }
+
+    public List<RecipeStep> getSteps()
+    {
+        return steps;
+    }
+
     /* Setters */
 
     public void setOwnerId(int ownerIdIn)
@@ -191,5 +209,15 @@ public class Recipe
     public void setUpdatedAt(OffsetDateTime updatedAtIn)
     {
         updatedAt = updatedAtIn;
+    }
+
+    public void setIngredients(List<RecipeIngredient> ingredientsIn)
+    {
+        ingredients = ingredientsIn;
+    }
+
+    public void setSteps(List<RecipeStep> stepsIn)
+    {
+        steps = stepsIn;
     }
 }

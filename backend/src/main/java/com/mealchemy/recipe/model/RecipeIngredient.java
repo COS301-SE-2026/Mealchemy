@@ -3,11 +3,12 @@ package com.mealchemy.recipe.model;
 /* Import libraries */
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 
 /* Import classes */
 
 @Entity
-@Table(name = recipe_ingredients)
+@Table(name = "recipe_ingredients")
 public class RecipeIngredient
 {
     /* Declaring fields */
@@ -16,8 +17,9 @@ public class RecipeIngredient
     @Column(name = "ingredient_id")
     private int ingredientId;
     
-    @Column(name = "recipe_id", nullable = false)
-    private int recipeId;
+    @ManyToOne
+    @JoinColumn(name = "recipe_id", nullable = false)
+    private Recipe recipe;
 
     @Column(name = "ing_id", nullable = false)
     private int ingId;
@@ -38,9 +40,9 @@ public class RecipeIngredient
         return ingredientId;
     }
 
-    public int getRecipeId()
+    public Recipe getRecipe()
     {
-        return recipeId;
+        return recipe;
     }
 
     public int getIngId()
@@ -64,6 +66,11 @@ public class RecipeIngredient
     }
 
     /* Setters */
+
+    public void setRecipe(Recipe recipeIn)
+    {
+        recipe = recipeIn;
+    }
 
     public void setQuantity(BigDecimal quantityIn)
     {
