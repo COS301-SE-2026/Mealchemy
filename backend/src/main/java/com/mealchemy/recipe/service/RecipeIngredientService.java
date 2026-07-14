@@ -33,6 +33,13 @@ public class RecipeIngredientService
     }
 
     // Update a specific step in an existing recipe
+    public RecipeIngredientResponse updateRecipeIngredient(int id, RecipeIngredientRequest request, Recipe recipe)
+    {
+        // Add logic to check if recipe owner
+
+        RecipeIngredient recipeIngredientForReturn = recipeIngredientRepository.findById(id).orElseThrow(() -> new RuntimeException("Ingredient not found."));
+        return RecipeIngredientResponse.from(recipeIngredientRepository.save(recipeIngredientForReturn));
+    }
 
     // Delete a specific step in an existing recipe
 
