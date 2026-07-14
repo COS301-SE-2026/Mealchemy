@@ -1,0 +1,26 @@
+package com.mealchemy.recipe.controller;
+
+/* Import libraries */
+
+import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import java.util.*;
+import jakarta.validation.Valid;
+
+/* Import classes */
+
+import com.mealchemy.recipe.dto.RecipeIngredientRequest;
+import com.mealchemy.recipe.dto.RecipeIngredientResponse;
+import com.mealchemy.recipe.service.RecipeIngredientService;
+
+public class RecipeIngredientController
+{
+    private final RecipeIngredientService recipeIngredientService;
+
+    public RecipeIngredientController(RecipeIngredientService recipeIngredientService)
+    {
+        this.recipeIngredientService = recipeIngredientService;
+    }
+
+    /* Mapping functions */
+}
