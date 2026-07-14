@@ -15,15 +15,19 @@ import com.mealchemy.recipe.dto.RecipeRequest;
 import com.mealchemy.recipe.dto.RecipeFullRequest;
 import com.mealchemy.recipe.dto.RecipeResponse;
 import com.mealchemy.recipe.repository.RecipeRepository;
+import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 
 @Service
 public class RecipeService
 {
     private final RecipeRepository recipeRepository;
 
-    public RecipeService(RecipeRepository recipeRepository)
+    private final IngredientCatalogueRepository ingredientCatalogueRepository;
+
+    public RecipeService(RecipeRepository recipeRepository, IngredientCatalogueRepository ingredientCatalogueRepository)
     {
         this.recipeRepository = recipeRepository;
+        this.ingredientCatalogueRepository = ingredientCatalogueRepository;
     }
 
     // Get all recipes
@@ -47,12 +51,18 @@ public class RecipeService
         return RecipeResponse.from(recipeRepository.save(recipeForReturn));
     }
 
-        // Post to create a new recipe from an existing one
+    // Post to create a new recipe from an existing one
     public RecipeResponse createFromFullRecipe(RecipeFullRequest request, Integer ownerId)
     {
         Recipe recipeForReturn = mapRequestToEntity(request, ownerId);
 
         List<RecipeIngredient> ingredients = request.ingredients().stream().map(i -> {
+            
+            if (!ingredientCatalogueRepository.existsById(i.ingId()))
+            {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One of the ingredients you want to add does not exist.");
+            }
+            
             RecipeIngredient recipeIngredient = new RecipeIngredient();
             recipeIngredient.setIngId(i.ingId());
             recipeIngredient.setQuantity(i.quantity());
