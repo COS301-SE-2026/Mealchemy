@@ -46,6 +46,27 @@ public class RecipeStepService {
     }
 
     // Update a specific step in an existing recipe
+    public RecipeStepResponse updateRecipeStep(int id, RecipeStepRequest request, Integer recipeId, Integer ownerId)
+    {
+        Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new RuntimeException("Recipe not found."));
+
+        if(!recipeToCheck.getOwnerId().equals(ownerId))
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its steps.");
+        }
+
+        RecipeStep recipeStepForReturn = recipeStepRepository.findById(id).orElseThrow(() -> new RuntimeException("Step not found."));
+
+        if(!recipeStepForReturn.getRecipe().getRecipeId().equals(recipeId))
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Step must be part of the recipe.");
+        }
+
+        recipeStepForReturn.setStepNr(request.stepNr());
+        recipeStepForReturn.setContent(request.content());
+
+        return RecipeStepResponse.from(recipeStepRepository.save(recipeStepForReturn));
+    }
 
     // Delete a specific step in an existing recipe
 
