@@ -25,4 +25,11 @@ public class RecipeIngredientController
     }
 
     /* Mapping functions */
+
+    // Post
+    @PostMapping("/recipe/{recipeId}/create")
+    public RecipeIngredientResponse createRecipeIngredient(@Valid @RequestBody RecipeIngredientRequest request, @PathVariable Integer recipeId, @AuthenticationPrincipal String ownerId)
+    {
+        return recipeService.createRecipeIngredient(request, recipeId, ownerId);
+    }
 }
