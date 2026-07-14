@@ -9,10 +9,10 @@ import jakarta.validation.Valid;
 
 /* Import classes */
 
-import com.mealchemy.dto.RecipeRequest;
-import com.mealchemy.dto.RecipeFullRequest;
-import com.mealchemy.dto.RecipeResponse;
-import com.mealchemy.sercice.RecipeService;
+import com.mealchemy.recipe.dto.RecipeRequest;
+import com.mealchemy.recipe.dto.RecipeFullRequest;
+import com.mealchemy.recipe.dto.RecipeResponse;
+import com.mealchemy.recipe.service.RecipeService;
 
 @RestController
 @RequestMapping("/recipes")
@@ -25,5 +25,5 @@ public class RecipeController
         this.recipeService = recipeService;
     }
 
-    /* Mapping Functions */
+    /* Mapping functions */
 }

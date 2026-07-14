@@ -13,6 +13,8 @@ import com.mealchemy.recipe.dto.RecipeIngredientRequest;
 import com.mealchemy.recipe.dto.RecipeIngredientResponse;
 import com.mealchemy.recipe.service.RecipeIngredientService;
 
+@RestController
+@RequestMapping("/ingredients")
 public class RecipeIngredientController
 {
     private final RecipeIngredientService recipeIngredientService;
