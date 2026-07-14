@@ -4,6 +4,7 @@ package com.mealchemy.recipe.service;
 
 import org.springframework.stereotype.Service;
 import java.util;
+import java.util.stream.*;
 
 /* Import classes */
 
