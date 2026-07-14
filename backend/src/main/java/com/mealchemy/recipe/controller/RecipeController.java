@@ -50,21 +50,21 @@ public class RecipeController
 
     // Post
     @PostMapping("/copy")
-    public RecipeResponse createFromFullRecipe(@Valid @RequestBody request, @AuthenticationPrincipal String ownerId)
+    public RecipeResponse createFromFullRecipe(@Valid @RequestBody RecipeFullRequest request, @AuthenticationPrincipal String ownerId)
     {
         return recipeService.createFromFullRecipe(request, Integer.parseInt(ownerId));
     }
 
     // Put
     @PutMapping("/edit/{id}")
-    public RecipeResponse updateRecipe(@PathVariable id, @Valid @RequestBody request, @AuthenticationPrincipal String ownerId)
+    public RecipeResponse updateRecipe(@PathVariable int id, @Valid @RequestBody RecipeRequest request, @AuthenticationPrincipal String ownerId)
     {
         return recipeService.updateRecipe(id, request, Integer.parseInt(ownerId));
     }
 
     // Delete
     @DeleteMapping("/{id}")
-    public RecipeResponse deleteRecipe(@PathVariable id, @AuthenticationPrincipal String ownerId)
+    public void deleteRecipe(@PathVariable int id, @AuthenticationPrincipal String ownerId)
     {
         recipeService.deleteRecipe(id, Integer.parseInt(ownerId));
     }
