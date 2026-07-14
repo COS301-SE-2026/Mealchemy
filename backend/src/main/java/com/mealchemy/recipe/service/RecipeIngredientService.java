@@ -29,7 +29,7 @@ public class RecipeIngredientService
         this.recipeRepository = recipeRepository;
     }
 
-    // Create a new step for a specific recipe
+    // Create a new ingredient for a specific recipe
     public RecipeIngredientResponse createRecipeIngredient(RecipeIngredientRequest request, Integer recipeId, Integer ownerId)
     {
         Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new RuntimeException("Recipe not found."));
@@ -44,7 +44,7 @@ public class RecipeIngredientService
         return RecipeIngredientResponse.from(recipeIngredientRepository.save(recipeIngredientForReturn));
     }
 
-    // Update a specific step in an existing recipe
+    // Update a specific ingredient in an existing recipe
     public RecipeIngredientResponse updateRecipeIngredient(int id, RecipeIngredientRequest request, Integer recipeId, Integer ownerId)
     {
         Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new RuntimeException("Recipe not found."));
@@ -69,7 +69,7 @@ public class RecipeIngredientService
         return RecipeIngredientResponse.from(recipeIngredientRepository.save(recipeIngredientForReturn));
     }
 
-    // Delete a specific step in an existing recipe
+    // Delete a specific ingredient in an existing recipe
     public void deleteRecipeIngredient(int id, Integer recipeId, Integer ownerId)
     {
         Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new RuntimeException("Recipe not found."));
