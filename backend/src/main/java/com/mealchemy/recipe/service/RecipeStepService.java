@@ -3,7 +3,7 @@ package com.mealchemy.recipe.service;
 /* Import libraries */
 
 import org.springframework.stereotype.Service;
-import java.util;
+import java.util.*;
 import java.util.stream.*;
 import org.springframework.web.server.*;
 import org.springframework.http.*;
@@ -42,7 +42,7 @@ public class RecipeStepService {
 
         RecipeStep recipeStepForReturn = mapRequestToEntity(request, recipeToCheck);
 
-        return RecipeResponse.from(recipeStepRepository.save(RecipeStepForReturn));
+        return RecipeStepResponse.from(recipeStepRepository.save(recipeStepForReturn));
     }
 
     // Update a specific step in an existing recipe
@@ -75,14 +75,14 @@ public class RecipeStepService {
 
         if (!recipeToCheck.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its ingredients.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its steps.");
         }
 
-        RecipeStep recipeStepForReturn = recipeStepRepository.findById(id).orElseThrow(() -> new RuntimeException("Ingredient not found."));
+        RecipeStep recipeStepForReturn = recipeStepRepository.findById(id).orElseThrow(() -> new RuntimeException("step not found."));
 
         if (!recipeStepForReturn.getRecipe().getRecipeId().equals(recipeId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Ingredient must be part of the recipe.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Step must be part of the recipe.");
         }
 
         recipeStepRepository.deleteById(id);
