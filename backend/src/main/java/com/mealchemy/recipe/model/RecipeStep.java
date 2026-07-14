@@ -27,5 +27,25 @@ public class RecipeStep
 
     /* Getters */
 
+    public int getStepId()
+    {
+        return stepId;
+    }
+
+    public int getRecipeId()
+    {
+        return recipeId;
+    }
+
+    public int getStepNr()
+    {
+        return stepNr;
+    }
+
+    public String getContent()
+    {
+        return content;
+    }
+
     /* Setters */
 }
