@@ -130,4 +130,59 @@ public class Recipe
     }
 
     /* Setters */
+
+    public void setTitle(String titleIn)
+    {
+        title = titleIn;
+    }
+
+    public void setDescription(String descriptionIn)
+    {
+        description = descriptionIn;
+    }
+
+    public void setCuisineType(String cuisineTypeIn)
+    {
+        cuisineType = cuisineTypeIn;
+    }
+
+    public void setPrepTimeMins(int prepTimeMinsIn)
+    {
+        prepTimeMins = prepTimeMinsIn;
+    }
+
+    public void setCookingTimeMins(int cookingTimeMinsIn)
+    {
+        cookingTimeMins = cookingTimeMinsIn;
+    }
+
+    public void setServingSize(int servingSizeIn)
+    {
+        servingSize = servingSizeIn;
+    }
+
+    public void setPhotoUrl(String photoUrlIn)
+    {
+        photoUrl = photoUrlIn;
+    }
+
+    public void setVideoUrl(String videoUrlIn)
+    {
+        videoUrl = videoUrlIn;
+    }
+
+    public void setExternalUrl(String externalUrlIn)
+    {
+        externalUrl = externalUrlIn;
+    }
+
+    public void setIsCommunityPublished(boolean isCommunityPublishedIn)
+    {
+        isCommunityPublished = isCommunityPublishedIn;
+    }
+
+    public void setUpdatedAt(OffsetDateTime updatedAtIn)
+    {
+        updatedAt = updatedAtIn;
+    }
 }
