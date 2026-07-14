@@ -13,6 +13,19 @@ import com.mealchemy.recipe.dto.RecipeIngredientResponse;
 import com.mealchemy.recipe.repository.RecipeIngredientRepository;
 
 @Service
-public class RecipeIngredientService {
+public class RecipeIngredientService 
+{
+    private final RecipeIngredientRepository recipeIngredientRepository;
+
+    public RecipeIngredienService(RecipeIngredientRepository recipeIngredientRepository)
+    {
+        this.recipeIngredientRepository = recipeIngredientRepository;
+    }
+
+    // Get all steps that belong to a recipe
+    public List<RecipeIngredientResponse> getStepsByRecipeId(int id)
+    {
+        return recipeIngredientRepository.findById(id).stream().map(RecipeIngredientResponse::from).collect(Collectors.toList());
+    }
     
 }
