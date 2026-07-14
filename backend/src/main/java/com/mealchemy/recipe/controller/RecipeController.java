@@ -47,4 +47,11 @@ public class RecipeController
     {
         return recipeService.createRecipe(request, Integer.parseInt(ownerId));
     }
+
+    // Post
+    @PostMapping("/copy")
+    public RecipeResponse createFromFullRecipe(@Valid @RequestBody request, @AuthenticationPrincipal String ownerId)
+    {
+        return recipeService.createFromFullRecipe(request, Integer.parseInt(ownerId));
+    }
 }
