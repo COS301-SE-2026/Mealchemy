@@ -19,7 +19,7 @@ public class FlavourProfileOptions()
     @Column(name = "id")
     private int id;
 
-    @Column(name = "value", nullable = false)
+    @Column(name = "value", nullable = false, unique = true)
     private String value;
 
     @Column(name = "label", nullable = false)
