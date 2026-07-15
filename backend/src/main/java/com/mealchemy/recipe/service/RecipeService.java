@@ -16,6 +16,7 @@ import com.mealchemy.recipe.dto.RecipeFullRequest;
 import com.mealchemy.recipe.dto.RecipeResponse;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
+import com.mealchemy.cuisinetype.repository.FlavourProfileOptionsRepository;
 
 @Service
 public class RecipeService
@@ -24,10 +25,13 @@ public class RecipeService
 
     private final IngredientCatalogueRepository ingredientCatalogueRepository;
 
-    public RecipeService(RecipeRepository recipeRepository, IngredientCatalogueRepository ingredientCatalogueRepository)
+    private final FlavourProfileOptionsRepository flavourProfileOptionsRepository;
+
+    public RecipeService(RecipeRepository recipeRepository, IngredientCatalogueRepository ingredientCatalogueRepository, FlavourProfileOptionsRepository flavourProfileOptionsRepository)
     {
         this.recipeRepository = recipeRepository;
         this.ingredientCatalogueRepository = ingredientCatalogueRepository;
+        this.flavourProfileOptionsRepository = flavourProfileOptionsRepository;
     }
 
     // Get all recipes
@@ -46,6 +50,11 @@ public class RecipeService
     // Post to create a new fresh recipe
     public RecipeResponse createRecipe(RecipeRequest request, Integer ownerId)
     {
+        if (!flavourProfileOptionsRepository.existsByValue(request.cuisineType()))
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cuisine type is invalid.");
+        }
+
         Recipe recipeForReturn = mapRequestToEntity(request, ownerId);
 
         return RecipeResponse.from(recipeRepository.save(recipeForReturn));
@@ -54,6 +63,11 @@ public class RecipeService
     // Post to create a new recipe from an existing one
     public RecipeResponse createFromFullRecipe(RecipeFullRequest request, Integer ownerId)
     {
+        if (!flavourProfileOptionsRepository.existsByValue(request.cuisineType()))
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cuisine type is invalid.");
+        }
+        
         Recipe recipeForReturn = mapRequestToEntity(request, ownerId);
 
         List<RecipeIngredient> ingredients = request.ingredients().stream().map(i -> {
@@ -94,6 +108,11 @@ public class RecipeService
         if (!recipeForReturn.getOwnerId().equals(ownerId))
         {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can edit it.");
+        }
+
+        if (!flavourProfileOptionsRepository.existsByValue(request.cuisineType()))
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cuisine type is invalid.");
         }
 
         recipeForReturn.setTitle(request.title());
