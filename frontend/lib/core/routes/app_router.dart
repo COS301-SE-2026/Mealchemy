@@ -1,5 +1,9 @@
 //maps each route string to its screen widget
 import 'app_routes.dart';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
 import 'package:go_router/go_router.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
@@ -17,7 +21,7 @@ import '../../features/shopping_lists/screens/shopping_list_detail_screen.dart';
 import '../../features/guided_discovery/screens/guided_discovery_screen.dart';
 
 final appRouter = GoRouter(
-  initialLocation: AppRoutes.login,
+  initialLocation: AppRoutes.dashboard,
     // Sets the first screen shown when the app launches. 
                                     // During development: change this to your screen (e.g. AppRoutes.pantry)
                                     // Before committing: ALWAYS reset this back to AppRoutes.login
@@ -50,8 +54,27 @@ final appRouter = GoRouter(
       builder: (context, state) => const VaultScreen(),
     ),
     GoRoute(
+      //translucent overlay: opaque false keeps the previous screen
+      //visible so the header can blur it. open with push, not go
+      
       path: AppRoutes.addIngredient,
-      builder: (context, state) => const AddIngredientScreen(),
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        opaque: false,
+        barrierColor: Colors.transparent,
+        child: const AddIngredientScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 1),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            ),
+            child: child,
+          );
+        },
+      ),
     ),
     GoRoute(
       path: AppRoutes.signup,

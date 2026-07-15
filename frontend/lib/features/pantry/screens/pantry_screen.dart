@@ -45,7 +45,7 @@ class PantryScreen extends ConsumerWidget {
         onRouteSelected: (route) => context.go(route),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.go(AppRoutes.addIngredient),
+        onPressed: () => context.push(AppRoutes.addIngredient),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textDark,
         child: const Icon(Icons.add),
