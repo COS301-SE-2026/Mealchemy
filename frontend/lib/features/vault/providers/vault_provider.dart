@@ -22,7 +22,7 @@ final vaultRepositoryProvider = Provider<VaultRepository>((ref) {
 
 // Vaults provider
 final vaultsProvider = FutureProvider<List<Vault>>((ref) {
-  final userId = ref.watch(authProvider).userId;
+  final userId = ref.watch(authProvider).user?.id;
   if (userId == null) return Future.value([]);
   return ref.watch(vaultRepositoryProvider).getVaultsByOwnerId(userId);
 });
