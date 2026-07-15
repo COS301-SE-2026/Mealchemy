@@ -10,7 +10,7 @@ import org.hibernate.annotations.*;
 
 @Entity
 @Table(name = "flavour_profile_options")
-public class FlavourProfileOptions()
+public class FlavourProfileOptions
 {
     /* Declaring fields */
 
