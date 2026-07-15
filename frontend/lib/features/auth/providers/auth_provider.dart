@@ -1,8 +1,8 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../repositories/api_auth_repository.dart';
 import '../repositories/auth_repository.dart';
 import '../../../core/providers/api_service_provider.dart';
-import 'dart:convert';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return ApiAuthRepository(ref.read(dioProvider));
