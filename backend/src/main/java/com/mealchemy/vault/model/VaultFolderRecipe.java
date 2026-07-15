@@ -7,6 +7,8 @@ import java.time.OffsetDateTime;
 
 /* Import classes */
 
+import com.mealchemy.recipe.model.Recipe;
+
 @Entity
 @Table(name = "vault_folder_recipes")
 public class VaultFolderRecipe {
@@ -17,11 +19,13 @@ public class VaultFolderRecipe {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(name = "folder_id", nullable = false)
-    private int folderId;
+    @ManyToOne
+    @JoinColumn(name = "folder_id", nullable = false)
+    private VaultFolder folder;
 
-    @Column(name = "recipe_id", nullable = false)
-    private int recipeId;
+    @ManyToOne
+    @JoinColumn(name = "recipe_id", nullable = false)
+    private Recipe recipe;
 
     @Column(name = "added_at", nullable = false)
     private OffsetDateTime addedAt = OffsetDateTime.now();
@@ -33,14 +37,14 @@ public class VaultFolderRecipe {
         return id;
     }
 
-    public int getFolderId()
+    public VaultFolder getFolder()
     {
-        return folderId;
+        return folder;
     }
 
-    public int getRecipeId()
+    public Recipe getRecipe()
     {
-        return recipeId;
+        return recipe;
     }
 
     public OffsetDateTime getAddedAt()
@@ -50,13 +54,13 @@ public class VaultFolderRecipe {
 
     /* Setters */
 
-    public void setFolderId(int folderIdIn)
+    public void setFolder(VaultFolder folderIn)
     {
-        folderId = folderIdIn;
+        folder = folderIn;
     }
 
-    public void setRecipeId(int recipeIdIn)
+    public void setRecipe(Recipe recipeIn)
     {
-        recipeId = recipeIdIn;
+        recipe = recipeIn;
     }
 }
