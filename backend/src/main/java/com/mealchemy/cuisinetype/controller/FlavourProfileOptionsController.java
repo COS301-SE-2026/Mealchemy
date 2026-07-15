@@ -25,7 +25,7 @@ public class FlavourProfileOptionsController {
 
     // Get
     @GetMapping("/all")
-    public FlavourProfileOptionsResponse getAllCuisineTypes()
+    public List<FlavourProfileOptionsResponse> getAllCuisineTypes()
     {
         return flavourProfileOptionsService.getAllCuisineTypes();
     }

@@ -23,7 +23,7 @@ public class FlavourProfileOptionsService {
     }
 
     // Get all cuisine types
-    public FlavourProfileOptionsResponse getAllCuisineTypes()
+    public List<FlavourProfileOptionsResponse> getAllCuisineTypes()
     {
         return flavourProfileOptionsRepository.findAll().stream().map(FlavourProfileOptionsResponse::from).collect(Collectors.toList());
     }
