@@ -10,8 +10,8 @@ import jakarta.validation.constraints.*;
 import com.mealchemy.shared.enums.VaultType;
 
 public record VaultRequest(
-    @NotBlank VaultType vaultType,
-    @NotNull String name
+    @NotNull VaultType vaultType,
+    @NotBlank String name
 )
 {
 }

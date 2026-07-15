@@ -6,6 +6,8 @@ import java.time.OffsetDateTime;
 
 /* Import classes */
 
+import com.mealchemy.vault.model.VaultFolderRecipe;
+
 public record VaultFolderRecipeResponse(
     Integer id,
     Integer folderId,
@@ -17,8 +19,8 @@ public record VaultFolderRecipeResponse(
     {
         return new VaultFolderRecipeResponse(
             vaultFolderRecipe.getId(),
-            vaultFolderRecipe.getFolderId(),
-            vaultFolderRecipe.getRecipeId(),
+            vaultFolderRecipe.getFolder().getFolderId(),
+            vaultFolderRecipe.getRecipe().getRecipeId(),
             vaultFolderRecipe.getAddedAt()
         );
     }

@@ -3,6 +3,9 @@ package com.mealchemy.vault.dto;
 /* Import libraries */
 import java.time.OffsetDateTime;
 
+/* Import classes */
+import com.mealchemy.vault.model.VaultFolder;
+
 public record VaultFolderResponse(
     Integer folderId,
     Integer vaultId,
@@ -14,8 +17,8 @@ public record VaultFolderResponse(
     {
         return new VaultFolderResponse(
             vaultFolder.getFolderId(),
-            vaultFolder.getVaultId(),
-            vaultFolder.getFolderId(),
+            vaultFolder.getVault().getVaultId(),
+            vaultFolder.getFolderName(),
             vaultFolder.getCreatedAt()
         );
     }

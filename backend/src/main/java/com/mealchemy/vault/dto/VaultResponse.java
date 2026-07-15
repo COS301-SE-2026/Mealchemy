@@ -7,6 +7,7 @@ import java.time.OffsetDateTime;
 /* Import classes */
 
 import com.mealchemy.shared.enums.VaultType;
+import com.mealchemy.vault.model.Vault;
 
 public record VaultResponse(
     Integer vaultId,
