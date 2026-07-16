@@ -2,9 +2,10 @@ package com.mealchemy.vault.dto;
 
 /* Import libraries */
 
+import jakarta.validation.constraints.*;
+
 /* Import classes */
 
 public record VaultMemberRequest(
-    @NotNull Integer VaultId,
-    @NotNull Integer UserId
+    @NotBlank @Email String email
 ){}
