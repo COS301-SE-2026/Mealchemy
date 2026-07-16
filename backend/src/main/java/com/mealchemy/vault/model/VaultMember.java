@@ -57,4 +57,14 @@ public class VaultMember {
     }
 
     /* Setters */
+
+    public void setVault(Vault vaultIn)
+    {
+        vault = vaultIn;
+    }
+
+    public void setUser(User userIn)
+    {
+        user = userIn;
+    }
 }
