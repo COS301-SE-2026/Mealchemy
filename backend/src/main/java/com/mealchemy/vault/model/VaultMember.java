@@ -36,5 +36,25 @@ public class VaultMember {
 
     /* Getters */
 
+    public int getId()
+    {
+        return id;
+    }
+
+    public Vault getVault()
+    {
+        return vault;
+    }
+
+    public User getUser()
+    {
+        return user;
+    }
+
+    public OffsetDateTime getJoinedAt()
+    {
+        return joinedAt;
+    }
+
     /* Setters */
 }
