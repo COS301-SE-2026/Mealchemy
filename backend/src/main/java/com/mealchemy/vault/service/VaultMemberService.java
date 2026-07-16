@@ -32,16 +32,16 @@ public class VaultMemberService {
         return vaultMemberRepository.findAll().map(VaultMemberResponse::from).collect(Collectors.toList());
     }
 
-    
+
 
     /* Mapping functions */
 
-    public VaultMember mapRequestToEntity(VaultMemberRequest request)
+    public VaultMember mapRequestToEntity(VaultMemberRequest request, Integer userIdIn)
     {
         VaultMember member = new VaultMember();
 
-        member.setVaultId();
-        member.setUserId(request.userId())
+        member.setVaultId(request.vaultId());
+        member.setUserId(userIdIn);
 
         return member;
     }
