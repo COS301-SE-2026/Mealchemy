@@ -36,6 +36,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -163,14 +164,14 @@ public class PantryControllerTest {
             "g"
         );
 
-        when(pantryService.addIngredientManually(anyInt(), any(PantryIngredientRequest.class))).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found"));
+        when(pantryService.addIngredientManually(anyInt(), any(PantryIngredientRequest.class))).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found in pantry in pantry"));
 
         // Act and Assert
         mockMvc.perform(post("/api/pantry").with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(mockRequest)))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Ingredient not found"));
+                .andExpect(jsonPath("$.message").value("Ingredient not found in pantry in pantry"));
     }
 
     //bad request body
@@ -262,7 +263,7 @@ public class PantryControllerTest {
             "g"
         );
 
-        when(pantryService.updateIngredientManually(anyInt(), anyInt(), any(PantryIngredientRequest.class))).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found"));
+        when(pantryService.updateIngredientManually(anyInt(), anyInt(), any(PantryIngredientRequest.class))).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found in pantry in pantry"));
 
         // Act and Assert
         mockMvc.perform(put("/api/pantry/{id}", 3)
@@ -270,7 +271,7 @@ public class PantryControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(mockRequest)))    
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Ingredient not found"));
+                .andExpect(jsonPath("$.message").value("Ingredient not found in pantry in pantry"));
     }
 
     @Test 
@@ -282,14 +283,14 @@ public class PantryControllerTest {
             "g"
         );
 
-        when(pantryService.updateIngredientManually(anyInt(), eq(3), any(PantryIngredientRequest.class))).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "User does not own this ingredient"));
+        when(pantryService.updateIngredientManually(anyInt(), eq(3), any(PantryIngredientRequest.class))).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this ingredient"));
 
         // Act and Assert
         mockMvc.perform(put("/api/pantry/{id}", 3).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(mockRequest))) 
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("User does not own this ingredient"));
+                .andExpect(jsonPath("$.message").value("You do not own this ingredient"));
     }
     
 
@@ -327,12 +328,12 @@ public class PantryControllerTest {
     @Test
     void removePantryIngredient_ingredientDoesNotExist_return404() throws Exception {
 
-        when(pantryService.removePantryIngredient(anyInt(), eq(3))).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found"));
+        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found in pantry")).when(pantryService).removePantryIngredient(anyInt(), eq(3));
 
         // Act and Assert
         mockMvc.perform(delete("/api/pantry/{id}", 3).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))  
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Ingredient not found"));
+                .andExpect(jsonPath("$.message").value("Ingredient not found in pantry"));
     }
 
     @Test
@@ -344,7 +345,7 @@ public class PantryControllerTest {
             "g"
         );
 
-        when(pantryService.removePantryIngredient(anyInt(), eq(3))).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "User does not own this ingredient"));
+        doThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this ingredient")).when(pantryService).removePantryIngredient(anyInt(), eq(3));
 
         // Act and Assert
         mockMvc.perform(delete("/api/pantry/{id}", 3)
@@ -352,7 +353,7 @@ public class PantryControllerTest {
                 .content(objectMapper.writeValueAsString(mockRequest))    
                 .with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("User does not own this ingredient"));
+                .andExpect(jsonPath("$.message").value("You do not own this ingredient"));
     }
 
 
@@ -372,7 +373,7 @@ public class PantryControllerTest {
             OffsetDateTime.parse("2026-07-17T14:00:00Z")
         );
 
-        when(pantryService.getIngredientByName(anyInt(), eq("hummus"))).thenReturn(List.of(mockResponse));
+        when(pantryService.findPantryIngredientsByName(anyInt(), eq("hummus"))).thenReturn(List.of(mockResponse));
 
         // Act and Assert
         mockMvc.perform(get("/api/pantry/search").param("q", "hummus")
@@ -389,7 +390,7 @@ public class PantryControllerTest {
     @Test
     void searchPantryIngredients_noMatch_returns200EmptyArray() throws Exception {
         // Arrange
-        when(pantryService.getIngredientByName(anyInt(), eq("not-found"))).thenReturn(List.of());
+        when(pantryService.findPantryIngredientsByName(anyInt(), eq("not-found"))).thenReturn(List.of());
 
         // Act and Assert
         mockMvc.perform(get("/api/pantry/search").param("q", "not-found")
