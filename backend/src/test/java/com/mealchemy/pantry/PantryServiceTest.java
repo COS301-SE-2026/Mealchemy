@@ -81,7 +81,7 @@ public class PantryServiceTest {
     @Test
     void pantry_whenUserHasNoItems_returnsEmptyList() {
         // Arrange - no ingredients in pantry returns empty array
-        when(pantryIngredientRepository.findByUserId(1)).thenReturn(List.of());
+        when(pantryIngredientRepository.findPantryByUserId(1)).thenReturn(List.of());
 
         // Act
         List<PantryIngredientResponse> responses = pantryService.getUserPantryItems(1);
@@ -95,9 +95,18 @@ public class PantryServiceTest {
     @Test
     void pantry_whenUserHasItems_returnsPantryIngredientResponses() {
         // Arrange 
-        when(pantryIngredientRepository.findByUserId(1)).thenReturn(List.of(existingPantryIngredient));
-        when(ingredientCatalogueRepository.findById(2)).thenReturn(Optional.of(catalogueInstance));
-        when(ingredientCategoryRepository.findById(5)).thenReturn(Optional.of(categoryInstance));
+        PantryIngredientResponse expected = new PantryIngredientResponse(
+            1,
+            2,
+            "Hummus",
+            "Legumes and Legume Products",
+            new BigDecimal("250"),
+            "g",
+            null,
+            null
+        );
+
+        when(pantryIngredientRepository.findByUserId(1)).thenReturn(List.of(expected));
 
         // Act
         List<PantryIngredientResponse> responses = pantryService.getUserPantryItems(1);

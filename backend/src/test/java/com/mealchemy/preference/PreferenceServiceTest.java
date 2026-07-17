@@ -46,7 +46,7 @@ public class PreferenceServiceTest {
         existingPreferences.setAllergies(List.of("peanuts"));
         existingPreferences.setDislikedIngredients(List.of("coriander"));
         existingPreferences.setFlavourProfile(List.of("mediterranean"));
-        existingPreferences.setFlavourProfile(List.of("low_carb"));
+        existingPreferences.setNutritionalGoals(List.of("low_carb"));
 
         // simulates what flutter puts in PUT req
         updateRequest = new PreferenceRequest(

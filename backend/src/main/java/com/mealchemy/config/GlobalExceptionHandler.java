@@ -6,6 +6,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.ErrorResponse;
 
 import java.util.Map;
 
@@ -34,6 +35,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("message", message));
+    }
+
+    //catches Spring MVC's built-in exceptions and uses correct status code instead of falling through to generic 500
+    @ExceptionHandler(ErrorResponse.class)
+    public ResponseEntity<Map<String, String>> handleSpringMvcException(ErrorResponse ex) {
+        String message = ex.getBody().getDetail() != null ? ex.getBody().getDetail() : "Invalid request";
+       
+        return ResponseEntity.status(ex.getStatusCode())
+                             .body(Map.of("message", message));
     }
 
     //catches anything unexpected - returns generic message
