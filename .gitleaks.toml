@@ -1,0 +1,7 @@
+title = "Mealchemy gitleaks config"
+
+[allowlist]
+  description = "BCrypt hashes in database seed files are hashed credentials, not plaintext secrets"
+  paths = [
+    '''database/V\d+__seed.*\.sql'''
+  ]

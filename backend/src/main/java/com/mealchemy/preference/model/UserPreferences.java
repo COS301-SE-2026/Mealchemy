@@ -36,6 +36,10 @@ public class UserPreferences {
     @Column(name = "flavour_profile", columnDefinition = "jsonb")
     private List<String> flavourProfile = List.of();
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "nutritional_goals", columnDefinition = "jsonb")
+    private List<String> nutritionalGoals = List.of();
+
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt = OffsetDateTime.now();
 
@@ -78,6 +82,14 @@ public class UserPreferences {
     
     public void setFlavourProfile(List<String> flavourProfileList) { 
         this.flavourProfile = flavourProfileList; 
+    }
+
+    public List<String> getNutritionalGoals() { 
+        return nutritionalGoals; 
+    }
+    
+    public void setNutritionalGoals(List<String> nutritionalGoalsList) { 
+        this.nutritionalGoals = nutritionalGoalsList; 
     }
     
     public OffsetDateTime getUpdatedAt() { 
