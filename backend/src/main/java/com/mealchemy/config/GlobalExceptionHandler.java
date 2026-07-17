@@ -37,13 +37,12 @@ public class GlobalExceptionHandler {
                 .body(Map.of("message", message));
     }
 
-    //catches Spring MVC's built-in exceptions and uses correct status code instead of falling through to generic 500
-    @ExceptionHandler(ErrorResponse.class)
-    public ResponseEntity<Map<String, String>> handleSpringMvcException(ErrorResponse ex) {
-        String message = ex.getBody().getDetail() != null ? ex.getBody().getDetail() : "Invalid request";
-       
-        return ResponseEntity.status(ex.getStatusCode())
-                             .body(Map.of("message", message));
+    //malinformed request body and invalid path variale types
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
+    public ResponseEntity<Map<String, String>> handleBadRequest(Exception ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", "Invalid request"));
     }
 
     //catches anything unexpected - returns generic message
