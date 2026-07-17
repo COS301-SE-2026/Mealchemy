@@ -81,7 +81,7 @@ public class PantryServiceTest {
     @Test
     void pantry_whenUserHasNoItems_returnsEmptyList() {
         // Arrange - no ingredients in pantry returns empty array
-        when(pantryIngredientRepository.findPantryByUserId(1)).thenReturn(List.of());
+        when(pantryIngredientRepository.findPantryIngredientsByUserId(1)).thenReturn(List.of());
 
         // Act
         List<PantryIngredientResponse> responses = pantryService.getUserPantryItems(1);
@@ -106,7 +106,7 @@ public class PantryServiceTest {
             null
         );
 
-        when(pantryIngredientRepository.findByUserId(1)).thenReturn(List.of(expected));
+        when(pantryIngredientRepository.findPantryIngredientsByUserId(1)).thenReturn(List.of(expected));
 
         // Act
         List<PantryIngredientResponse> responses = pantryService.getUserPantryItems(1);
