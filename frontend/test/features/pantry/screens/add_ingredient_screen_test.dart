@@ -32,15 +32,17 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('AddIngredientScreen renders manual ingredient form', (
+  testWidgets('AddIngredientScreen renders sheet title and  form fields', (
     tester,
   ) async {
     await pumpAddIngredientScreen(tester);
 
-    expect(find.text('Add Ingredient\nManually'), findsOneWidget);
+    expect(find.text('Pantry Entry'), findsOneWidget);
+    expect(find.text('Add Ingredient Manually'), findsOneWidget);
     expect(find.text('Ingredient Details'), findsOneWidget);
-    expect(find.text('Ingredient name'), findsOneWidget);
-    expect(find.text('Quantity'), findsWidgets);
+    expect(find.text('Ingredient Name'), findsOneWidget);
+    expect(find.text('Unit'), findsOneWidget);
+    expect(find.text('Save Ingredient'), findsOneWidget);
   });
 
   testWidgets('AddIngredientScreen validates required fields on save', (
@@ -49,7 +51,7 @@ void main() {
     await pumpAddIngredientScreen(tester);
 
     // First AppButton is the save action.
-    await tester.tap(find.byType(AppButton).first);
+    await tester.tap(find.text('Save Ingredient'));
     await tester.pumpAndSettle();
 
     expect(
@@ -57,23 +59,38 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.text('Quantity and unit are required.', skipOffstage: false),
+      find.text('Unit is required.', skipOffstage: false),
       findsOneWidget,
     );
   });
 
-  testWidgets('AddIngredientScreen updates category and stock controls', (
+  testWidgets('AddIngredientScreen quantity stepper increments and floors at 1 ', (
     tester,
   ) async {
     await pumpAddIngredientScreen(tester);
 
-    await tester.tap(find.text('DAIRY'));
+    //starts at 1 and the minus button does nothing at the floor
+    expect(find.text('1'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.remove));
     await tester.pumpAndSettle();
+    expect(find.text('1'), findsOneWidget);
 
-    await tester.tap(find.text('Mark as out of stock'));
+    //last Icons.add is the stepper plus (first is the header button)
+    await tester.tap(find.byIcon(Icons.add).last);
     await tester.pumpAndSettle();
+    expect(find.text('2'), findsOneWidget);
+  });
 
-    expect(find.text('DAIRY'), findsOneWidget);
-    expect(find.text('Mark as out of stock'), findsOneWidget);
+    testWidgets('AddIngredientScreen selects a unit from the dropdown', (
+    tester,
+  ) async {
+    await pumpAddIngredientScreen(tester);
+ 
+    await tester.tap(find.text('e.g. oz'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('g').last);
+    await tester.pumpAndSettle();
+ 
+    expect(find.text('g'), findsOneWidget);
   });
 }

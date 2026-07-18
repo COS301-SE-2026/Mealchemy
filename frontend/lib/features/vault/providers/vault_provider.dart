@@ -3,12 +3,12 @@ import 'package:mealchemy/core/providers/api_service_provider.dart';
 import 'package:mealchemy/features/auth/providers/auth_provider.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/repositories/mock_recipe_repository.dart';
-import 'package:mealchemy/features/vault/repositories/mock_vault_repository.dart';
-import '../repositories/api_vault_repository.dart';
-import '../repositories/vault_repository.dart';
 import '../models/vault.dart';
 import '../models/vault_folder.dart';
 import '../models/vault_folder_recipe.dart';
+import '../repositories/vault_repository.dart';
+import '../repositories/mock_vault_repository.dart';
+import '../repositories/api_vault_repository.dart';
 
 // Toggleflutter run/ default is false now, have to include falg in flutter run command to use mock data
 const bool _useMock = bool.fromEnvironment('USE_MOCK');
@@ -22,7 +22,7 @@ final vaultRepositoryProvider = Provider<VaultRepository>((ref) {
 
 // Vaults provider
 final vaultsProvider = FutureProvider<List<Vault>>((ref) {
-  final userId = ref.watch(authProvider).user?.id;
+  final userId = ref.watch(authProvider).userId;
   if (userId == null) return Future.value([]);
   return ref.watch(vaultRepositoryProvider).getVaultsByOwnerId(userId);
 });
