@@ -380,7 +380,7 @@ class _LabelledDropdown extends StatelessWidget {
     return _LabelledField(
       label: label,
       child: DropdownButtonFormField<String>(
-        value: value,
+        initialValue: value,
         onChanged: onChanged,
         isExpanded: true,
         icon: const Icon(
