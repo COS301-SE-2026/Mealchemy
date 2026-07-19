@@ -25,6 +25,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import org.springframework.http.MediaType;
 
 @SpringBootTest
@@ -99,8 +100,7 @@ public class PantryControllerIntegrationTest {
                 "kg"
         );
 
-        // This is the happy path: Flutter sends an ingredient id, quantity, and unit.
-        // The backend fills in name/category from the ingredient catalogue.
+        //bbackend fills in name/category from the ingredient catalogue.
         mockMvc.perform(post("/api/pantry")
                         .with(authentication(new UsernamePasswordAuthenticationToken(
                                 "1",
@@ -119,7 +119,7 @@ public class PantryControllerIntegrationTest {
                 .andExpect(jsonPath("$.created_at", notNullValue()))
                 .andExpect(jsonPath("$.updated_at", notNullValue()));
 
-        // Quick database sanity check: the row was really saved, not just returned.
+        //row was saved -> check
         List<PantryIngredient> savedItems = pantryIngredientRepository.findByUserId(1);
         org.junit.jupiter.api.Assertions.assertEquals(1, savedItems.size());
         org.junit.jupiter.api.Assertions.assertEquals(testIngredient.getIngId(), savedItems.get(0).getIngredientId());
@@ -129,5 +129,48 @@ public class PantryControllerIntegrationTest {
                 new BigDecimal("1.75").compareTo(savedItems.get(0).getQuantity())
         );
         org.junit.jupiter.api.Assertions.assertEquals("kg", savedItems.get(0).getUnit());
+    }
+
+    @Test
+    void updatePantryIngredientManually_updatesQuantityAndUnit() throws Exception {
+        PantryIngredient existingItem = pantryIngredientRepository.findByUserId(1)
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No pantry item created in setup"));
+
+        PantryIngredientRequest request = new PantryIngredientRequest(
+                testIngredient.getIngId(),
+                new BigDecimal("4.25"),
+                "g"
+        );
+
+        //updating keeps the same pantry row, changes the amount/unit
+        mockMvc.perform(put("/api/pantry/{id}", existingItem.getPIngredientId())
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                "1",
+                                null,
+                                List.of()
+                        )))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.p_ingredient_id", is(existingItem.getPIngredientId())))
+                .andExpect(jsonPath("$.ing_id", is(testIngredient.getIngId())))
+                .andExpect(jsonPath("$.name", is(testIngredient.getName())))
+                .andExpect(jsonPath("$.category", notNullValue()))
+                .andExpect(jsonPath("$.quantity", is(4.25)))
+                .andExpect(jsonPath("$.unit", is("g")))
+                .andExpect(jsonPath("$.updated_at", notNullValue()));
+
+        PantryIngredient updatedItem = pantryIngredientRepository.findById(existingItem.getPIngredientId())
+                .orElseThrow(() -> new IllegalStateException("Updated pantry item was not found"));
+
+        //compare number
+        org.junit.jupiter.api.Assertions.assertEquals(
+                0,
+                new BigDecimal("4.25").compareTo(updatedItem.getQuantity())
+        );
+        org.junit.jupiter.api.Assertions.assertEquals("g", updatedItem.getUnit());
     }
 }
