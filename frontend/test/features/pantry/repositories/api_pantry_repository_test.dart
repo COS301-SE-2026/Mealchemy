@@ -1,31 +1,93 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mealchemy/features/pantry/repositories/api_pantry_repository.dart';
+import 'package:mealchemy/features/pantry/widgets/pantry_item_card.dart';
 
 void main() {
-  //throw
-  test('ApiPantryRepository throws for summary until API is implemented', () {
-    //create repo instance
-    final repository = ApiPantryRepository();
+  late ApiPantryRepository repository;
 
-    expect(repository.getPantrySummary, throwsA(isA<UnimplementedError>()));
+  setUp(() {
+    final dio = Dio();
+
+    //keep the repo test fast and offline
+    //without calling the real backend
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          handler.resolve(
+            Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: [
+                {
+                  'p_ingredient_id': 1,
+                  'ing_id': 2,
+                  'name': 'Chicken Breast',
+                  'category': 'poultry',
+                  'quantity': 800,
+                  'unit': 'g',
+                  'created_at': '2026-07-19T10:00:00Z',
+                  'updated_at': '2026-07-19T10:00:00Z',
+                },
+                {
+                  'p_ingredient_id': 2,
+                  'ing_id': 3,
+                  'name': 'Full Cream Milk',
+                  'category': 'dairy',
+                  'quantity': 1,
+                  'unit': 'L',
+                  'created_at': '2026-07-19T10:00:00Z',
+                  'updated_at': '2026-07-19T10:00:00Z',
+                },
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    repository = ApiPantryRepository(dio);
   });
 
-  test('ApiPantryRepository throws for filters until API is implemented', () {
-    final repository = ApiPantryRepository();
+  test('getPantryIngredients maps backend pantry JSON into UI ingredients',
+      () async {
+    final ingredients = await repository.getPantryIngredients();
 
-    //ensure it fails (not returning invalid data)
-    expect(repository.getPantryFilters, throwsA(isA<UnimplementedError>()));
+    expect(ingredients, hasLength(2));
+    expect(ingredients.first.name, 'Chicken Breast');
+    expect(ingredients.first.details, '800g • Pantry');
+    expect(ingredients.first.category, 'Proteins');
+    expect(ingredients.first.status, PantryItemStatus.fresh);
+
+    expect(ingredients.last.name, 'Full Cream Milk');
+    expect(ingredients.last.details, '1L • Pantry');
+    expect(ingredients.last.category, 'Dairy');
   });
 
-  test('ApiPantryRepository throws for ingredients until API is implemented', () {
-    final repository = ApiPantryRepository();
+  test('getPantrySummary builds summary values from API pantry items',
+      () async {
+    final summary = await repository.getPantrySummary();
 
-    expect(repository.getPantryIngredients, throwsA(isA<UnimplementedError>()));
+    expect(summary.totalItems, 2);
+    expect(summary.freshnessPercent, 100);
+    expect(summary.categoryCount, 2);
+    expect(summary.optimizationPercent, 72);
   });
 
-  test('ApiPantryRepository throws for categories until API is implemented', () {
-    final repository = ApiPantryRepository();
+  test('getPantryFilters builds filter counts from API pantry items', () async {
+    final filters = await repository.getPantryFilters();
 
-    expect(repository.getIngredientCategories, throwsA(isA<UnimplementedError>()));
+    expect(filters.map((filter) => filter.label),
+        containsAll(['All', 'Proteins', 'Dairy']));
+    expect(filters.first.label, 'All');
+    expect(filters.first.count, 2);
+  });
+
+  test(
+      'getIngredientCategories returns sorted categories from API pantry items',
+      () async {
+    final categories = await repository.getIngredientCategories();
+
+    expect(categories, ['Dairy', 'Proteins']);
   });
 }
