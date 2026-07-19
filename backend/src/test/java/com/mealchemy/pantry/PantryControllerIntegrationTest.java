@@ -173,4 +173,26 @@ public class PantryControllerIntegrationTest {
         );
         org.junit.jupiter.api.Assertions.assertEquals("g", updatedItem.getUnit());
     }
+
+    @Test
+    void removePantryIngredientManually_deletesPantryItem() throws Exception {
+        PantryIngredient existingItem = pantryIngredientRepository.findByUserId(1)
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No pantry item created in setup"));
+
+        //should remove pantry row
+        mockMvc.perform(delete("/api/pantry/{id}", existingItem.getPIngredientId())
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                "1",
+                                null,
+                                List.of()
+                        )))
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+
+        org.junit.jupiter.api.Assertions.assertFalse(
+                pantryIngredientRepository.findById(existingItem.getPIngredientId()).isPresent()
+        );
+    }
 }
