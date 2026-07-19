@@ -8,6 +8,7 @@ import '../repositories/api_pantry_repository.dart';
 import '../repositories/mock_pantry_repository.dart';
 import '../repositories/pantry_repository.dart';
 import '../widgets/pantry_item_card.dart';
+import '../../../core/providers/api_service_provider.dart';
 
 //selects mock/API repo
 final pantryRepositoryProvider = Provider<PantryRepository>((ref) {
@@ -15,7 +16,7 @@ final pantryRepositoryProvider = Provider<PantryRepository>((ref) {
     return MockPantryRepository();
   }
 
-  return ApiPantryRepository();
+  return ApiPantryRepository(ref.read(dioProvider));
 });
 
 //editable pantry screen
