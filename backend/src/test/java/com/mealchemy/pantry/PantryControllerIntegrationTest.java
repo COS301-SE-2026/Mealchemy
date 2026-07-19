@@ -195,4 +195,26 @@ public class PantryControllerIntegrationTest {
                 pantryIngredientRepository.findById(existingItem.getPIngredientId()).isPresent()
         );
     }
+
+    @Test
+    void searchPantryItem_returnsMatchingPantryItems() throws Exception {
+        String searchTerm = testIngredient.getName().substring(0, Math.min(3, testIngredient.getName().length()));
+
+        //should look up items by ingredient catalogue (not by pantry id)
+        mockMvc.perform(get("/api/pantry/search")
+                        .param("q", searchTerm)
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                "1",
+                                null,
+                                List.of()
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(greaterThan(0))))
+                .andExpect(jsonPath("$[0].p_ingredient_id", notNullValue()))
+                .andExpect(jsonPath("$[0].ing_id", is(testIngredient.getIngId())))
+                .andExpect(jsonPath("$[0].name", is(testIngredient.getName())))
+                .andExpect(jsonPath("$[0].category", notNullValue()))
+                .andExpect(jsonPath("$[0].quantity", notNullValue()))
+                .andExpect(jsonPath("$[0].unit", is("kg")));
+    }
 }
