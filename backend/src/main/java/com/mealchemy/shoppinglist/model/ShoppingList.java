@@ -26,7 +26,7 @@ public class ShoppingList {
     private String name;
 
     @Enumerated(EnumType.STRING)
-    @@JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "status", nullable = false, columnDefinition = "shopping_list_status_enum")
     private ShoppingListStatus status;
 
@@ -56,11 +56,11 @@ public class ShoppingList {
         this.name = name;
     }
 
-    public List<String> getStatus() {
+    public ShoppingListStatus getStatus() {
         return status; 
     }
     
-    public void setStatus(List<String> status) {
+    public void setStatus(ShoppingListStatus status) {
         this.status = status;
     }
 

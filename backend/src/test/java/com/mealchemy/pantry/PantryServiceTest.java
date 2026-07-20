@@ -12,7 +12,7 @@ import com.mealchemy.category.model.IngredientCategory;
 // import repository
 import com.mealchemy.pantry.repository.PantryIngredientRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
-import com mealchemy.category.repository.IngredientCategoryRepository;
+import com.mealchemy.category.repository.IngredientCategoryRepository;
 // import service
 import com.mealchemy.pantry.service.PantryService;
 
@@ -65,7 +65,7 @@ public class PantryServiceTest {
         catalogueInstance.setCategoryId(5);
 
         categoryInstance = new IngredientCategory();
-        categoryInstance.setCategoryName("Legumes and Legume Products")
+        categoryInstance.setCategoryName("Legumes and Legume Products");
         
         // what flutter puts in req
         updateRequest = new PantryIngredientRequest (
@@ -131,7 +131,8 @@ public class PantryServiceTest {
     }
 
     // Happy path
-    @Test addIngredientManually_whenRequestIsValid_saveAndReturnResponse() {
+    @Test 
+    void addIngredientManually_whenRequestIsValid_saveAndReturnResponse() {
         // Arrange
         when(ingredientCatalogueRepository.findById(2)).thenReturn(Optional.of(catalogueInstance));
         when(ingredientCategoryRepository.findById(5)).thenReturn(Optional.of(categoryInstance));
@@ -265,7 +266,8 @@ public class PantryServiceTest {
 
     // ========== Search Pantry By Ingredient Name Testing ==========
 
-    @Test searchPantry_returnsMatchingResponses() {
+    @Test 
+    void searchPantry_returnsMatchingResponses() {
         // Arrange
         PantryIngredientResponse expected = new PantryIngredientResponse(
             1,
@@ -288,7 +290,9 @@ public class PantryServiceTest {
         assertEquals("Hummus", results.get(0).name());
     }
 
-    @Test searchPantry_noMatchFound_returnEmptyArray() {
+    @Test 
+    void
+    searchPantry_noMatchFound_returnEmptyArray() {
         // Arrange
         when(pantryIngredientRepository.getIngredientByName(1, "none")).thenReturn(List.of());
 

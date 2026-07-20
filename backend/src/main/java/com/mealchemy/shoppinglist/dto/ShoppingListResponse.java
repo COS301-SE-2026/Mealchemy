@@ -1,5 +1,6 @@
 package com.mealchemy.shoppinglist.dto;
-package com.mealchemy.shared.enums.ShoppingListStatus;
+
+import com.mealchemy.shared.enums.ShoppingListStatus;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.OffsetDateTime;

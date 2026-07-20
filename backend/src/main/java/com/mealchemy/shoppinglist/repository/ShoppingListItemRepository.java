@@ -13,7 +13,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface ShoppingListItemRepository extends JpaRepository<ShoppingListItem, Integer> {
-    // find lists for a specific user
-    List<ShoppingListItem> findByUserId(Integer userId);
+    // get all items for specific shopping list
+    List<ShoppingListItem> findByShoppingListId(Integer shoppingListId);
     
 }
