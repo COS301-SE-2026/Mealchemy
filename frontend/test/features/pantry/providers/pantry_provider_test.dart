@@ -22,7 +22,8 @@ void main() {
     final summary = await container.read(pantrySummaryProvider.future);
     final filters = await container.read(pantryFiltersProvider.future);
     final ingredients = await container.read(pantryIngredientsProvider.future);
-    final categories = await container.read(ingredientCategoriesProvider.future);
+    final categories =
+        await container.read(ingredientCategoriesProvider.future);
 
     expect(summary.totalItems, 42);
     expect(filters.first.label, 'All');
@@ -107,28 +108,30 @@ void main() {
     );
   });
 
-  test('addIngredient adds manual ingredient to local pantry list', () async {
-  final container = ProviderContainer();
-  addTearDown(container.dispose);
+  test('addIngredient adds repository-created ingredient to pantry list',
+      () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
 
-  await container.read(pantryStateProvider.future);
+    await container.read(pantryStateProvider.future);
 
-  final notifier = container.read(pantryStateProvider.notifier);
-  notifier.addIngredient(
-    name: 'Brown Rice',
-    quantity: '500',
-    unit: 'g',
-    category: 'grains',
-    isOutOfStock: false,
-  );
+    final notifier = container.read(pantryStateProvider.notifier);
+    await notifier.addIngredient(
+      ingId: 44,
+      quantity: '500',
+      unit: 'g',
+    );
 
-  final pantryState = container.read(pantryStateProvider).value!;
-  final ingredient = pantryState.ingredients.firstWhere(
-    (item) => item.name == 'Brown Rice',
-  );
+    final pantryState = container.read(pantryStateProvider).value!;
+    final ingredient = pantryState.ingredients.firstWhere(
+      (item) => item.ingId == 44,
+    );
 
-  expect(ingredient.details, '500g • Manual entry');
-  expect(ingredient.category, 'Other');
-  expect(ingredient.status, PantryItemStatus.fresh);
-});
+    //the mock repo now behaves like the backend-shaped API response
+    expect(ingredient.pIngredientId, 999);
+    expect(ingredient.name, 'Mock ingredient');
+    expect(ingredient.details, '500g • Manual entry');
+    expect(ingredient.category, 'Other');
+    expect(ingredient.status, PantryItemStatus.fresh);
+  });
 }

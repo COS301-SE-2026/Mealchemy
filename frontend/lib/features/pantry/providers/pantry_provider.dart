@@ -85,37 +85,30 @@ class PantryNotifier extends AsyncNotifier<PantryState> {
     state = AsyncData(current.copyWith(ingredients: updatedIngredients));
   }
 
-  //adds ingredient to pantry
-  void addIngredient({
-    required String name,
+  //adds ingredient to pantry through active repo
+  Future<void> addIngredient({
+    required int ingId,
     required String quantity,
     required String unit,
-    required String category,
-    required bool isOutOfStock,
-  }) {
+  }) async {
     final current = state.valueOrNull;
-    final cleanedName = name.trim();
     final cleanedQuantity = quantity.trim();
     final cleanedUnit = unit.trim();
 
-    if (current == null ||
-        cleanedName.isEmpty ||
-        cleanedQuantity.isEmpty ||
-        cleanedUnit.isEmpty) {
+    if (current == null || cleanedQuantity.isEmpty || cleanedUnit.isEmpty) {
       return;
     }
 
-    final displayCategory = _displayCategory(category);
-    final newIngredient = PantryIngredient(
-      name: cleanedName,
-      details: '$cleanedQuantity$cleanedUnit • Manual entry',
-      category: displayCategory,
-      status: isOutOfStock ? PantryItemStatus.expired : PantryItemStatus.fresh,
+    final createdIngredient = await _repository.addPantryIngredient(
+      ingId: ingId,
+      quantity: cleanedQuantity,
+      unit: cleanedUnit,
     );
 
+    //add backend created item to current screen
     state = AsyncData(
       current.copyWith(
-        ingredients: [...current.ingredients, newIngredient],
+        ingredients: [...current.ingredients, createdIngredient],
       ),
     );
   }
@@ -153,13 +146,3 @@ final ingredientCategoriesProvider = FutureProvider<List<String>>((ref) async {
   final pantryState = await ref.watch(pantryStateProvider.future);
   return pantryState.categories;
 });
-
-//changes enum values
-String _displayCategory(String category) {
-  return switch (category) {
-    'meat' || 'poultry' || 'seafood' => 'Proteins',
-    'produce' => 'Vegetables',
-    'dairy' => 'Dairy',
-    _ => 'Other',
-  };
-}
