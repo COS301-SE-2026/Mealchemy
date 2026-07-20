@@ -10,6 +10,7 @@ class AppColors {
   static const Color accent = Color(0xFFD4AF37);
   static const Color accentMuted = Color(0xFF755B00);
   static const Color accentLight = Color( 0xFFFEF9F1);
+  static const Color accentSoft = Color(0xFFC9A84C);
   static const Color tertiaryMuted = Color(0xFF7A5C5C);
   //Background
   static const Color bgLight = Color(0xFFFEF9F1);
