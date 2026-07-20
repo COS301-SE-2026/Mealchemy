@@ -45,6 +45,16 @@ class _FailingPantryRepository implements PantryRepository {
   Future<void> deletePantryIngredient(int pIngredientId) {
     throw UnimplementedError();
   }
+
+  @override
+  Future<PantryIngredient> updatePantryIngredient({
+    required int pIngredientId,
+    required int ingId,
+    required String quantity,
+    required String unit,
+  }) {
+    throw UnimplementedError();
+  }
 }
 
 void main() {
