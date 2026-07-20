@@ -60,10 +60,6 @@ class _RecordingPantryRepository implements PantryRepository {
     );
   }
 
-  Future<void> deletePantryIngredient(int pIngredientId) async {
-    //not used in this screen test
-  }
-
   @override
   Future<List<String>> getIngredientCategories() async {
     return const ['Dairy'];
@@ -87,6 +83,11 @@ class _RecordingPantryRepository implements PantryRepository {
       categoryCount: 0,
       optimizationPercent: 72,
     );
+  }
+
+  @override
+  Future<void> deletePantryIngredient(int pIngredientId) async {
+    //not used in this screen test
   }
 
   Future<PantryIngredient> updatePantryIngredient({

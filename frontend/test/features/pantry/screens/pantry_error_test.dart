@@ -40,6 +40,11 @@ class _FailingPantryRepository implements PantryRepository {
   }) {
     throw UnimplementedError();
   }
+
+  @override
+  Future<void> deletePantryIngredient(int pIngredientId) {
+    throw UnimplementedError();
+  }
 }
 
 void main() {
