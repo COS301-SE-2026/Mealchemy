@@ -24,17 +24,23 @@ public class VaultMemberController {
     /* Mapping functions */
 
     // Get
-    @GetMapping("/all")
+    @GetMapping("/vault/{vaultId}/all")
     public List<VaultMemberResponse> getVaultMembersByVaultId(@PathVariable Integer vaultId, @AuthenticationPrincipal Integer userId)
     {
         return vaultMemberService.getVaultMembersByVaultId(vaultId, userId);
     }
 
     // Post
-    @PostMapping("/create")
+    @PostMapping("/vault/{vaultId}/create")
     public VaultMemberResponse addVaultMember(@PathVariable Integer vaultId, @Valid @RequestBody VaultMemberRequest request, @AuthenticationPrincipal Integer ownerId)
     {
         return vaultMemberService.addVaultMember(vaultId, request, ownerId);
     }
 
+    // Delete
+    @DeleteMapping("/vault/{vaultId}/delete")
+    public void removeVaultMember(@PathVariable Integer vaultId, @Valid, @RequestBody VaultMemberRequest request, @AuthenticationPrincipal Integer ownerId)
+    {
+        vaultMemberService.removeVaultMember(vaultId, request, ownerId);
+    }
 }
