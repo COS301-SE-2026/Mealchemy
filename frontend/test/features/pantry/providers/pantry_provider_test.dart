@@ -91,19 +91,24 @@ void main() {
     expect(ingredient.status, PantryItemStatus.expired);
   });
 
-  test('removeIngredient removes ingredient from local pantry list', () async {
+  test('removeIngredient deletes ingredient by pantry id', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
     await container.read(pantryStateProvider.future);
 
-    final notifier = container.read(pantryStateProvider.notifier);
-    notifier.removeIngredient('Chicken Breast');
+    final pantryStateBefore = container.read(pantryStateProvider).value!;
+    final ingredientToDelete = pantryStateBefore.ingredients.first;
 
-    final pantryState = container.read(pantryStateProvider).value!;
+    final notifier = container.read(pantryStateProvider.notifier);
+    await notifier.removeIngredient(ingredientToDelete.pIngredientId!);
+
+    final pantryStateAfter = container.read(pantryStateProvider).value!;
 
     expect(
-      pantryState.ingredients.any((item) => item.name == 'Chicken Breast'),
+      pantryStateAfter.ingredients.any(
+        (item) => item.pIngredientId == ingredientToDelete.pIngredientId,
+      ),
       isFalse,
     );
   });
