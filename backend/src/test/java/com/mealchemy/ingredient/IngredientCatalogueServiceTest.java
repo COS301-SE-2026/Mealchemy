@@ -5,28 +5,20 @@ package com.mealchemy.ingredient;
 // import dto
 import com.mealchemy.ingredient.dto.IngredientCatalogueResponse;
 // import model
-import com.mealchemy.ingredient.model.IngredientCatalogue;
-import com.mealchemy.category.model.IngredientCategory;
 // import repository
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
-import com.mealchemy.category.repository.IngredientCategoryRepository;
 // import service
 import com.mealchemy.ingredient.service.IngredientCatalogueService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,7 +30,7 @@ public class IngredientCatalogueServiceTest {
     private IngredientCatalogueService ingredientCatalogueService;
 
     private IngredientCatalogueResponse hummusResponse;
-    private IngredientCatalogueResponse chickResponse;
+    private IngredientCatalogueResponse chickenResponse;
 
     @BeforeEach
     void setUp() {
@@ -72,7 +64,7 @@ public class IngredientCatalogueServiceTest {
 
         // Assert
         assertEquals(1, response.size());
-        assertTrue("Chicken Breast", response.get(0).name());
+        assertEquals("Chicken Breast", response.get(0).name());
         verify(ingredientCatalogueRepository, times(1)).getIngredientByName("chick");
 
     }
@@ -86,7 +78,7 @@ public class IngredientCatalogueServiceTest {
         List<IngredientCatalogueResponse> response = ingredientCatalogueService.getIngredientByName("no-match");
 
         // Assert
-        assertEquals(response.isEmpty())
+        assertTrue(response.isEmpty());
     }
 }
 

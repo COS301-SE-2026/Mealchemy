@@ -357,7 +357,7 @@ public class PantryControllerTest {
     }
 
 
-    // ========== GET Testing (DELETE /api/pantry/search?=) ==========
+    // ========== GET Testing (GET /api/pantry/search?=) ==========
 
     @Test
     void searchPantryIngredients_matchFound_returns200() throws Exception {

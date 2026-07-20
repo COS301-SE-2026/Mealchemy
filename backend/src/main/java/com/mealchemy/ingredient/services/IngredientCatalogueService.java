@@ -24,12 +24,10 @@ import org.springframework.web.server.ResponseStatusException;
 public class IngredientCatalogueService {
 
     private final IngredientCatalogueRepository ingredientCatalogueRepository;
-    private final IngredientCategoryRepository ingredientCategoryRepository;
 
     //constructor
-    public IngredientCatalogueService(IngredientCatalogueRepository ingredientCatalogueRepository, IngredientCategoryRepository ingredientCategoryRepository) {
+    public IngredientCatalogueService(IngredientCatalogueRepository ingredientCatalogueRepository) {
         this.ingredientCatalogueRepository = ingredientCatalogueRepository;
-        this.ingredientCategoryRepository = ingredientCategoryRepository;
     }
 
     // GET request - return all ingredient catalogue items
