@@ -24,10 +24,15 @@ class RecipeIngredient {
       recipeId: json['recipe_id'] as int,
       ingId: json['ing_id'] as int,
       name: json['name'] as String?,
-
       quantity: (json['quantity'] as num?)?.toDouble(),
       unit: json['unit'] as String?,
       sortOrder: (json['sort_order'] as int?) ?? 0,
     );
   }
+  Map<String, dynamic> toJson() => {
+        'ingId': ingId,
+        'quantity': quantity,
+        'unit': unit,
+        'sortOrder': sortOrder,
+      };
 }

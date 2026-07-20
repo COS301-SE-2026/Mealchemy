@@ -1,12 +1,12 @@
-//mirrors the recipes table 
+//mirrors the recipes table
 //Lightweight summary shared with vault; ingredients/steps are null on the
 //list endpoint and populated on the detail endpoint.
 import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
 
-
 class Recipe {
   final int recipeId;
+  final int? ownerId;
   final String title;
   final String? description;
   final String? cuisineType;
@@ -14,6 +14,11 @@ class Recipe {
   final int? cookingTimeMins;
   final int? servingSize;
   final String? photoUrl;
+  final String? videoUrl;
+  final String? externalUrl;
+  final bool isCommunityPublished;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   //populated by GET /recipes/{id}, null on list responses
   final List<RecipeIngredient>? ingredients;
@@ -21,6 +26,7 @@ class Recipe {
 
   const Recipe({
     required this.recipeId,
+    this.ownerId,
     required this.title,
     this.description,
     this.cuisineType,
@@ -28,20 +34,35 @@ class Recipe {
     this.cookingTimeMins,
     this.servingSize,
     this.photoUrl,
+    this.videoUrl,
+    this.externalUrl,
+    this.isCommunityPublished = false,
+    this.createdAt,
+    this.updatedAt,
     this.ingredients,
     this.steps,
   });
 
   factory Recipe.fromJson(Map<String, dynamic> json) {
     return Recipe(
-      recipeId: json['recipe_id'] as int,
+      recipeId: json['recipeId'] as int,
+      ownerId: json['ownerId'] as int?,
       title: json['title'] as String,
       description: json['description'] as String?,
-      cuisineType: json['cuisine_type'] as String?,
-      prepTimeMins: json['prep_time_mins'] as int?,
-      cookingTimeMins: json['cooking_time_mins'] as int?,
-      servingSize: json['serving_size'] as int?,
-      photoUrl: json['photo_url'] as String?,
+      cuisineType: json['cuisineType'] as String?,
+      prepTimeMins: json['prepTimeMins'] as int?,
+      cookingTimeMins: json['cookingTimeMins'] as int?,
+      servingSize: json['servingSize'] as int?,
+      photoUrl: json['photoUrl'] as String?,
+      videoUrl: json['videoUrl'] as String?,
+      externalUrl: json['externalUrl'] as String?,
+      isCommunityPublished: json['isCommunityPublished'] as bool? ?? false,
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.parse(json['createdAt'] as String),
+      updatedAt: json['updatedAt'] == null
+          ? null
+          : DateTime.parse(json['updatedAt'] as String),
       ingredients: (json['ingredients'] as List<dynamic>?)
           ?.map((e) => RecipeIngredient.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -50,4 +71,18 @@ class Recipe {
           .toList(),
     );
   }
+  Map<String, dynamic> toFullRequestJson() => {
+        'title': title,
+        'description': description ?? '',
+        'cuisineType': cuisineType,
+        'prepTimeMins': prepTimeMins,
+        'cookingTimeMins': cookingTimeMins,
+        'servingSize': servingSize,
+        'photoUrl': photoUrl,
+        'videoUrl': videoUrl,
+        'externalUrl': externalUrl,
+        'isCommunityPublished': isCommunityPublished,
+        'ingredients': ingredients?.map((i) => i.toJson()).toList() ?? [],
+        'steps': steps?.map((s) => s.toJson()).toList() ?? [],
+      };
 }
