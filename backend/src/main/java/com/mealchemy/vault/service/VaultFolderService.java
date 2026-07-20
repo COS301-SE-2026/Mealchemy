@@ -4,6 +4,8 @@ package com.mealchemy.vault.service;
 import org.springframework.stereotype.Service;
 import java.util.stream.Collectors;
 import java.util.List;
+import org.springframework.web.server.*;
+import org.springframework.http.*;
 
 /* Import classes */
 import com.mealchemy.vault.model.VaultFolder;
@@ -19,7 +21,7 @@ import com.mealchemy.vault.repository.VaultMemberRepository;
 public class VaultFolderService {
     private final VaultFolderRepository vaultFolderRepository;
     
-    private final UserRepository userRepository;
+    private final VaultMemberRepository vaultMemberRepository;
     
     private final VaultRepository vaultRepository;
 
@@ -33,16 +35,9 @@ public class VaultFolderService {
     // Get all folders relating to one vault
     public List<VaultFolderResponse> getVaultFolderByVaultId(Integer vaultId, Integer userId)
     {
-        Vault vaultForCheck = vaultRepository.findByVaultId(userId).orElseThrow(() -> new RuntimeException("Vault not found."));
+        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new RuntimeException("Vault not found."));
 
-        boolean isMember = vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(vaultId, userId).orElseThrow(() -> new RuntimeException("Vault member not found."));
-
-        boolean isOwner = vaultForCheck.getOwnerId().equals(userId);
-
-        if (!isOwner && !isMember)
-        {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only vault a member/owner can view the folders.");
-        }
+        isOwnerOrMember(vaultForCheck, userId);
 
         List<VaultFolderResponse> vaultFoldersForReturn = vaultFolderRepository.findByVault_VaultId(vaultId).stream().map(VaultFolderResponse::from).collect(Collectors.toList());
 
@@ -52,63 +47,92 @@ public class VaultFolderService {
     // Get a single folder by name
     public VaultFolderResponse getVaultFolderByName(String name, Integer vaultId, Integer userId)
     {
-        Vault vaultForCheck = vaultRepository.findByVaultId(userId).orElseThrow(() -> new RuntimeException("Vault not found."));
+        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new RuntimeException("Vault not found."));
 
-        boolean isMember = vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(vaultId, userId).orElseThrow(() -> new RuntimeException("Vault member not found."));
-
-        boolean isOwner = vaultForCheck.getOwnerId().equals(userId);
-
-        if (!isOwner && !isMember)
-        {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only vault a member/owner can view the folders.");
-        }
+        isOwnerOrMember(vaultForCheck, userId);
 
         VaultFolder vaultFolderForReturn = vaultFolderRepository.findByFolderName(name).orElseThrow(() -> new RuntimeException("Folder not found."));
-        
+
         return VaultFolderResponse.from(vaultFolderForReturn);
     }
 
     // Get a single folder by id
-    public VaultFolderResponse getVaultFolderById(int id)
+    public VaultFolderResponse getVaultFolderById(int id, Integer vaultId, Integer userId)
     {
+        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new RuntimeException("Vault not found."));
+
+        isOwnerOrMember(vaultForCheck, userId);
+        
         VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(id).orElseThrow(() -> new RuntimeException("Folder not found."));
         return VaultFolderResponse.from(vaultFolderForReturn);
     }
 
     // Post to create a new vault folder
-    public VaultFolderResponse createVaultFolder(VaultFolderRequest request)
+    public VaultFolderResponse createVaultFolder(VaultFolderRequest request, Integer ownerId)
     {
-        VaultFolder vaultFolderForReturn = mapRequestToEntity(request);
+        Vault vaultForCheck = vaultRepository.findById(request.vaultId()).orElseThrow(() -> new RuntimeException("Vault not found."));
+        
+        isOwner(vaultForCheck, ownerId);
+
+        VaultFolder vaultFolderForReturn = mapRequestToEntity(request, vaultForCheck);
         return VaultFolderResponse.from(vaultFolderRepository.save(vaultFolderForReturn));
     }
 
     // Put to update an existing folder
-    public VaultFolderResponse updateVaultFolder(int id, VaultFolderRequest request)
+    public VaultFolderResponse updateVaultFolder(int id, VaultFolderRequest request, Integer ownerId)
     {
+        Vault vaultForCheck = vaultRepository.findById(request.vaultId()).orElseThrow(() -> new RuntimeException("Vault not found."));
+        
+        isOwner(vaultForCheck, ownerId);
+
         VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(id).orElseThrow(() -> new RuntimeException("Folder not found."));
         
-        vaultFolderForReturn.setVaultId(request.getVaultId());
-        vaultFolderForReturn.setFolderName(request.getFolderName());
+        vaultFolderForReturn.setVault(vaultForCheck);
+        vaultFolderForReturn.setFolderName(request.folderName());
 
         return VaultFolderResponse.from(vaultFolderRepository.save(vaultFolderForReturn));
     }
 
     // Delete a specific folder using id
-    public void deleteVaultFolder(int id)
+    public void deleteVaultFolder(int id, Integer vaultId, Integer ownerId)
     {
+        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new RuntimeException("Vault not found."));
+        
+        isOwner(vaultForCheck, ownerId);
+
         vaultFolderRepository.deleteById(id);
     }
 
     /* Mapping functions */
 
-    private VaultFolder mapRequestToEntity(VaultFolderRequest request)
+    private VaultFolder mapRequestToEntity(VaultFolderRequest request, Vault vault)
     {
         VaultFolder vaultFolder = new VaultFolder();
 
-        vaultFolder.setVaultId(request.getVaultId());
-        vaultFolder.setFolderName(request.getFolderName());
+        vaultFolder.setVault(vault);
+        vaultFolder.setFolderName(request.folderName());
 
         return vaultFolder;
     }
 
+    /* Helpers */
+    private void isOwnerOrMember(Vault vault, Integer userId)
+    {
+        boolean isMember = vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(vault.getVaultId(), userId);
+
+        boolean isOwner = vault.getOwnerId().equals(userId);
+
+        if (!isOwner && !isMember)
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only vault a member/owner can view the folders.");
+        }
+    }
+
+    private void isOwner(Vault vault, Integer ownerId)
+    {
+        if (!vault.getOwnerId().equals(ownerId))
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only vault a owner can create new folders.");
+        }
+    }
 }
