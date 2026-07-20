@@ -7,44 +7,65 @@ import java.util.List;
 
 /* Import classes */
 import com.mealchemy.vault.model.VaultFolder;
+import com.mealchemy.vault.model.Vault;
+import com.mealchemy.auth.model.User;
 import com.mealchemy.vault.dto.VaultFolderRequest;
 import com.mealchemy.vault.dto.VaultFolderResponse;
 import com.mealchemy.vault.repository.VaultFolderRepository;
+import com.mealchemy.vault.repository.VaultRepository;
+import com.mealchemy.vault.repository.VaultMemberRepository;
 
 @Service
 public class VaultFolderService {
     private final VaultFolderRepository vaultFolderRepository;
+    
+    private final UserRepository userRepository;
+    
+    private final VaultRepository vaultRepository;
 
-    public VaultFolderService(VaultFolderRepository vaultFolderRepository)
+    public VaultFolderService(VaultFolderRepository vaultFolderRepository, VaultMemberRepository vaultMemberRepository, VaultRepository vaultRepository)
     {
         this.vaultFolderRepository = vaultFolderRepository;
+        this.vaultMemberRepository = vaultMemberRepository;
+        this.vaultRepository = vaultRepository;
     }
 
     // Get all folders relating to one vault
-    public List<VaultFolderResponse> getVaultFolderByVaultId(int vaultId)
+    public List<VaultFolderResponse> getVaultFolderByVaultId(int vaultId, Integer userId)
     {
-        return vaultFolderRepository.findByVaultId(vaultId).stream().map(this::mapToResponseDto).collect(Collectors.toList());
+        Vault vaultForCheck = vaultRepository.findByVaultId(userId).orElseThrow(() -> new RuntimeException("Vault not found."));
+
+        boolean isMember = vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(vaultId, userId).orElseThrow(() -> new RuntimeException("Vault member not found."));
+
+        boolean isOwner = vaultForCheck.getOwnerId().equals(userId);
+
+        if (!isOwner && !isMember)
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only vault a member/owner can view the folders.");
+        }
+
+        return vaultFolderRepository.findByVault_VaultId(vaultId).stream().map(VaultFolderResponse::from).collect(Collectors.toList());
     }
 
     // Get a single folder by name
     public VaultFolderResponse getVaultFolderByName(String name)
     {
         VaultFolder vaultFolderForReturn = vaultFolderRepository.findByFolderName(name).orElseThrow(() -> new RuntimeException("Folder not found."));
-        return mapToResponseDto(vaultFolderForReturn);
+        return VaultFolderResponse.from(vaultFolderForReturn);
     }
 
     // Get a single folder by id
     public VaultFolderResponse getVaultFolderById(int id)
     {
         VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(id).orElseThrow(() -> new RuntimeException("Folder not found."));
-        return mapToResponseDto(vaultFolderForReturn);
+        return VaultFolderResponse.from(vaultFolderForReturn);
     }
 
     // Post to create a new vault folder
     public VaultFolderResponse createVaultFolder(VaultFolderRequest request)
     {
         VaultFolder vaultFolderForReturn = mapRequestToEntity(request);
-        return mapToResponseDto(vaultFolderRepository.save(vaultFolderForReturn));
+        return VaultFolderResponse.from(vaultFolderRepository.save(vaultFolderForReturn));
     }
 
     // Put to update an existing folder
@@ -55,7 +76,7 @@ public class VaultFolderService {
         vaultFolderForReturn.setVaultId(request.getVaultId());
         vaultFolderForReturn.setFolderName(request.getFolderName());
 
-        return mapToResponseDto(vaultFolderRepository.save(vaultFolderForReturn));
+        return VaultFolderResponse.from(vaultFolderRepository.save(vaultFolderForReturn));
     }
 
     // Delete a specific folder using id
@@ -65,18 +86,6 @@ public class VaultFolderService {
     }
 
     /* Mapping functions */
-
-    private VaultFolderResponse mapToResponseDto(VaultFolder vaultFolderIn)
-    {
-        VaultFolderResponse response = new VaultFolderResponse();
-
-        response.setFolderId(vaultFolderIn.getFolderId());
-        response.setVaultId(vaultFolderIn.getVaultId());
-        response.setFolderName(vaultFolderIn.getFolderName());
-        response.setCreatedAt(vaultFolderIn.getCreatedAt());
-
-        return response;
-    }
 
     private VaultFolder mapRequestToEntity(VaultFolderRequest request)
     {
