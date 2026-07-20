@@ -35,7 +35,7 @@ public class VaultMemberService {
     }
 
     // Get all vault members
-    public List<VaultMemberResponse> getMembersByVaultId(Integer vaultId, Integer userId)
+    public List<VaultMemberResponse> getVaultMembersByVaultId(Integer vaultId, Integer userId)
     {
         Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new RuntimeException("Vault not found."));
 
@@ -53,7 +53,7 @@ public class VaultMemberService {
     }
 
     // Post to add a vaultMember
-    public VaultMemberResponse addMember(Integer vaultId, VaultMemberRequest request, Integer ownerId)
+    public VaultMemberResponse addVaultMember(Integer vaultId, VaultMemberRequest request, Integer ownerId)
     {
         Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new RuntimeException("Vault not found."));
 
@@ -67,6 +67,23 @@ public class VaultMemberService {
         VaultMember vaultMemberToAdd = mapRequestToEntity(userToAdd, vaultForCheck);
 
         return VaultMemberResponse.from(vaultMemberRepository.save(vaultMemberToAdd));
+    }
+
+    // Delete to remove a vaultMember
+    public void removeVaultMember(Integer vaultId, VaultMemberRequest request, Integer ownerId)
+    {
+        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new RuntimeException("Vault not found."));
+
+        if (!vaultForCheck.getOwnerId().equals(ownerId))
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of the vault can remove a member.");
+        }
+
+        User userToRemove = userRepository.findByEmail(request.email()).orElseThrow(() -> new RuntimeException("User not found."));
+
+        VaultMember rowToRemove = vaultMemberRepository.findByVault_VaultIdAndUser_UserId(vaultId, userToRemove.getUserId()).orElseThrow(() -> new RuntimeException("VaultMember row not found."));
+
+        vaultMemberRepository.delete(rowToRemove);
     }
 
     /* Mapping functions */
