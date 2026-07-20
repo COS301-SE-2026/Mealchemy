@@ -104,4 +104,9 @@ class MockPantryRepository implements PantryRepository {
       unit: unit,
     );
   }
+
+  @override
+  Future<void> deletePantryIngredient(int pIngredientId) async {
+    //mock delete does nothing because the provider updates local state
+  }
 }

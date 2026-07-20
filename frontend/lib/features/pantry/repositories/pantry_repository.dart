@@ -17,4 +17,7 @@ abstract class PantryRepository {
     required String quantity,
     required String unit,
   });
+
+  //removes one pantry item owned by the logged-in user
+  Future<void> deletePantryIngredient(int pIngredientId);
 }

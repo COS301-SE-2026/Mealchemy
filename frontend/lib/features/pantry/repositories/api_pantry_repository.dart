@@ -89,6 +89,14 @@ class ApiPantryRepository implements PantryRepository {
     return _pantryIngredientFromJson(response.data ?? {});
   }
 
+  @override
+  Future<void> deletePantryIngredient(int pIngredientId) async {
+    await _dio.delete<void>('/api/pantry/$pIngredientId');
+
+    //delete changes the pantry list, so next read should fetch fresh data
+    _cachedIngredients = null;
+  }
+
   Future<List<PantryIngredient>> _getCachedIngredients() async {
     if (_cachedIngredients != null) {
       return _cachedIngredients!;
