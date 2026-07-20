@@ -9,6 +9,7 @@ import '../repositories/mock_pantry_repository.dart';
 import '../repositories/pantry_repository.dart';
 import '../widgets/pantry_item_card.dart';
 import '../../../core/providers/api_service_provider.dart';
+import '../repositories/ingredient_catalogue_repository.dart';
 
 //selects mock/API repo
 final pantryRepositoryProvider = Provider<PantryRepository>((ref) {
@@ -17,6 +18,12 @@ final pantryRepositoryProvider = Provider<PantryRepository>((ref) {
   }
 
   return ApiPantryRepository(ref.read(dioProvider));
+});
+
+//gives screens access to ingredient catalogue search
+final ingredientCatalogueRepositoryProvider =
+    Provider<IngredientCatalogueRepository>((ref) {
+  return IngredientCatalogueRepository(ref.read(dioProvider));
 });
 
 //editable pantry screen
