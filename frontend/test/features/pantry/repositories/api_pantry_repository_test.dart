@@ -5,15 +5,27 @@ import 'package:mealchemy/features/pantry/widgets/pantry_item_card.dart';
 
 void main() {
   late ApiPantryRepository repository;
+  late RequestOptions? lastRequest;
 
   setUp(() {
     final dio = Dio();
+    lastRequest = null;
 
     //keep the repo test fast and offline
     //without calling the real backend
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
+          lastRequest = options;
+          if (options.method == 'DELETE' && options.path == '/api/pantry/5') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 204,
+              ),
+            );
+            return;
+          }
           if (options.method == 'POST' && options.path == '/api/pantry') {
             handler.resolve(
               Response(
@@ -146,5 +158,11 @@ void main() {
       ),
       throwsArgumentError,
     );
+  });
+  test('deletePantryIngredient calls delete pantry endpoint', () async {
+    await repository.deletePantryIngredient(5);
+
+    expect(lastRequest?.method, 'DELETE');
+    expect(lastRequest?.path, '/api/pantry/5');
   });
 }
