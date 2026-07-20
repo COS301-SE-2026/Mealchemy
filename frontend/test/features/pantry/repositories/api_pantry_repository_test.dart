@@ -14,6 +14,26 @@ void main() {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
+          if (options.method == 'POST' && options.path == '/api/pantry') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: {
+                  'p_ingredient_id': 5,
+                  'ing_id': options.data['ing_id'],
+                  'name': 'Rice',
+                  'category': 'grain',
+                  'quantity': options.data['quantity'],
+                  'unit': options.data['unit'],
+                  'created_at': '2026-07-20T10:00:00Z',
+                  'updated_at': '2026-07-20T10:00:00Z',
+                },
+              ),
+            );
+            return;
+          }
+
           handler.resolve(
             Response(
               requestOptions: options,
@@ -100,5 +120,31 @@ void main() {
     final categories = await repository.getIngredientCategories();
 
     expect(categories, ['Dairy', 'Proteins']);
+  });
+  test('addPantryIngredient posts pantry item and maps response', () async {
+    final ingredient = await repository.addPantryIngredient(
+      ingId: 9,
+      quantity: '2',
+      unit: 'kg',
+    );
+
+    expect(ingredient.pIngredientId, 5);
+    expect(ingredient.ingId, 9);
+    expect(ingredient.name, 'Rice');
+    expect(ingredient.details, '2kg • Pantry');
+    expect(ingredient.category, 'grain');
+    expect(ingredient.quantity, '2');
+    expect(ingredient.unit, 'kg');
+  });
+
+  test('addPantryIngredient rejects invalid quantity before API call', () {
+    expect(
+      () => repository.addPantryIngredient(
+        ingId: 9,
+        quantity: 'two',
+        unit: 'kg',
+      ),
+      throwsArgumentError,
+    );
   });
 }
