@@ -26,6 +26,25 @@ void main() {
             );
             return;
           }
+          if (options.method == 'PUT' && options.path == '/api/pantry/5') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: {
+                  'p_ingredient_id': 5,
+                  'ing_id': options.data['ing_id'],
+                  'name': 'Rice',
+                  'category': 'grain',
+                  'quantity': options.data['quantity'],
+                  'unit': options.data['unit'],
+                  'created_at': '2026-07-20T10:00:00Z',
+                  'updated_at': '2026-07-20T10:30:00Z',
+                },
+              ),
+            );
+            return;
+          }
           if (options.method == 'POST' && options.path == '/api/pantry') {
             handler.resolve(
               Response(
@@ -164,5 +183,38 @@ void main() {
 
     expect(lastRequest?.method, 'DELETE');
     expect(lastRequest?.path, '/api/pantry/5');
+  });
+  test('updatePantryIngredient puts pantry item and maps response', () async {
+    final ingredient = await repository.updatePantryIngredient(
+      pIngredientId: 5,
+      ingId: 9,
+      quantity: '3',
+      unit: 'kg',
+    );
+
+    expect(lastRequest?.method, 'PUT');
+    expect(lastRequest?.path, '/api/pantry/5');
+    expect(lastRequest?.data['ing_id'], 9);
+    expect(lastRequest?.data['quantity'], 3);
+    expect(lastRequest?.data['unit'], 'kg');
+
+    expect(ingredient.pIngredientId, 5);
+    expect(ingredient.ingId, 9);
+    expect(ingredient.name, 'Rice');
+    expect(ingredient.details, '3kg • Pantry');
+    expect(ingredient.quantity, '3');
+    expect(ingredient.unit, 'kg');
+  });
+
+  test('updatePantryIngredient rejects invalid quantity before API call', () {
+    expect(
+      () => repository.updatePantryIngredient(
+        pIngredientId: 5,
+        ingId: 9,
+        quantity: 'three',
+        unit: 'kg',
+      ),
+      throwsArgumentError,
+    );
   });
 }
