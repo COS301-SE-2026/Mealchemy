@@ -81,11 +81,22 @@ class ApiPantryRepository implements PantryRepository {
     final category = json['category']?.toString() ?? 'Other';
 
     return PantryIngredient(
+      //ids for update/delete API calls
+      pIngredientId: _readInt(json['p_ingredient_id']),
+      ingId: _readInt(json['ing_id']),
       name: json['name']?.toString() ?? 'Unknown ingredient',
       details: '$quantity$unit • Pantry',
       category: _displayCategory(category),
       status: PantryItemStatus.fresh,
+      quantity: quantity,
+      unit: unit,
     );
+  }
+
+  int? _readInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    return int.tryParse(value.toString());
   }
 
   int _calculateFreshnessPercent(List<PantryIngredient> ingredients) {
