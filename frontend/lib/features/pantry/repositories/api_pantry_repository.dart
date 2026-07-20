@@ -60,6 +60,35 @@ class ApiPantryRepository implements PantryRepository {
     return ingredients.map((item) => item.category).toSet().toList()..sort();
   }
 
+  @override
+  Future<PantryIngredient> addPantryIngredient({
+    required int ingId,
+    required String quantity,
+    required String unit,
+  }) async {
+    final cleanedQuantity = quantity.trim();
+    final cleanedUnit = unit.trim();
+
+    final parsedQuantity = num.tryParse(cleanedQuantity);
+    if (parsedQuantity == null) {
+      throw ArgumentError('Quantity must be a valid number.');
+    }
+
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/api/pantry',
+      data: {
+        'ing_id': ingId,
+        'quantity': parsedQuantity,
+        'unit': cleanedUnit,
+      },
+    );
+
+    //new pantry data changed, so the next read should fetch fresh data
+    _cachedIngredients = null;
+
+    return _pantryIngredientFromJson(response.data ?? {});
+  }
+
   Future<List<PantryIngredient>> _getCachedIngredients() async {
     if (_cachedIngredients != null) {
       return _cachedIngredients!;

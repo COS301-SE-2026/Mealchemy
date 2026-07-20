@@ -85,4 +85,23 @@ class MockPantryRepository implements PantryRepository {
       'other',
     ];
   }
+
+  @override
+  Future<PantryIngredient> addPantryIngredient({
+    required int ingId,
+    required String quantity,
+    required String unit,
+  }) async {
+    //mock version just returns a pantry-looking item without touching backend
+    return PantryIngredient(
+      pIngredientId: 999,
+      ingId: ingId,
+      name: 'Mock ingredient',
+      details: '$quantity$unit • Manual entry',
+      category: 'Other',
+      status: PantryItemStatus.fresh,
+      quantity: quantity,
+      unit: unit,
+    );
+  }
 }
