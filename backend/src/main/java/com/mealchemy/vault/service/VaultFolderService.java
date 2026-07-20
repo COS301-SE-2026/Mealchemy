@@ -31,7 +31,7 @@ public class VaultFolderService {
     }
 
     // Get all folders relating to one vault
-    public List<VaultFolderResponse> getVaultFolderByVaultId(int vaultId, Integer userId)
+    public List<VaultFolderResponse> getVaultFolderByVaultId(Integer vaultId, Integer userId)
     {
         Vault vaultForCheck = vaultRepository.findByVaultId(userId).orElseThrow(() -> new RuntimeException("Vault not found."));
 
@@ -50,9 +50,21 @@ public class VaultFolderService {
     }
 
     // Get a single folder by name
-    public VaultFolderResponse getVaultFolderByName(String name)
+    public VaultFolderResponse getVaultFolderByName(String name, Integer vaultId, Integer userId)
     {
+        Vault vaultForCheck = vaultRepository.findByVaultId(userId).orElseThrow(() -> new RuntimeException("Vault not found."));
+
+        boolean isMember = vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(vaultId, userId).orElseThrow(() -> new RuntimeException("Vault member not found."));
+
+        boolean isOwner = vaultForCheck.getOwnerId().equals(userId);
+
+        if (!isOwner && !isMember)
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only vault a member/owner can view the folders.");
+        }
+
         VaultFolder vaultFolderForReturn = vaultFolderRepository.findByFolderName(name).orElseThrow(() -> new RuntimeException("Folder not found."));
+        
         return VaultFolderResponse.from(vaultFolderForReturn);
     }
 
