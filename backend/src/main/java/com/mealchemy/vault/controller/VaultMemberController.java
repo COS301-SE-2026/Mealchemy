@@ -29,4 +29,12 @@ public class VaultMemberController {
     {
         return vaultMemberService.getVaultMembersByVaultId(vaultId, userId);
     }
+
+    // Post
+    @PostMapping("/create")
+    public VaultMemberResponse addVaultMember(@PathVariable Integer vaultId, @Valid @RequestBody VaultMemberRequest request, @AuthenticationPrincipal Integer ownerId)
+    {
+        return vaultMemberService.addVaultMember(vaultId, request, ownerId);
+    }
+
 }
