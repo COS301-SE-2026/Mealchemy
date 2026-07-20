@@ -139,4 +139,34 @@ void main() {
     expect(ingredient.category, 'Other');
     expect(ingredient.status, PantryItemStatus.fresh);
   });
+
+  test('updateIngredient replaces pantry item with repository result',
+      () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await container.read(pantryStateProvider.future);
+
+    final pantryStateBefore = container.read(pantryStateProvider).value!;
+    final ingredientToUpdate = pantryStateBefore.ingredients.first;
+
+    final notifier = container.read(pantryStateProvider.notifier);
+    await notifier.updateIngredient(
+      pIngredientId: ingredientToUpdate.pIngredientId!,
+      ingId: ingredientToUpdate.ingId!,
+      quantity: '123',
+      unit: 'g',
+    );
+
+    final pantryStateAfter = container.read(pantryStateProvider).value!;
+    final updatedIngredient = pantryStateAfter.ingredients.firstWhere(
+      (item) => item.pIngredientId == ingredientToUpdate.pIngredientId,
+    );
+
+    //provider swaps in backend-shaped updated pantry row
+    expect(updatedIngredient.ingId, ingredientToUpdate.ingId);
+    expect(updatedIngredient.details, '123g • Pantry');
+    expect(updatedIngredient.quantity, '123');
+    expect(updatedIngredient.unit, 'g');
+  });
 }

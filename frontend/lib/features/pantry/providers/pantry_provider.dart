@@ -126,6 +126,34 @@ class PantryNotifier extends AsyncNotifier<PantryState> {
 
     state = AsyncData(current.copyWith(ingredients: updatedIngredients));
   }
+
+  //updates an existing pantry row without needing a new screen yet
+  Future<void> updateIngredient({
+    required int pIngredientId,
+    required int ingId,
+    required String quantity,
+    required String unit,
+  }) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final updatedIngredient = await _repository.updatePantryIngredient(
+      pIngredientId: pIngredientId,
+      ingId: ingId,
+      quantity: quantity,
+      unit: unit,
+    );
+
+    final updatedIngredients = current.ingredients.map((ingredient) {
+      if (ingredient.pIngredientId != pIngredientId) {
+        return ingredient;
+      }
+
+      return updatedIngredient;
+    }).toList();
+
+    state = AsyncData(current.copyWith(ingredients: updatedIngredients));
+  }
 }
 
 final pantrySummaryProvider = FutureProvider<PantrySummary>((ref) async {
