@@ -44,7 +44,9 @@ public class VaultFolderService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only vault a member/owner can view the folders.");
         }
 
-        return vaultFolderRepository.findByVault_VaultId(vaultId).stream().map(VaultFolderResponse::from).collect(Collectors.toList());
+        List<VaultFolderResponse> vaultFoldersForReturn = vaultFolderRepository.findByVault_VaultId(vaultId).stream().map(VaultFolderResponse::from).collect(Collectors.toList());
+
+        return vaultFoldersForReturn;
     }
 
     // Get a single folder by name
