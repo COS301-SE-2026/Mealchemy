@@ -113,13 +113,15 @@ class PantryNotifier extends AsyncNotifier<PantryState> {
     );
   }
 
-  //removes ingredient from pantry list
-  void removeIngredient(String ingredientName) {
+  //removes ingredient from backend first, then from the local screen list
+  Future<void> removeIngredient(int pIngredientId) async {
     final current = state.valueOrNull;
     if (current == null) return;
 
+    await _repository.deletePantryIngredient(pIngredientId);
+
     final updatedIngredients = current.ingredients
-        .where((ingredient) => ingredient.name != ingredientName)
+        .where((ingredient) => ingredient.pIngredientId != pIngredientId)
         .toList();
 
     state = AsyncData(current.copyWith(ingredients: updatedIngredients));

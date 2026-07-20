@@ -137,9 +137,11 @@ class _PantryContent extends ConsumerWidget {
                     onEdit: () => pantryNotifier.markOutOfStock(
                       ingredient.name,
                     ),
-                    onDelete: () => pantryNotifier.removeIngredient(
-                      ingredient.name,
-                    ),
+                    onDelete: ingredient.pIngredientId == null
+                        ? null
+                        : () => pantryNotifier.removeIngredient(
+                              ingredient.pIngredientId!,
+                            ),
                   ),
                 ),
               ),
