@@ -5,13 +5,18 @@ package com.mealchemy.vault.service;
 import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.*;
+import org.springframework.web.server.*;
+import org.springframework.http.*;
 
 /* Import classes */
 
 import com.mealchemy.vault.model.VaultMember;
+import com.mealchemy.auth.model.User;
+import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.dto.VaultMemberRequest;
 import com.mealchemy.vault.dto.VaultMemberResponse;
 import com.mealchemy.vault.repository.VaultMemberRepository;
+import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.auth.repository.UserRepository;
 
 @Service
@@ -20,28 +25,43 @@ public class VaultMemberService {
 
     private final UserRepository userRepository;
 
-    public VaultMemberService(VaultMemberRepository vaultMemberRepository, UserRepository userRepository)
+    private final VaultRepository vaultRepository;
+
+    public VaultMemberService(VaultMemberRepository vaultMemberRepository, UserRepository userRepository, VaultRepository vaultRepository)
     {
-        this.vaultMemberRepisitory = vaultMemberRepository;
+        this.vaultMemberRepository = vaultMemberRepository;
         this.userRepository = userRepository;
+        this.vaultRepository = vaultRepository;
     }
 
     // Get all vault members
-    public List<VaultMemberResponse> getAllVaultMembers()
+    public List<VaultMemberResponse> getMembersByVaultId(Integer vaultId, Integer userId)
     {
-        return vaultMemberRepository.findAll().map(VaultMemberResponse::from).collect(Collectors.toList());
+        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new RuntimeException("Vault not found."));
+
+        boolean isOwner = vaultForCheck.getOwnerId().equals(userId);
+        boolean isMember = vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(vaultId, userId);
+
+        if (!isOwner && !isMember)
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a member/owner of the vault can view its members.");
+        }
+
+        List<VaultMemberResponse> vaultMembersForReturn = vaultMemberRepository.findByVault_VaultId(vaultId).stream().map(VaultMemberResponse::from).collect(Collectors.toList());
+       
+        return vaultMembersForReturn;
     }
 
 
 
     /* Mapping functions */
 
-    public VaultMember mapRequestToEntity(VaultMemberRequest request, Integer userIdIn)
-    {
+    public VaultMember mapRequestToEntity(User user, Vault vault)
+    {        
         VaultMember member = new VaultMember();
 
-        member.setVaultId(request.vaultId());
-        member.setUserId(userIdIn);
+        member.setVault(vault);
+        member.setUser(user);
 
         return member;
     }
