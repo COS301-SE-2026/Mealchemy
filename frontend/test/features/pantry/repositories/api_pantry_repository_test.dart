@@ -54,14 +54,25 @@ void main() {
     final ingredients = await repository.getPantryIngredients();
 
     expect(ingredients, hasLength(2));
+
+    //first item keeps both the UI display data and backend ids
+    expect(ingredients.first.pIngredientId, 1);
+    expect(ingredients.first.ingId, 2);
     expect(ingredients.first.name, 'Chicken Breast');
     expect(ingredients.first.details, '800g • Pantry');
     expect(ingredients.first.category, 'Proteins');
     expect(ingredients.first.status, PantryItemStatus.fresh);
+    expect(ingredients.first.quantity, '800');
+    expect(ingredients.first.unit, 'g');
 
+    //second item proves mapper handles another category/unit too
+    expect(ingredients.last.pIngredientId, 2);
+    expect(ingredients.last.ingId, 3);
     expect(ingredients.last.name, 'Full Cream Milk');
     expect(ingredients.last.details, '1L • Pantry');
     expect(ingredients.last.category, 'Dairy');
+    expect(ingredients.last.quantity, '1');
+    expect(ingredients.last.unit, 'L');
   });
 
   test('getPantrySummary builds summary values from API pantry items',
