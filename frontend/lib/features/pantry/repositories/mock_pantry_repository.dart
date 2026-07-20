@@ -133,4 +133,24 @@ class MockPantryRepository implements PantryRepository {
   Future<void> deletePantryIngredient(int pIngredientId) async {
     //mock delete does nothing because the provider updates local state
   }
+
+  @override
+  Future<PantryIngredient> updatePantryIngredient({
+    required int pIngredientId,
+    required int ingId,
+    required String quantity,
+    required String unit,
+  }) async {
+    //mock update returns the same pantry row shape the backend would return
+    return PantryIngredient(
+      pIngredientId: pIngredientId,
+      ingId: ingId,
+      name: 'Mock ingredient',
+      details: '$quantity$unit • Pantry',
+      category: 'Other',
+      status: PantryItemStatus.fresh,
+      quantity: quantity,
+      unit: unit,
+    );
+  }
 }

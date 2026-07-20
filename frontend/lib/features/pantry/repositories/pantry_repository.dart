@@ -20,4 +20,12 @@ abstract class PantryRepository {
 
   //removes one pantry item owned by the logged-in user
   Future<void> deletePantryIngredient(int pIngredientId);
+
+  //updates quantity/unit for an existing pantry item
+  Future<PantryIngredient> updatePantryIngredient({
+    required int pIngredientId,
+    required int ingId,
+    required String quantity,
+    required String unit,
+  });
 }

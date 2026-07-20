@@ -97,6 +97,36 @@ class ApiPantryRepository implements PantryRepository {
     _cachedIngredients = null;
   }
 
+  @override
+  Future<PantryIngredient> updatePantryIngredient({
+    required int pIngredientId,
+    required int ingId,
+    required String quantity,
+    required String unit,
+  }) async {
+    final cleanedQuantity = quantity.trim();
+    final cleanedUnit = unit.trim();
+
+    final parsedQuantity = num.tryParse(cleanedQuantity);
+    if (parsedQuantity == null) {
+      throw ArgumentError('Quantity must be a valid number.');
+    }
+
+    final response = await _dio.put<Map<String, dynamic>>(
+      '/api/pantry/$pIngredientId',
+      data: {
+        'ing_id': ingId,
+        'quantity': parsedQuantity,
+        'unit': cleanedUnit,
+      },
+    );
+
+    //update changes pantry data, so next read should refetch from backend
+    _cachedIngredients = null;
+
+    return _pantryIngredientFromJson(response.data ?? {});
+  }
+
   Future<List<PantryIngredient>> _getCachedIngredients() async {
     if (_cachedIngredients != null) {
       return _cachedIngredients!;
