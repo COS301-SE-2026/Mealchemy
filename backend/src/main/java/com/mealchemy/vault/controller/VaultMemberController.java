@@ -22,4 +22,11 @@ public class VaultMemberController {
     }
 
     /* Mapping functions */
+
+    // Get
+    @GetMapping("/all")
+    public List<VaultMemberResponse> getVaultMembersByVaultId(@PathVariable Integer vaultId, @AuthenticationPrincipal Integer userId)
+    {
+        return vaultMemberService.getVaultMembersByVaultId(vaultId, userId);
+    }
 }
