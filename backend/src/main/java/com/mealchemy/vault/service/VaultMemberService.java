@@ -52,7 +52,22 @@ public class VaultMemberService {
         return vaultMembersForReturn;
     }
 
+    // Post to add a vaultMember
+    public VaultMemberResponse addMember(Integer vaultId, VaultMemberRequest request, Integer ownerId)
+    {
+        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new RuntimeException("Vault not found."));
 
+        if (!vaultForCheck.getOwnerId().equals(ownerId))
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of the vault can add a new member.");
+        }
+
+        User userToAdd = userRepository.findByEmail(request.email()).orElseThrow(() -> new RuntimeException("User not found."));
+
+        VaultMember vaultMemberToAdd = mapRequestToEntity(userToAdd, vaultForCheck);
+
+        return VaultMemberResponse.from(vaultMemberRepository.save(vaultMemberToAdd));
+    }
 
     /* Mapping functions */
 
