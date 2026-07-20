@@ -172,7 +172,265 @@
       <!--closing section end -->
     </main>
 
-    <!-- to add swipe-demo, vaults, showcase, download,requirements -->
+     <!--recommendation enegine -->
+      <section class="swipe-demo section-shell" id="swipe-demo">
+        <div class="section-heading reveal">
+          <p class="eyebrow"><span></span> Guided discovery</p>
+          <h2>See how Mealchemy turns a global recipe vault into a personal swipe deck.</h2>
+          <p>The engine is deterministic, explainable, and built as three clear phases. It knows the user, knows their pantry, blocks what cannot be served, and scores the rest.</p>
+        </div>
+
+        <div class="heuristic-demo reveal" data-engine-state="vault" aria-label="Interactive demonstration of Mealchemy's three recommendation phases and separate learning loop">
+          <div class="phase-strip" aria-hidden="true">
+            <span>Global vault</span>
+            <span>Phase 1: Safe pool</span>
+            <span>Tournament: 100</span>
+            <span>Phase 2: Scored</span>
+            <span>Phase 3: Final 20</span>
+          </div>
+
+          <div class="candidate-bank" aria-hidden="true">
+            <article class="bank-card survivor survivor-one">
+              <img src="assets/meals/garlic-chicken-stir-fry.jpg" alt="">
+              <span>Garlic Chicken</span>
+            </article>
+            <article class="bank-card survivor survivor-two">
+              <img src="assets/meals/pasta-carbonara.jpg" alt="">
+              <span>Carbonara</span>
+            </article>
+            <article class="bank-card survivor survivor-three">
+              <img src="assets/meals/japanese-omelette.jpg" alt="">
+              <span>Omelette</span>
+            </article>
+            <article class="bank-card survivor survivor-four">
+              <img src="assets/meals/chicken-rice-bowl.jpeg" alt="">
+              <span>Rice Bowl</span>
+            </article>
+            <article class="bank-card survivor survivor-five">
+              <img src="assets/meals/apple-tart.jpg" alt="">
+              <span>Apple Tart</span>
+            </article>
+            <article class="bank-card survivor survivor-six">
+              <img src="assets/meals/grilled-fish.jpg" alt="">
+              <span>Grilled Fish</span>
+            </article>
+            <article class="bank-card survivor survivor-seven">
+              <img src="assets/meals/salad-bowl.jpeg" alt="">
+              <span>Salad Bowl</span>
+            </article>
+            <article class="bank-card filtered allergy-card">
+              <img src="assets/meals/peanut-noodles.webp" alt="">
+              <span>Peanut Noodles</span>
+            </article>
+            <article class="bank-card filtered gluten-card">
+              <img src="assets/meals/gluten-pasta-bake.jpeg" alt="">
+              <span>Pasta Bake</span>
+            </article>
+            <article class="bank-card filtered liked-card">
+              <img src="assets/meals/pizza.webp" alt="">
+              <span>Pesto Pizza</span>
+            </article>
+            <article class="bank-card filtered recent-card">
+              <img src="assets/meals/ramen-wheat.jpeg" alt="">
+              <span>Beef Ramen</span>
+            </article>
+          </div>
+
+          <div class="system-user-grid">
+            <nav class="phase-card-stack" aria-label="Recommendation engine steps">
+              <button type="button" class="pipeline-card vault-step-card is-active" data-engine-phase="vault" aria-pressed="true">
+                <span>Source pool</span>
+                <strong>Global recipe vault</strong>
+                <p>Begin with every published recipe available to Mealchemy users.</p>
+              </button>
+              <button type="button" class="pipeline-card filter-step-card" data-engine-phase="filter" aria-pressed="false">
+                <span>Phase 1</span>
+                <strong>Hard filtering</strong>
+                <p>Remove allergens, dietary conflicts, already liked recipes, and recipes disliked within 30 days.</p>
+              </button>
+              <button type="button" class="pipeline-card tournament-step-card" data-engine-phase="tournament" aria-pressed="false">
+                <span>Eligible pool</span>
+                <strong>Tournament selection</strong>
+                <p>Randomly sample about 100 safe recipes from the remaining pool.</p>
+              </button>
+              <button type="button" class="pipeline-card score-card" data-engine-phase="score" aria-pressed="false">
+                <span>Phase 2</span>
+                <strong>Weighted affinity scoring</strong>
+                <p>Pantry coverage, cuisine affinity, nutritional goals, freshness, and novelty combine into a score from 0.0 to 1.0.</p>
+              </button>
+              <button type="button" class="pipeline-card allocation-card" data-engine-phase="allocation" aria-pressed="false">
+                <span>Phase 3</span>
+                <strong>Cuisine grouping and slot allocation</strong>
+                <p>Top cuisines receive proportional slots, with 1 to 2 wildcards protecting variety. The final 20 are returned to the app.</p>
+              </button>
+              <button type="button" class="pipeline-card user-card" data-engine-phase="swipe" aria-pressed="false">
+                <span>User experience</span>
+                <strong>The final 20 become a swipe deck</strong>
+                <p>The user sees a simple save or skip decision while the ranked batch has already been prepared.</p>
+              </button>
+              <button type="button" class="pipeline-card learn-card" data-engine-phase="learn" aria-pressed="false">
+                <span>Learning loop</span>
+                <strong>Two separate updates follow every swipe</strong>
+                <p>EMA adjusts global preference weights and the recipe's cuisine affinity without allowing one choice to overpower the profile.</p>
+              </button>
+            </nav>
+
+            <div class="phase-visual-layer" aria-live="polite">
+              <section class="phase-visual score-visual" data-phase-visual="score" aria-label="Phase 2 weighted affinity score animation">
+                <p class="visual-kicker">Phase 2 · One candidate</p>
+                <div class="score-demo-card">
+                  <div class="score-recipe-heading">
+                    <img src="assets/meals/garlic-chicken-stir-fry.jpg" alt="">
+                    <div>
+                      <strong>Garlic Chicken Stir-Fry</strong>
+                      <small>Five weighted signals</small>
+                    </div>
+                  </div>
+                  <div class="score-signals">
+                    <div style="--signal-value: 78%"><span>Pantry coverage</span><i></i><b>0.78</b></div>
+                    <div style="--signal-value: 85%"><span>Cuisine affinity</span><i></i><b>0.85</b></div>
+                    <div style="--signal-value: 68%"><span>Nutritional goal</span><i></i><b>0.68</b></div>
+                    <div style="--signal-value: 92%"><span>Freshness</span><i></i><b>0.92</b></div>
+                    <div style="--signal-value: 40%"><span>Novelty</span><i></i><b>0.40</b></div>
+                  </div>
+                  <div class="score-total"><span>Weighted affinity score</span><strong>0.78</strong></div>
+                </div>
+              </section>
+
+              <section class="phase-visual allocation-visual" data-phase-visual="allocation" aria-label="Phase 3 cuisine grouping and slot allocation animation">
+                <p class="visual-kicker">Phase 3 · Final batch</p>
+                <div class="allocation-board">
+                  <div class="allocation-heading">
+                    <div>
+                      <strong>20 recommendation slots</strong>
+                      <small>Grouped by cuisine affinity</small>
+                    </div>
+                    <span>1 to 2 wildcard slots</span>
+                  </div>
+                  <div class="cuisine-buckets" aria-hidden="true">
+                    <div class="cuisine-bucket japanese"><strong>Japanese</strong><span></span><span></span><span></span><span></span><span></span></div>
+                    <div class="cuisine-bucket mediterranean"><strong>Mediterranean</strong><span></span><span></span><span></span><span></span></div>
+                    <div class="cuisine-bucket italian"><strong>Italian</strong><span></span><span></span><span></span><span></span></div>
+                    <div class="cuisine-bucket indian"><strong>Indian</strong><span></span><span></span><span></span></div>
+                    <div class="cuisine-bucket wildcard"><strong>Wildcards</strong><span></span><span></span></div>
+                    <div class="cuisine-bucket overflow"><strong>Redistributed</strong><span></span><span></span></div>
+                  </div>
+                  <div class="allocation-result"><strong>Final 20</strong><span>Backend</span><span>Flutter swipe deck</span></div>
+                </div>
+              </section>
+
+              <section class="phase-visual learning-visual" data-phase-visual="learn" aria-label="Learning loop animation">
+                <p class="visual-kicker">After each swipe</p>
+                <div class="learning-flow">
+                  <article>
+                    <span>Update 1</span>
+                    <strong>Preference weights</strong>
+                    <small>How much each signal matters globally</small>
+                  </article>
+                  <div class="learning-arrow">+</div>
+                  <article>
+                    <span>Update 2</span>
+                    <strong>Cuisine affinity</strong>
+                    <small>How much the recipe's cuisine is liked</small>
+                  </article>
+                  <div class="ema-result">
+                    <span>EMA · α = 0.15</span>
+                    <strong>Profile updated gradually</strong>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div class="swipe-phone">
+              <div class="swipe-topbar">
+                <span>Discover</span>
+                <small>Final 20</small>
+              </div>
+
+              <div class="swipe-stack" aria-hidden="true">
+                <article class="recipe-swipe-card card-one">
+                  <img src="assets/meals/garlic-chicken-stir-fry.jpg" alt="">
+                  <div class="meal-content">
+                    <h3>Garlic Chicken Stir-Fry</h3>
+                  </div>
+                  <div class="swipe-stamp like">Save</div>
+                </article>
+
+                <article class="recipe-swipe-card card-two">
+                  <img src="assets/meals/apple-tart.jpg" alt="">
+                  <div class="meal-content">
+                    <h3>Apple Tart</h3>
+                  </div>
+                  <div class="swipe-stamp skip">Skip</div>
+                </article>
+
+                <article class="recipe-swipe-card card-three">
+                  <img src="assets/meals/japanese-omelette.jpg" alt="">
+                  <div class="meal-content">
+                    <h3>Japanese Omelette</h3>
+                  </div>
+                  <div class="swipe-stamp like">Save</div>
+                </article>
+
+                <article class="recipe-swipe-card card-four">
+                  <img src="assets/meals/chicken-rice-bowl.jpeg" alt="">
+                  <div class="meal-content">
+                    <h3>Chicken Rice Bowl</h3>
+                  </div>
+                  <div class="swipe-stamp skip">Skip</div>
+                </article>
+
+                <article class="recipe-swipe-card card-five">
+                  <img src="assets/meals/grilled-fish.jpg" alt="">
+                  <div class="meal-content">
+                    <h3>Grilled Fish</h3>
+                  </div>
+                  <div class="swipe-stamp like">Save</div>
+                </article>
+              </div>
+
+              <div class="swipe-actions" aria-hidden="true">
+                <span class="reject">×</span>
+                <span class="cook">🍴</span>
+                <span class="save">♥</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="preference-panel learning-reveal heuristic-output">
+          <div>
+            <p class="eyebrow"><span></span> The learning loop</p>
+            <h3>Each swipe updates two different parts of the profile.</h3>
+            <p>Global signal weights and cuisine affinity are updated separately. The exponential moving average keeps personalisation responsive without letting one decision cause a drastic change. The engine remains stateless, while the backend stores the updated profile.</p>
+          </div>
+          <div class="preference-stats" aria-label="Recommendation learning updates">
+            <article>
+              <span>Preference weights</span>
+              <strong>EMA adjusted</strong>
+              <small>Pantry, nutrition, freshness, novelty, and cuisine signals</small>
+            </article>
+            <article>
+              <span>Cuisine affinity</span>
+              <strong>Updated separately</strong>
+              <small>The cuisine attached to each swiped recipe</small>
+            </article>
+            <article>
+              <span>Learning rate</span>
+              <strong>&alpha; = 0.15</strong>
+              <small>Moderate adaptation is the recommended default</small>
+            </article>
+            <article>
+              <span>Hard constraints</span>
+              <strong>Remain active</strong>
+              <small>Learning never overrides allergies or dietary restrictions</small>
+            </article>
+          </div>
+        </div>
+      </section>
+      <!-- recommendation enegine -->
+
+    <!-- to add vaults, showcase, download,requirements -->
 
     <!-- features -->
     <section class="features section-shell" id="features">
