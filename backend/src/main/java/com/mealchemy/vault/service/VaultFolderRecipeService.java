@@ -4,86 +4,163 @@ package com.mealchemy.vault.service;
 import org.springframework.stereotype.Service;
 import java.util.stream.Collectors;
 import java.util.List;
+import org.springframework.web.server.*;
+import org.springframework.http.*;
 
 /* Import classes */
 import com.mealchemy.vault.model.VaultFolderRecipe;
+import com.mealchemy.vault.model.VaultMember;
+import com.mealchemy.vault.model.Vault;
+import com.mealchemy.vault.model.VaultFolder;
+import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.vault.dto.VaultFolderRecipeResponse;
 import com.mealchemy.vault.dto.VaultFolderRecipeRequest;
+import com.mealchemy.vault.dto.VaultFolderRecipeMoveRequest;
 import com.mealchemy.vault.repository.VaultFolderRecipeRepository;
+import com.mealchemy.vault.repository.VaultMemberRepository;
+import com.mealchemy.recipe.repository.RecipeRepository;
+import com.mealchemy.vault.repository.VaultFolderRepository;
 
 @Service
 public class VaultFolderRecipeService {
     private final VaultFolderRecipeRepository vaultFolderRecipeRepository;
 
-    public VaultFolderRecipeService(VaultFolderRecipeRepository vaultFolderRecipeRepository)
+    private final RecipeRepository recipeRepository;
+
+    private final VaultMemberRepository vaultMemberRepository;
+
+    private final VaultFolderRepository vaultFolderRepository;
+
+    public VaultFolderRecipeService(VaultFolderRecipeRepository vaultFolderRecipeRepository, RecipeRepository recipeRepository, 
+        VaultMemberRepository vaultMemberRepository, VaultFolderRepository vaultFolderRepository)
     {
         this.vaultFolderRecipeRepository = vaultFolderRecipeRepository;
+        this.recipeRepository = recipeRepository;
+        this.vaultMemberRepository = vaultMemberRepository;
+        this.vaultFolderRepository = vaultFolderRepository;
     }
 
     // Get all recipes using folderId
-    public List<VaultFolderRecipeResponse> getRecipesByFolderId(int folderId)
+    public List<VaultFolderRecipeResponse> getRecipesByFolderId(int folderId, Integer userId)
     {
-        return vaultFolderRecipeRepository.findByFolderId(folderId).stream().map(this::mapToResponseDto).collect(Collectors.toList());
+        VaultFolder vaultFolderForCheck = vaultFolderRepository.findById(folderId).orElseThrow(() -> new RuntimeException("Folder not found."));
+        Vault vaultForCheck = vaultFolderForCheck.getVault();
+
+        isOwnerOrMember(vaultForCheck, userId);
+
+        return vaultFolderRecipeRepository.findByFolder_FolderId(folderId).stream().map(VaultFolderRecipeResponse::from).collect(Collectors.toList());
     }
 
     // Get all folders containing a recipe
-    public List<VaultFolderRecipeResponse> getFoldersByRecipeId(int recipeId)
+    public List<VaultFolderRecipeResponse> getFoldersByRecipeId(int recipeId, Integer userId)
     {
-        return vaultFolderRecipeRepository.findByRecipeId(recipeId).stream().map(this::mapToResponseDto).collect(Collectors.toList());
+        Recipe recipeForCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new RuntimeException("Recipe not found."));
+
+        if (!recipeForCheck.getOwnerId().equals(userId))
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the recipe owner can see where it has been added.");
+        }
+
+        return vaultFolderRecipeRepository.findByRecipe_RecipeId(recipeId).stream().map(VaultFolderRecipeResponse::from).collect(Collectors.toList());
     }
 
     // Get a single record by id
-    public VaultFolderRecipeResponse getFolderRecipeById(int id)
+    public VaultFolderRecipeResponse getFolderRecipeById(int id, Integer userId)
     {
-        VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("No record found"));
-        return mapToResponseDto(vaultFolderRecipeForReturn);
+        VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("No record found."));
+        Vault vaultForCheck = vaultFolderRecipeForReturn.getFolder().getVault();
+        
+        isOwnerOrMember(vaultForCheck, userId);
+        
+        return VaultFolderRecipeResponse.from(vaultFolderRecipeForReturn);
     }
 
     // Post create a new record
-    public VaultFolderRecipeResponse createVaultFolderRecipe(VaultFolderRecipeRequest request)
+    public VaultFolderRecipeResponse createVaultFolderRecipe(VaultFolderRecipeRequest request, Integer userId, Integer folderId)
     {
-        VaultFolderRecipe vaultFolderRecipeForReturn = mapRequestToEntity(request);
-        return mapToResponseDto(vaultFolderRecipeRepository.save(vaultFolderRecipeForReturn));
+        VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(folderId).orElseThrow(() -> new RuntimeException("Folder not found."));
+        Vault vaultForCheck = vaultFolderForReturn.getVault();
+        isOwnerOrMember(vaultForCheck, userId);
+
+        Recipe recipeForReturn = recipeRepository.findById(request.recipeId()).orElseThrow(() -> new RuntimeException("Recipe not found."));
+
+        VaultFolderRecipe vaultFolderRecipeForReturn = mapRequestToEntity(vaultFolderForReturn, recipeForReturn);
+        return VaultFolderRecipeResponse.from(vaultFolderRecipeRepository.save(vaultFolderRecipeForReturn));
     }
 
     // Put to update a record
-    public VaultFolderRecipeResponse updateVaultFolderRecipe(int id, VaultFolderRecipeRequest request)
+    public VaultFolderRecipeResponse updateVaultFolderRecipe(int id, VaultFolderRecipeMoveRequest request, Integer userId)
     {
         VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("No record found"));
 
-        vaultFolderRecipeForReturn.setFolderId(request.getFolderId());
-        vaultFolderRecipeForReturn.setRecipeId(request.getRecipeId());
+        isOwner(vaultFolderRecipeForReturn.getFolder().getVault(), userId);
 
-        return mapToResponseDto(vaultFolderRecipeRepository.save(vaultFolderRecipeForReturn));
+        VaultFolder vaultFolderForCheck = vaultFolderRepository.findById(request.folderId()).orElseThrow(() -> new RuntimeException("New folder not found."));
+
+        if(!vaultFolderForCheck.getVault().getVaultId().equals(vaultFolderRecipeForReturn.getFolder().getVault().getVaultId()))
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Recipes can only moved between folders in the same vault.");
+        }
+
+        vaultFolderRecipeForReturn.setFolder(vaultFolderForCheck);
+
+        return VaultFolderRecipeResponse.from(vaultFolderRecipeRepository.save(vaultFolderRecipeForReturn));
     }
 
     // Delete a specific record using id
-    public void deleteVaultFolderRecipe(int id)
+    public void deleteVaultFolderRecipe(int id, Integer userId)
     {
+        VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("No record found"));
+
+        canDelete(vaultFolderRecipeForReturn.getFolder().getVault(), vaultFolderRecipeForReturn.getAddedBy().getUserId(), userId);
+
         vaultFolderRecipeRepository.deleteById(id);
     }
 
     /* Mapping functions */
 
-    private VaultFolderRecipeResponse mapToResponseDto(VaultFolderRecipe vaultFolderRecipeIn)
-    {
-        VaultFolderRecipeResponse response = new VaultFolderRecipeResponse();
-
-        response.setId(vaultFolderRecipeIn.getId());
-        response.setFolderId(vaultFolderRecipeIn.getFolderId());
-        response.setRecipeId(vaultFolderRecipeIn.getRecipeId());
-        response.setAddedAt(vaultFolderRecipeIn.getAddedAt());
-
-        return response;
-    }
-
-    private VaultFolderRecipe mapRequestToEntity(VaultFolderRecipeRequest request)
+    private VaultFolderRecipe mapRequestToEntity(VaultFolder vaultFolderIn, Recipe recipeIn)
     {
         VaultFolderRecipe vaultFolderRecipe = new VaultFolderRecipe();
 
-        vaultFolderRecipe.setFolderId(request.getFolderId());
-        vaultFolderRecipe.setRecipeId(request.getRecipeId());
+        vaultFolderRecipe.setFolder(vaultFolderIn);
+        vaultFolderRecipe.setRecipe(recipeIn);
 
         return vaultFolderRecipe;
+    }
+
+    /* Helpers */
+    private void isOwnerOrMember(Vault vault, Integer userId)
+    {
+        boolean isMember = vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(vault.getVaultId(), userId);
+
+        boolean isOwner = vault.getOwnerId().equals(userId);
+
+        if (!isOwner && !isMember)
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only vault a member/owner can can interact with folders/recipe relationships.");
+        }
+    }
+
+    private void isOwner(Vault vault, Integer ownerId)
+    {
+        if (!vault.getOwnerId().equals(ownerId))
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only vault a owner can interact with folders/recipe relationships.");
+        }
+    }
+
+    private void canDelete(Vault vault, Integer addedByUserId, Integer userId)
+    {
+        boolean isMember = vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(vault.getVaultId(), userId);
+
+        boolean isOwner = vault.getOwnerId().equals(userId);
+
+        boolean isPersonWhoAdded = addedByUserId.equals(userId);
+
+        if (!isOwner && !isMember && !isPersonWhoAdded)
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only vault a member/owner can delete the folders.");
+        }
     }
 }
