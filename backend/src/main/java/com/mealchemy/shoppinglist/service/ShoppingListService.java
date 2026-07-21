@@ -142,7 +142,8 @@ public class ShoppingListService {
 
     // ========== Shopping List Item Level ==========
 
-    public List<ShoppingListItemResponse> getSpecificListItems(Integer userId, Integer shoppingListId) {
+    // GET - all shopping list items in a particular list
+    public ShoppingListWithItemsResponse getSpecificListItems(Integer userId, Integer shoppingListId) {
         // get shopping list first
         ShoppingList list = shoppingListRepository.findById(shoppingListId)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found")); //find by primary key
@@ -152,7 +153,16 @@ public class ShoppingListService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
         }
 
-        return shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId);
+        List<ShoppingListItemResponse> items = shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId);
+
+        return new ShoppingListWithItemsResponse(
+            list.getShoppingListId(),
+            list.getUserId(),
+            list.getName(),
+            list.getStatus(),
+            list.getCreatedAt(),
+            items
+        );
     }
 
 
