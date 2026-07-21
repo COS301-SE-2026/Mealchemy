@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -16,7 +17,7 @@
   <body>
     <div class="scroll-meter" aria-hidden="true"><span></span></div>
 
-    <!-- header-->
+    <!-- header -->
     <header class="site-header" data-elevate>
       <a class="brand" href="#top" aria-label="Mealchemy home">
         <img src="assets/logos/logo-mark.png" alt="" aria-hidden="true">
@@ -35,10 +36,9 @@
 
       <a class="nav-cta" href="#showcase">Explore the system</a>
     </header>
-    <!-- header -->
 
     <main id="top">
-      <!-- hero card -->
+      <!-- hero -->
       <section class="hero section-shell">
         <div class="hero-copy reveal">
           <p class="eyebrow"><span></span> Intelligent recipe management ecosystem</p>
@@ -92,7 +92,7 @@
       </section>
       <!-- hero end -->
 
-      <!-- problem and solution -->
+      <!-- problem -->
       <section class="problem section-shell" id="problem">
         <div class="section-heading reveal">
           <p class="eyebrow"><span></span> The problem</p>
@@ -120,7 +120,7 @@
           </article>
         </div>
       </section>
-
+      <!-- solution -->
       <section class="solution section-shell">
         <div class="solution-panel reveal">
           <div>
@@ -156,23 +156,7 @@
       </section>
       <!-- problem and solution end -->
 
-      
-      <!-- closing section start -->
-      <section class="final-cta section-shell">
-        <div class="final-panel reveal">
-          <img src="assets/logos/logo-full.png" alt="Mealchemy logo">
-          <h2>A smarter way to decide what’s for dinner.</h2>
-          <p>Mealchemy turns fragmented recipe storage and grocery uncertainty into a guided, intelligent cooking workflow.</p>
-          <div class="final-actions">
-            <a class="button button-primary magnetic" href="#top">Return to top</a>
-            <a class="button button-android magnetic" href="#download">Android download placeholder</a>
-          </div>
-        </div>
-      </section>
-      <!--closing section end -->
-    </main>
-
-     <!--recommendation enegine -->
+      <!-- recomendation engine -->
       <section class="swipe-demo section-shell" id="swipe-demo">
         <div class="section-heading reveal">
           <p class="eyebrow"><span></span> Guided discovery</p>
@@ -428,12 +412,10 @@
           </div>
         </div>
       </section>
-      <!-- recommendation enegine -->
+      <!-- recomendation engine end -->
 
-    <!-- to add vaults, showcase, download,requirements -->
-
-    <!-- features -->
-    <section class="features section-shell" id="features">
+      <!-- features -->
+      <section class="features section-shell" id="features">
         <div class="section-heading reveal">
           <p class="eyebrow"><span></span> Core functionality</p>
           <h2>Built around the product’s highest-value capabilities.</h2>
@@ -474,12 +456,197 @@
         </div>
       </section>
       <!-- features -->
-  
 
+      <!-- product showcase -->
+      <section class="showcase section-shell" id="showcase">
+        <div class="section-heading reveal">
+          <p class="eyebrow"><span></span> Product screens</p>
+          <h2>A mobile-first experience that explains itself quickly.</h2>
+          <p>Real current-build screens are used where available, with design mockups retained for the Vault, Shopping Lists, and recipe-creation flows.</p>
+        </div>
+
+        <div class="showcase-layout">
+          <div class="showcase-controls reveal" role="tablist" aria-label="Choose a Mealchemy screen">
+            <button class="screen-tab active" type="button" role="tab" aria-selected="true" data-screen="dashboard">
+              <span>Dashboard</span>
+              <small>Smart home hub</small>
+            </button>
+            <button class="screen-tab" type="button" role="tab" aria-selected="false" data-screen="swipe">
+              <span>Guided Discovery</span>
+              <small>Swipe decisions</small>
+            </button>
+            <button class="screen-tab" type="button" role="tab" aria-selected="false" data-screen="pantry">
+              <span>Pantry</span>
+              <small>Ingredient inventory</small>
+            </button>
+            <button class="screen-tab" type="button" role="tab" aria-selected="false" data-screen="vault">
+              <span>Vault</span>
+              <small>Saved recipes</small>
+            </button>
+            <button class="screen-tab" type="button" role="tab" aria-selected="false" data-screen="shopping">
+              <span>Shopping Lists</span>
+              <small>Recipe gaps to groceries</small>
+            </button>
+          </div>
+
+          <div class="showcase-phone reveal">
+            <article class="phone uses-live-frame">
+              <img id="active-screen" src="assets/screens/app-dashboard.png" alt="Real Mealchemy dashboard screen">
+            </article>
+            <div class="screen-caption" aria-live="polite">
+              <span id="screen-kicker">Dashboard · Live app</span>
+              <strong id="screen-title">A calm command centre for cooking decisions.</strong>
+              <p id="screen-copy">The dashboard surfaces pantry status, smart suggestions, recommended recipes, and trending ideas without overwhelming the user.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mockup-gallery reveal" aria-label="Additional Mealchemy product screens">
+          <article class="mockup-card tall">
+            <img class="live-screen-image" src="assets/screens/app-discover.png" alt="Real Mealchemy Discover screen with recipe browsing and cuisine categories">
+            <div>
+              <span>Discover · Live app</span>
+              <strong>Browse meals by context, category, and appetite.</strong>
+            </div>
+          </article>
+
+          <article class="mockup-card">
+            <img src="assets/screens/recipe-creation.png" alt="Mealchemy recipe creation screen with ingredient and nutrition details">
+            <div>
+              <span>Create · Design mockup</span>
+              <strong>Build recipes with ingredients, nutrition, and cooking flow.</strong>
+            </div>
+          </article>
+
+          <article class="mockup-card">
+            <img src="assets/screens/shopping-list.png" alt="Mealchemy shopping lists screen showing favourites, general list, and recipe-generated grocery lists">
+            <div>
+              <span>Shopping list · Design mockup</span>
+              <strong>Turn selected meals into organised grocery actions.</strong>
+            </div>
+          </article>
+
+          <article class="mockup-card">
+            <img class="live-screen-image" src="assets/screens/app-profile.png" alt="Real Mealchemy profile screen for dietary directives, allergies, and flavour choices">
+            <div>
+              <span>Profile · Live app</span>
+              <strong>Personalise recommendations around diet and taste.</strong>
+            </div>
+          </article>
+        </div>
+      </section>
+      <!-- product showcase -->
+
+      <!-- andorid download -->
+      <section class="download section-shell" id="download">
+        <div class="download-panel reveal">
+          <div>
+            <p class="eyebrow"><span></span> Android app</p>
+            <h2>Download link placeholder.</h2>
+            <p>
+              Add the final Android app link here when the APK, Play Store listing, Firebase App Distribution build, or release page is ready.
+            </p>
+          </div>
+          <a class="android-badge" href="#" aria-disabled="true" data-placeholder-link>
+            <span>Android</span>
+            <strong>Download coming soon</strong>
+            <small>Replace this placeholder with the final app link</small>
+          </a>
+        </div>
+      </section>
+      <!-- android download link end -->
+
+      <!-- requirementents -->
+      <section class="requirements section-shell" id="requirements">
+        <div class="section-heading reveal">
+          <p class="eyebrow"><span></span> Assessment alignment</p>
+          <h2>Clear mapping between the system goals and the product experience.</h2>
+          <p>Mealchemy’s core functionality is shown in a way that makes the system’s purpose, value, and scope easy to understand at a glance.</p>
+        </div>
+
+        <div class="requirements-table reveal" role="table" aria-label="Client requirement alignment">
+          <div class="req-row head" role="row">
+            <span role="columnheader">Requirement</span>
+            <span role="columnheader">How Mealchemy addresses it</span>
+          </div>
+          <div class="req-row" role="row">
+            <span role="cell">Recipe Vault</span>
+            <span role="cell">Stores custom, external, suggested, and shared recipes in one organised space.</span>
+          </div>
+          <div class="req-row" role="row">
+            <span role="cell">Heuristic Generator</span>
+            <span role="cell">Combines pantry inventory, preferences, constraints, and nutrition goals to recommend meals.</span>
+          </div>
+          <div class="req-row" role="row">
+            <span role="cell">Guided Discovery</span>
+            <span role="cell">Uses a swipe-style flow to reduce choice overload and learn user taste quickly.</span>
+          </div>
+          <div class="req-row" role="row">
+            <span role="cell">Shopping List</span>
+            <span role="cell">Identifies missing ingredients after a recipe is selected.</span>
+          </div>
+          <div class="req-row" role="row">
+            <span role="cell">Nutrition Calculator</span>
+            <span role="cell">Shows calorie and macro information from ingredients and cooking methods.</span>
+          </div>
+          <div class="req-row" role="row">
+            <span role="cell">Accessibility</span>
+            <span role="cell">Prioritises readable text, high contrast, labels, focus states, and mobile touch targets.</span>
+          </div>
+        </div>
+      </section>
+      <!-- requirements -->
+
+      <!-- closing section -->
+      <section class="wow section-shell">
+        <div class="wow-card reveal">
+          <p class="eyebrow"><span></span> Future wow factors</p>
+          <h2>Stretch capabilities that extend the ecosystem.</h2>
+          <div class="wow-grid">
+            <article>
+              <span>Camera</span>
+              <h3>Pantry scanning</h3>
+              <p>Use a phone camera to populate inventory from ingredients.</p>
+            </article>
+            <article>
+              <span>Voice</span>
+              <h3>Hands-free cooking</h3>
+              <p>Read steps aloud and respond to “next” or “repeat”.</p>
+            </article>
+            <article>
+              <span>Cost</span>
+              <h3>Per-serving estimates</h3>
+              <p>Estimate meal cost using ingredient pricing data.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="final-cta section-shell">
+        <div class="final-panel reveal">
+          <img src="assets/logos/logo-full.png" alt="Mealchemy logo">
+          <h2>A smarter way to decide what’s for dinner.</h2>
+          <p>Mealchemy turns fragmented recipe storage and grocery uncertainty into a guided, intelligent cooking workflow.</p>
+          <div class="final-actions">
+            <a class="button button-primary magnetic" href="#top">Return to top</a>
+            <a class="button button-android magnetic" href="#download">Android download placeholder</a>
+          </div>
+        </div>
+      </section>
+      <!-- closing -->
+    </main>
+
+    <!-- footer -->
+    <footer class="site-footer">
+      <span>Mealchemy landing page</span>
+      <span>Recipe discovery, pantry intelligence, and smarter cooking decisions.</span>
+    </footer>
+    <!-- footer -->
+
+    <script src="scripts/shared.js"></script>
     <script src="scripts/base.js"></script>
     <script src="scripts/recommendation-story.js"></script>
     <script src="scripts/vault-story.js"></script>
     <script src="scripts/showcase.js"></script>
   </body>
 </html>
-
