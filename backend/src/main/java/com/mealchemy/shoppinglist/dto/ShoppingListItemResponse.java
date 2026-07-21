@@ -11,6 +11,7 @@ public record ShoppingListItemResponse( //records are immutable and auto generat
     @JsonProperty("shopping_list_id") Integer shoppingListId,
     @JsonProperty("ing_id") Integer ingId,
     String name,
+    String category,
     BigDecimal quantity,
     String unit,
     Boolean purchased    
