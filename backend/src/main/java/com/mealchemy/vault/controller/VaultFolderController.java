@@ -2,7 +2,9 @@ package com.mealchemy.vault.controller;
 
 /* Import libraries */
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import java.util.*;
+import jakarta.validation.Valid;
 
 /* Import classes */
 import com.mealchemy.vault.dto.VaultFolderRequest;
@@ -24,43 +26,43 @@ public class VaultFolderController
 
     // Get
     @GetMapping("/vault/{vaultId}")
-    public List<VaultFolderResponse> getVaultFolderByVaultId(@PathVariable int vaultId)
+    public List<VaultFolderResponse> getVaultFolderByVaultId(@PathVariable int vaultId, @AuthenticationPrincipal String userId)
     {
-        return vaultFolderService.getVaultFolderByVaultId(vaultId);
+        return vaultFolderService.getVaultFolderByVaultId(vaultId, Integer.parseInt(userId));
     }
 
     // Get
-    @GetMapping("/folder/name/{name}")
-    public VaultFolderResponse getVaultFolderByName(@PathVariable String name)
+    @GetMapping("/{vaultId}/folder/name/{name}")
+    public VaultFolderResponse getVaultFolderByName(@PathVariable String name, @PathVariable Integer vaultId, @AuthenticationPrincipal String userId)
     {
-        return vaultFolderService.getVaultFolderByName(name);
+        return vaultFolderService.getVaultFolderByName(name, vaultId, Integer.parseInt(userId));
     }
 
     // Get
-    @GetMapping("/folder/{id}")
-    public VaultFolderResponse getVaultFolderById(@PathVariable int id)
+    @GetMapping("/{vaultId}/folder/{id}")
+    public VaultFolderResponse getVaultFolderById(@PathVariable int id, @PathVariable Integer vaultId, @AuthenticationPrincipal String userId)
     {
-        return vaultFolderService.getVaultFolderById(id);
+        return vaultFolderService.getVaultFolderById(id, vaultId, Integer.parseInt(userId));
     }
 
     // Post
     @PostMapping
-    public VaultFolderResponse createVaultFolder(@RequestBody VaultFolderRequest request)
+    public VaultFolderResponse createVaultFolder(@Valid @RequestBody VaultFolderRequest request, @AuthenticationPrincipal String ownerId)
     {
-        return vaultFolderService.createVaultFolder(request);
+        return vaultFolderService.createVaultFolder(request, Integer.parseInt(ownerId));
     }
 
     // Put
     @PutMapping("/{id}")
-    public VaultFolderResponse updateVaultFolder(@PathVariable int id, @RequestBody VaultFolderRequest request)
+    public VaultFolderResponse updateVaultFolder(@PathVariable int id, @Valid @RequestBody VaultFolderRequest request, @AuthenticationPrincipal String ownerId)
     {
-        return vaultFolderService.updateVaultFolder(id, request);
+        return vaultFolderService.updateVaultFolder(id, request, Integer.parseInt(ownerId));
     }
 
     // Delete
-    @DeleteMapping("/{id}")
-    public void deleteVaultFolder(@PathVariable int id)
+    @DeleteMapping("/vault/{vaultId}/folder/{id}")
+    public void deleteVaultFolder(@PathVariable int id, @PathVariable Integer vaultId, @AuthenticationPrincipal String ownerId)
     {
-        vaultFolderService.deleteVaultFolder(id);
+        vaultFolderService.deleteVaultFolder(id, vaultId, Integer.parseInt(ownerId));
     }
 }
