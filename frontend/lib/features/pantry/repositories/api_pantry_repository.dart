@@ -12,6 +12,13 @@ class ApiPantryRepository implements PantryRepository {
   }
 
   @override
+  Future<void> addPantryIngredient(PantryIngredient ingredient) async {
+    throw UnimplementedError(
+      'Pantry API integration has not been implemented yet.',
+    );
+  }
+
+  @override
   Future<List<PantryFilter>> getPantryFilters() {
     throw UnimplementedError(
       'Pantry API integration has not been implemented yet.',

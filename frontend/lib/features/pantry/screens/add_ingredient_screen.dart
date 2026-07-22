@@ -38,6 +38,7 @@ class AddIngredientScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: categoriesState.when(
+        skipLoadingOnReload: true, 
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => _AddIngredientError(message: '$error'),
         data: (categories) => _AddIngredientContent(categories: categories),
@@ -64,6 +65,9 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
   String? _selectedUnit;
   String? _selectedCategory;
   bool _showValidation = false;
+
+  AppButtonStatus _saveStatus = AppButtonStatus.idle;
+  String? _saveError;
 
   @override
   void initState() {
@@ -191,6 +195,10 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
                   onPressed: _saveIngredient,
                   isFullWidth: true,
                   isRounded: true,
+                  status: _saveStatus,
+                  errorMessage: _saveError,
+                  //pop only after the tick has played
+                  onSuccessComplete: () => context.pop(),
                 ),
               ],
             ),
@@ -200,26 +208,41 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
     );
   }
 
-  void _saveIngredient() {
+  Future<void> _saveIngredient() async {
     final hasRequiredFields =
         _nameController.text.trim().isNotEmpty && _selectedUnit != null;
 
     if (!hasRequiredFields) {
       setState(() {
         _showValidation = true;
+        _saveStatus = AppButtonStatus.error;
+        _saveError = null;
       });
       return;
     }
 
-    ref.read(pantryStateProvider.notifier).addIngredient(
-          name: _nameController.text,
-          quantity: '$_quantity',
-          unit: _selectedUnit!,
-          category: _selectedCategory ?? 'produce',
-          isOutOfStock: false,
-        );
+    setState(() {
+      _saveStatus = AppButtonStatus.loading;
+      _saveError = null;
+    });
 
-    context.pop();
+    try {
+      await ref.read(pantryStateProvider.notifier).addIngredient(
+            name: _nameController.text,
+            quantity: '$_quantity',
+            unit: _selectedUnit!,
+            category: _selectedCategory ?? 'produce',
+            isOutOfStock: false,
+          );
+      if (!mounted) return;
+      setState(() => _saveStatus = AppButtonStatus.success);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _saveStatus = AppButtonStatus.error;
+        _saveError = 'Could not save ingredient. Try again.';
+      });
+    }
   }
 }
 

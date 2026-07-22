@@ -78,13 +78,13 @@ class PantryNotifier extends AsyncNotifier<PantryState> {
   }
 
   //adds ingredient to pantry
-  void addIngredient({
+  Future<void> addIngredient({
     required String name,
     required String quantity,
     required String unit,
     required String category,
     required bool isOutOfStock,
-  }) {
+  }) async {
     final current = state.valueOrNull;
     final cleanedName = name.trim();
     final cleanedQuantity = quantity.trim();
@@ -94,7 +94,7 @@ class PantryNotifier extends AsyncNotifier<PantryState> {
         cleanedName.isEmpty ||
         cleanedQuantity.isEmpty ||
         cleanedUnit.isEmpty) {
-      return;
+      throw ArgumentError('Ingredient name, quantity and unit are required.');
     }
 
     final displayCategory = _displayCategory(category);
@@ -104,6 +104,8 @@ class PantryNotifier extends AsyncNotifier<PantryState> {
       category: displayCategory,
       status: isOutOfStock ? PantryItemStatus.expired : PantryItemStatus.fresh,
     );
+
+    await _repository.addPantryIngredient(newIngredient);
 
     state = AsyncData(
       current.copyWith(

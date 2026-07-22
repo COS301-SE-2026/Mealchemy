@@ -1,6 +1,11 @@
 //main action buttons used across screens
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
+import 'package:mealchemy/core/theme/app_typography.dart';
 
 //  Enums
 enum ButtonVariant { primary, secondary, outlined, text }
@@ -12,7 +17,10 @@ enum ButtonVariant { primary, secondary, outlined, text }
 
 enum ButtonSize { small, medium, large }
 
-class AppButton extends StatelessWidget {
+//new states for buttons
+enum AppButtonStatus { idle, loading, success, error }
+
+class AppButton extends StatefulWidget {
   final String label;
   final VoidCallback? onPressed;
   final ButtonVariant variant;
@@ -24,6 +32,10 @@ class AppButton extends StatelessWidget {
   final Color? customBorderColor;
   final IconData? leftIcon;
   final IconData? rightIcon;
+
+  final AppButtonStatus status;
+  final String? errorMessage;
+  final VoidCallback? onSuccessComplete;
 
   const AppButton({
     super.key,
@@ -38,6 +50,9 @@ class AppButton extends StatelessWidget {
     this.customBorderColor,
     this.leftIcon,
     this.rightIcon,
+    this.status = AppButtonStatus.idle,
+    this.errorMessage,
+    this.onSuccessComplete,
   });
 
   // Convenience constructors
@@ -51,7 +66,10 @@ class AppButton extends StatelessWidget {
     this.isRounded = false,
     this.leftIcon,
     this.rightIcon,
-  }) : variant = ButtonVariant.primary,
+    this.status = AppButtonStatus.idle,
+    this.errorMessage,
+    this.onSuccessComplete,
+  })  : variant = ButtonVariant.primary,
         customColor = null,
         customBorderColor = null;
 
@@ -65,7 +83,10 @@ class AppButton extends StatelessWidget {
     this.isRounded = false,
     this.leftIcon,
     this.rightIcon,
-  }) : variant = ButtonVariant.secondary,
+    this.status = AppButtonStatus.idle,
+    this.errorMessage,
+    this.onSuccessComplete,
+  })  : variant = ButtonVariant.secondary,
         customColor = null,
         customBorderColor = null;
 
@@ -81,6 +102,9 @@ class AppButton extends StatelessWidget {
     this.customBorderColor,
     this.leftIcon,
     this.rightIcon,
+    this.status = AppButtonStatus.idle,
+    this.errorMessage,
+    this.onSuccessComplete,
   }) : variant = ButtonVariant.outlined;
 
   const AppButton.text({
@@ -94,12 +118,106 @@ class AppButton extends StatelessWidget {
     this.customColor,
     this.leftIcon,
     this.rightIcon,
-  }) : variant = ButtonVariant.text,
-       customBorderColor = null;
+    this.status = AppButtonStatus.idle,
+    this.errorMessage,
+    this.onSuccessComplete,
+  })  : variant = ButtonVariant.text,
+        customBorderColor = null;
+
+  @override
+  State<AppButton> createState() => _AppButtonState();
+}
+
+class _AppButtonState extends State<AppButton>
+    with SingleTickerProviderStateMixin {
+  static const _shakeDuration = Duration(milliseconds: 420);
+  static const _swapDuration = Duration(milliseconds: 180);
+  static const _fillDuration = Duration(milliseconds: 200);
+  static const _successHold = Duration(milliseconds: 900);
+  static const _errorRevert = Duration(milliseconds: 2500);
+
+  late final AnimationController _shakeController;
+
+  late AppButtonStatus _displayStatus;
+  Timer? _revertTimer;
+  Timer? _successTimer;
+  double? _lockedWidth;
+  bool _isPressed = false;
+  AppButtonStatus get _effectiveStatus =>
+      widget.isLoading ? AppButtonStatus.loading : widget.status;
+
+  @override
+  void initState() {
+    super.initState();
+    _displayStatus = _effectiveStatus;
+    _shakeController =
+        AnimationController(vsync: this, duration: _shakeDuration);
+    if (_displayStatus == AppButtonStatus.error) _enterError(shake: false);
+    if (_displayStatus == AppButtonStatus.success) _enterSuccess();
+  }
+
+  @override
+  void didUpdateWidget(covariant AppButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final oldStatus =
+        oldWidget.isLoading ? AppButtonStatus.loading : oldWidget.status;
+    final newStatus = _effectiveStatus;
+    if (oldStatus == newStatus) return;
+
+    if (oldStatus == AppButtonStatus.idle && !widget.isFullWidth) {
+      _lockedWidth = context.size?.width;
+    }
+
+    _revertTimer?.cancel();
+    _successTimer?.cancel();
+    setState(() => _displayStatus = newStatus);
+
+    switch (newStatus) {
+      case AppButtonStatus.error:
+        _enterError(shake: true);
+      case AppButtonStatus.success:
+        _enterSuccess();
+      case AppButtonStatus.idle:
+        _lockedWidth = null;
+      case AppButtonStatus.loading:
+        break;
+    }
+  }
+
+  void _enterError({required bool shake}) {
+    if (shake) {
+      HapticFeedback.mediumImpact();
+      _shakeController.forward(from: 0);
+    }
+    _revertTimer = Timer(_errorRevert, () {
+      if (!mounted) return;
+      setState(() {
+        _displayStatus = AppButtonStatus.idle;
+        _lockedWidth = null;
+      });
+    });
+  }
+
+  void _enterSuccess() {
+    HapticFeedback.lightImpact();
+    _successTimer = Timer(_successHold, () {
+      if (!mounted) return;
+      widget.onSuccessComplete?.call();
+    });
+  }
+
+  @override
+  void dispose() {
+    _shakeController.dispose();
+    _revertTimer?.cancel();
+    _successTimer?.cancel();
+    super.dispose();
+  }
 
   // Size getters
   double get _height {
-    switch (size) {
+    switch (widget.size) {
       case ButtonSize.small:
         return 36;
       case ButtonSize.medium:
@@ -110,7 +228,7 @@ class AppButton extends StatelessWidget {
   }
 
   double get _fontSize {
-    switch (size) {
+    switch (widget.size) {
       case ButtonSize.small:
         return 12;
       case ButtonSize.medium:
@@ -121,7 +239,7 @@ class AppButton extends StatelessWidget {
   }
 
   double get _iconSize {
-    switch (size) {
+    switch (widget.size) {
       case ButtonSize.small:
         return 14;
       case ButtonSize.medium:
@@ -132,100 +250,120 @@ class AppButton extends StatelessWidget {
   }
 
   BorderRadius get _borderRadius =>
-    isRounded ? BorderRadius.circular(100) : BorderRadius.circular(12);
+      widget.isRounded ? BorderRadius.circular(100) : BorderRadius.circular(12);
 
-  //  Child builder
-  Widget _buildChild(Color textColor) {
-    if (isLoading) {
-      return SizedBox(
-        width: _iconSize,
-        height: _iconSize,
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          color: textColor,
-        ),
+  bool get _isFilled =>
+      widget.variant == ButtonVariant.primary ||
+      widget.variant == ButtonVariant.secondary;
+
+  Color get _accentColor => widget.customColor ?? AppColors.primary;
+
+  static final Color _loadingFill = AppColors.primary.withValues(alpha: 0.08);
+
+  //  Status driven colours
+  Color _foregroundColor() {
+    switch (_displayStatus) {
+      case AppButtonStatus.loading:
+        return _isFilled ? AppColors.primary : _accentColor;
+      case AppButtonStatus.success:
+        return _isFilled ? AppColors.textDark : AppColors.success;
+      case AppButtonStatus.error:
+        return _isFilled ? AppColors.textDark : AppColors.error;
+      case AppButtonStatus.idle:
+        switch (widget.variant) {
+          case ButtonVariant.primary:
+            return AppColors.textDark;
+          case ButtonVariant.secondary:
+            return AppColors.textLight;
+          case ButtonVariant.outlined:
+          case ButtonVariant.text:
+            return _accentColor;
+        }
+    }
+  }
+
+  BoxDecoration _fillDecoration() {
+    if (!_isFilled) {
+      //outlined and text variants
+      final borderColor = switch (_displayStatus) {
+        AppButtonStatus.error => AppColors.error,
+        AppButtonStatus.success => AppColors.success,
+        _ => widget.customBorderColor ?? _accentColor,
+      };
+      return BoxDecoration(
+        borderRadius: _borderRadius,
+        border: widget.variant == ButtonVariant.outlined
+            ? Border.all(color: borderColor, width: 1.5)
+            : null,
       );
     }
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (leftIcon != null) ...[
-          Icon(leftIcon, size: _iconSize, color: textColor),
-          const SizedBox(width: 8),
-        ],
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: _fontSize,
-            fontWeight: FontWeight.w600,
-            color: textColor,
-          ),
-        ),
-        if (rightIcon != null) ...[
-          const SizedBox(width: 8),
-          Icon(rightIcon, size: _iconSize, color: textColor),
-        ],
-      ],
-    );
+    switch (_displayStatus) {
+      case AppButtonStatus.loading:
+        return BoxDecoration(borderRadius: _borderRadius, color: _loadingFill);
+      case AppButtonStatus.success:
+        return BoxDecoration(
+            borderRadius: _borderRadius, color: AppColors.success);
+      case AppButtonStatus.error:
+        return BoxDecoration(
+            borderRadius: _borderRadius, color: AppColors.error);
+      case AppButtonStatus.idle:
+        if (widget.onPressed == null) {
+          return BoxDecoration(
+            borderRadius: _borderRadius,
+            color: AppColors.textMuted.withValues(alpha: 0.3),
+          );
+        }
+        return widget.variant == ButtonVariant.primary
+            ? BoxDecoration(
+                borderRadius: _borderRadius, gradient: AppColors.brand)
+            : BoxDecoration(
+                borderRadius: _borderRadius, color: AppColors.accent);
+    }
   }
 
-  //  Style builder
-  ButtonStyle _buildStyle() {
-    final shape = RoundedRectangleBorder(
-      borderRadius: _borderRadius,
-    );
-
-    final padding = EdgeInsets.symmetric(
-      horizontal: 20,
-      vertical: size == ButtonSize.small ? 8 : 14,
-    );
-
-    switch (variant) {
-      case ButtonVariant.primary:
-        return ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.textDark,
-          minimumSize: Size(isFullWidth ? double.infinity : 0, _height),
-          textStyle:
-              TextStyle(fontSize: _fontSize, fontWeight: FontWeight.w600),
-          padding: padding,
-          shape: shape,
-          elevation: 0,
+  //  Child builder
+  Widget _buildChild(Color foreground) {
+    switch (_displayStatus) {
+      case AppButtonStatus.loading:
+        return SizedBox(
+          key: const ValueKey('loading'),
+          width: _iconSize,
+          height: _iconSize,
+          child: CircularProgressIndicator(strokeWidth: 2, color: foreground),
         );
 
-      case ButtonVariant.secondary:
-        return ElevatedButton.styleFrom(
-          backgroundColor: AppColors.accent,
-          foregroundColor: AppColors.textLight,
-          minimumSize: Size(isFullWidth ? double.infinity : 0, _height),
-          textStyle:
-              TextStyle(fontSize: _fontSize, fontWeight: FontWeight.w600),
-          padding: padding,
-          shape: shape,
-          elevation: 0,
+      case AppButtonStatus.success:
+        return Icon(
+          Icons.check_rounded,
+          key: const ValueKey('success'),
+          size: _iconSize + 4,
+          color: foreground,
         );
 
-      case ButtonVariant.outlined:
-        return OutlinedButton.styleFrom(
-          foregroundColor: customColor ?? AppColors.primary,
-          minimumSize: Size(isFullWidth ? double.infinity : 0, _height),
-          textStyle:
-              TextStyle(fontSize: _fontSize, fontWeight: FontWeight.w600),
-          padding: padding,
-          shape: shape,
-          side: BorderSide(color: customBorderColor ?? customColor ?? AppColors.primary, width: 1.5),
-        );
-
-      case ButtonVariant.text:
-        return TextButton.styleFrom(
-          foregroundColor: customColor ?? AppColors.primary,
-          minimumSize: Size(isFullWidth ? double.infinity : 0, _height),
-          textStyle:
-              TextStyle(fontSize: _fontSize, fontWeight: FontWeight.w600),
-          padding: padding,
-          shape: shape,
+      case AppButtonStatus.error:
+      case AppButtonStatus.idle:
+        return Row(
+          key: ValueKey(_displayStatus),
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (widget.leftIcon != null) ...[
+              Icon(widget.leftIcon, size: _iconSize, color: foreground),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              widget.label,
+              style: AppTextStyles.button.copyWith(
+                fontSize: _fontSize,
+                color: foreground,
+              ),
+            ),
+            if (widget.rightIcon != null) ...[
+              const SizedBox(width: 8),
+              Icon(widget.rightIcon, size: _iconSize, color: foreground),
+            ],
+          ],
         );
     }
   }
@@ -233,75 +371,112 @@ class AppButton extends StatelessWidget {
   //  Build
   @override
   Widget build(BuildContext context) {
-    switch (variant) {
-      case ButtonVariant.primary:
-        return SizedBox(
-          width: isFullWidth ? double.infinity : null,
-          height: _height,
-          child: ClipRRect(   
-            borderRadius: _borderRadius,
-            child: 
-            DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: onPressed != null ? AppColors.brand : null,
-              color: onPressed == null
-                  ? AppColors.textMuted.withValues(alpha: 0.3)
-                  : null,
+    final foreground = _foregroundColor();
 
-            ),
-            child: ElevatedButton(
-              onPressed: isLoading ? null : onPressed,
-              style: _buildStyle().copyWith(
-                backgroundColor: WidgetStateProperty.all(Colors.transparent),
-                shadowColor: WidgetStateProperty.all(Colors.transparent),
+    //tap disabled while working
+    final effectiveOnPressed = switch (_displayStatus) {
+      AppButtonStatus.loading || AppButtonStatus.success => null,
+      _ => widget.onPressed,
+    };
+
+    Widget button = SizedBox(
+      width: widget.isFullWidth ? double.infinity : _lockedWidth,
+      height: _height,
+      child: AnimatedContainer(
+        duration: _fillDuration,
+        curve: Curves.easeOut,
+        decoration: _fillDecoration(),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: effectiveOnPressed,
+            borderRadius: _borderRadius,
+            //hover and pressed feedback depends on the foreground colour
+            //dark ink on light fills, light ink on the gradient and status fills
+            overlayColor: WidgetStateProperty.resolveWith((states) {
+              final ink = _isFilled && _displayStatus != AppButtonStatus.loading
+                  ? AppColors.textDark
+                  : _accentColor;
+              if (states.contains(WidgetState.pressed)) {
+                return ink.withValues(alpha: 0.16);
+              }
+              if (states.contains(WidgetState.hovered)) {
+                return ink.withValues(alpha: 0.08);
+              }
+              if (states.contains(WidgetState.focused)) {
+                return ink.withValues(alpha: 0.10);
+              }
+              return null;
+            }),
+            onHighlightChanged: (pressed) =>
+                setState(() => _isPressed = pressed),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: widget.variant == ButtonVariant.text ? 12 : 20,
               ),
-              child: _buildChild(AppColors.textDark),
+              child: Center(
+                child: AnimatedSwitcher(
+                  duration: _swapDuration,
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: ScaleTransition(scale: animation, child: child),
+                  ),
+                  child: _buildChild(foreground),
+                ),
+              ),
             ),
-          ),
-          )
-        );
-
-      case ButtonVariant.secondary:
-        return SizedBox(
-          width: isFullWidth ? double.infinity : null,
-          height: _height,
-          child: ClipRRect(   
-            borderRadius: _borderRadius,
-            child: ElevatedButton(
-            onPressed: isLoading ? null : onPressed,
-            style: _buildStyle(),
-            child: _buildChild(AppColors.textLight),
           ),
         ),
-        );
+      ),
+    );
 
-      case ButtonVariant.outlined:
-        return SizedBox(
-          width: isFullWidth ? double.infinity : null,
-          height: _height,
-          child: ClipRRect(
-            borderRadius: _borderRadius,
-            child: OutlinedButton(
-              onPressed: isLoading ? null : onPressed,
-              style: _buildStyle(),
-              child: _buildChild(customColor ?? AppColors.primary),
-            ),
-          ),
-        );
-        
-      case ButtonVariant.text:
-        return SizedBox(
-          width: isFullWidth ? double.infinity : null,
-          height: _height,
-          child: ClipRRect(
-            borderRadius: _borderRadius,
-            child: TextButton(
-              onPressed: isLoading ? null : onPressed,
-              style: _buildStyle(),
-              child: _buildChild(customColor ?? AppColors.primary),
-            ),
-          ),
-        );
-    }
+    //subtle
+    button = AnimatedScale(
+      scale: _isPressed ? 0.97 : 1.0,
+      duration: const Duration(milliseconds: 100),
+      curve: Curves.easeOut,
+      child: button,
+    );
+
+    //horizontal shake, three decaying oscillations
+    button = AnimatedBuilder(
+      animation: _shakeController,
+      builder: (context, child) {
+        final t = _shakeController.value;
+        final offset = math.sin(t * math.pi * 6) * 8 * (1 - t);
+        return Transform.translate(offset: Offset(offset, 0), child: child);
+      },
+      child: button,
+    );
+
+    final showMessage =
+        _displayStatus == AppButtonStatus.error && widget.errorMessage != null;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: widget.isFullWidth
+          ? CrossAxisAlignment.stretch
+          : CrossAxisAlignment.center,
+      children: [
+        button,
+        AnimatedSize(
+          duration: _swapDuration,
+          curve: Curves.easeOut,
+          alignment: Alignment.topCenter,
+          child: showMessage
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    widget.errorMessage!,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.error,
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+      ],
+    );
   }
 }

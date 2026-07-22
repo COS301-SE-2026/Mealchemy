@@ -6,6 +6,7 @@ abstract class PantryRepository {
   Future<PantrySummary> getPantrySummary();
 
   Future<List<PantryFilter>> getPantryFilters();
+  Future<void> addPantryIngredient(PantryIngredient ingredient);
 
   Future<List<PantryIngredient>> getPantryIngredients();
 
