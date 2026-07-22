@@ -86,4 +86,16 @@ public class VaultServiceTest
 
         assertTrue(result.isEmpty());
     }
+
+    @Test
+    void createVault_returnsCreatedVault()
+    {
+        when(vaultRepository.save(any(Vault.class))).thenReturn(vault);
+
+        VaultResponse result = vaultService.createVault(requests, 1);
+
+        assertNotNull(result);
+        assertEquals("Test Vault", result.name());
+        verify(vaultRepository, times(1).save(any(Vault.class)));
+    }
 }
