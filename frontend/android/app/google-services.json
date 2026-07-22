@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "480345342713",
+    "project_id": "mealchemy-app-distribution",
+    "storage_bucket": "mealchemy-app-distribution.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:480345342713:android:490cec1011395be746d828",
+        "android_client_info": {
+          "package_name": "com.mealchemy.mealchemy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSAZUGipk9Ou3dtnZxxC3M3MoNySpZGME"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
