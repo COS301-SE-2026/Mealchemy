@@ -76,4 +76,14 @@ public class VaultServiceTest
         assertEquals(1, result.size());
         assertEquals("Test Vault", result.get(0).name());
     }
+
+    @Test
+    void getVaultsByOwnerId_returnsEmptyList_whenNoneFound()
+    {
+        when(vaultRepository.findByOwnerId(99)).thenReturn(List.of());
+
+        List<VaultResponse> result = vaultService.getVaultsByOwnerId(99);
+
+        assertTrue(result.isEmpty());
+    }
 }
