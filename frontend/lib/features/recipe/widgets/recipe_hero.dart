@@ -22,52 +22,45 @@ class RecipeHero extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           _HeroImage(photoUrl: recipe.photoUrl),
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
-            child: DecoratedBox(
-              decoration: const BoxDecoration(gradient: AppColors.brandOverlay),
-            ),
+          const DecoratedBox(
+            decoration: BoxDecoration(gradient: AppColors.heroScrim),
           ),
-
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.transparent, AppColors.bgDark.withValues(alpha: 0.8)],
-                stops: const [0.35, 1.0],
-              ),
-            ),
-          ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Row(
-                children: [
-                  _HeroCircleButton(
-                    icon: Icons.arrow_back,
-                    onTap: () => context.pop(),
-                    background: AppColors.surfaceWhite.withValues(alpha: 0.95),
-                    iconColor: AppColors.textLight,
-                    frosted: false,
-                  ),
-                  const Spacer(),
-                  _HeroCircleButton(
-                    icon: Icons.favorite_border,
-                    onTap: () {},
-                    background: AppColors.textLight.withValues(alpha: 0.45),
-                    iconColor: AppColors.textDark,
-                    frosted: true,
-                  ),
-                  const SizedBox(width: 10),
-                  _HeroCircleButton(
-                    icon: Icons.share_outlined,
-                    onTap: () {},
-                    background: AppColors.textLight.withValues(alpha: 0.45),
-                    iconColor: AppColors.textDark,
-                    frosted: true,
-                  ),
-                ],
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Row(
+                  children: [
+                    _HeroCircleButton(
+                      icon: Icons.arrow_back,
+                      onTap: () => context.pop(),
+                      background:
+                          AppColors.surfaceWhite.withValues(alpha: 0.95),
+                      iconColor: AppColors.textLight,
+                      frosted: false,
+                    ),
+                    const Spacer(),
+                    _HeroCircleButton(
+                      icon: Icons.favorite_border,
+                      onTap: () {},
+                      background: AppColors.textLight.withValues(alpha: 0.45),
+                      iconColor: AppColors.textDark,
+                      frosted: true,
+                    ),
+                    const SizedBox(width: 10),
+                    _HeroCircleButton(
+                      icon: Icons.share_outlined,
+                      onTap: () {},
+                      background: AppColors.textLight.withValues(alpha: 0.45),
+                      iconColor: AppColors.textDark,
+                      frosted: true,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
