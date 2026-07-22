@@ -22,7 +22,8 @@ public record RecipeResponse(
     String externalUrl,
     boolean isCommunityPublished,
     OffsetDateTime createdAt,
-    OffsetDateTime updatedAt
+    OffsetDateTime updatedAt,
+    Integer parentRecipeId
 )
 {
     public static RecipeResponse from (Recipe recipe)
@@ -41,7 +42,8 @@ public record RecipeResponse(
             recipe.getExternalUrl(),
             recipe.getIsCommunityPublished(),
             recipe.getCreatedAt(),
-            recipe.getUpdatedAt()
+            recipe.getUpdatedAt(),
+            recipe.getParentRecipe() != null ? recipe.getParentRecipe().getRecipeId() : null
         );
     }
 }
