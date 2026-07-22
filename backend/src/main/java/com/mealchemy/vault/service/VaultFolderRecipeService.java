@@ -13,6 +13,7 @@ import com.mealchemy.vault.model.VaultMember;
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.model.VaultFolder;
 import com.mealchemy.recipe.model.Recipe;
+import com.mealchemy.auth.model.User;
 import com.mealchemy.vault.dto.VaultFolderRecipeResponse;
 import com.mealchemy.vault.dto.VaultFolderRecipeRequest;
 import com.mealchemy.vault.dto.VaultFolderRecipeMoveRequest;
@@ -20,6 +21,7 @@ import com.mealchemy.vault.repository.VaultFolderRecipeRepository;
 import com.mealchemy.vault.repository.VaultMemberRepository;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.vault.repository.VaultFolderRepository;
+import com.mealchemy.auth.repository.UserRepository;
 
 @Service
 public class VaultFolderRecipeService {
@@ -31,13 +33,16 @@ public class VaultFolderRecipeService {
 
     private final VaultFolderRepository vaultFolderRepository;
 
+    private final UserRepository userRepository;
+
     public VaultFolderRecipeService(VaultFolderRecipeRepository vaultFolderRecipeRepository, RecipeRepository recipeRepository, 
-        VaultMemberRepository vaultMemberRepository, VaultFolderRepository vaultFolderRepository)
+        VaultMemberRepository vaultMemberRepository, VaultFolderRepository vaultFolderRepository, UserRepository userRepository)
     {
         this.vaultFolderRecipeRepository = vaultFolderRecipeRepository;
         this.recipeRepository = recipeRepository;
         this.vaultMemberRepository = vaultMemberRepository;
         this.vaultFolderRepository = vaultFolderRepository;
+        this.userRepository = userRepository;
     }
 
     // Get all recipes using folderId
@@ -84,7 +89,9 @@ public class VaultFolderRecipeService {
 
         Recipe recipeForReturn = recipeRepository.findById(request.recipeId()).orElseThrow(() -> new RuntimeException("Recipe not found."));
 
-        VaultFolderRecipe vaultFolderRecipeForReturn = mapRequestToEntity(vaultFolderForReturn, recipeForReturn);
+        User userForReturn = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found."));
+
+        VaultFolderRecipe vaultFolderRecipeForReturn = mapRequestToEntity(vaultFolderForReturn, recipeForReturn, userForReturn);
         return VaultFolderRecipeResponse.from(vaultFolderRecipeRepository.save(vaultFolderRecipeForReturn));
     }
 
@@ -119,12 +126,13 @@ public class VaultFolderRecipeService {
 
     /* Mapping functions */
 
-    private VaultFolderRecipe mapRequestToEntity(VaultFolder vaultFolderIn, Recipe recipeIn)
+    private VaultFolderRecipe mapRequestToEntity(VaultFolder vaultFolderIn, Recipe recipeIn, User addedBy)
     {
         VaultFolderRecipe vaultFolderRecipe = new VaultFolderRecipe();
 
         vaultFolderRecipe.setFolder(vaultFolderIn);
         vaultFolderRecipe.setRecipe(recipeIn);
+        vaultFolderRecipe.setAddedBy(addedBy);
 
         return vaultFolderRecipe;
     }
