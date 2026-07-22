@@ -61,7 +61,7 @@ public class RecipeService
     }
 
     // Post to create a new recipe from an existing one
-    public RecipeResponse createFromFullRecipe(RecipeFullRequest request, Integer ownerId)
+    public RecipeResponse createFromFullRecipe(RecipeFullRequest request, Integer ownerId, Integer sourceRecipeId)
     {
         if (!flavourProfileOptionsRepository.existsByValue(request.cuisineType()))
         {
@@ -69,6 +69,13 @@ public class RecipeService
         }
         
         Recipe recipeForReturn = mapRequestToEntity(request, ownerId);
+
+        if (sourceRecipeId != null)
+        {
+            Recipe sourceRecipe = recipeRepository.findById(sourceRecipeId).orElseThrow(() -> new RuntimeException("Source recipe not found."));
+
+            recipeForReturn.setParentRecipe(sourceRecipe);
+        }
 
         List<RecipeIngredient> ingredients = request.ingredients().stream().map(i -> {
             
