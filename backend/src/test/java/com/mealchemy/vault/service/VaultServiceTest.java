@@ -65,4 +65,15 @@ public class VaultServiceTest
         RuntimeException ex = assertThrows(RuntimeException.class, () -> vaultService.getVault(99));
         assertEquals("Vault not found.", ex.getMessage());
     }
+
+    @Test
+    void getVaultsByOwnerId_returnsListOfVaults()
+    {
+        when(vaultRepository.findByOwnerId(1)).thenReturn(List.of(vault));
+
+        List<VaultResponse> result = vaultService.getVaultsByOwnerId(1);
+
+        assertEquals(1, result.size());
+        assertEquals("Test Vault", result.get(0).name());
+    }
 }
