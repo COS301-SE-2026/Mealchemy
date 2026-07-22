@@ -67,6 +67,10 @@ public class Recipe
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RecipeStep> steps = new ArrayList<>();
 
+    @ManyToOne
+    @JoinColumn(name = "parent_recipe_id")
+    private Recipe parentRecipe;
+
     /* Getters */
     
     public int getRecipeId()
@@ -149,6 +153,11 @@ public class Recipe
         return steps;
     }
 
+    public Recipe getParentRecipe()
+    {
+        return parentRecipe;
+    }
+
     /* Setters */
 
     public void setOwnerId(Integer ownerIdIn)
@@ -219,5 +228,10 @@ public class Recipe
     public void setSteps(List<RecipeStep> stepsIn)
     {
         steps = stepsIn;
+    }
+
+    public void setParentRecipe(Recipe parentRecipeIn)
+    {
+        parentRecipe = parentRecipeIn;
     }
 }
