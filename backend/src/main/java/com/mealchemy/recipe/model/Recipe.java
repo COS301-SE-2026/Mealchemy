@@ -9,6 +9,8 @@ import org.hibernate.annotations.*;
 
 /* Import Classes */
 
+import com.mealchemy.vault.model.VaultFolderRecipe;
+
 @Entity
 @Table(name = "recipes")
 public class Recipe
@@ -70,6 +72,9 @@ public class Recipe
     @ManyToOne
     @JoinColumn(name = "parent_recipe_id")
     private Recipe parentRecipe;
+
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<VaultFolderRecipe> vaultFolderRecipes = new ArrayList<>();
 
     /* Getters */
     
@@ -158,6 +163,11 @@ public class Recipe
         return parentRecipe;
     }
 
+    public List<VaultFolderRecipe> getVaultFolderRecipes()
+    {
+        return vaultFolderRecipes;
+    }
+
     /* Setters */
 
     public void setOwnerId(Integer ownerIdIn)
@@ -233,5 +243,10 @@ public class Recipe
     public void setParentRecipe(Recipe parentRecipeIn)
     {
         parentRecipe = parentRecipeIn;
+    }
+
+    public void setVaultFolderRecipes(List<VaultFolderRecipe> vaultFolderRecipesIn)
+    {
+        vaultFolderRecipes = vaultFolderRecipesIn;
     }
 }
