@@ -414,6 +414,166 @@
       </section>
       <!-- recomendation engine end -->
 
+      <!-- vault explanation -->
+      <section class="vault-story section-shell" id="vaults">
+        <div class="section-heading reveal">
+          <p class="eyebrow"><span></span> The vault system</p>
+          <h2>Three vault types. One organised recipe model.</h2>
+          <p>Private, shared, and global vaults serve different purposes, but every recipe follows the same containment rule. A vault contains folders, and folders contain recipes.</p>
+        </div>
+
+        <div class="vault-model reveal" aria-label="Vault containment hierarchy">
+          <div><span>01</span><strong>Vault</strong><small>Private, shared, or global</small></div>
+          <i aria-hidden="true">→</i>
+          <div><span>02</span><strong>Folder</strong><small>Organises recipes by context</small></div>
+          <i aria-hidden="true">→</i>
+          <div><span>03</span><strong>Recipe</strong><small>Always stored through a folder</small></div>
+        </div>
+
+        <div class="vault-explainer reveal" data-vault-scene="private">
+          <nav class="vault-scene-controls" aria-label="Complete vault journey">
+            <button type="button" class="vault-scene-button is-active" data-vault-step="private" aria-pressed="true">
+              <span>01</span><strong>Your private vault</strong><small>Created with your account</small>
+            </button>
+            <button type="button" class="vault-scene-button" data-vault-step="add" aria-pressed="false">
+              <span>02</span><strong>Add your recipe</strong><small>Create it, own it, file it</small>
+            </button>
+            <button type="button" class="vault-scene-button" data-vault-step="shared" aria-pressed="false">
+              <span>03</span><strong>Create a shared vault</strong><small>A distinct collaborative space</small>
+            </button>
+            <button type="button" class="vault-scene-button" data-vault-step="invite" aria-pressed="false">
+              <span>04</span><strong>Invite collaborators</strong><small>Accept and assign a role</small>
+            </button>
+            <button type="button" class="vault-scene-button" data-vault-step="protect" aria-pressed="false">
+              <span>05</span><strong>Protect the original</strong><small>Copy before you edit</small>
+            </button>
+            <button type="button" class="vault-scene-button" data-vault-step="global" aria-pressed="false">
+              <span>06</span><strong>Browse the global vault</strong><small>Discover the shared repository</small>
+            </button>
+            <button type="button" class="vault-scene-button" data-vault-step="copy" aria-pressed="false">
+              <span>07</span><strong>Save a personal copy</strong><small>Your version, your folder</small>
+            </button>
+          </nav>
+
+          <div class="vault-scene-stage" aria-live="polite">
+            <article class="vault-scene-panel is-active" data-vault-scene-panel="private">
+              <div class="vault-scene-copy">
+                <p class="visual-kicker">Scene 1 · Registration</p>
+                <h3>Your private vault begins with you.</h3>
+                <p>Registration creates the user, profile, preferences, and one private vault together. The locked space belongs to that user from the first session.</p>
+              </div>
+              <div class="vault-scene-visual private-visual" aria-hidden="true">
+                <div class="vault-user-node"><b>MA</b><span>New user</span></div>
+                <div class="vault-motion-arrow"><i></i></div>
+                <div class="vault-object private-vault-object">
+                  <div class="vault-object-head"><span>Private vault</span><b>Locked</b></div>
+                  <div class="vault-folder-object">
+                    <strong>Weeknight meals</strong>
+                    <div class="vault-recipe-mini"><img src="assets/meals/garlic-chicken-stir-fry.jpg" alt=""><span>Garlic Chicken</span></div>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="vault-scene-panel" data-vault-scene-panel="add">
+              <div class="vault-scene-copy">
+                <p class="visual-kicker">Scene 2 · Create</p>
+                <h3>Add the recipe, then choose its folder.</h3>
+                <p>Enter the title, ingredients, and steps. The owned recipe card moves into a selected folder inside the private vault.</p>
+              </div>
+              <div class="vault-scene-visual add-visual" aria-hidden="true">
+                <div class="vault-form-card"><span>New recipe</span><strong>Garlic Chicken</strong><i></i><i></i><i></i><b>Owner · You</b></div>
+                <div class="vault-motion-arrow"><i></i></div>
+                <div class="vault-object compact-vault-object">
+                  <div class="vault-object-head"><span>Private vault</span><b>Yours</b></div>
+                  <div class="vault-folder-object target-folder"><strong>Weeknight meals</strong><span>Recipe filed here</span></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="vault-scene-panel" data-vault-scene-panel="shared">
+              <div class="vault-scene-copy">
+                <p class="visual-kicker">Scene 3 · Collaborate</p>
+                <h3>A shared vault has its own identity.</h3>
+                <p>Create a second vault for a household, team, or cooking group. It stays visually and structurally distinct from every member's private vault.</p>
+              </div>
+              <div class="vault-scene-visual twin-vault-visual" aria-hidden="true">
+                <div class="vault-object private-vault-object small-object">
+                  <div class="vault-object-head"><span>Private</span><b>1 person</b></div>
+                  <div class="vault-folder-object"><strong>My recipes</strong><span>Personal space</span></div>
+                </div>
+                <div class="vault-vs">≠</div>
+                <div class="vault-object shared-vault-object small-object">
+                  <div class="vault-object-head"><span>Shared</span><b>Members</b></div>
+                  <div class="vault-folder-object"><strong>Family recipes</strong><span>Collaborative space</span></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="vault-scene-panel" data-vault-scene-panel="invite">
+              <div class="vault-scene-copy">
+                <p class="visual-kicker">Scene 4 · Membership</p>
+                <h3>Invite people into the same shared space.</h3>
+                <p>An invitation travels to another user. Once accepted, the shared vault appears in their vault list with an owner, editor, or viewer role.</p>
+              </div>
+              <div class="vault-scene-visual invite-visual" aria-hidden="true">
+                <div class="invite-user user-a"><b>MA</b><span>User A</span></div>
+                <div class="invite-path"><span>Invite</span><i>✉</i></div>
+                <div class="invite-user user-b"><b>LB</b><span>User B</span></div>
+                <div class="shared-arrival"><strong>Shared vault</strong><span>Editor</span></div>
+              </div>
+            </article>
+
+            <article class="vault-scene-panel" data-vault-scene-panel="protect">
+              <div class="vault-scene-copy">
+                <p class="visual-kicker">Scene 5 · Safe editing</p>
+                <h3>Edit your copy, never someone else's original.</h3>
+                <p>When a recipe is not yours, Mealchemy offers to save a personal copy. Editing opens on your version while the shared or global source stays unchanged.</p>
+              </div>
+              <div class="vault-scene-visual protect-visual" aria-hidden="true">
+                <div class="source-recipe-card"><img src="assets/meals/pasta-carbonara.jpg" alt=""><span>Shared original</span><strong>Carbonara</strong><small>Unchanged</small></div>
+                <div class="copy-prompt"><span>Original protected</span><strong>Save your own copy to edit</strong><b>Save copy</b></div>
+                <div class="private-copy-card"><img src="assets/meals/pasta-carbonara.jpg" alt=""><span>Your version</span><strong>Carbonara</strong><small>Editing enabled</small></div>
+              </div>
+            </article>
+
+            <article class="vault-scene-panel" data-vault-scene-panel="global">
+              <div class="vault-scene-copy">
+                <p class="visual-kicker">Scene 6 · Public repository</p>
+                <h3>The global vault is ready to browse.</h3>
+                <p>Open a pre-seeded repository of community recipes directly. There is no invitation or membership handshake, just browse, inspect, and save.</p>
+              </div>
+              <div class="vault-scene-visual global-visual" aria-hidden="true">
+                <div class="global-orbit"><span>Global vault</span><small>Shared recipe repository</small></div>
+                <div class="global-recipe recipe-a"><img src="assets/meals/grilled-fish.jpg" alt=""><span>Grilled Fish</span></div>
+                <div class="global-recipe recipe-b"><img src="assets/meals/salad-bowl.jpeg" alt=""><span>Salad Bowl</span></div>
+                <div class="global-recipe recipe-c"><img src="assets/meals/apple-tart.jpg" alt=""><span>Apple Tart</span></div>
+                <div class="global-browse-label">Browse · No invitation</div>
+              </div>
+            </article>
+
+            <article class="vault-scene-panel" data-vault-scene-panel="copy">
+              <div class="vault-scene-copy">
+                <p class="visual-kicker">Scene 7 · Personal copy</p>
+                <h3>Save a copy. Keep the source intact.</h3>
+                <p>The recipe is copied, not moved or synchronised. The new personal version is placed inside a folder in the user's private vault.</p>
+              </div>
+              <div class="vault-scene-visual copy-visual" aria-hidden="true">
+                <div class="copy-source"><span>Global vault</span><div class="vault-recipe-mini"><img src="assets/meals/grilled-fish.jpg" alt=""><strong>Grilled Fish</strong></div><small>Original remains</small></div>
+                <div class="clone-route"><i></i><span>Copy</span></div>
+                <div class="copy-destination"><span>Private vault</span><div class="vault-folder-object"><strong>Saved from global</strong><div class="vault-recipe-mini"><img src="assets/meals/grilled-fish.jpg" alt=""><strong>Your copy</strong></div></div></div>
+              </div>
+            </article>
+
+            <div class="vault-stage-footer">
+              <strong>Complete vault experience</strong>
+              <span>This visual includes the intended collaboration and global browsing functionality.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- vault end -->
+
       <!-- features -->
       <section class="features section-shell" id="features">
         <div class="section-heading reveal">
