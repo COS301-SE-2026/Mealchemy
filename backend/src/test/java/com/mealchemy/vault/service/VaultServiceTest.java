@@ -45,4 +45,24 @@ public class VaultServiceTest
 
         request = new VaultRequest(VaultType.PRIVATE, "Test Vault");
     }
+
+    @Test
+    void getVault_returnsVault_whenFound()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+
+        VaultResponse result = vaultService.getVault(1);
+
+        assertNotNull(result);
+        assertEquals("Test Vault", result.name());
+    }
+
+    @Test
+    void getVault_throwsException_whenNotFound()
+    {
+        when(vaultRepository.findById(99)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> vaultService.getVault(99));
+        assertEquals("Vault not found.", ex.getMessage());
+    }
 }
