@@ -49,10 +49,10 @@ public class RecipeController
     }
 
     // Post
-    @PostMapping("/copy")
-    public RecipeResponse createFromFullRecipe(@Valid @RequestBody RecipeFullRequest request, @AuthenticationPrincipal String ownerId)
+    @PostMapping("/{sourceId}/copy")
+    public RecipeResponse createFromFullRecipe(@Valid @RequestBody RecipeFullRequest request, @AuthenticationPrincipal String ownerId, @PathVariable Integer sourceId)
     {
-        return recipeService.createFromFullRecipe(request, Integer.parseInt(ownerId));
+        return recipeService.createFromFullRecipe(request, Integer.parseInt(ownerId), sourceId);
     }
 
     // Put
