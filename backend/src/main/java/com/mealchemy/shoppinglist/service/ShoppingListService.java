@@ -4,6 +4,7 @@ import com.mealchemy.shoppinglist.model.ShoppingList;
 import com.mealchemy.shoppinglist.model.ShoppingListItem;
 import com.mealchemy.ingredient.model.IngredientCatalogue;
 import com.mealchemy.category.model.IngredientCategory;
+import com.mealchemy.pantry.model.PantryIngredient;
 
 
 //repositories
@@ -11,6 +12,7 @@ import com.mealchemy.shoppinglist.repository.ShoppingListRepository;
 import com.mealchemy.shoppinglist.repository.ShoppingListItemRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.category.repository.IngredientCategoryRepository;
+import com.mealchemy.pantry.repository.PantryIngredientRepository;
 
 import org.springframework.transaction.annotation.Transactional; //need to annotate any function that makes an update to the database
 
@@ -25,11 +27,13 @@ import com.mealchemy.shoppinglist.dto.ShoppingListWithItemsResponse;
 import com.mealchemy.shoppinglist.dto.UpdateShoppingListItemRequest;
 import com.mealchemy.shoppinglist.dto.UpdateShoppingListRequest;
 import com.mealchemy.shoppinglist.dto.DeleteBatchItemsRequest;
+import com.mealchemy.shoppinglist.dto.CompleteShopResponse;
 
 //enum for shopping list status
 import com.mealchemy.shared.enums.ShoppingListStatus;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.Optional;
 import java.math.BigDecimal;
@@ -38,7 +42,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-// TODO: Automatic shopping list generation
+// TODO: Automatic shopping list generation (compare to recipe) and automatic shopping list completion (remove from shopping list and add to pantry)
 @Service 
 public class ShoppingListService {
 
@@ -48,13 +52,17 @@ public class ShoppingListService {
     private final IngredientCatalogueRepository ingredientCatalogueRepository;
     private final IngredientCategoryRepository ingredientCategoryRepository;
 
+    private final PantryIngredientRepository pantryIngredientRepository;
+
     // constructor
-    public ShoppingListService(ShoppingListRepository shoppingListRepository, ShoppingListItemRepository shoppingListItemRepository, IngredientCatalogueRepository ingredientCatalogueRepository, IngredientCategoryRepository ingredientCategoryRepository) {
+    public ShoppingListService(ShoppingListRepository shoppingListRepository, ShoppingListItemRepository shoppingListItemRepository, IngredientCatalogueRepository ingredientCatalogueRepository, IngredientCategoryRepository ingredientCategoryRepository, PantryIngredientRepository pantryIngredientRepository) {
         this.shoppingListRepository = shoppingListRepository;
         this.shoppingListItemRepository = shoppingListItemRepository;
 
         this.ingredientCatalogueRepository = ingredientCatalogueRepository;
         this.ingredientCategoryRepository = ingredientCategoryRepository;
+
+        this.pantryIngredientRepository = pantryIngredientRepository;
     }
 
     // ========== Shopping List Level ==========
@@ -84,6 +92,9 @@ public class ShoppingListService {
         //new list should automatically be active (default in db)
         if(request.status() != null) {
             newList.setStatus(request.status());
+        }
+        else {
+            newList.setStatus(ShoppingListStatus.ACTIVE);
         }
 
         ShoppingList saved = shoppingListRepository.save(newList);
@@ -136,8 +147,6 @@ public class ShoppingListService {
 
         shoppingListRepository.delete(selectedList);
     }
-
-
 
 
     // ========== Shopping List Item Level ==========
@@ -385,5 +394,145 @@ public class ShoppingListService {
 
             shoppingListItemRepository.delete(selectedItem);
         }
+    }
+
+
+    // ========== Generating Shopping List Items (Compares recipe to current pantry ingredients and inserts the rest into shopping list) ==========
+
+    // POST - creates a new shopping list from the ingedients for a selected recipe (all recipe ingredients are added)
+    // @Transactional
+    // public ShoppingListWithItemsResponse createNewListWithAllIngredients(Integer userId, Integer recipeId, PantryRecipeComparisonRequest request) {
+    //     // create the new shopping list
+    //     ShoppingList newList = new ShoppingList();
+    //     newList.setUserId(userId);
+    //     newList.setName(request.name());
+    //     // auto set status to active
+    //     newList.setStatus(ShoppingListStatus.ACTIVE);
+
+    //     // save shopping list
+    //     ShoppingList saved = shoppingListRepository.save(newList);   
+
+    //     // 
+
+    // }
+
+    
+    // POST - creates a new shopping list from the ingedients for a selected recipe (ONLY INGREDIENTS MISSING FROM PANTRY)
+
+
+
+
+    // PUT request - update all items purchased flag to true (select all items in list on frontend)
+    @Transactional
+    public ShoppingListWithItemsResponse selectAllItemsAsPurchased(Integer userId, Integer shoppingListId) {
+        // get shopping list and check ownership
+        ShoppingList selectedList = shoppingListRepository.findById(shoppingListId)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
+
+        if(!selectedList.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
+        }
+
+        List<ShoppingListItem> items = shoppingListItemRepository.findByShoppingListId(shoppingListId);
+
+        for (ShoppingListItem item : items) {
+            item.setPurchased(true);
+            shoppingListItemRepository.save(item);
+        }
+
+        List<ShoppingListItemResponse> itemsToSave = shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId);
+
+        return new ShoppingListWithItemsResponse(
+            selectedList.getShoppingListId(),
+            selectedList.getUserId(),
+            selectedList.getName(),
+            selectedList.getStatus(),
+            selectedList.getCreatedAt(),
+            itemsToSave
+        );
+    }
+
+    // PUT request - update all items purchased flag to false (deselect all items in list on frontend)
+    @Transactional
+    public ShoppingListWithItemsResponse deselectAllItemsAsPurchased(Integer userId, Integer shoppingListId) {
+        // get shopping list and check ownership
+        ShoppingList selectedList = shoppingListRepository.findById(shoppingListId)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
+
+        if(!selectedList.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
+        }
+
+        List<ShoppingListItem> items = shoppingListItemRepository.findByShoppingListId(shoppingListId);
+                               
+        for (ShoppingListItem item : items) {
+            item.setPurchased(false);
+            shoppingListItemRepository.save(item);
+        }
+
+        List<ShoppingListItemResponse> itemsToSave = shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId);
+
+        return new ShoppingListWithItemsResponse(
+            selectedList.getShoppingListId(),
+            selectedList.getUserId(),
+            selectedList.getName(),
+            selectedList.getStatus(),
+            selectedList.getCreatedAt(),
+            itemsToSave
+        );
+    }
+
+
+    // PUT request - automatically removes items with purchased flag set to true from shopping list and inserts them into pantry (upon clicking complete shop button)
+    @Transactional
+    public CompleteShopResponse autoAddToPantryRemoveFromList(Integer userId, Integer shoppingListId) {
+        // get shopping list and check ownership
+        ShoppingList selectedList = shoppingListRepository.findById(shoppingListId)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
+
+        if(!selectedList.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
+        }
+
+        // find all items where purchased flag is true - list can be empty so if not found don't throw error
+        List<ShoppingListItem> items = shoppingListItemRepository.findByShoppingListId(shoppingListId);
+        
+        Integer addedToPantryCount = 0;
+        List<String> skippedManualItemNames = new ArrayList<>();
+        
+        for (ShoppingListItem item : items) {
+            // if ing_id is false don't add to pantry
+            if (item.getPurchased()) {
+                if (item.getIngId() != null) {
+                    // don't mearge pantry ingredients - need separate entries for the createdAt date for freshness purposes
+                    PantryIngredient newPantryItem = new PantryIngredient();
+                    newPantryItem.setUserId(userId);
+                    newPantryItem.setIngredientId(item.getIngId());
+                    newPantryItem.setQuantity(item.getQuantity());
+                    newPantryItem.setUnit(item.getUnit());
+                    pantryIngredientRepository.save(newPantryItem);
+                    addedToPantryCount++;
+                }
+                else {
+                    skippedManualItemNames.add(item.getName());
+                }
+                // remove item from shopping list
+                shoppingListItemRepository.delete(item);
+            }
+        }
+
+        List<ShoppingListItem> remainingItems = shoppingListItemRepository.findByShoppingListId(shoppingListId);
+        Boolean shoppingListDeleted = false;
+
+        if (remainingItems.isEmpty()) {
+            shoppingListDeleted = true;
+            shoppingListRepository.delete(selectedList);
+        }
+
+        return new CompleteShopResponse(
+            addedToPantryCount,
+            skippedManualItemNames,
+            shoppingListDeleted
+        );
     }
 }

@@ -21,7 +21,7 @@ public interface ShoppingListItemRepository extends JpaRepository<ShoppingListIt
                 i.itemId,
                 i.shoppingListId,
                 i.ingId,
-                c.name,
+                COALESCE(c.name, i.name),
                 cat.name,
                 i.quantity,
                 i.unit,

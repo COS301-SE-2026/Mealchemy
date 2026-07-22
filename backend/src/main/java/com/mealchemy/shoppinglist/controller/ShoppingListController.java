@@ -88,4 +88,22 @@ public class ShoppingListController {
         shoppingListService.deleteSelectedItems(Integer.parseInt(userId), id, request);
         return ResponseEntity.noContent().build();
     }
+
+    // select all items as purchased
+    @PutMapping("/{id}/items/select-all")
+    public ResponseEntity<ShoppingListWithItemsResponse> selectAllItems(@AuthenticationPrincipal String userId, @PathVariable Integer id) {
+        return ResponseEntity.ok(shoppingListService.selectAllItemsAsPurchased(Integer.parseInt(userId), id));
+    }
+
+    // deselect all items as purchased
+    @PutMapping("/{id}/items/deselect-all")
+    public ResponseEntity<ShoppingListWithItemsResponse> deselectAllItems(@AuthenticationPrincipal String userId, @PathVariable Integer id) {
+        return ResponseEntity.ok(shoppingListService.deselectAllItemsAsPurchased(Integer.parseInt(userId), id));
+    }
+
+    // complete shop - move purchased items to pantry and remove from list
+    @PutMapping("/{id}/complete-shop")
+    public ResponseEntity<CompleteShopResponse> completeShop(@AuthenticationPrincipal String userId, @PathVariable Integer id) {
+        return ResponseEntity.ok(shoppingListService.autoAddToPantryRemoveFromList(Integer.parseInt(userId), id));
+    }
 }
