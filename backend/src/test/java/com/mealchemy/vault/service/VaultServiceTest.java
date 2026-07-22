@@ -110,4 +110,13 @@ public class VaultServiceTest
         assertNotNull(result);
         verify(vaultRepository, times(1)).save(any(Vault.class));
     }
+
+    @Test
+    void updateVault_throwsException_whenNotFound()
+    {
+        when(vaultRepository.findById(99)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> vaultService.updateVault(99, request, 1));
+        assertEquals("Vault not found.", ex.getMessage());
+    }
 }
