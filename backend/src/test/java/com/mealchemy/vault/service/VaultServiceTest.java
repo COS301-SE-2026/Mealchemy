@@ -119,4 +119,14 @@ public class VaultServiceTest
         RuntimeException ex = assertThrows(RuntimeException.class, () -> vaultService.updateVault(99, request, 1));
         assertEquals("Vault not found.", ex.getMessage());
     }
+
+    @Test
+    void deleteVault_callsDeleteById()
+    {
+        doNothing()when(vaultRepository).deleteById(1);
+
+        vaultService.deleteVault(1);
+
+        verify(vaultRepository, times(1)).deleteById(1);
+    }
 }
