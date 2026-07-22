@@ -27,23 +27,23 @@
         live: true,
         aspectRatio: "392 / 850"
       },
-      vault: {
-        image: "assets/screens/vault.png",
-        alt: "Mealchemy recipe vault screen",
-        kicker: "Recipe Vault · Design mockup",
-        title: "One place for saved, custom, and suggested recipes.",
-        copy: "The vault reduces fragmented storage by bringing recipe links, generated suggestions, and saved meals into an organised system.",
-        live: false,
-        aspectRatio: "733 / 1644"
+      recipe: {
+        image: "assets/screens/Recipe-Intstructions-page-real-app.png",
+        alt: "Real Mealchemy recipe instructions screen",
+        kicker: "Recipe · Live app",
+        title: "Step-by-step cooking with full ingredient detail.",
+        copy: "Recipe pages surface ingredients, quantities, nutritional breakdown, and step-by-step instructions so the user can cook without switching apps.",
+        live: true,
+        aspectRatio: "392 / 850"
       },
       shopping: {
-        image: "assets/screens/shopping-list.png",
-        alt: "Mealchemy shopping lists screen",
-        kicker: "Shopping Lists · Design mockup",
+        image: "assets/screens/Shopping-List-Real-app.png",
+        alt: "Real Mealchemy shopping list screen",
+        kicker: "Shopping Lists · Live app",
         title: "Recipe decisions become practical grocery lists.",
         copy: "Shopping lists organise favourites, general groceries, and recipe-specific ingredients so the user can move from meal choice to action.",
-        live: false,
-        aspectRatio: "567 / 1015"
+        live: true,
+        aspectRatio: "392 / 850"
       }
     };
     const tabs = document.querySelectorAll(".screen-tab");
