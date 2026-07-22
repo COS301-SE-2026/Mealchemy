@@ -36,6 +36,11 @@ class AppNavbar extends StatelessWidget {
       icon: Icons.home_outlined,
       route: AppRoutes.dashboard,
     ),
+     AppNavItem(
+      label: 'Swipes', //name can be changed to something better 
+      icon: Icons.style_outlined,
+      route: AppRoutes.guidedDiscovery,
+    ),
     AppNavItem(
       label: 'Discover',
       icon: Icons.explore_outlined,
@@ -50,11 +55,6 @@ class AppNavbar extends StatelessWidget {
       label: 'Pantry',
       icon: Icons.kitchen_outlined,
       route: AppRoutes.pantry,
-    ),
-    AppNavItem(
-      label: 'Profile',
-      icon: Icons.person_outline,
-      route: AppRoutes.preference,
     ),
   ];
 

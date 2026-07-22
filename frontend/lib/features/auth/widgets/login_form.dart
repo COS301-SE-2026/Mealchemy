@@ -49,9 +49,9 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     setState(() => _isLoading = true);
 
     final success = await ref.read(authProvider.notifier).login(
-      _emailController.text.trim(),
-      _passwordController.text,
-    );
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
 
     if (!mounted) return;
     setState(() => _isLoading = false);
@@ -60,7 +60,14 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       context.go('/vault');
     } else {
       final error = ref.read(authProvider).errorMessage;
-      setState(() => _emailError = error);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(error ?? 'Invalid email or password'),
+            backgroundColor: AppColors.primaryGradientLight,
+          ),
+        );
+      }
     }
   }
 
