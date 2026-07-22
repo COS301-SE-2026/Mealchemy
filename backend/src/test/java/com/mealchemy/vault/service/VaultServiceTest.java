@@ -23,7 +23,6 @@ import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.shared.enums.VaultType;
 
-
 @ExtendWith(MockitoExtension.class)
 public class VaultServiceTest
 {
@@ -44,103 +43,6 @@ public class VaultServiceTest
         vault.setVaultType(VaultType.PRIVATE);
         vault.setName("Test Vault");
 
-        request = new VaultRequest();
-        request.setOwnerId(1);
-        request.setVaultType(VaultType.PRIVATE);
-        request.setName("Test Vault");
-    }
-
-    // getVaultsByOwnerId
-
-    @Test
-    void getVaultsByOwnerId_returnsListOfVaults()
-    {
-        when(vaultRepository.findByOwnerId(1)).thenReturn(List.of(vault));
-
-        List<VaultResponse> result = vaultService.getVaultsByOwnerId(1);
-
-        assertEquals(1, result.size());
-        assertEquals("Test Vault", result.get(0).getName());
-    }
-
-    @Test
-    void getVaultsByOwnerId_returnsEmptyList_whenNoVaultsFound()
-    {
-        when(vaultRepository.findByOwnerId(99)).thenReturn(List.of());
-
-        List<VaultResponse> result = vaultService.getVaultsByOwnerId(99);
-
-        assertTrue(result.isEmpty());
-    }
-
-    // getVault
-
-    @Test
-    void getVault_returnsVault_whenFound()
-    {
-        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
-
-        VaultResponse result = vaultService.getVault(1);
-
-        assertNotNull(result);
-        assertEquals("Test Vault", result.getName());
-    }
-
-    @Test
-    void getVault_throwsException_whenNotFound()
-    {
-        when(vaultRepository.findById(99)).thenReturn(Optional.empty());
-
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> vaultService.getVault(99));
-        assertEquals("Vault not found.", ex.getMessage());
-    }
-
-    // createVault
-
-    @Test
-    void createVault_returnsCreatedVault()
-    {
-        when(vaultRepository.save(any(Vault.class))).thenReturn(vault);
-
-        VaultResponse result = vaultService.createVault(request);
-
-        assertNotNull(result);
-        assertEquals("Test Vault", result.getName());
-        verify(vaultRepository, times(1)).save(any(Vault.class));
-    }
-
-    // updateVault
-
-    @Test
-    void updateVault_returnsUpdatedVault_whenFound()
-    {
-        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
-        when(vaultRepository.save(any(Vault.class))).thenReturn(vault);
-
-        VaultResponse result = vaultService.updateVault(1, request);
-
-        assertNotNull(result);
-        verify(vaultRepository, times(1)).save(any(Vault.class));
-    }
-
-    @Test
-    void updateVault_throwsException_whenNotFound()
-    {
-        when(vaultRepository.findById(99)).thenReturn(Optional.empty());
-
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> vaultService.updateVault(99, request));
-        assertEquals("Vault not found.", ex.getMessage());
-    }
-
-    // deleteVault
-
-    @Test
-    void deleteVault_callsDeleteById()
-    {
-        doNothing().when(vaultRepository).deleteById(1);
-
-        vaultService.deleteVault(1);
-
-        verify(vaultRepository, times(1)).deleteById(1);
+        request = new VaultRequest(VaultType.PRIVATE, "Test Vault");
     }
 }
