@@ -90,15 +90,6 @@ class _RecordingPantryRepository implements PantryRepository {
     //not used in this screen test
   }
 
-  Future<PantryIngredient> updatePantryIngredient({
-    required int pIngredientId,
-    required int ingId,
-    required String quantity,
-    required String unit,
-  }) {
-    throw UnimplementedError();
-  }
-
   @override
   Future<PantryIngredient> updatePantryIngredient({
     required int pIngredientId,
