@@ -221,9 +221,11 @@ h3 {
 }
 
 h1 {
-  max-width: 820px;
-  font-size: clamp(4rem, 9vw, 8.3rem);
-  line-height: 0.84;
+  max-width: 100%;
+  font-size: clamp(3rem, 6.5vw, 6.5rem);
+  line-height: 0.9;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 h2 {
