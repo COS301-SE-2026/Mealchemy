@@ -98,4 +98,16 @@ public class VaultServiceTest
         assertEquals("Test Vault", result.name());
         verify(vaultRepository, times(1).save(any(Vault.class)));
     }
+
+    @Test
+    void updateVault_returnsUpdatedVault_whenFound()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultRepository.save(any(Vault.class))).thenReturn(vault);
+
+        VaultResponse result = vaultService.updateVault(1, request, 1);
+
+        assertNotNull(result);
+        verify(vaultRepository, times(1)).save(any(Vault.class));
+    }
 }
