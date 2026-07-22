@@ -12,7 +12,8 @@ public record VaultFolderRecipeResponse(
     Integer id,
     Integer folderId,
     Integer recipeId,
-    OffsetDateTime addedAt
+    OffsetDateTime addedAt,
+    Integer addedByUserId
 )
 {
     public static VaultFolderRecipeResponse from (VaultFolderRecipe vaultFolderRecipe)
@@ -21,7 +22,8 @@ public record VaultFolderRecipeResponse(
             vaultFolderRecipe.getId(),
             vaultFolderRecipe.getFolder().getFolderId(),
             vaultFolderRecipe.getRecipe().getRecipeId(),
-            vaultFolderRecipe.getAddedAt()
+            vaultFolderRecipe.getAddedAt(),
+            vaultFolderRecipe.getAddedBy() != null ? vaultFolderRecipe.getAddedBy().getUserId() : null
         );
     }
 }
