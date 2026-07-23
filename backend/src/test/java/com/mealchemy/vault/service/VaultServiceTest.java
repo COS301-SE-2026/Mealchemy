@@ -66,6 +66,16 @@ public class VaultServiceTest
     }
 
     @Test
+    void getVault_throwsException_whenNotVaultOwnerOrMember()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultService.getVault(1, 3));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only a vault member/owner can view it.", ex.getReason());
+    }
+
+    @Test
     void getVault_throwsException_whenNotFound()
     {
         when(vaultRepository.findById(99)).thenReturn(Optional.empty());
