@@ -204,7 +204,7 @@ public class VaultServiceTest
     }
 
     @Test
-    void deleteVault_callsDeleteById_whenNotOwner()
+    void deleteVault_throwsException_whenNotOwner()
     {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
 
@@ -213,4 +213,16 @@ public class VaultServiceTest
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Vaults can only be deleted be the owner.", ex.getReason());
     } 
+
+    @Test
+    void deleteVault_throwsException_whenVaultTypeIsPrivate()
+    {
+        vault.setVaultType(VaultType.PRIVATE);
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultService.deleteVault(1, 1));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Private vaults can't be deleted.", ex.getReason());
+    }
 }
