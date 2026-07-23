@@ -50,9 +50,9 @@ jobs:
           fetch-depth: 0
 
       - name: Run Gitleaks
-        #CLI tool - no license required, works on org repos and in act
+        #--proto =https fixes initial request and all redirects to HTTPS, prevents downgrade to insecure http which sonarcube picked up
         run: |
-          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz | tar -xz gitleaks
+          curl -sSL --proto '=https' --tlsv1.2 https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz | tar -xz gitleaks
           ./gitleaks detect --source . --redact
 
   # ─────────────────────────────────────────────
