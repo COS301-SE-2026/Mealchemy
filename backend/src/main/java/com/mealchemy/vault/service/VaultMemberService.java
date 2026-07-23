@@ -37,7 +37,7 @@ public class VaultMemberService {
     // Get all vault members
     public List<VaultMemberResponse> getVaultMembersByVaultId(Integer vaultId, Integer userId)
     {
-        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new RuntimeException("Vault not found."));
+        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
 
         boolean isOwner = vaultForCheck.getOwnerId().equals(userId);
         boolean isMember = vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(vaultId, userId);
@@ -55,14 +55,14 @@ public class VaultMemberService {
     // Post to add a vaultMember
     public VaultMemberResponse addVaultMember(Integer vaultId, VaultMemberRequest request, Integer ownerId)
     {
-        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new RuntimeException("Vault not found."));
+        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
 
         if (!vaultForCheck.getOwnerId().equals(ownerId))
         {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of the vault can add a new member.");
         }
 
-        User userToAdd = userRepository.findByEmail(request.email()).orElseThrow(() -> new RuntimeException("User not found."));
+        User userToAdd = userRepository.findByEmail(request.email()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found."));
 
         VaultMember vaultMemberToAdd = mapRequestToEntity(userToAdd, vaultForCheck);
 
@@ -72,16 +72,16 @@ public class VaultMemberService {
     // Delete to remove a vaultMember
     public void removeVaultMember(Integer vaultId, VaultMemberRequest request, Integer ownerId)
     {
-        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new RuntimeException("Vault not found."));
+        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
 
         if (!vaultForCheck.getOwnerId().equals(ownerId))
         {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of the vault can remove a member.");
         }
 
-        User userToRemove = userRepository.findByEmail(request.email()).orElseThrow(() -> new RuntimeException("User not found."));
+        User userToRemove = userRepository.findByEmail(request.email()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found."));
 
-        VaultMember rowToRemove = vaultMemberRepository.findByVault_VaultIdAndUser_UserId(vaultId, userToRemove.getUserId()).orElseThrow(() -> new RuntimeException("VaultMember row not found."));
+        VaultMember rowToRemove = vaultMemberRepository.findByVault_VaultIdAndUser_UserId(vaultId, userToRemove.getUserId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "VaultMember row not found."));
 
         vaultMemberRepository.delete(rowToRemove);
     }
