@@ -34,15 +34,13 @@ RUN ./mvnw package -DskipTests --no-transfer-progress && \
 # Minimal JRE only 
 FROM eclipse-temurin:21-jre-jammy AS runtime
 
-# Apply latest Ubuntu security patches and install curl (required for the HEALTHCHECK) in the same layer so Trivy doesn't flag stale OS packages.
+# Apply latest Ubuntu security patches, install curl for the HEALTHCHECK, and create a non-root user in a single layer so Trivy does not flag stale. one layer for sonar issue
 RUN apt-get update && \
     apt-get upgrade -y --no-install-recommends && \
     apt-get install -y --no-install-recommends curl && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Create a non-root user, if container escape occurs, attacker does not get root.
-RUN groupadd --system mealchemy && \
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd --system mealchemy && \
     useradd --system --gid mealchemy --no-create-home mealchemy
 
 WORKDIR /app
