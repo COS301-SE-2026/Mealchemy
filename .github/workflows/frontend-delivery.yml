@@ -46,6 +46,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      #installed explicitly so no  scripts run on demand via npx, sonarcube issue
+      - name: Install firebase-tools
+        run: npm install --no-audit --no-fund --ignore-scripts -g firebase-tools@15.22.4
+
       - name: Check versionCode gate
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_APP_DISTRIBUTION_TOKEN }}
@@ -53,7 +57,7 @@ jobs:
           NEW_CODE="${{ github.run_number }}"
 
           STDERR_FILE=$(mktemp)
-          if ! RELEASES_JSON=$(npx firebase-tools@15.22.4 appdistribution:releases:list \
+          if ! RELEASES_JSON=$(firebase appdistribution:releases:list \
             --app 1:480345342713:android:490cec1011395be746d828 \
             --project mealchemy-app-distribution \
             --token "$FIREBASE_TOKEN" \
@@ -130,11 +134,15 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: flutter build apk --release --build-number ${{ github.run_number }}
 
+      #installed so no scripts run on demand via npx
+      - name: Install firebase-tools
+        run: npm install --no-audit --no-fund --ignore-scripts -g firebase-tools@15.22.4
+
       - name: Distribute via Firebase App Distribution
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_APP_DISTRIBUTION_TOKEN }}
         run: |
-          npx firebase-tools@15.22.4 appdistribution:distribute \
+          firebase appdistribution:distribute \
             build/app/outputs/flutter-apk/app-release.apk \
             --app 1:480345342713:android:490cec1011395be746d828 \
             --groups testers \
