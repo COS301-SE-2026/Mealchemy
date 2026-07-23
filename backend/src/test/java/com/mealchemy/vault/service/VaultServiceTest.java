@@ -21,6 +21,8 @@ import com.mealchemy.vault.dto.VaultRequest;
 import com.mealchemy.vault.dto.VaultResponse;
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.repository.VaultRepository;
+import com.mealchemy.vault.repository.VaultMemberRepository;
+import com.mealchemy.auth.repository.UserRepository;
 import com.mealchemy.shared.enums.VaultType;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,6 +30,12 @@ public class VaultServiceTest
 {
     @Mock
     private VaultRepository vaultRepository;
+
+    @Mock
+    private VaultMemberRepository vaultMemberRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private VaultService vaultService;
