@@ -133,6 +133,19 @@ public class VaultServiceTest
     }
 
     @Test
+    void createVault_throwsException_whenVaultTypeIsPrivate()
+    {
+        when(vaultRepository.save(any(vault.class))).thenReturn(vault);
+        when(userRepository.findById(1)).thenReturn(Optional.of(new User()));
+
+        VaultRequest privateRequest = new VaultRequest(VaultType.PRIVATE, "Test Private Vault");
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultService.createVault(privateRequest, 1));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Users only get one private vault.", ex.getReason());
+    }
+
+    @Test
     void updateVault_returnsUpdatedVault_whenFound()
     {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
