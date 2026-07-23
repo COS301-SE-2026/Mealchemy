@@ -3,7 +3,7 @@ class VaultMember {
   final int vaultId;
   final int userId;
   final DateTime joinedAt;
-//will add a email feld later after backend chat 
+//email not need 
   VaultMember({
     required this.id,
     required this.vaultId,
