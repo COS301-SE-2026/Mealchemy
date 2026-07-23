@@ -34,9 +34,9 @@ public class VaultController
 
     // Get
     @GetMapping("/{id}")
-    public VaultResponse getVault(@PathVariable int id)
+    public VaultResponse getVault(@PathVariable int id, @AuthenticationPrincipal String userId)
     {
-        return vaultService.getVault(id);
+        return vaultService.getVault(id, Integer.parseInt(userId));
     }
 
     // Post
@@ -55,8 +55,8 @@ public class VaultController
 
     // Delete
     @DeleteMapping("/{id}")
-    public void deleteVault(@PathVariable int id)
+    public void deleteVault(@PathVariable int id, @AuthenticationPrincipal String ownerId)
     {
-        vaultService.deleteVault(id);
+        vaultService.deleteVault(id, Integer.parseInt(ownerId));
     }
 }
