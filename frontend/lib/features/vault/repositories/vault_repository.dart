@@ -7,6 +7,7 @@ abstract class VaultRepository {
   // Vaults
   Future<List<Vault>> getMyVaults();
   Future<Vault> getVaultById(int vaultId);
+  Future<Vault> createVault(String name);
   //Future<Vault> renameVault(int vaultId, String vaultType, String name);
 
   // Folders
