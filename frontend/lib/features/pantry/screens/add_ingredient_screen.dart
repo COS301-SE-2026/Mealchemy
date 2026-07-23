@@ -9,6 +9,7 @@ import '../../../core/shared_widgets/atoms/app_button.dart';
 import '../../../core/shared_widgets/atoms/app_text_field.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
+import '../models/ingredient_catalogue_item.dart';
 import '../providers/pantry_provider.dart';
 
 const double _blurArea = 240;
@@ -59,7 +60,13 @@ class _AddIngredientContent extends ConsumerStatefulWidget {
 class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
   final TextEditingController _nameController = TextEditingController();
 
-  //stepper starts at 1 so quantity can never be zero or negatve
+  final List<IngredientCatalogueItem> _ingredientOptions = [];
+
+  IngredientCatalogueItem? _selectedIngredient;
+  bool _isSearchingIngredients = false;
+  String? _ingredientSearchError;
+
+  //stepper starts at 1 so quantity can never be zero or negative
   int _quantity = 1;
   String? _selectedUnit;
   String? _selectedCategory;
@@ -111,7 +118,6 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
                   child: _SheetHandle(),
                 ),
                 const SizedBox(height: 16),
-
                 Text(
                   'Pantry Entry',
                   textAlign: TextAlign.center,
@@ -135,21 +141,36 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
                 AppTextField(
                   controller: _nameController,
                   label: 'Ingredient Name',
-                  hint: 'e.g. Chicken Breast',
+                  hint: 'Search catalogue, e.g. Chicken Breast',
                   prefixIcon: Icons.search,
-                  onChanged: (_) => setState(() {}),
+                  onChanged: _searchIngredients,
                 ),
                 if (_showValidation && !hasName)
                   const _ValidationText('Ingredient name is required.'),
+                if (_showValidation && _selectedIngredient == null && hasName)
+                  const _ValidationText(
+                    'Please select an ingredient from the catalogue.',
+                  ),
+                if (_ingredientSearchError != null)
+                  _ValidationText(_ingredientSearchError!),
+                if (_isSearchingIngredients)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 10),
+                    child: LinearProgressIndicator(),
+                  ),
+                if (_ingredientOptions.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  _IngredientSearchResults(
+                    ingredients: _ingredientOptions,
+                    selectedIngredient: _selectedIngredient,
+                    onSelected: _selectIngredient,
+                  ),
+                ],
                 const SizedBox(height: 14),
-                _LabelledDropdown(
-                  label: 'Category',
-                  hint: 'Select a category',
-                  value: _selectedCategory,
-                  options: widget.categories,
-                  displayText: _formatCategory,
-                  onChanged: (value) =>
-                      setState(() => _selectedCategory = value),
+                _SelectedCategoryLabel(
+                  category: _selectedIngredient?.category ??
+                      _selectedCategory ??
+                      'Select an ingredient',
                 ),
                 const SizedBox(height: 28),
 
@@ -185,7 +206,6 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
                 if (_showValidation && !hasUnit)
                   const _ValidationText('Unit is required.'),
                 const SizedBox(height: 36),
-
                 AppButton.primary(
                   label: 'Save Ingredient',
                   onPressed: _saveIngredient,
@@ -200,9 +220,63 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
     );
   }
 
-  void _saveIngredient() {
-    final hasRequiredFields =
-        _nameController.text.trim().isNotEmpty && _selectedUnit != null;
+  Future<void> _searchIngredients(String query) async {
+    setState(() {
+      _selectedIngredient = null;
+      _ingredientSearchError = null;
+    });
+
+    final cleanedQuery = query.trim();
+    if (cleanedQuery.length < 2) {
+      setState(() {
+        _ingredientOptions.clear();
+        _isSearchingIngredients = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isSearchingIngredients = true;
+    });
+
+    try {
+      final results = await ref
+          .read(ingredientCatalogueRepositoryProvider)
+          .searchIngredients(cleanedQuery);
+
+      if (!mounted || _nameController.text.trim() != cleanedQuery) return;
+
+      setState(() {
+        _ingredientOptions
+          ..clear()
+          ..addAll(results);
+        _isSearchingIngredients = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _ingredientOptions.clear();
+        _isSearchingIngredients = false;
+        _ingredientSearchError = 'Could not search ingredients right now.';
+      });
+    }
+  }
+
+  void _selectIngredient(IngredientCatalogueItem ingredient) {
+    setState(() {
+      _selectedIngredient = ingredient;
+      _selectedCategory = ingredient.category;
+      _nameController.text = ingredient.name;
+      _ingredientOptions.clear();
+      _ingredientSearchError = null;
+    });
+  }
+
+  Future<void> _saveIngredient() async {
+    final hasRequiredFields = _nameController.text.trim().isNotEmpty &&
+        _selectedIngredient != null &&
+        _selectedUnit != null;
 
     if (!hasRequiredFields) {
       setState(() {
@@ -211,15 +285,15 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
       return;
     }
 
-    ref.read(pantryStateProvider.notifier).addIngredient(
-          name: _nameController.text,
+    await ref.read(pantryStateProvider.notifier).addIngredient(
+          ingId: _selectedIngredient!.ingId,
           quantity: '$_quantity',
           unit: _selectedUnit!,
-          category: _selectedCategory ?? 'produce',
-          isOutOfStock: false,
         );
 
-    context.pop();
+    if (mounted) {
+      context.pop();
+    }
   }
 }
 
@@ -230,6 +304,7 @@ String _formatCategory(String raw) {
 
 class _PantryHeader extends StatelessWidget {
   const _PantryHeader();
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -334,8 +409,82 @@ class _SheetHandle extends StatelessWidget {
   }
 }
 
+class _IngredientSearchResults extends StatelessWidget {
+  const _IngredientSearchResults({
+    required this.ingredients,
+    required this.selectedIngredient,
+    required this.onSelected,
+  });
+
+  final List<IngredientCatalogueItem> ingredients;
+  final IngredientCatalogueItem? selectedIngredient;
+  final ValueChanged<IngredientCatalogueItem> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: ingredients.map((ingredient) {
+        final selected = selectedIngredient?.ingId == ingredient.ingId;
+        return Material(
+          color: Colors.transparent,
+          child: ListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            leading: Icon(
+              selected ? Icons.check_circle : Icons.restaurant_outlined,
+              color: selected ? AppColors.primary : AppColors.textMuted,
+            ),
+            title: Text(
+              ingredient.name,
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.textLight,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            subtitle: Text(
+              _formatCategory(ingredient.category),
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textMuted,
+              ),
+            ),
+            onTap: () => onSelected(ingredient),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _SelectedCategoryLabel extends StatelessWidget {
+  const _SelectedCategoryLabel({required this.category});
+
+  final String category;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Icon(
+          Icons.category_outlined,
+          color: AppColors.primary,
+          size: 18,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'Category: ${_formatCategory(category)}',
+          style: AppTextStyles.bodySmall.copyWith(
+            fontWeight: FontWeight.w500,
+            color: AppColors.textLight,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _LabelledField extends StatelessWidget {
   const _LabelledField({required this.label, required this.child});
+
   final String label;
   final Widget child;
 
@@ -365,7 +514,6 @@ class _LabelledDropdown extends StatelessWidget {
     required this.value,
     required this.options,
     required this.onChanged,
-    this.displayText,
   });
 
   final String label;
@@ -373,7 +521,6 @@ class _LabelledDropdown extends StatelessWidget {
   final String? value;
   final List<String> options;
   final ValueChanged<String?> onChanged;
-  final String Function(String)? displayText;
 
   @override
   Widget build(BuildContext context) {
@@ -418,7 +565,7 @@ class _LabelledDropdown extends StatelessWidget {
             .map(
               (option) => DropdownMenuItem<String>(
                 value: option,
-                child: Text(displayText?.call(option) ?? option),
+                child: Text(option),
               ),
             )
             .toList(),
@@ -429,6 +576,7 @@ class _LabelledDropdown extends StatelessWidget {
 
 class _QuantityStepper extends StatelessWidget {
   const _QuantityStepper({required this.value, required this.onChanged});
+
   final int value;
   final ValueChanged<int> onChanged;
 
