@@ -47,14 +47,14 @@ public class VaultFolderRecipeController
 
     // Post
     @PostMapping("/folder/{folderId}")
-    public VaultFolderRecipeResponse createVaultFolderRecipe(@Valid @RequestBody VaultFolderRecipeRequest request, @AuthenticationPrinciple String userId, @PathVariable Integer folderId)
+    public VaultFolderRecipeResponse createVaultFolderRecipe(@Valid @RequestBody VaultFolderRecipeRequest request, @AuthenticationPrincipal String userId, @PathVariable Integer folderId)
     {
         return vaultFolderRecipeService.createVaultFolderRecipe(request, Integer.parseInt(userId), folderId);
     }
 
     // Put
     @PutMapping("/{id}")
-    public VaultFolderRecipeResponse updateVaultFolderRecipe(@PathVariable int id, @RequestBody VaultFolderRecipeRequest request, @AuthenticationPrincipal String userId)
+    public VaultFolderRecipeResponse updateVaultFolderRecipe(@PathVariable int id, @RequestBody VaultFolderRecipeMoveRequest request, @AuthenticationPrincipal String userId)
     {
         return vaultFolderRecipeService.updateVaultFolderRecipe(id, request, Integer.parseInt(userId));
     }
