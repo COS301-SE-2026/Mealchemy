@@ -70,8 +70,9 @@ public class VaultServiceTest
     {
         when(vaultRepository.findById(99)).thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> vaultService.getVault(99));
-        assertEquals("Vault not found.", ex.getMessage());
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultService.getVault(99, 1));
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Vault not found.", ex.getReason());
     }
 
     @Test
