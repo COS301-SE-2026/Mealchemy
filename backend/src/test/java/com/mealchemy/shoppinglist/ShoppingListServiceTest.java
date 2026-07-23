@@ -42,6 +42,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -92,6 +93,8 @@ public class ShoppingListServiceTest {
         existingShoppingListItem.setQuantity(new BigDecimal("250"));
         existingShoppingListItem.setUnit("g");
         existingShoppingListItem.setPurchased(false);
+
+        ReflectionTestUtils.setField(existingShoppingListItem, "itemId", 1);
 
         catalogueInstance = new IngredientCatalogue();
         catalogueInstance.setName("Hummus");
@@ -152,7 +155,7 @@ public class ShoppingListServiceTest {
     @Test
     void getUsersShoppingList_whenUserHasLists_returnsShoppingListResponse() {
         // Arrange
-        existingShoppingList.setShoppingListId(1);
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
         when(shoppingListRepository.findByUserId(1)).thenReturn(List.of(existingShoppingList));
 
         // Act - from actual service
@@ -177,7 +180,7 @@ public class ShoppingListServiceTest {
             null
         );
 
-        ArgumentCaptor<ShoppingList> captor = ArguementCaptor.forClass(ShoppingList.class);
+        ArgumentCaptor<ShoppingList> captor = ArgumentCaptor.forClass(ShoppingList.class);
         when(shoppingListRepository.save(captor.capture())).thenReturn(existingShoppingList);
 
         // Act
@@ -186,13 +189,14 @@ public class ShoppingListServiceTest {
         // Assert
         assertEquals(ShoppingListStatus.ACTIVE, captor.getValue().getStatus());
         assertNotNull(response);
-        verify.(shoppingListRepository).save(any(ShoppingList.class));
+        verify(shoppingListRepository).save(any(ShoppingList.class));
     }
 
     @Test
     void createShoppingList_statusProvided() {
         // Arrange
-        when(shoppingListRepository.findByUserId(1)).theReturn(existingShoppingList);
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.save(any(ShoppingList.class))).thenReturn(existingShoppingList); // when anything is saved to the repository - return
 
         // Act
         ShoppingListResponse response = shoppingListService.createNewShoppingList(1, createShoppingListRequest);
@@ -240,7 +244,7 @@ public class ShoppingListServiceTest {
     @Test
     void updateShoppingList_whenValid_updatesAndReturnsResponse() {
         // Arrange
-        existingShoppingList.setShoppingListId(1);
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
         when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
         when(shoppingListRepository.save(any(ShoppingList.class))).thenReturn(existingShoppingList);
 
@@ -289,7 +293,7 @@ public class ShoppingListServiceTest {
 
     @Test
     void deleteShoppingList_whenValid_deletesList() {
-        existingShoppingList.setShoppingListId(1);
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
         when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
        
         // Act
@@ -305,8 +309,557 @@ public class ShoppingListServiceTest {
 
     // ========== Get Shopping List Items ==========
 
-    
+    @Test 
+    void getSpecificListItems_whenListNotFound_throwsNotFound() {
+        when(shoppingListRepository.findById(48)).thenReturn(Optional.empty());
 
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.getSpecificListItems(1, 48)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void getSpecificListItems_whenNotOwned_throwsUnauthorized() {
+        // Arrange
+        existingShoppingList.setUserId(2);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.getSpecificListItems(1, 1)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+    }
+
+    @Test
+    void getSpecificListItems_returnsListWithNestedItems() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+
+        ShoppingListItemResponse expectedItem = new ShoppingListItemResponse(
+            1, // itemId
+            1, // shoppingListId
+            2, // ingId
+            "Hummus",
+            "Legumes and Legume Products",
+            new BigDecimal("250"),
+            "g",
+            false
+        );
+
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList)); // when shoppingListId is 1 return the existingShoppingList
+        when(shoppingListItemRepository.getSpecificShoppingListItems(1)).thenReturn(List.of(expectedItem)); // when getting the specific items for list 1 return list of the expectedItem
+
+        // Act
+        ShoppingListWithItemsResponse response = shoppingListService.getSpecificListItems(1, 1);
+
+        // Assert
+        // List level
+        assertEquals(1, response.shoppingListId());
+        assertEquals(1, response.userId());
+        assertEquals("Weekly Groceries", response.name());
+        assertEquals(ShoppingListStatus.ACTIVE, response.status());
+        
+        // List Item Level
+        assertEquals(1, response.items().size());
+        ShoppingListItemResponse actualItem = response.items().get(0);
+        assertEquals(1, actualItem.itemId());
+        assertEquals(2, actualItem.ingId());
+        assertEquals("Hummus", actualItem.name());
+        assertEquals("Legumes and Legume Products", actualItem.category());
+        assertEquals(new BigDecimal("250"), actualItem.quantity());
+        assertEquals("g", actualItem.unit());
+        assertEquals(false, actualItem.purchased());
+
+    }
+
+    // ========== Add New Shopping List Items ==========
+
+    @Test
+    void addNewShoppingListItem_whenListNotFound_throwsNotFound() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(2)).thenReturn(Optional.empty());
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.addNewShoppingListItem(1, 2, createShoppingListItemRequest)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test 
+    void addNewShoppingListItem_whenNotOwned_throwsUnauthorized() {
+        // Arrange
+        existingShoppingList.setUserId(2);
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.addNewShoppingListItem(1, 1, createShoppingListItemRequest)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+    }
+
+    @Test
+    void addNewShoppingListItem_NoNameOrIngId_throwsBadRequest() {
+        // Arrange 
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        CreateShoppingListItemRequest badRequest = new CreateShoppingListItemRequest(
+            null,
+            null,
+            new BigDecimal("120"),
+            "g"
+        );
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.addNewShoppingListItem(1, 1, badRequest)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void addNewShoppingListItem_nameAndIngId_throwsBadRequest() {
+        // Arrange 
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        CreateShoppingListItemRequest badRequest = new CreateShoppingListItemRequest(
+            2,
+            "Flour",
+            new BigDecimal("120"),
+            "g"
+        );
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.addNewShoppingListItem(1, 1, badRequest)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void addNewShoppingListItem_withIngId_getNameFromCatalogue() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        existingShoppingListItem.setName(null);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(shoppingListItemRepository.save(any(ShoppingListItem.class))).thenReturn(existingShoppingListItem);
+        when(ingredientCatalogueRepository.findById(2)).thenReturn(Optional.of(catalogueInstance));
+        when(ingredientCategoryRepository.findById(5)).thenReturn(Optional.of(categoryInstance));
+
+        // Act
+        ShoppingListItemResponse response = shoppingListService.addNewShoppingListItem(1, 1, createShoppingListItemRequest);
+
+        // Assert
+        assertEquals(2, response.ingId());
+        assertEquals("Hummus", response.name());
+        assertEquals("Legumes and Legume Products", response.category());
+        assertEquals(new BigDecimal("250"), response.quantity());
+    }
+
+    @Test
+    void addNewShoppingListItem_withNameIngIdNull_categoryIsNull() {
+        // Arrange
+        CreateShoppingListItemRequest manualRequest = new CreateShoppingListItemRequest(
+            null,
+            "Tomatoes",
+            new BigDecimal("150"),
+            "g"
+        );
+
+        ShoppingListItem savedManualItem = new ShoppingListItem();
+        savedManualItem.setShoppingListId(1);
+        savedManualItem.setIngId(null);
+        savedManualItem.setName("Tomatoes");
+        savedManualItem.setQuantity(new BigDecimal("150"));
+        savedManualItem.setUnit("g");
+        savedManualItem.setPurchased(false);
+
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(shoppingListItemRepository.save(any(ShoppingListItem.class))).thenReturn(savedManualItem);
+
+        // Act 
+        ShoppingListItemResponse response = shoppingListService.addNewShoppingListItem(1, 1, manualRequest);
+
+        // Assert
+        assertEquals(1, response.shoppingListId());
+        assertEquals(null, response.ingId()); //ing_id
+        assertEquals("Tomatoes", response.name());
+        assertEquals(null, response.category()); 
+        assertEquals(new BigDecimal("150"), response.quantity());
+        assertEquals("g", response.unit()); 
+        assertEquals(false, response.purchased());
+    }
+
+
+    // ========== Update Shopping List Item ==========
+
+    @Test 
+    void updateShoppingListItem_whenListNotFound_throwsNotFound() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.empty());
+        
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.updateShoppingListItem(1, 1, 1, updateShoppingListItemRequest)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test 
+    void updateShoppingListItem_whenNotOwned_throwsUnauthorized() {
+        // Arrange
+        existingShoppingList.setUserId(2);
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.updateShoppingListItem(1, 1, 1, updateShoppingListItemRequest)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+    }
+
+    @Test
+    void updateShoppingListItem_whenItemNotFound_throwsNotFound() { //lost found but item not found
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(shoppingListItemRepository.findById(48)).thenReturn(Optional.empty());
+
+        // Act 
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.updateShoppingListItem(1, 1, 48, updateShoppingListItemRequest)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void updateShoppingListItem_itemBelongsToDifferentList_throwsNotFound() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        ReflectionTestUtils.setField(existingShoppingListItem, "itemId", 48);
+        existingShoppingListItem.setShoppingListId(2); // different list 
+
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(shoppingListItemRepository.findById(48)).thenReturn(Optional.of(existingShoppingListItem));
+
+        // Act 
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.updateShoppingListItem(1, 1, 48, updateShoppingListItemRequest)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void updateShoppingListItem_valid_UpdatesAndReturnsResponse() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        ReflectionTestUtils.setField(existingShoppingListItem, "itemId", 1);
+        existingShoppingListItem.setShoppingListId(1);
+
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(shoppingListItemRepository.findById(1)).thenReturn(Optional.of(existingShoppingListItem));
+        when(shoppingListItemRepository.save(any(ShoppingListItem.class))).thenReturn(existingShoppingListItem);
+        when(ingredientCatalogueRepository.findById(2)).thenReturn(Optional.of(catalogueInstance));
+        when(ingredientCategoryRepository.findById(5)).thenReturn(Optional.of(categoryInstance));
+
+        // Act
+        ShoppingListItemResponse response = shoppingListService.updateShoppingListItem(1, 1, 1, updateShoppingListItemRequest);
+
+        // Assert
+        assertEquals(1, response.shoppingListId());
+        assertEquals(2, response.ingId());
+        assertEquals("Hummus", response.name());
+        assertEquals("Legumes and Legume Products", response.category());
+        assertEquals(new BigDecimal("250"), response.quantity());
+        assertEquals("g", response.unit());
+        assertEquals(false, response.purchased());
+    }
+
+
+    // ========== Update Purchased Flag ==========
+
+    @Test
+    void updatePurchasedFlag_whenListNotFound_throwsNotFound() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.empty());
+        
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.updatePurchasedFlag(1, 1, 1, purchasedUpdateRequest)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void updatePurchasedFlag_whenNotOwned_throwsUnauthorized() {
+        // Arrange
+        existingShoppingList.setUserId(2);
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.updatePurchasedFlag(1, 1, 1, purchasedUpdateRequest)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+    }
+
+    @Test
+    void updatePurchasedFlag_whenItemNotFound_throwsNotFound() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(shoppingListItemRepository.findById(48)).thenReturn(Optional.empty());
+
+        // Act 
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.updatePurchasedFlag(1, 1, 48, purchasedUpdateRequest)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void updatePurchasedFlag_whenItemInDifferentList_throwsNotFound() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        ReflectionTestUtils.setField(existingShoppingListItem, "itemId", 48);
+        existingShoppingListItem.setShoppingListId(2); // different list 
+
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(shoppingListItemRepository.findById(48)).thenReturn(Optional.of(existingShoppingListItem));
+
+        // Act 
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.updatePurchasedFlag(1, 1, 48, purchasedUpdateRequest)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void updatePurchasedFlag_changePurchasedField() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        ReflectionTestUtils.setField(existingShoppingListItem, "itemId", 1);
+        existingShoppingListItem.setShoppingListId(1);
+        existingShoppingListItem.setPurchased(false); // initially false
+
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(shoppingListItemRepository.findById(1)).thenReturn(Optional.of(existingShoppingListItem));
+        when(shoppingListItemRepository.save(any(ShoppingListItem.class))).thenReturn(existingShoppingListItem);
+        when(ingredientCatalogueRepository.findById(2)).thenReturn(Optional.of(catalogueInstance));
+        when(ingredientCategoryRepository.findById(5)).thenReturn(Optional.of(categoryInstance));
+
+        // Act
+        ShoppingListItemResponse response = shoppingListService.updatePurchasedFlag(1, 1, 1, purchasedUpdateRequest);
+        
+        // Assert
+        assertEquals(2, response.ingId());
+        assertEquals(new BigDecimal("250"), response.quantity());
+        assertEquals("g", response.unit());
+        assertEquals(true, response.purchased());
+    }
+
+
+    // ========== Delete item testing ==========
+
+    @Test
+    void deleteShoppingListItem_whenListNotFound_throwsNotFound() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.empty());
+        
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.deleteShoppingListItem(1, 1, 1)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void deleteShoppingListItem_whenNotOwned_throwsUnauthorized() {
+        // Arrange
+        existingShoppingList.setUserId(2);
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.deleteShoppingListItem(1, 1, 1)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+    }
+
+    @Test
+    void deleteShoppingListItem_whenItemNtFound_throwsNotFound() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(shoppingListItemRepository.findById(48)).thenReturn(Optional.empty());
+
+        // Act 
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.deleteShoppingListItem(1, 1, 48)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void deleteShoppingListItem_whenItemBelongsToDifferentList_throwsNotFound() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        ReflectionTestUtils.setField(existingShoppingListItem, "itemId", 48);
+        existingShoppingListItem.setShoppingListId(2); // different list 
+
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(shoppingListItemRepository.findById(48)).thenReturn(Optional.of(existingShoppingListItem));
+
+        // Act 
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.deleteShoppingListItem(1, 1, 48)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void deleteShoppingListItem_valid_deletesItem() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        ReflectionTestUtils.setField(existingShoppingListItem, "itemId", 1);
+        existingShoppingListItem.setShoppingListId(1);
+
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(shoppingListItemRepository.findById(1)).thenReturn(Optional.of(existingShoppingListItem));
+
+        // Act 
+        shoppingListService.deleteShoppingListItem(1, 1, 1);
+
+        // Assert
+        verify(shoppingListItemRepository).delete(existingShoppingListItem);
+    }
+
+
+    // ========== Delete Selected Item ==========
+
+    @Test
+    void deleteSelectedItems_whenListNotFound_throwsNotFound() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.empty());
+        
+        DeletedBatchRequest request = new DeleteBatchItemsRequest(List.of(1, 2, 3))
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.deleteSelectedItems(1, 1, request)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void deleteSelectedItems_whenNotOwned_throwsUnauthorized() {
+        // Arrange
+        existingShoppingList.setUserId(2);
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        DeletedBatchRequest request = new DeleteBatchItemsRequest(List.of(1, 2, 3))
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.deleteSelectedItems(1, 1, request)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+    }
+
+    @Test
+    void deleteSelectedItems_whenOneItemNotFound_throwsNotFound() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        
+
+
+        DeletedBatchRequest request = new DeleteBatchItemsRequest(List.of(1, 2, 3))
+        // Act 
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.deleteSelectedItems(1, 1, request)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void deleteSelectedItems_whenItemBelongsToDifferentList_throwsNotFound() {
+        //TODO 
+    }
 
 
 }
