@@ -92,11 +92,11 @@ public class VaultServiceTest
     {
         when(vaultRepository.save(any(Vault.class))).thenReturn(vault);
 
-        VaultResponse result = vaultService.createVault(requests, 1);
+        VaultResponse result = vaultService.createVault(request, 1);
 
         assertNotNull(result);
         assertEquals("Test Vault", result.name());
-        verify(vaultRepository, times(1).save(any(Vault.class)));
+        verify(vaultRepository, times(1)).save(any(Vault.class));
     }
 
     @Test
