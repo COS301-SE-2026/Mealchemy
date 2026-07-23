@@ -55,12 +55,24 @@ public class VaultServiceTest
     }
 
     @Test
-    void getVault_returnsVault_whenFound()
+    void getVault_returnsVault_whenFoundAndOwner()
     {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
 
         VaultResponse result = vaultService.getVault(1, 1);
 
+        assertNotNull(result);
+        assertEquals("Test Vault", result.name());
+    }
+
+    @Test
+    void getVault_returnsVaultWhenFoundAndMember()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 2)).thenReturn(true);
+
+        VaultResponse result = vaultService.getVault(1, 2);
+        
         assertNotNull(result);
         assertEquals("Test Vault", result.name());
     }
