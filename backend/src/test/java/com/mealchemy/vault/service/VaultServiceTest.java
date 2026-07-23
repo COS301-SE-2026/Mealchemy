@@ -169,6 +169,17 @@ public class VaultServiceTest
     }
 
     @Test
+    void updateVault_throwsException_whenNotVaultOwner()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultService.updateVault(1, request, 2));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Vault can only be edited by the owner.", ex.getReason());
+    }
+
+    @Test
     void deleteVault_callsDeleteById()
     {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
