@@ -123,7 +123,7 @@ public class VaultServiceTest
     @Test
     void deleteVault_callsDeleteById()
     {
-        doNothing()when(vaultRepository).deleteById(1);
+        doNothing().when(vaultRepository).deleteById(1);
 
         vaultService.deleteVault(1);
 
