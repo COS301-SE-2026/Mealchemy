@@ -16,6 +16,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+
 /* Import classes */
 import com.mealchemy.vault.dto.VaultMemberResponse;
 import com.mealchemy.vault.dto.VaultMemberRequest;
@@ -23,6 +26,8 @@ import com.mealchemy.vault.model.VaultMember;
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.auth.model.User;
 import com.mealchemy.vault.repository.VaultMemberRepository;
+import com.mealchemy.vault.repository.VaultRepository;
+import com.mealchemy.auth.repository.UserRepository;
 import com.mealchemy.shared.enums.VaultType;
 
 
@@ -30,6 +35,12 @@ import com.mealchemy.shared.enums.VaultType;
 public class VaultMemberServiceTest {
     @Mock
     private VaultMemberRepository vaultMemberRepository;
+
+    @Mock
+    private VaultRepository vaultRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private VaultMemberService vaultMemberService;
@@ -57,5 +68,17 @@ public class VaultMemberServiceTest {
         vaultMember.setUser(user);
 
         request = new VaultMemberRequest("testUser@gmail.com");
+    }
+
+    @Test
+    void getVaultMembersByVaultId_returnsVaultMember_whenFoundAndOwner()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultMemberRepository.findByVault_VaultId(1)).thenReturn(List.of(vault));
+
+        List<VaultMemberResponse> result = vaultMemberService.getVaultMembersByVaultId(1, 1);
+
+        assertEquals(1, result.size());
+        assertEquals("Test Vault", result.get(0).name());
     }
 }

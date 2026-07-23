@@ -16,6 +16,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+
 /* Importing classes */
 import com.mealchemy.vault.dto.VaultRequest;
 import com.mealchemy.vault.dto.VaultResponse;
