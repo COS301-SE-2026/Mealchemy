@@ -135,7 +135,6 @@ public class VaultServiceTest
     @Test
     void createVault_throwsException_whenVaultTypeIsPrivate()
     {
-        when(vaultRepository.save(any(vault.class))).thenReturn(vault);
         when(userRepository.findById(1)).thenReturn(Optional.of(new User()));
 
         VaultRequest privateRequest = new VaultRequest(VaultType.PRIVATE, "Test Private Vault");
