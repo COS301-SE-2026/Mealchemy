@@ -59,7 +59,7 @@ public class VaultServiceTest
     {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
 
-        VaultResponse result = vaultService.getVault(1);
+        VaultResponse result = vaultService.getVault(1, 1);
 
         assertNotNull(result);
         assertEquals("Test Vault", result.name());
