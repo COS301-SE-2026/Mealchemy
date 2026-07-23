@@ -20,6 +20,7 @@ import static org.mockito.Mockito.*;
 import com.mealchemy.vault.dto.VaultRequest;
 import com.mealchemy.vault.dto.VaultResponse;
 import com.mealchemy.vault.model.Vault;
+import com.mealchemy.auth.model.User;
 import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.vault.repository.VaultMemberRepository;
 import com.mealchemy.auth.repository.UserRepository;
@@ -48,10 +49,10 @@ public class VaultServiceTest
     {
         vault = new Vault();
         vault.setOwnerId(1);
-        vault.setVaultType(VaultType.PRIVATE);
+        vault.setVaultType(VaultType.SHARED);
         vault.setName("Test Vault");
 
-        request = new VaultRequest(VaultType.PRIVATE, "Test Vault");
+        request = new VaultRequest(VaultType.SHARED, "Test Vault");
     }
 
     @Test
@@ -122,6 +123,7 @@ public class VaultServiceTest
     void createVault_returnsCreatedVault()
     {
         when(vaultRepository.save(any(Vault.class))).thenReturn(vault);
+        when(userRepository.findById(1)).thenReturn(Optional.of(new User()));
 
         VaultResponse result = vaultService.createVault(request, 1);
 
@@ -147,16 +149,19 @@ public class VaultServiceTest
     {
         when(vaultRepository.findById(99)).thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> vaultService.updateVault(99, request, 1));
-        assertEquals("Vault not found.", ex.getMessage());
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultService.updateVault(99, request, 1));
+        
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Vault not found.", ex.getReason());
     }
 
     @Test
     void deleteVault_callsDeleteById()
     {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
         doNothing().when(vaultRepository).deleteById(1);
 
-        vaultService.deleteVault(1);
+        vaultService.deleteVault(1, 1);
 
         verify(vaultRepository, times(1)).deleteById(1);
     }
