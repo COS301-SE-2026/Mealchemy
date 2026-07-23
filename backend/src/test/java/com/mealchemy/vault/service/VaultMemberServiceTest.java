@@ -71,12 +71,25 @@ public class VaultMemberServiceTest {
     }
 
     @Test
-    void getVaultMembersByVaultId_returnsVaultMember_whenFoundAndOwner()
+    void getVaultMembersByVaultId_returnsListOfVaultMembers_whenFoundAndOwner()
     {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
         when(vaultMemberRepository.findByVault_VaultId(1)).thenReturn(List.of(vault));
 
         List<VaultMemberResponse> result = vaultMemberService.getVaultMembersByVaultId(1, 1);
+
+        assertEquals(1, result.size());
+        assertEquals("Test Vault", result.get(0).name());
+    }
+
+    @Test
+    void getVaultMembersByVaultId_returnsListOfVaultMembers_whenFoundAndMember()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 2)).thenReturn(true);
+        when(vaultMemberRepository.findByVault_VaultId(1)).thenReturn(List.of(vault));
+
+        List<VaultMemberResponse> result = vaultMemberService.getVaultMembersByVaultId(1, 2);
 
         assertEquals(1, result.size());
         assertEquals("Test Vault", result.get(0).name());
