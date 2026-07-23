@@ -193,7 +193,7 @@ public class VaultServiceTest
     }
 
     @Test
-    void deleteVault_callsDeleteById()
+    void deleteVault_callsDeleteById_whenOwner()
     {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
         doNothing().when(vaultRepository).deleteById(1);
@@ -202,4 +202,15 @@ public class VaultServiceTest
 
         verify(vaultRepository, times(1)).deleteById(1);
     }
+
+    @Test
+    void deleteVault_callsDeleteById_whenNotOwner()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultService.deleteVault(1, 2));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Vaults can only be deleted be the owner.", ex.getReason());
+    } 
 }
