@@ -14,50 +14,31 @@ CREATE TYPE vault_type_enum AS ENUM (
 
 -- User's preferred unit of measurement
 CREATE TYPE preferred_unit_enum AS ENUM (
-    'metric',
-    'imperial'
+    'METRIC',
+    'IMPERIAL'
 );
 
--- Pantry ingredient categories. Used in pantry_ingredients.category.
-CREATE TYPE pantry_category_enum AS ENUM (
-    'produce',      -- fresh fruit and vegetables
-    'dairy',        -- milk, cheese, yoghurt, eggs
-    'dairy_alternatives', -- almond milk, vegan cheese
-    'meat',         -- beef, pork, lamb
-    'poultry',      -- chicken, turkey
-    'seafood',      -- fish, shellfish
-    'grains',       -- rice, pasta, bread
-    'legumes',      -- beans, lentils, chickpeas
-    'spices',       -- herbs, spices, seasonings
-    'condiments_and_oils',   -- sauces, oils, vinegars
-    'canned_and_jarred', -- pickles, tuna, tomato puree
-    'nuts_and_seeds', -- peanuts, chai seeds, flax seeds
-    'plant_based',  -- tofu, vegan substitutes
-    'beverages',    -- drinks, juices
-    'frozen',       -- frozen goods
-    'baking_supplies', -- flour, sugar, baking powder, vanilla extract
-    'snacks',       -- packaged snack foods
-    'sweets',       -- for desserts
-    'other'         -- anything not covered above
+-- User's role: admin, general (different privileges)
+CREATE TYPE user_role_enum AS ENUM (
+    'ADMIN',
+    'USER'
 );
 
--- Cuisine types used to classify recipes.
-CREATE TYPE cuisine_type_enum AS ENUM (
-    'african',
-    'american',
-    'asian',
-    'caribbean',
-    'chinese',
-    'french',
-    'greek',
-    'indian',
-    'italian',
-    'japanese',
-    'mediterranean',
-    'mexican',
-    'southeast_asian',
-    'middle_eastern',
-    'south_african',
-    'thai',
-    'other'
+-- Flagged recipes possible statuses
+CREATE TYPE flagged_status_enum AS ENUM (
+    'PENDING',
+    'REVIEWED',
+    'REMOVED'
+);
+
+-- Shopping list statuses
+CREATE TYPE shopping_list_status_enum AS ENUM (
+    'ACTIVE',
+    'COMPLETED'
+);
+
+-- Possible swipe actions
+CREATE TYPE swipe_action_enum AS ENUM (
+    'LIKED',
+    'DISLIKED'
 );
