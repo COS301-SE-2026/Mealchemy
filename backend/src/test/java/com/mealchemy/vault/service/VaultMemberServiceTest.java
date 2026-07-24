@@ -189,4 +189,15 @@ public class VaultMemberServiceTest {
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Vault not found.", ex.getReason());
     }
+
+    @Test
+    void removeVaultMember_throwsException_whenNotOwner()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> removeVaultMember(1, request, 3));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only the owner of the vault can remove a member.", ex.getReason());
+    }
 }
