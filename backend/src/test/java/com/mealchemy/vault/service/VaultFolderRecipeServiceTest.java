@@ -92,4 +92,15 @@ public class VaultFolderRecipeServiceTest
         moveRequest = new VaultFolderRecipeMoveRequest(1);
     }
 
+    @Test
+    void getRecipesByFolderId_returnsListOfRecipes_whenFoundAndOwner()
+    {
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
+        when(vaultFolderRecipeRepository.findByFolder_FolderId(1)).thenReturn(List.of(folderRecipe));
+
+        List<VaultFolderRecipeResponse> result = vaultFolderRecipeService.getRecipesByFolderId(1, 1);
+
+        assertNotNull(result);
+        assertEquals(1, result.get(0).addedByUserId());
+    }
 }
