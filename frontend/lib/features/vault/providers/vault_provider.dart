@@ -57,3 +57,32 @@ final folderRecipeDisplayProvider =
 
   return results.whereType<Recipe>().toList();
 });
+
+//Selecting a vault 
+
+final selectedVaultIdProvider = StateProvider.autoDispose<int?>((ref) => null);
+final isSharedModeProvider = StateProvider.autoDispose<bool>((ref) => false);
+
+final selectedVaultProvider = Provider.autoDispose<Vault?>((ref) {
+  final vaults = ref.watch(vaultsProvider).valueOrNull;
+  if (vaults == null || vaults.isEmpty) return null;
+
+  if (!ref.watch(isSharedModeProvider)) {
+    for (final v in vaults) {
+      if (v.vaultType == VaultTypes.private) return v;
+    }
+    return vaults.first;
+  }
+
+  final shared =
+      vaults.where((v) => v.vaultType == VaultTypes.shared).toList();
+  if (shared.isEmpty) return null;
+
+  final selectedId = ref.watch(selectedVaultIdProvider);
+  if (selectedId != null) {
+    for (final v in shared) {
+      if (v.vaultId == selectedId) return v;
+    }
+  }
+  return shared.first;
+});

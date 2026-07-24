@@ -16,6 +16,7 @@ class AppSectionHeader extends StatelessWidget {
     this.showAccentLine = true,
     this.size = SectionHeaderSize.medium,
     this.weight = SectionHeaderWeight.semiBold,
+    this.titleStyle,
   });
 
   final String title;
@@ -24,6 +25,7 @@ class AppSectionHeader extends StatelessWidget {
   final bool showAccentLine;
   final SectionHeaderSize size;
   final SectionHeaderWeight weight;
+  final TextStyle? titleStyle;
 
   double get _fontSize {
     switch (size) {
@@ -55,7 +57,7 @@ class AppSectionHeader extends StatelessWidget {
         //Title
         Text(
           title,
-          style: AppTextStyles.body.copyWith(
+          style: titleStyle ?? AppTextStyles.body.copyWith(
             fontSize: _fontSize,
             fontWeight: _fontWeight,
             color: AppColors.primaryLight,
