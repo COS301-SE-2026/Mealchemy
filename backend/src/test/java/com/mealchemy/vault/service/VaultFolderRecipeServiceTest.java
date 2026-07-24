@@ -368,4 +368,15 @@ public class VaultFolderRecipeServiceTest
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Recipes can only moved between folders in the same vault.", ex.getReason());
     }
+
+    @Test
+    void deleteVaultFolderRecipe_callsDeleteById_whenFoundAndOwner()
+    {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        doNothing().when(vaultFolderRecipeRepository).deleteById(1);
+
+        VaultFolderRecipeResponse result = vaultFolderRecipeService.deleteVaultFolderRecipe(1, 1);
+
+        verify(vaultFolderRecipeRepository, times(1)).deleteById(1);
+    }
 }

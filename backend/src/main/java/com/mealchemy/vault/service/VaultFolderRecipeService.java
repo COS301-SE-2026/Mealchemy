@@ -117,7 +117,7 @@ public class VaultFolderRecipeService {
     // Delete a specific record using id
     public void deleteVaultFolderRecipe(int id, Integer userId)
     {
-        VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("No record found"));
+        VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("No record found."));
 
         canDelete(vaultFolderRecipeForReturn.getFolder().getVault(), vaultFolderRecipeForReturn.getAddedBy().getUserId(), userId);
 
