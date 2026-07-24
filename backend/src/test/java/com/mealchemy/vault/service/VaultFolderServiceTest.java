@@ -348,4 +348,15 @@ public class VaultFolderServiceTest
         assertEquals(HttpsStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Vault not found.", ex.getReason());
     }
+
+    @Test
+    void deleteVaultFolder_throwsException_whenNotOwner()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.deleteVaultFolder(1, 1, 3));
+
+        assertEquals(HttpsStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only a vault owner can modify folders.", ex.getReason());
+    }
 }
