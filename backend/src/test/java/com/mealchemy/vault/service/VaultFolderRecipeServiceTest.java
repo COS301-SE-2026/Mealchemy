@@ -177,7 +177,7 @@ public class VaultFolderRecipeServiceTest
     @Test
     void getFolderRecipeById_returnsVaultFolderRecipe_whenFoundAndOwner()
     {
-        when(vaultFolderRecipeRepository.findById(1)).thenReturn(folderRecipe);
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
 
         VaultFolderResponse result = vaultFolderRecipeService.getFolderRecipeById(1, 1);
 
@@ -188,12 +188,23 @@ public class VaultFolderRecipeServiceTest
     @Test
     void getFolderRecipeById_returnsVaultFolderRecipe_whenFoundAndMember()
     {
-        when(vaultFolderRecipeRepository.findById(1)).thenReturn(folderRecipe);
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
         when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(true);
 
         VaultFolderResponse result = vaultFolderRecipeService.getFolderRecipeById(1, 3);
 
         assertNotNull(result);
         assertEquals(1, result.id());
+    }
+
+    @Test
+    void getFolderRecipeById_throwsException_whenRecordNotFound()
+    {
+        when(vaultFolderRecipeRepository.findById(99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.getFolderRecipeById(99, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("No record found.", ex.getReason());
     }
 }
