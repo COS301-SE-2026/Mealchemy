@@ -55,7 +55,7 @@ public class VaultMemberServiceTest {
     {
         vault = new Vault();
         vault.setOwnerId(1);
-        vault.setVaultType(VaultType.PRIVATE);
+        vault.setVaultType(VaultType.SHARED);
         vault.setName("Test Vault");
         ReflectionTestUtils.setField(vault, "vaultId", 1);
 
@@ -152,6 +152,18 @@ public class VaultMemberServiceTest {
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only the owner of the vault can add a new member.", ex.getReason());
+    }
+
+    @Test
+    void addVaultMember_throwsException_whenVaultTypeIsPrivate()
+    {
+        vault.setVaultType(VaultType.PRIVATE);
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.addVaultMember(1, request, 1));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Members can't be added to a private vault.", ex.getReason());
     }
 
     @Test
