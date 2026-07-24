@@ -107,6 +107,26 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     return ShoppingListsState(lists: lists);
   }
 
+  //creates new shopping list through the active repo
+  Future<void> createShoppingList({
+    required String name,
+    String status = 'ACTIVE',
+  }) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final createdList = await _repository.createShoppingList(
+      name: name,
+      status: status,
+    );
+
+    state = AsyncData(
+      current.copyWith(
+        lists: [...current.lists, createdList],
+      ),
+    );
+  }
+
   //checks/unchecks
   Future<void> toggleItemChecked({
     required String listId,

@@ -135,4 +135,24 @@ void main() {
       isFalse,
     );
   });
+  test('shoppingListsProvider creates shopping list', () async {
+    //container used to read Riverpod providers in tests
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await container.read(shoppingListsProvider.future);
+
+    final notifier = container.read(shoppingListsProvider.notifier);
+
+    await notifier.createShoppingList(name: 'Weekend Braai');
+
+    final updatedState = container.read(shoppingListsProvider).value!;
+    final createdList = updatedState.lists.firstWhere(
+      (list) => list.title == 'Weekend Braai',
+    );
+
+    expect(createdList.shoppingListId, 999);
+    expect(createdList.section, 'OTHER LISTS');
+    expect(createdList.items, isEmpty);
+  });
 }
