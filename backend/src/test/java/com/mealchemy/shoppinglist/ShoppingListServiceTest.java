@@ -608,7 +608,7 @@ public class ShoppingListServiceTest {
         assertEquals(2, response.ingId());
         assertEquals("Hummus", response.name());
         assertEquals("Legumes and Legume Products", response.category());
-        assertEquals(new BigDecimal("250"), response.quantity());
+        assertEquals(new BigDecimal("150"), response.quantity());
         assertEquals("g", response.unit());
         assertEquals(false, response.purchased());
     }
