@@ -253,4 +253,15 @@ public class VaultFolderServiceTest
         assertEquals("General", result.folderName());
         verify(vaultFolderRepository, times(1)).save(any(VaultFolder.class));
     }
+
+    @Test
+    void createVaultFolder_throwsException_whenVaultNotFound()
+    {
+        when(vaultRepository.findById(99)).thenReturn(Optional.empty());
+        
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.createVaultFolder(request, 1));
+
+        assertEquals(HttpsStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Vault not found.", ex.getReason());
+    }
 }
