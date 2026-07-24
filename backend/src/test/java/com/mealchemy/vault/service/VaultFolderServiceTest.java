@@ -274,4 +274,20 @@ public class VaultFolderServiceTest
         assertEquals(HttpsStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only a vault owner can modify folders.", ex.getReason());
     }
+
+    @Test
+    void updateVaultFolder_updatesFolder_whenFoundAndOwner()
+    {
+        when(vaultRepository.findById(request.vaultId)).thenReturn(Optional.of(vault));
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
+        when(vaultFolderRepository.save(any(VaultFolder.class))).thenReturn(folder);
+
+        VaultFolderRequest updateRequest = new VaultFolderRequest(1, "Updated General");
+
+        VaultFolderResponse result = vaultFolderService.updateVaultFolder(1, updateRequest, 1);
+
+        assertNotNull(result);
+        assertEquals("Updated General", vaultFolder);
+        verify(vaultFolderRepository, times(1)).save(any(VaultFolder.class));
+    }
 }
