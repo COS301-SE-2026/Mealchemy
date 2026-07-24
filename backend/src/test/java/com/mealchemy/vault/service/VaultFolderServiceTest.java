@@ -314,4 +314,16 @@ public class VaultFolderServiceTest
         assertEquals(HttpsStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only a vault owner can modify folders.", ex.getReason());
     }
+
+    @Test
+    void updateVaultFolder_throwsException_whenFolderNotFound()
+    {
+        when(vaultRepository.findById(request.vaultId)).thenReturn(Optional.of(vault));
+        when(vaultFolderRepository.findById(99)).thenReturn(Optional.empty());       
+        
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.updateVaultFolder(99, vaultNotFoundRequest, 1));
+
+        assertEquals(HttpsStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Folder not found.", ex.getReason());
+    }
 }
