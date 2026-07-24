@@ -128,7 +128,7 @@ public class VaultMemberServiceTest {
         VaultMemberResponse result = vaultMemberService.addVaultMember(1, request, 1);
 
         assertNotNull(result);
-        assertEquals(1, result.get(0).getUserId());
+        assertEquals(1, result.userId());
         verify(vaultMemberRepository, times(1)).save(any(VaultMember.class));
     }
 
@@ -137,7 +137,7 @@ public class VaultMemberServiceTest {
     {
         when(vaultRepository.findById(99)).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> addVaultMember(99, request, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.addVaultMember(99, request, 1));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Vault not found.", ex.getReason());
@@ -148,7 +148,7 @@ public class VaultMemberServiceTest {
     {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> addVaultMember(1, request, 3));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.addVaultMember(1, request, 3));
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only the owner of the vault can add a new member.", ex.getReason());
@@ -160,7 +160,7 @@ public class VaultMemberServiceTest {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
         when(userRepository.findByEmail("testUser@gmail.com")).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> addVaultMember(1, request, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.addVaultMember(1, request, 1));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("User not found.", ex.getReason());
@@ -174,7 +174,7 @@ public class VaultMemberServiceTest {
         when(vaultMemberRepository.findByVault_VaultIdAndUser_UserId(vault.getVaultId(), user.getUserId())).thenReturn(Optional.of(vaultMember));
         doNothing().when(vaultMemberRepository).delete(vaultMember);
 
-        vaultMemberService.delete(vaultMember);
+        vaultMemberService.removeVaultMember(1, request, 1);
         
         verify(vaultMemberRepository, times(1)).delete(vaultMember);
     }
@@ -184,7 +184,7 @@ public class VaultMemberServiceTest {
     {
         when(vaultRepository.findById(99)).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> removeVaultMember(1, request, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.removeVaultMember(99, request, 1));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Vault not found.", ex.getReason());
@@ -195,7 +195,7 @@ public class VaultMemberServiceTest {
     {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> removeVaultMember(1, request, 3));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.removeVaultMember(1, request, 3));
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only the owner of the vault can remove a member.", ex.getReason());
@@ -207,7 +207,7 @@ public class VaultMemberServiceTest {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
         when(userRepository.findByEmail("testUser@gmail.com")).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> removeVaultMember(1, request, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.removeVaultMember(1, request, 1));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("User not found.", ex.getReason());
@@ -220,7 +220,7 @@ public class VaultMemberServiceTest {
         when(userRepository.findByEmail("testUser@gmail.com")).thenReturn(Optional.of(user));
         when(vaultMemberRepository.findByVault_VaultIdAndUser_UserId(vault.getVaultId(), user.getUserId())).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> removeVaultMember(1, request, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.removeVaultMember(1, request, 1));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("VaultMember row not found.", ex.getReason());
