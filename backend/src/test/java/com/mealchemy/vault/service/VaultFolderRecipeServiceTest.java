@@ -234,4 +234,20 @@ public class VaultFolderRecipeServiceTest
         assertEquals(1, result.id());
         verify(vaultFolderRepository, times(1)).save(any(VaultFolderRecipe.class));
     }
+
+    @Test
+    void createVaultFolderRecipe_returnsNewVaultFolderRecipe_whenFoundAndMember()
+    {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(recipeRepository.findById(request.recipeId())).thenReturn(Optional.of(recipe));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(true);
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+        when(vaultFolderRecipe.save(any(VaultFolderRecipe.class))).thenReturn(Optional.of(folderRecipe));
+
+        VaultFolderRecipeResponse result = vaultFolderRecipe.createVaultFolderRecipe(request, 3, 1);
+
+        assertNotNull(result);
+        assertEquals(1, result.id());
+        verify(vaultFolderRepository, times(1)).save(any(VaultFolderRecipe.class));
+    }
 }
