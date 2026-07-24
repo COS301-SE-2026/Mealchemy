@@ -117,4 +117,39 @@ void main() {
     expect(find.text('All Items'), findsOneWidget);
     expect(find.text('Heirloom Tomatoes'), findsOneWidget);
   });
+  testWidgets(
+      'ShoppingListsScreen creates new list from floating action button',
+      (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: ShoppingListsScreen(),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Create Shopping List'), findsOneWidget);
+    expect(find.text('List name'), findsOneWidget);
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'List name'),
+      'Weekend Braai',
+    );
+
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Weekend Braai created.'), findsOneWidget);
+
+    //new list is appended lower in the overview, so scroll until it is visible
+    await tester.drag(find.byType(ListView), const Offset(0, -700));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Weekend Braai'), findsOneWidget);
+  });
 }

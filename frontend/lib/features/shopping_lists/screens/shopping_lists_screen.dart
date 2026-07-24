@@ -27,6 +27,11 @@ class ShoppingListsScreen extends ConsumerWidget {
           onSearchChanged: (query) {
             ref.read(shoppingListsProvider.notifier).updateSearchQuery(query);
           },
+          onCreateList: (name) async {
+            await ref.read(shoppingListsProvider.notifier).createShoppingList(
+                  name: name,
+                );
+          },
         ),
         loading: () => const Center(
           child: CircularProgressIndicator(
@@ -43,7 +48,14 @@ class ShoppingListsScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () => _showCreateListDialog(
+          context,
+          (name) async {
+            await ref.read(shoppingListsProvider.notifier).createShoppingList(
+                  name: name,
+                );
+          },
+        ),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textDark,
         elevation: 8,
@@ -62,10 +74,12 @@ class _ShoppingListsContent extends StatelessWidget {
   const _ShoppingListsContent({
     required this.state,
     required this.onSearchChanged,
+    required this.onCreateList,
   });
 
   final ShoppingListsState state;
   final ValueChanged<String> onSearchChanged;
+  final Future<void> Function(String name) onCreateList;
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +99,7 @@ class _ShoppingListsContent extends StatelessWidget {
           _ShoppingListsTopBar(
             searchQuery: state.searchQuery,
             onSearchChanged: onSearchChanged,
+            onCreateList: onCreateList,
           ),
           const SizedBox(height: 26),
           const _ShoppingListsTitle(),
@@ -147,10 +162,12 @@ class _ShoppingListsTopBar extends StatefulWidget {
   const _ShoppingListsTopBar({
     required this.searchQuery,
     required this.onSearchChanged,
+    required this.onCreateList,
   });
 
   final String searchQuery;
   final ValueChanged<String> onSearchChanged;
+  final Future<void> Function(String name) onCreateList;
 
   @override
   State<_ShoppingListsTopBar> createState() => _ShoppingListsTopBarState();
@@ -257,7 +274,8 @@ class _ShoppingListsTopBarState extends State<_ShoppingListsTopBar> {
         Column(
           children: [
             IconButton(
-              onPressed: () {},
+              onPressed: () =>
+                  _showCreateListDialog(context, widget.onCreateList),
               icon: const Icon(
                 Icons.add,
                 color: AppColors.textLight,
@@ -326,4 +344,92 @@ class _EmptySearchState extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _showCreateListDialog(
+  BuildContext context,
+  Future<void> Function(String name) onCreateList,
+) async {
+  final nameController = TextEditingController();
+
+  final result = await showDialog<String>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: AppColors.bgLight,
+        title: Text(
+          'Create Shopping List',
+          style: AppTextStyles.heading2.copyWith(
+            color: AppColors.primary,
+          ),
+        ),
+        content: TextField(
+          controller: nameController,
+          autofocus: true,
+          style: AppTextStyles.body.copyWith(
+            color: AppColors.textLight,
+          ),
+          decoration: InputDecoration(
+            labelText: 'List name',
+            labelStyle: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.tertiaryMuted,
+            ),
+            hintText: 'e.g. Weekend Braai',
+            enabledBorder: OutlineInputBorder(
+              borderSide: const BorderSide(
+                color: AppColors.inputBorder,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: const BorderSide(
+                color: AppColors.primary,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Cancel',
+              style: AppTextStyles.button.copyWith(
+                color: AppColors.textMuted,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop(nameController.text);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.textDark,
+            ),
+            child: const Text('Create'),
+          ),
+        ],
+      );
+    },
+  );
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    nameController.dispose();
+  });
+
+  final cleanedName = result?.trim() ?? '';
+  if (cleanedName.isEmpty) return;
+
+  await onCreateList(cleanedName);
+
+  if (!context.mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('$cleanedName created.'),
+      backgroundColor: AppColors.primary,
+      behavior: SnackBarBehavior.floating,
+    ),
+  );
 }
