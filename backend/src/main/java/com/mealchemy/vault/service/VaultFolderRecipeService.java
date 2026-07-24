@@ -168,7 +168,7 @@ public class VaultFolderRecipeService {
 
         if (!isOwner && !(isMember && isPersonWhoAdded))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only vault a member/owner can delete the folders.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault member who added the recipe/vault owner can delete the folders.");
         }
     }
 }

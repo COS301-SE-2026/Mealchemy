@@ -384,6 +384,7 @@ public class VaultFolderRecipeServiceTest
     void deleteVaultFolderRecipe_callsDeleteById_whenFoundAndMemberRecipeWasAddedBy()
     {
         when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 1)).thenReturn(true);
         doNothing().when(vaultFolderRecipeRepository).deleteById(1);
         
         vault.setOwnerId(3);
@@ -394,7 +395,21 @@ public class VaultFolderRecipeServiceTest
     }
 
     @Test
-    void deleteVaultFolderRecipe.throwsException_whenVaultFolderRecipeNotFound()
+    void deleteVaultFolderRecipe_throwsException_whenMemberButDidNotAdd()
+    {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 2)).thenReturn(true);
+        
+        vault.setOwnerId(3);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.deleteVaultFolderRecipe(1, 2));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only a vault member who added the recipe/vault owner can delete the folders.", ex.getReason());
+    }
+
+    @Test
+    void deleteVaultFolderRecipe_throwsException_whenVaultFolderRecipeNotFound()
     {
         when(vaultFolderRecipeRepository.findById(99)).thenReturn(Optional.empty());
 
