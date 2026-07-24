@@ -86,3 +86,18 @@ final selectedVaultProvider = Provider.autoDispose<Vault?>((ref) {
   }
   return shared.first;
 });
+
+// Shared vaults for the strip
+final sharedVaultsProvider = Provider.autoDispose<List<Vault>>((ref) {
+  final vaults = ref.watch(vaultsProvider).valueOrNull ?? const [];
+  return vaults.where((v) => v.vaultType == VaultTypes.shared).toList();
+});
+
+// The users private vault
+final privateVaultProvider = Provider.autoDispose<Vault?>((ref) {
+  final vaults = ref.watch(vaultsProvider).valueOrNull ?? const [];
+  for (final v in vaults) {
+    if (v.vaultType == VaultTypes.private) return v;
+  }
+  return null;
+});

@@ -4,6 +4,7 @@ import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/core/shared_widgets/atoms/app_icon_button.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_section_header.dart';
 import 'vault_switcher.dart';
+import 'shared_vault_strip.dart';
 
 class VaultHero extends StatelessWidget {
   const VaultHero({
@@ -44,6 +45,7 @@ class VaultHero extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 const VaultSwitcher(),
+                 const SharedVaultStrip(),
               ],
             ),
           ),
