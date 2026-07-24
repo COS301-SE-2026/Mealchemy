@@ -190,4 +190,17 @@ public class VaultFolderServiceTest
         assertNotNull(result);
         assertEquals("General", result.folderName());
     }
+
+    @Test
+    void getVaultFolderById_returnsFolder_whenFoundAndMember()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(true);
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
+
+        VaultFolderResponse result = vaultFolderService.getVaultFolderById(1, 1, 3);
+
+        assertNotNull(result);
+        assertEquals("General", result.folderName());
+    }
 }
