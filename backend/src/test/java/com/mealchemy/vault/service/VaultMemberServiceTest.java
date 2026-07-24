@@ -105,4 +105,16 @@ public class VaultMemberServiceTest {
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Vault not found.", ex.getReason());
     }
+
+    @Test
+    void getVaultMembersByVaultId_throwsException_whenNotOwnerOrMember()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.getVaultMembersByVaultId(1, 3));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only a member/owner of the vault can view its members.", ex.getReason());
+    }
 }
