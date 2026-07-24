@@ -73,6 +73,25 @@ void main() {
             );
             return;
           }
+
+          if (options.method == 'POST' &&
+              options.path == '/api/shopping-lists') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: {
+                  'shopping_list_id': 3,
+                  'user_id': 3,
+                  'name': options.data['name'],
+                  'status': options.data['status'],
+                  'created_at': '2026-07-13T14:20:00Z',
+                },
+              ),
+            );
+            return;
+          }
+
           if (options.path == '/api/shopping-lists/1') {
             handler.resolve(
               Response(
@@ -234,5 +253,29 @@ void main() {
     expect(result.addedToPantryCount, 2);
     expect(result.skippedManualItems, ['Fresh basil bunch']);
     expect(result.shoppingListDeleted, isFalse);
+  });
+  test('createShoppingList posts list metadata and maps response', () async {
+    final list = await repository.createShoppingList(
+      name: 'Weekend Braai',
+    );
+
+    expect(lastRequest?.method, 'POST');
+    expect(lastRequest?.path, '/api/shopping-lists');
+    expect(lastRequest?.data['name'], 'Weekend Braai');
+    expect(lastRequest?.data['status'], 'ACTIVE');
+
+    expect(list.id, '3');
+    expect(list.shoppingListId, 3);
+    expect(list.userId, 3);
+    expect(list.title, 'Weekend Braai');
+    expect(list.status, 'ACTIVE');
+    expect(list.items, isEmpty);
+  });
+
+  test('createShoppingList rejects blank name before API call', () {
+    expect(
+      () => repository.createShoppingList(name: '   '),
+      throwsArgumentError,
+    );
   });
 }

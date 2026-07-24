@@ -9,6 +9,13 @@ abstract class ShoppingListRepository {
 
   //returns one shopping list by id
   Future<ShoppingList?> getShoppingListById(String id);
+
+  //creates new shopping list for user
+  Future<ShoppingList> createShoppingList({
+    required String name,
+    String status = 'ACTIVE',
+  });
+
   //updates one item checked/purchased state
   Future<ShoppingListItem> updateItemPurchased({
     required String listId,

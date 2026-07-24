@@ -206,4 +206,29 @@ class MockShoppingListRepository implements ShoppingListRepository {
       shoppingListDeleted: false,
     );
   }
+
+  @override
+  Future<ShoppingList> createShoppingList({
+    required String name,
+    String status = 'ACTIVE',
+  }) async {
+    final cleanedName = name.trim();
+
+    if (cleanedName.isEmpty) {
+      throw ArgumentError('Shopping list name is required.');
+    }
+
+    //mock version returns empty list
+    return ShoppingList(
+      id: cleanedName.toLowerCase().replaceAll(' ', '-'),
+      shoppingListId: 999,
+      userId: 1,
+      title: cleanedName,
+      subtitle: '0 items',
+      section: 'OTHER LISTS',
+      iconType: 'list',
+      status: status,
+      items: const [],
+    );
+  }
 }
