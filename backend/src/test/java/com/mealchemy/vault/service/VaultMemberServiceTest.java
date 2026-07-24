@@ -133,7 +133,7 @@ public class VaultMemberServiceTest {
     }
 
     @Test
-    void addVaultMember_throwsException_whenNotVaultNotFound()
+    void addVaultMember_throwsException_whenVaultNotFound()
     {
         when(vaultRepository.findById(99)).thenReturn(Optional.empty());
 
@@ -177,5 +177,16 @@ public class VaultMemberServiceTest {
         vaultMemberService.delete(vaultMember);
         
         verify(vaultMemberRepository, times(1)).delete(vaultMember);
+    }
+
+    @Test
+    void removeVaultMember_throwsException_whenVaultNotFound()
+    {
+        when(vaultRepository.findById(99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> removeVaultMember(1, request, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Vault not found.", ex.getReason());
     }
 }
