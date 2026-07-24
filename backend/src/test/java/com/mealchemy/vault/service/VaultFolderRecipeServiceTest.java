@@ -298,4 +298,18 @@ public class VaultFolderRecipeServiceTest
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("User not found.", ex.getReason());
     }
+
+    @Test
+    void updateVaultFolderRecipe_returnsUpdatedVaultFolderRecipe_whenFoundAndOwner()
+    {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
+        when(vaultFolderRecipeRepository.save(all(VaultFolderRecipe.class))).thenReturn(folderRecipe);
+
+        VaultFolderResponse result = vaultFolderRecipeService.updateVaultFolderRecipe(1, request, 1);
+
+        assertNotNull(result);
+        assertEquals(1, result.id());
+        verify(vaultFolderRecipeRepository, times(1)).save(any(VaultFolderRecipe.class));
+    }
 }
