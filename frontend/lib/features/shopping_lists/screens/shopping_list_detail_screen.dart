@@ -44,8 +44,8 @@ class ShoppingListDetailScreen extends ConsumerWidget {
 
           return _ShoppingListDetailContent(
             list: list,
-            onToggleItem: (itemId) {
-              ref.read(shoppingListsProvider.notifier).toggleItemChecked(
+            onToggleItem: (itemId) async {
+              await ref.read(shoppingListsProvider.notifier).toggleItemChecked(
                     listId: list.id,
                     itemId: itemId,
                   );
@@ -54,8 +54,8 @@ class ShoppingListDetailScreen extends ConsumerWidget {
               required name,
               required quantity,
               required category,
-            }) {
-              ref.read(shoppingListsProvider.notifier).addItemToList(
+            }) async {
+              await ref.read(shoppingListsProvider.notifier).addItemToList(
                     listId: list.id,
                     name: name,
                     quantity: quantity,
@@ -91,8 +91,8 @@ class _ShoppingListDetailContent extends StatelessWidget {
   });
 
   final ShoppingList list;
-  final ValueChanged<String> onToggleItem;
-  final void Function({
+  final Future<void> Function(String itemId) onToggleItem;
+  final Future<void> Function({
     required String name,
     required String quantity,
     required String category,
@@ -134,7 +134,8 @@ class _ShoppingListDetailContent extends StatelessWidget {
             bottom: 42,
             child: _UpdatePantryButton(
               onTap: () {
-                final checkedCount = list.items.where((item) => item.checked).length;
+                final checkedCount =
+                    list.items.where((item) => item.checked).length;
 
                 final message = checkedCount == 0
                     ? 'No checked items to update.'
@@ -231,7 +232,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
 
     if (result == null) return;
 
-    onAddItem(
+    await onAddItem(
       name: result['name'] ?? '',
       quantity: result['quantity'] ?? '',
       category: result['category'] ?? '',
@@ -277,7 +278,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
         widgets.add(
           ShoppingItemRow(
             item: item,
-            onChanged: (_) => onToggleItem(item.id),
+            onChanged: (_) async => onToggleItem(item.id),
           ),
         );
       }

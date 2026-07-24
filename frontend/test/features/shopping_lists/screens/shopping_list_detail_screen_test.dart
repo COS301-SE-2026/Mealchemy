@@ -77,14 +77,21 @@ void main() {
     //waits for mock data to finish loading
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.add).first);
+    await tester.tap(find.byIcon(Icons.add).last);
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.widgetWithText(TextField, 'Item name'), 'Fresh Basil');
-    await tester.enterText(find.widgetWithText(TextField, 'Quantity'), '1 bunch');
-    await tester.enterText(find.widgetWithText(TextField, 'Category'), 'Produce');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Item name'), 'Fresh Basil');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Quantity'), '1 bunch');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Category'), 'Produce');
 
     await tester.tap(find.text('Add'));
+    await tester.pumpAndSettle();
+
+    //new item is appended lower in list, so scroll until visible
+    await tester.drag(find.byType(ListView), const Offset(0, -700));
     await tester.pumpAndSettle();
 
     expect(find.text('Fresh Basil'), findsOneWidget);
