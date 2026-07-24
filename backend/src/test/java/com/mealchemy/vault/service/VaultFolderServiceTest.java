@@ -164,4 +164,17 @@ public class VaultFolderServiceTest
         assertEquals(HttpsStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only vault a member/owner can view the folders.", ex.getReason());
     }
+
+    @Test
+    void getVaultFolderByName_throwsException_whenFolderNotFound()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.empty());
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 1)).thenReturn(false);
+        when(vaultFolderRepository.findByFolderName("General")).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.getVaultFolderByVaultId("General", 1, 1));
+
+        assertEquals(HttpsStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Folder not found.", ex.getReason());
+    }
 }
