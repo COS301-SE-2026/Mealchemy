@@ -326,4 +326,15 @@ public class VaultFolderServiceTest
         assertEquals(HttpsStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Folder not found.", ex.getReason());
     }
+
+    @Test
+    void deleteVaultFolder_callsDeleteById_whenFoundAndOwner()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        doNothing().when(vaultFolderRepository).deleteById(1);
+
+        vaultFolderService.deleteVaultFolder(1, 1, 1);
+
+        verify(vaultFolderRepository, times(1)).deleteById(1);
+    }
 }
