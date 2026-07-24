@@ -334,4 +334,16 @@ public class VaultFolderRecipeServiceTest
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only a vault owner can interact with folders/recipe relationships.", ex.getReason());
     }
+
+    @Test
+    void updateVaultFolderRecipe_throwsException_whenNewFolderNotFound()
+    {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(vaultFolderRepository.findById(request.folderId())).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.updateVaultFolderRecipe(1, request, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("New folder not found.", ex.getReason());
+    }
 }
