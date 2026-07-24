@@ -392,4 +392,15 @@ public class VaultFolderRecipeServiceTest
 
         verify(vaultFolderRecipeRepository, times(1)).deleteById(1);
     }
+
+    @Test
+    void deleteVaultFolderRecipe.throwsException_whenVaultFolderRecipeNotFound()
+    {
+        when(vaultFolderRecipeRepository.findById(99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.deleteVaultFolderRecipe(99, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("No record found.", ex.getReason());
+    }
 }
