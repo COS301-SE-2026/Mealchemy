@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../models/shopping_list.dart';
 
 import 'shopping_list_repository.dart';
+import '../models/shopping_list_item.dart';
 
 //backend shopping list data source
 class ApiShoppingListRepository implements ShoppingListRepository {
@@ -31,5 +32,21 @@ class ApiShoppingListRepository implements ShoppingListRepository {
     if (data == null) return null;
 
     return ShoppingList.fromJson(data);
+  }
+
+  @override
+  Future<ShoppingListItem> updateItemPurchased({
+    required String listId,
+    required String itemId,
+    required bool purchased,
+  }) async {
+    final response = await _dio.patch<Map<String, dynamic>>(
+      '/api/shopping-lists/$listId/items/$itemId/purchased',
+      data: {
+        'purchased': purchased,
+      },
+    );
+
+    return ShoppingListItem.fromJson(response.data ?? {});
   }
 }

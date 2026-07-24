@@ -16,6 +16,26 @@ void main() {
         onRequest: (options, handler) {
           lastRequest = options;
 
+          if (options.method == 'PATCH' &&
+              options.path == '/api/shopping-lists/1/items/10/purchased') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: {
+                  'item_id': 10,
+                  'shopping_list_id': 1,
+                  'ing_id': null,
+                  'name': 'Greek Yogurt',
+                  'category': null,
+                  'quantity': 907.000,
+                  'unit': 'g',
+                  'purchased': options.data['purchased'],
+                },
+              ),
+            );
+            return;
+          }
           if (options.path == '/api/shopping-lists/1') {
             handler.resolve(
               Response(
@@ -104,5 +124,22 @@ void main() {
     expect(item.category, 'MANUAL');
     expect(item.quantity, '907 g');
     expect(item.checked, isFalse);
+  });
+  test('updateItemPurchased patches purchased state and maps response',
+      () async {
+    final item = await repository.updateItemPurchased(
+      listId: '1',
+      itemId: '10',
+      purchased: true,
+    );
+
+    expect(lastRequest?.method, 'PATCH');
+    expect(lastRequest?.path, '/api/shopping-lists/1/items/10/purchased');
+    expect(lastRequest?.data['purchased'], true);
+
+    expect(item.itemId, 10);
+    expect(item.shoppingListId, 1);
+    expect(item.name, 'Greek Yogurt');
+    expect(item.checked, isTrue);
   });
 }

@@ -143,4 +143,24 @@ class MockShoppingListRepository implements ShoppingListRepository {
 
     return null;
   }
+
+  @override
+  Future<ShoppingListItem> updateItemPurchased({
+    required String listId,
+    required String itemId,
+    required bool purchased,
+  }) async {
+    //mock version returns the updated item shape without touching a backend
+    for (final list in _lists) {
+      if (list.id != listId) continue;
+
+      for (final item in list.items) {
+        if (item.id == itemId) {
+          return item.copyWith(checked: purchased);
+        }
+      }
+    }
+
+    throw StateError('Shopping list item not found.');
+  }
 }
