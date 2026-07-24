@@ -92,5 +92,16 @@ public class VaultFolderServiceTest
         assertNotNull(result);
         assertEquals("General", result.folderName());
     }
+
+    @Test
+    void getVaultFolderByVaultId_throwsException_vaultNotFound()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.getVaultFolderByVaultId(1, 1));
+
+        assertEquals(HttpsStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Vault not found.", ex.getReason());
+    }
     
 }
