@@ -184,4 +184,16 @@ public class VaultFolderRecipeServiceTest
         assertNotNull(result);
         assertEquals(1, result.id());
     }
+
+    @Test
+    void getFolderRecipeById_returnsVaultFolderRecipe_whenFoundAndMember()
+    {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(folderRecipe);
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(true);
+
+        VaultFolderResponse result = vaultFolderRecipeService.getFolderRecipeById(1, 3);
+
+        assertNotNull(result);
+        assertEquals(1, result.id());
+    }
 }
