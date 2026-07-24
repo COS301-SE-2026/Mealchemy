@@ -173,4 +173,15 @@ public class VaultFolderRecipeServiceTest
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only the recipe owner can see where it has been added.", ex.getReason());
     }
+
+    @Test
+    void getFolderRecipeById_returnsVaultFolderRecipe_whenFoundAndOwner()
+    {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(folderRecipe);
+
+        VaultFolderResponse result = vaultFolderRecipeService.getFolderRecipeById(1, 1);
+
+        assertNotNull(result);
+        assertEquals(1, result.id());
+    }
 }
