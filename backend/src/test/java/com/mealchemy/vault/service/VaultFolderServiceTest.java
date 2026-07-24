@@ -96,9 +96,9 @@ public class VaultFolderServiceTest
     @Test
     void getVaultFolderByVaultId_throwsException_whenVaultNotFound()
     {
-        when(vaultRepository.findById(1)).thenReturn(Optional.empty());
+        when(vaultRepository.findById(99)).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.getVaultFolderByVaultId(1, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.getVaultFolderByVaultId(99, 1));
 
         assertEquals(HttpsStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Vault not found.", ex.getReason());
@@ -145,9 +145,9 @@ public class VaultFolderServiceTest
     @Test
     void getVaultFolderByName_throwsException_whenVaultNotFound()
     {
-        when(vaultRepository.findById(1)).thenReturn(Optional.empty());
+        when(vaultRepository.findById(99)).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.getVaultFolderByVaultId("General", 1, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.getVaultFolderByVaultId("General", 99, 1));
 
         assertEquals(HttpsStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Vault not found.", ex.getReason());
@@ -202,5 +202,16 @@ public class VaultFolderServiceTest
 
         assertNotNull(result);
         assertEquals("General", result.folderName());
+    }
+
+    @Test
+    void getVaultFolderById_throwsException_whenVaultNotFound()
+    {
+        when(vaultRepository.findById(99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.getVaultFolderByVaultId("General", 99, 1));
+
+        assertEquals(HttpsStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Vault not found.", ex.getReason());
     }
 }
