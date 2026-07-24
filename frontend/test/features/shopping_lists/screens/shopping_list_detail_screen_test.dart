@@ -124,7 +124,7 @@ void main() {
     await tester.tap(find.text('Update Pantry'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('items sent to pantry'), findsOneWidget);
+    expect(find.textContaining('item sent to pantry'), findsOneWidget);
   });
 
   testWidgets('ShoppingListDetailScreen renders not found state', (

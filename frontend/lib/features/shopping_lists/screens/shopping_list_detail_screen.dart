@@ -62,6 +62,11 @@ class ShoppingListDetailScreen extends ConsumerWidget {
                     category: category,
                   );
             },
+            onCompleteShop: () async {
+              return ref
+                  .read(shoppingListsProvider.notifier)
+                  .completeShop(list.id);
+            },
           );
         },
         loading: () => const Center(
@@ -88,6 +93,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
     required this.list,
     required this.onToggleItem,
     required this.onAddItem,
+    required this.onCompleteShop,
   });
 
   final ShoppingList list;
@@ -97,6 +103,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
     required String quantity,
     required String category,
   }) onAddItem;
+  final Future<Object?> Function() onCompleteShop;
 
   @override
   Widget build(BuildContext context) {
@@ -133,23 +140,39 @@ class _ShoppingListDetailContent extends StatelessWidget {
             right: 28,
             bottom: 42,
             child: _UpdatePantryButton(
-              onTap: () {
+              onTap: () async {
                 final checkedCount =
                     list.items.where((item) => item.checked).length;
 
-                final message = checkedCount == 0
-                    ? 'No checked items to update.'
-                    : checkedCount == 1
-                        ? '1 item sent to pantry.'
-                        : '$checkedCount items sent to pantry.';
+                if (checkedCount == 0) {
+                  _showSnackBar(
+                    context,
+                    'No checked items to update.',
+                  );
+                  return;
+                }
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(message),
-                    backgroundColor: AppColors.primary,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
+                final result = await onCompleteShop();
+
+                if (!context.mounted) return;
+
+                final addedCount = result == null
+                    ? checkedCount
+                    : (result as dynamic).addedToPantryCount as int;
+
+                final skippedItems = result == null
+                    ? <String>[]
+                    : (result as dynamic).skippedManualItems as List<String>;
+
+                final skippedText = skippedItems.isEmpty
+                    ? ''
+                    : ' ${skippedItems.length} manual item skipped.';
+
+                final message = addedCount == 1
+                    ? '1 item sent to pantry.$skippedText'
+                    : '$addedCount items sent to pantry.$skippedText';
+
+                _showSnackBar(context, message);
               },
             ),
           ),
@@ -414,4 +437,14 @@ class _AddItemField extends StatelessWidget {
       ),
     );
   }
+}
+
+void _showSnackBar(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      backgroundColor: AppColors.primary,
+      behavior: SnackBarBehavior.floating,
+    ),
+  );
 }
