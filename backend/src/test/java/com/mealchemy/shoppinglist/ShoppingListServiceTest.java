@@ -1,4 +1,4 @@
-// unit testing for pantry
+// unit testing for shopping list
 
 package com.mealchemy.shoppinglist;
 
@@ -757,7 +757,7 @@ public class ShoppingListServiceTest {
             () -> shoppingListService.deleteShoppingListItem(1, 1, 48)
         );
 
-        // Assert
+        // Assert1, 2, 3
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 
@@ -807,7 +807,7 @@ public class ShoppingListServiceTest {
         ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
         when(shoppingListRepository.findById(1)).thenReturn(Optional.empty());
         
-        DeletedBatchRequest request = new DeleteBatchItemsRequest(List.of(1, 2, 3))
+        DeleteBatchItemsRequest request = new DeleteBatchItemsRequest(List.of(1, 2, 3));
 
         // Act
         ResponseStatusException ex = assertThrows(
@@ -825,7 +825,7 @@ public class ShoppingListServiceTest {
         ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
         when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
 
-        DeletedBatchRequest request = new DeleteBatchItemsRequest(List.of(1, 2, 3))
+        DeleteBatchItemsRequest request = new DeleteBatchItemsRequest(List.of(1, 2, 3));
 
         // Act
         ResponseStatusException ex = assertThrows(
@@ -842,10 +842,15 @@ public class ShoppingListServiceTest {
         // Arrange
         ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
         when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
-        
 
+        ShoppingListItem item1 = new ShoppingListItem();
+        item1.setShoppingListId(1);
+        ReflectionTestUtils.setField(item1, "itemId", 1);
 
-        DeletedBatchRequest request = new DeleteBatchItemsRequest(List.of(1, 2, 3))
+        when(shoppingListItemRepository.findById(1)).thenReturn(Optional.of(item1));
+        when(shoppingListItemRepository.findById(2)).thenReturn(Optional.empty());
+
+        DeleteBatchItemsRequest request = new DeleteBatchItemsRequest(List.of(1, 2, 3));
         // Act 
         ResponseStatusException ex = assertThrows(
             ResponseStatusException.class,
@@ -854,12 +859,359 @@ public class ShoppingListServiceTest {
 
         // Assert
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        
+        // loop delets as it goes, item 1 should be deleted 
+        verify(shoppingListItemRepository).delete(item1);
+        // item 3 never reached - loop stopperd after failure
+        verify(shoppingListItemRepository, times(1)).delete(any());
     }
 
     @Test
     void deleteSelectedItems_whenItemBelongsToDifferentList_throwsNotFound() {
-        //TODO 
+        // Arrange 
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        ShoppingListItem itemDiffList = new ShoppingListItem();
+        itemDiffList.setShoppingListId(2); 
+        ReflectionTestUtils.setField(itemDiffList, "itemId", 5);
+
+        when(shoppingListItemRepository.findById(5)).thenReturn(Optional.of(itemDiffList));
+
+        DeleteBatchItemsRequest request = new DeleteBatchItemsRequest(List.of(5));
+
+        // Act 
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.deleteSelectedItems(1, 1, request)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        verify(shoppingListItemRepository, never()).delete(any());        
+    }
+
+    @Test
+    void deleteSelectedItems_valid_deletesAllItems() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        ShoppingListItem item1 = new ShoppingListItem();
+        item1.setShoppingListId(1);
+        ReflectionTestUtils.setField(item1, "itemId", 1);
+
+        ShoppingListItem item2 = new ShoppingListItem();
+        item2.setShoppingListId(1);
+        ReflectionTestUtils.setField(item2, "itemId", 2);
+
+        when(shoppingListItemRepository.findById(1)).thenReturn(Optional.of(item1));
+        when(shoppingListItemRepository.findById(2)).thenReturn(Optional.of(item2));
+
+        // Act 
+        DeleteBatchItemsRequest request = new DeleteBatchItemsRequest(List.of(1, 2));
+
+        shoppingListService.deleteSelectedItems(1, 1, request);
+
+        // Assert
+        verify(shoppingListItemRepository).delete(item1);
+        verify(shoppingListItemRepository).delete(item2);
+        verify(shoppingListItemRepository, times(2)).delete(any(ShoppingListItem.class));     
     }
 
 
+    // ========== Select All Items As Purchased ==========
+
+    @Test 
+    void selectAllItemsAsPurchase_whenListNotFound_throwsNotFound() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.empty());
+        
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.selectAllItemsAsPurchased(1, 1)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void selectAllItemsAsPurchase_whenNotOwned_throwsUnauthorized() {
+        // Arrange
+        existingShoppingList.setUserId(2);
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.selectAllItemsAsPurchased(1, 1)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+    }
+
+    @Test
+    void selectAllItemsAsPurchase_valid_selectsAllItemsAsPurchased() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        ShoppingListItem item1 = new ShoppingListItem();
+        item1.setShoppingListId(1);
+        ReflectionTestUtils.setField(item1, "itemId", 1);
+
+        ShoppingListItem item2 = new ShoppingListItem();
+        item2.setShoppingListId(1);
+        ReflectionTestUtils.setField(item2, "itemId", 2);
+
+        when(shoppingListItemRepository.findByShoppingListId(1)).thenReturn(List.of(item1, item2));
+
+        shoppingListService.selectAllItemsAsPurchased(1, 1);
+
+        // Assert
+       assertEquals(true, item1.getPurchased());
+       assertEquals(true, item2.getPurchased());
+       verify(shoppingListItemRepository, times(2)).save(any(ShoppingListItem.class));
+    }
+
+
+    // ========== Deselect All Items As Purchased ==========
+
+    @Test 
+    void deselectAllItemsAsPurchase_whenListNotFound_throwsNotFound() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.empty());
+        
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.deselectAllItemsAsPurchased(1, 1)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void deselectAllItemsAsPurchase_whenNotOwned_throwsUnauthorized() {
+        // Arrange
+        existingShoppingList.setUserId(2);
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.deselectAllItemsAsPurchased(1, 1)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+    }
+
+    @Test
+    void deselectAllItemsAsPurchase_valid_deselectsAllItemsAsPurchased() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        ShoppingListItem item1 = new ShoppingListItem();
+        item1.setShoppingListId(1);
+        ReflectionTestUtils.setField(item1, "itemId", 1);
+
+        ShoppingListItem item2 = new ShoppingListItem();
+        item2.setShoppingListId(1);
+        ReflectionTestUtils.setField(item2, "itemId", 2);
+
+        when(shoppingListItemRepository.findByShoppingListId(1)).thenReturn(List.of(item1, item2));
+
+        shoppingListService.deselectAllItemsAsPurchased(1, 1);
+
+        // Assert
+       assertEquals(false, item1.getPurchased());
+       assertEquals(false, item2.getPurchased());
+       verify(shoppingListItemRepository, times(2)).save(any(ShoppingListItem.class));
+    }
+
+    // ========== Auto add to pantry from shopping list ==========
+
+    @Test 
+    void autoAddToPantryRemoveFromList_whenListNotFound_throwsNotFound() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.empty());
+        
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.autoAddToPantryRemoveFromList(1, 1)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void autoAddToPantryRemoveFromList_whenNotOwned_throwsUnauthorized() {
+        // Arrange
+        existingShoppingList.setUserId(2);
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.autoAddToPantryRemoveFromList(1, 1)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+    }
+
+    @Test
+    void autoAddToPantryRemoveFromList_catalogueLinkedItem_addToPantry() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        ShoppingListItem  itemInCatalogue = new ShoppingListItem();
+        itemInCatalogue.setShoppingListId(1);
+        itemInCatalogue.setIngId(2);
+        itemInCatalogue.setQuantity(new BigDecimal("250"));
+        itemInCatalogue.setUnit("g");
+        itemInCatalogue.setPurchased(true);
+        ReflectionTestUtils.setField(itemInCatalogue, "itemId", 1);
+
+        when(shoppingListItemRepository.findByShoppingListId(1)).thenReturn(List.of(itemInCatalogue)).thenReturn(List.of());
+        
+        // Act
+        CompleteShopResponse response = shoppingListService.autoAddToPantryRemoveFromList(1, 1);
+
+        // Assert
+        assertEquals(1, response.addedToPantryCount());
+        assertTrue(response.skippedManualItemNames().isEmpty());
+        verify(pantryIngredientRepository).save(any(PantryIngredient.class));
+        verify(shoppingListItemRepository).delete(itemInCatalogue);
+    }
+
+    @Test
+    void autoAddToPantryRemoveFromList_manualItem_skippedButRemovedFromList() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        ShoppingListItem  manualItem = new ShoppingListItem();
+        manualItem.setShoppingListId(1);
+        manualItem.setIngId(null);
+        manualItem.setName("Tomatoes");
+        manualItem.setQuantity(new BigDecimal("250"));
+        manualItem.setUnit("g");
+        manualItem.setPurchased(true);
+        ReflectionTestUtils.setField(manualItem, "itemId", 1);
+
+        when(shoppingListItemRepository.findByShoppingListId(1)).thenReturn(List.of(manualItem)).thenReturn(List.of());
+        
+        // Act
+        CompleteShopResponse response = shoppingListService.autoAddToPantryRemoveFromList(1, 1);
+
+        // Assert
+        assertEquals(0, response.addedToPantryCount());
+        assertEquals("Tomatoes", response.skippedManualItemNames());
+        verify(pantryIngredientRepository, never()).save(any());
+        verify(shoppingListItemRepository).delete(manualItem);
+    }
+
+    @Test
+    void autoAddToPantryRemoveFromList_purchasedAndUnpurchased() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        ShoppingListItem  itemInCatalogue = new ShoppingListItem();
+        itemInCatalogue.setShoppingListId(1);
+        itemInCatalogue.setIngId(2);
+        itemInCatalogue.setQuantity(new BigDecimal("250"));
+        itemInCatalogue.setUnit("g");
+        itemInCatalogue.setPurchased(true);
+        ReflectionTestUtils.setField(itemInCatalogue, "itemId", 1);
+
+        ShoppingListItem  unpurchased = new ShoppingListItem();
+        unpurchased.setShoppingListId(1);
+        unpurchased.setIngId(3);
+        unpurchased.setQuantity(new BigDecimal("250"));
+        unpurchased.setUnit("g");
+        unpurchased.setPurchased(false);
+        ReflectionTestUtils.setField(unpurchased, "itemId", 2);
+
+        when(shoppingListItemRepository.findByShoppingListId(1)).thenReturn(List.of(itemInCatalogue, unpurchased)).thenReturn(List.of(unpurchased));
+        
+        // Act
+        CompleteShopResponse response = shoppingListService.autoAddToPantryRemoveFromList(1, 1);
+
+        // Assert
+        assertEquals(1, response.addedToPantryCount());
+        assertTrue(response.skippedManualItemNames().isEmpty());
+        verify(pantryIngredientRepository, never()).save(any());
+        assertFalse(response.shoppingListDeleted());
+        verify(shoppingListItemRepository).delete(itemInCatalogue);
+        verify(shoppingListItemRepository, never()).delete(unpurchased);
+    }
+
+    @Test
+    void autoAddToPantryRemoveFromList_allItemsRemoved_deleteList() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        ShoppingListItem  item1 = new ShoppingListItem();
+        item1.setShoppingListId(1);
+        item1.setIngId(2);
+        item1.setQuantity(new BigDecimal("250"));
+        item1.setUnit("g");
+        item1.setPurchased(true);
+        ReflectionTestUtils.setField(item1, "itemId", 1);
+
+        when(shoppingListItemRepository.findByShoppingListId(1)).thenReturn(List.of(item1)).thenReturn(List.of());
+
+        // Act
+        CompleteShopResponse response = shoppingListService.autoAddToPantryRemoveFromList(1, 1);
+
+        // Assert
+        assertTrue(response.shoppingListDeleted());
+        verify(shoppingListRepository).delete(existingShoppingList);  
+    }
+    
+    @Test
+    void autoAddToPantryRemoveFromList_someItemsRemoved_doNotDeleteShoppingList() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        ShoppingListItem  purchased = new ShoppingListItem();
+        purchased.setShoppingListId(1);
+        purchased.setIngId(2);
+        purchased.setQuantity(new BigDecimal("250"));
+        purchased.setUnit("g");
+        purchased.setPurchased(true);
+        ReflectionTestUtils.setField(purchased, "itemId", 1);
+
+        ShoppingListItem  unpurchased = new ShoppingListItem();
+        unpurchased.setShoppingListId(1);
+        unpurchased.setIngId(3);
+        unpurchased.setQuantity(new BigDecimal("250"));
+        unpurchased.setUnit("g");
+        unpurchased.setPurchased(false);
+        ReflectionTestUtils.setField(unpurchased, "itemId", 2);
+
+        when(shoppingListItemRepository.findByShoppingListId(1)).thenReturn(List.of(purchased, unpurchased)).thenReturn(List.of(unpurchased));
+        
+        // Act
+        CompleteShopResponse response = shoppingListService.autoAddToPantryRemoveFromList(1, 1);
+
+        assertFalse(response.shoppingListDeleted());
+        verify(shoppingListRepository, never()).delete(any(ShoppingList.class));
+    }
 }
