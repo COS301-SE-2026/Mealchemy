@@ -212,4 +212,17 @@ public class VaultMemberServiceTest {
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("User not found.", ex.getReason());
     }
+
+    @Test
+    void removeVaultMember_throwsException_whenNoMatchingVaultMemberRowFound()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(userRepository.findByEmail("testUser@gmail.com")).thenReturn(Optional.of(user));
+        when(vaultMemberRepository.findByVault_VaultIdAndUser_UserId(vault.getVaultId(), user.getUserId())).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> removeVaultMember(1, request, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("VaultMember row not found.", ex.getReason());
+    }
 }
