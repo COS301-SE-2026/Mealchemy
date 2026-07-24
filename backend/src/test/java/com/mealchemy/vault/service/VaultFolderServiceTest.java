@@ -116,4 +116,16 @@ public class VaultFolderServiceTest
         assertEquals("Only vault a member/owner can view the folders.", ex.getReason());
     }
     
+    @Test
+    void getVaultFolderByName_returnsVaultFolder_whenFoundAndOwner()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 1)).thenReturn(false);
+        when(vaultFolderRepository.findByFolderName("General")).thenReturn(Optional.of(folder));
+
+        VaultFolderResponse result = vaultFolderService.getVaultFolderByVaultId(1, 1);
+
+        assertNotNull(result);
+        assertEquals("General", result.folderName());
+    }
 }
