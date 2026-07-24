@@ -18,6 +18,7 @@ import com.mealchemy.vault.dto.VaultMemberResponse;
 import com.mealchemy.vault.repository.VaultMemberRepository;
 import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.auth.repository.UserRepository;
+import com.mealchemy.shared.enums.VaultType;
 
 @Service
 public class VaultMemberService {
@@ -60,6 +61,11 @@ public class VaultMemberService {
         if (!vaultForCheck.getOwnerId().equals(ownerId))
         {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of the vault can add a new member.");
+        }
+
+        if (vaultForCheck.getVaultType().equals(VaultType.PRIVATE))
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Members can't be added to a private vault.");
         }
 
         User userToAdd = userRepository.findByEmail(request.email()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found."));
