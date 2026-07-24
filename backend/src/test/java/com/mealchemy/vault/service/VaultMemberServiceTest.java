@@ -117,4 +117,18 @@ public class VaultMemberServiceTest {
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only a member/owner of the vault can view its members.", ex.getReason());
     }
+
+    @Test
+    void addVaultMember_returnsCreatedVaultMember()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(userRepository.findByEmail("testUser@gmail.com")).thenReturn(Optional.of(user));
+        when(vaultMemberRepository.save(any(VaultMember.class))).thenReturn(vaultMember);
+
+        VaultMemberResponse result = vaultMemberService.addVaultMember(1, request, 1);
+
+        assertNotNull(result);
+        assertEquals(1, result.get(0).getUserId());
+        verify(vaultMemberRepository, times(1)).save(any(VaultMember.class));
+    }
 }
