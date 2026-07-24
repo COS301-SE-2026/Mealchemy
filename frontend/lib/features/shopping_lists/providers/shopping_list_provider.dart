@@ -5,6 +5,8 @@ import '../models/shopping_list.dart';
 import '../repositories/mock_shopping_list_repository.dart';
 import '../repositories/shopping_list_repository.dart';
 import '../models/shopping_list_item.dart';
+import '../../../core/providers/api_service_provider.dart';
+import '../repositories/api_shopping_list_repository.dart';
 
 //select mock/API
 final shoppingListRepositoryProvider = Provider<ShoppingListRepository>((ref) {
@@ -12,8 +14,7 @@ final shoppingListRepositoryProvider = Provider<ShoppingListRepository>((ref) {
     return MockShoppingListRepository();
   }
 
-  //API repo will replace this once the backend endpoint exists
-  return MockShoppingListRepository();
+  return ApiShoppingListRepository(ref.read(dioProvider));
 });
 
 //state management provider
@@ -24,7 +25,7 @@ final shoppingListsProvider =
 
 //current state of shopping list, tracks lists and item checked states
 class ShoppingListsState {
-    const ShoppingListsState({
+  const ShoppingListsState({
     required this.lists,
     this.searchQuery = '',
   });
@@ -80,7 +81,7 @@ class ShoppingListsState {
     return grouped;
   }
 
-    ShoppingListsState copyWith({
+  ShoppingListsState copyWith({
     List<ShoppingList>? lists,
     String? searchQuery,
   }) {
