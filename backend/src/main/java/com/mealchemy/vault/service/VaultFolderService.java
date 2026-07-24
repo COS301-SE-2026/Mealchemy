@@ -35,7 +35,7 @@ public class VaultFolderService {
     // Get all folders relating to one vault
     public List<VaultFolderResponse> getVaultFolderByVaultId(Integer vaultId, Integer userId)
     {
-        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new RuntimeException("Vault not found."));
+        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
 
         isOwnerOrMember(vaultForCheck, userId);
 
@@ -47,11 +47,11 @@ public class VaultFolderService {
     // Get a single folder by name
     public VaultFolderResponse getVaultFolderByName(String name, Integer vaultId, Integer userId)
     {
-        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new RuntimeException("Vault not found."));
+        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
 
         isOwnerOrMember(vaultForCheck, userId);
 
-        VaultFolder vaultFolderForReturn = vaultFolderRepository.findByFolderName(name).orElseThrow(() -> new RuntimeException("Folder not found."));
+        VaultFolder vaultFolderForReturn = vaultFolderRepository.findByFolderName(name).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
 
         return VaultFolderResponse.from(vaultFolderForReturn);
     }
@@ -59,18 +59,18 @@ public class VaultFolderService {
     // Get a single folder by id
     public VaultFolderResponse getVaultFolderById(int id, Integer vaultId, Integer userId)
     {
-        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new RuntimeException("Vault not found."));
+        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
 
         isOwnerOrMember(vaultForCheck, userId);
         
-        VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(id).orElseThrow(() -> new RuntimeException("Folder not found."));
+        VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
         return VaultFolderResponse.from(vaultFolderForReturn);
     }
 
     // Post to create a new vault folder
     public VaultFolderResponse createVaultFolder(VaultFolderRequest request, Integer ownerId)
     {
-        Vault vaultForCheck = vaultRepository.findById(request.vaultId()).orElseThrow(() -> new RuntimeException("Vault not found."));
+        Vault vaultForCheck = vaultRepository.findById(request.vaultId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
         
         isOwner(vaultForCheck, ownerId);
 
@@ -81,11 +81,11 @@ public class VaultFolderService {
     // Put to update an existing folder
     public VaultFolderResponse updateVaultFolder(int id, VaultFolderRequest request, Integer ownerId)
     {
-        Vault vaultForCheck = vaultRepository.findById(request.vaultId()).orElseThrow(() -> new RuntimeException("Vault not found."));
+        Vault vaultForCheck = vaultRepository.findById(request.vaultId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
         
         isOwner(vaultForCheck, ownerId);
 
-        VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(id).orElseThrow(() -> new RuntimeException("Folder not found."));
+        VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
         
         vaultFolderForReturn.setVault(vaultForCheck);
         vaultFolderForReturn.setFolderName(request.folderName());
@@ -96,7 +96,7 @@ public class VaultFolderService {
     // Delete a specific folder using id
     public void deleteVaultFolder(int id, Integer vaultId, Integer ownerId)
     {
-        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new RuntimeException("Vault not found."));
+        Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
         
         isOwner(vaultForCheck, ownerId);
 
