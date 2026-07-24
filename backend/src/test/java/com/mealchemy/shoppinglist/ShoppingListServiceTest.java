@@ -1119,7 +1119,8 @@ public class ShoppingListServiceTest {
 
         // Assert
         assertEquals(0, response.addedToPantryCount());
-        assertEquals("Tomatoes", response.skippedManualItemNames());
+        assertEquals(1, response.skippedManualItemNames().size());
+        assertEquals("Tomatoes", response.skippedManualItemNames().get(0));
         verify(pantryIngredientRepository, never()).save(any());
         verify(shoppingListItemRepository).delete(manualItem);
     }
@@ -1154,7 +1155,7 @@ public class ShoppingListServiceTest {
         // Assert
         assertEquals(1, response.addedToPantryCount());
         assertTrue(response.skippedManualItemNames().isEmpty());
-        verify(pantryIngredientRepository, never()).save(any());
+        verify(pantryIngredientRepository).save(any(PantryIngredient.class));
         assertFalse(response.shoppingListDeleted());
         verify(shoppingListItemRepository).delete(itemInCatalogue);
         verify(shoppingListItemRepository, never()).delete(unpurchased);

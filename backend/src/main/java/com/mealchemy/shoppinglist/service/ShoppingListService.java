@@ -217,7 +217,7 @@ public class ShoppingListService {
             saved.getItemId(),
             saved.getShoppingListId(),
             saved.getIngId(),
-            saved.getName(),
+            getItemName(saved.getIngId(), saved.getName()),
             getCategoryName(saved.getIngId()),
             saved.getQuantity(),
             saved.getUnit(),
@@ -245,6 +245,14 @@ public class ShoppingListService {
         }
 
         return category.get().getCategoryName();
+    }
+
+    private String getItemName(Integer ingId, String manualName) {
+        if (ingId == null) {
+            return manualName;
+        }
+        return ingredientCatalogueRepository.findById(ingId).map(IngredientCatalogue::getName)
+                                                            .orElse(manualName);
     }
 
 
@@ -296,7 +304,7 @@ public class ShoppingListService {
             saved.getItemId(),
             saved.getShoppingListId(),
             saved.getIngId(),
-            saved.getName(),
+            getItemName(saved.getIngId(), saved.getName()),
             getCategoryName(saved.getIngId()),
             saved.getQuantity(),
             saved.getUnit(),
@@ -336,7 +344,7 @@ public class ShoppingListService {
             saved.getItemId(),
             saved.getShoppingListId(),
             saved.getIngId(),
-            saved.getName(),
+            getItemName(saved.getIngId(), saved.getName()),
             getCategoryName(saved.getIngId()),
             saved.getQuantity(),
             saved.getUnit(),
