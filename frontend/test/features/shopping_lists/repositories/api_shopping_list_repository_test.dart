@@ -58,6 +58,21 @@ void main() {
             return;
           }
 
+          if (options.method == 'PUT' &&
+              options.path == '/api/shopping-lists/1/complete-shop') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: {
+                  'added_to_pantry_count': 2,
+                  'skipped_manual_items': ['Fresh basil bunch'],
+                  'shopping_list_deleted': false,
+                },
+              ),
+            );
+            return;
+          }
           if (options.path == '/api/shopping-lists/1') {
             handler.resolve(
               Response(
@@ -209,5 +224,15 @@ void main() {
       ),
       throwsArgumentError,
     );
+  });
+  test('completeShop puts complete-shop endpoint and maps response', () async {
+    final result = await repository.completeShop('1');
+
+    expect(lastRequest?.method, 'PUT');
+    expect(lastRequest?.path, '/api/shopping-lists/1/complete-shop');
+
+    expect(result.addedToPantryCount, 2);
+    expect(result.skippedManualItems, ['Fresh basil bunch']);
+    expect(result.shoppingListDeleted, isFalse);
   });
 }

@@ -1,5 +1,6 @@
 import '../models/shopping_list.dart';
 import '../models/shopping_list_item.dart';
+import '../models/complete_shop_result.dart';
 
 //contract for shopping list data source
 abstract class ShoppingListRepository {
@@ -22,4 +23,6 @@ abstract class ShoppingListRepository {
     required String quantity,
     required String unit,
   });
+  //moves purchased list items into pantry and removes them from this list
+  Future<CompleteShopResult> completeShop(String listId);
 }

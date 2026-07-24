@@ -4,6 +4,7 @@ import '../models/shopping_list.dart';
 
 import 'shopping_list_repository.dart';
 import '../models/shopping_list_item.dart';
+import '../models/complete_shop_result.dart';
 
 //backend shopping list data source
 class ApiShoppingListRepository implements ShoppingListRepository {
@@ -83,5 +84,14 @@ class ApiShoppingListRepository implements ShoppingListRepository {
     );
 
     return ShoppingListItem.fromJson(response.data ?? {});
+  }
+
+  @override
+  Future<CompleteShopResult> completeShop(String listId) async {
+    final response = await _dio.put<Map<String, dynamic>>(
+      '/api/shopping-lists/$listId/complete-shop',
+    );
+
+    return CompleteShopResult.fromJson(response.data ?? {});
   }
 }

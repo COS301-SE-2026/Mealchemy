@@ -1,6 +1,7 @@
 import '../models/shopping_list.dart';
 import '../models/shopping_list_item.dart';
 import 'shopping_list_repository.dart';
+import '../models/complete_shop_result.dart';
 
 //temporary mock data for shopping lists
 class MockShoppingListRepository implements ShoppingListRepository {
@@ -193,6 +194,16 @@ class MockShoppingListRepository implements ShoppingListRepository {
               : '$cleanedQuantity $cleanedUnit',
       category: 'MANUAL',
       unit: cleanedUnit.isEmpty ? null : cleanedUnit,
+    );
+  }
+
+  @override
+  Future<CompleteShopResult> completeShop(String listId) async {
+    //mock result mirrors the backend complete-shop response shape
+    return const CompleteShopResult(
+      addedToPantryCount: 1,
+      skippedManualItems: ['Mock manual item'],
+      shoppingListDeleted: false,
     );
   }
 }
