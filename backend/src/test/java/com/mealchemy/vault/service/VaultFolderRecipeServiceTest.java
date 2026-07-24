@@ -162,4 +162,15 @@ public class VaultFolderRecipeServiceTest
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Recipe not found.", ex.getReason());
     }
+
+    @Test
+    void getFoldersByRecipeId_throwsException_whenNotOwner()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.getFoldersByRecipeId(1, 3));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only the recipe owner can see where it has been added.", ex.getReason());
+    }
 }
