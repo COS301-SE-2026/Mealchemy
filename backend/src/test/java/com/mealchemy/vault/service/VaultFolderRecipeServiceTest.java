@@ -219,4 +219,19 @@ public class VaultFolderRecipeServiceTest
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only vault a member/owner can can interact with folders/recipe relationships.", ex.getReason());
     }
+
+    @Test
+    void createVaultFolderRecipe_returnsNewVaultFolderRecipe_whenFoundAndOwner()
+    {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(recipeRepository.findById(request.recipeId())).thenReturn(Optional.of(recipe));
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+        when(vaultFolderRecipe.save(any(VaultFolderRecipe.class))).thenReturn(Optional.of(folderRecipe));
+
+        VaultFolderRecipeResponse result = vaultFolderRecipe.createVaultFolderRecipe(request, 1, 1);
+
+        assertNotNull(result);
+        assertEquals(1, result.id());
+        verify(vaultFolderRepository, times(1)).save(any(VaultFolderRecipe.class));
+    }
 }
