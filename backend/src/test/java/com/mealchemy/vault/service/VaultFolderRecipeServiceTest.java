@@ -306,7 +306,7 @@ public class VaultFolderRecipeServiceTest
         when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
         when(vaultFolderRecipeRepository.save(all(VaultFolderRecipe.class))).thenReturn(folderRecipe);
 
-        VaultFolderResponse result = vaultFolderRecipeService.updateVaultFolderRecipe(1, request, 1);
+        VaultFolderResponse result = vaultFolderRecipeService.updateVaultFolderRecipe(1, moveRequest, 1);
 
         assertNotNull(result);
         assertEquals(1, result.id());
@@ -318,7 +318,7 @@ public class VaultFolderRecipeServiceTest
     {
         when(vaultFolderRecipeRepository.findById(99)).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.updateVaultFolderRecipe(99, request, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.updateVaultFolderRecipe(99, moveRequest, 1));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("No record found.", ex.getReason());
@@ -329,7 +329,7 @@ public class VaultFolderRecipeServiceTest
     {
         when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.updateVaultFolderRecipe(1, request, 3));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.updateVaultFolderRecipe(1, moveRequest, 3));
         
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only a vault owner can interact with folders/recipe relationships.", ex.getReason());
@@ -341,9 +341,31 @@ public class VaultFolderRecipeServiceTest
         when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
         when(vaultFolderRepository.findById(request.folderId())).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.updateVaultFolderRecipe(1, request, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.updateVaultFolderRecipe(1, moveRequest, 1));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("New folder not found.", ex.getReason());
+    }
+
+    @Test
+    void updateVaultFolderRecipe_throwsException_whenNewFolderFromDifferentVault()
+    {
+        Vault differentVault = new Vault();
+        differentVault.setOwnerId(2);
+        ReflectionTestUtils.setField(differentVault, "vaultId", 2);
+
+        VaultFolder newFolder = new VaultFolder();
+        folder.setVault(differentVault);
+        ReflectionTestUtils.setField(folder, "folderId", 3);
+
+        VaultFolderRecipeMoveRequest moveRequestLocal = new VaultFolderRecipeMoveRequest(3);
+
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(vaultFolderRepository.findById(request.folderId())).thenReturn(Optional.of(folder));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.updateVaultFolderRecipe(1, moveRequestLocal, 1));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Recipes can only moved between folders in the same vault.", ex.getReason());
     }
 }
