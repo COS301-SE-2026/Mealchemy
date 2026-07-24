@@ -124,7 +124,7 @@ public class VaultFolderService {
 
         if (!isOwner && !isMember)
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only vault a member/owner can view the folders.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault member/owner can view the folders.");
         }
     }
 
@@ -132,7 +132,7 @@ public class VaultFolderService {
     {
         if (!vault.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only vault a owner can create new folders.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault owner can modify folders.");
         }
     }
 }
