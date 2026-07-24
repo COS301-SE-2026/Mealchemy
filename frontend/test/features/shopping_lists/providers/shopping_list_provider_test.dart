@@ -107,4 +107,32 @@ void main() {
 
     expect(list.items.any((item) => item.name == 'Fresh Basil'), isFalse);
   });
+  test('shoppingListsProvider completes shop and removes checked items',
+      () async {
+    //container used to read Riverpod providers in tests
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await container.read(shoppingListsProvider.future);
+
+    final notifier = container.read(shoppingListsProvider.notifier);
+
+    await notifier.toggleItemChecked(
+      listId: 'general-list',
+      itemId: 'baby-arugula',
+    );
+
+    final result = await notifier.completeShop('general-list');
+
+    final updatedState = container.read(shoppingListsProvider).value!;
+    final list = updatedState.getListById('general-list')!;
+
+    expect(result, isNotNull);
+    expect(result!.addedToPantryCount, 1);
+    expect(result.skippedManualItems, ['Mock manual item']);
+    expect(
+      list.items.any((item) => item.id == 'baby-arugula'),
+      isFalse,
+    );
+  });
 }

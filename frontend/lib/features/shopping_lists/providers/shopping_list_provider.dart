@@ -7,6 +7,7 @@ import '../repositories/shopping_list_repository.dart';
 import '../models/shopping_list_item.dart';
 import '../../../core/providers/api_service_provider.dart';
 import '../repositories/api_shopping_list_repository.dart';
+import '../models/complete_shop_result.dart';
 
 //select mock/API
 final shoppingListRepositoryProvider = Provider<ShoppingListRepository>((ref) {
@@ -189,6 +190,32 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     state = AsyncData(
       current.copyWith(lists: updatedLists),
     );
+  }
+
+  //moves checked shopping items to pantry through backend
+  Future<CompleteShopResult?> completeShop(String listId) async {
+    final current = state.valueOrNull;
+    if (current == null) return null;
+
+    final result = await _repository.completeShop(listId);
+
+    final updatedLists = current.lists.map((list) {
+      if (list.id != listId) return list;
+
+      final remainingItems = list.items.where((item) => !item.checked).toList();
+
+      return list.copyWith(items: remainingItems);
+    }).toList();
+
+    state = AsyncData(
+      current.copyWith(
+        lists: result.shoppingListDeleted
+            ? updatedLists.where((list) => list.id != listId).toList()
+            : updatedLists,
+      ),
+    );
+
+    return result;
   }
 
   //updates search query
