@@ -14,4 +14,12 @@ abstract class ShoppingListRepository {
     required String itemId,
     required bool purchased,
   });
+
+  //adds a manual item to one shopping list
+  Future<ShoppingListItem> addItemToShoppingList({
+    required String listId,
+    required String name,
+    required String quantity,
+    required String unit,
+  });
 }

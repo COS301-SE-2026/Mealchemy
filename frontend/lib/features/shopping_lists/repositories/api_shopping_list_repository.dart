@@ -49,4 +49,39 @@ class ApiShoppingListRepository implements ShoppingListRepository {
 
     return ShoppingListItem.fromJson(response.data ?? {});
   }
+
+  @override
+  Future<ShoppingListItem> addItemToShoppingList({
+    required String listId,
+    required String name,
+    required String quantity,
+    required String unit,
+  }) async {
+    final cleanedName = name.trim();
+    final cleanedQuantity = quantity.trim();
+    final cleanedUnit = unit.trim();
+
+    final parsedQuantity =
+        cleanedQuantity.isEmpty ? null : num.tryParse(cleanedQuantity);
+
+    if (cleanedName.isEmpty) {
+      throw ArgumentError('Item name is required.');
+    }
+
+    if (cleanedQuantity.isNotEmpty && parsedQuantity == null) {
+      throw ArgumentError('Quantity must be a valid number.');
+    }
+
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/api/shopping-lists/$listId/items',
+      data: {
+        'ing_id': null,
+        'name': cleanedName,
+        'quantity': parsedQuantity,
+        'unit': cleanedUnit.isEmpty ? null : cleanedUnit,
+      },
+    );
+
+    return ShoppingListItem.fromJson(response.data ?? {});
+  }
 }

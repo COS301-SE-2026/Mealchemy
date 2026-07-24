@@ -36,6 +36,28 @@ void main() {
             );
             return;
           }
+
+          if (options.method == 'POST' &&
+              options.path == '/api/shopping-lists/1/items') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: {
+                  'item_id': 11,
+                  'shopping_list_id': 1,
+                  'ing_id': null,
+                  'name': options.data['name'],
+                  'category': null,
+                  'quantity': options.data['quantity'],
+                  'unit': options.data['unit'],
+                  'purchased': false,
+                },
+              ),
+            );
+            return;
+          }
+
           if (options.path == '/api/shopping-lists/1') {
             handler.resolve(
               Response(
@@ -141,5 +163,51 @@ void main() {
     expect(item.shoppingListId, 1);
     expect(item.name, 'Greek Yogurt');
     expect(item.checked, isTrue);
+  });
+  test('addItemToShoppingList posts manual item and maps response', () async {
+    final item = await repository.addItemToShoppingList(
+      listId: '1',
+      name: 'Fresh Basil',
+      quantity: '2',
+      unit: 'bunches',
+    );
+
+    expect(lastRequest?.method, 'POST');
+    expect(lastRequest?.path, '/api/shopping-lists/1/items');
+    expect(lastRequest?.data['ing_id'], isNull);
+    expect(lastRequest?.data['name'], 'Fresh Basil');
+    expect(lastRequest?.data['quantity'], 2);
+    expect(lastRequest?.data['unit'], 'bunches');
+
+    expect(item.itemId, 11);
+    expect(item.shoppingListId, 1);
+    expect(item.name, 'Fresh Basil');
+    expect(item.category, 'MANUAL');
+    expect(item.quantity, '2 bunches');
+    expect(item.checked, isFalse);
+  });
+
+  test('addItemToShoppingList rejects blank name before API call', () {
+    expect(
+      () => repository.addItemToShoppingList(
+        listId: '1',
+        name: '   ',
+        quantity: '2',
+        unit: 'bunches',
+      ),
+      throwsArgumentError,
+    );
+  });
+
+  test('addItemToShoppingList rejects invalid quantity before API call', () {
+    expect(
+      () => repository.addItemToShoppingList(
+        listId: '1',
+        name: 'Fresh Basil',
+        quantity: 'two',
+        unit: 'bunches',
+      ),
+      throwsArgumentError,
+    );
   });
 }

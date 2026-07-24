@@ -163,4 +163,36 @@ class MockShoppingListRepository implements ShoppingListRepository {
 
     throw StateError('Shopping list item not found.');
   }
+
+  @override
+  Future<ShoppingListItem> addItemToShoppingList({
+    required String listId,
+    required String name,
+    required String quantity,
+    required String unit,
+  }) async {
+    final cleanedName = name.trim();
+    final cleanedQuantity = quantity.trim();
+    final cleanedUnit = unit.trim();
+
+    if (cleanedName.isEmpty) {
+      throw ArgumentError('Item name is required.');
+    }
+
+    //mock version returns a backend-shaped manual item
+    return ShoppingListItem(
+      id: cleanedName.toLowerCase().replaceAll(' ', '-'),
+      itemId: 999,
+      shoppingListId: int.tryParse(listId),
+      ingId: null,
+      name: cleanedName,
+      quantity: cleanedQuantity.isEmpty
+          ? '-'
+          : cleanedUnit.isEmpty
+              ? cleanedQuantity
+              : '$cleanedQuantity $cleanedUnit',
+      category: 'MANUAL',
+      unit: cleanedUnit.isEmpty ? null : cleanedUnit,
+    );
+  }
 }
