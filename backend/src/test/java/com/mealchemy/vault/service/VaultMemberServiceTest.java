@@ -200,4 +200,16 @@ public class VaultMemberServiceTest {
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only the owner of the vault can remove a member.", ex.getReason());
     }
+
+    @Test
+    void removeVaultMember_throwsException_whenUserNotFound()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(userRepository.findByEmail("testUser@gmail.com")).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> removeVaultMember(1, request, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("User not found.", ex.getReason());
+    }
 }
