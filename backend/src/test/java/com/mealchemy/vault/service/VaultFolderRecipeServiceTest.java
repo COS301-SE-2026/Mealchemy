@@ -285,4 +285,17 @@ public class VaultFolderRecipeServiceTest
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Recipe not found.", ex.getReason());
     }
+
+    @Test
+    void createVaultFolderRecipe_throwsException_whenUserNotFound()
+    {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(recipeRepository.findById(request.recipeId())).thenReturn(Optional.of(recipe));
+        when(userRepository.findById(1)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipe.createVaultFolderRecipe(request, 1, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("User not found.", ex.getReason());
+    }
 }
