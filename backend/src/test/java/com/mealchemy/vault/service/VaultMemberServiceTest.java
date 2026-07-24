@@ -94,4 +94,15 @@ public class VaultMemberServiceTest {
         assertEquals(1, result.size());
         assertEquals(1, result.get(0).userId());
     }
+
+    @Test
+    void getVaultMembersByVaultId_throwsException_whenVaultNotFound()
+    {
+        when(vaultRepository.findById(99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.getVaultMembersByVaultId(99, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Vault not found.", ex.getReason());
+    }
 }
