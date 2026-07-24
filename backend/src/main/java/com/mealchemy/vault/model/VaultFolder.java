@@ -71,7 +71,7 @@ public class VaultFolder {
         folderName = folderNameIn;
     }
 
-    public void setVaultFolderRecipes(List<VaultFolderRecipe>    vaultFolderRecipesIn)
+    public void setVaultFolderRecipes(List<VaultFolderRecipe> vaultFolderRecipesIn)
     {
         vaultFolderRecipes = vaultFolderRecipesIn;
     }
