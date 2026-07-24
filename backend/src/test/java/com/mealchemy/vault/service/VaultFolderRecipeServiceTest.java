@@ -116,4 +116,15 @@ public class VaultFolderRecipeServiceTest
         assertNotNull(result);
         assertEquals(1, result.get(0).addedByUserId());
     }
+
+    @Test
+    void getRecipesByFolderId_throwsException_whenFolderNotFound()
+    {
+        when(vaultFolderRepository.findById(99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.getRecipesByFolderId(99, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Folder not found.", ex.getReason());
+    }
 }
