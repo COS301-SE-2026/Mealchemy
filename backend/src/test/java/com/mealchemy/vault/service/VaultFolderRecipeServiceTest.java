@@ -379,4 +379,17 @@ public class VaultFolderRecipeServiceTest
 
         verify(vaultFolderRecipeRepository, times(1)).deleteById(1);
     }
+
+    @Test
+    void deleteVaultFolderRecipe_callsDeleteById_whenFoundAndMemberRecipeWasAddedBy()
+    {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        doNothing().when(vaultFolderRecipeRepository).deleteById(1);
+        
+        vault.setOwnerId(3);
+
+        VaultFolderRecipeResponse result = vaultFolderRecipeService.deleteVaultFolderRecipe(1, 1);
+
+        verify(vaultFolderRecipeRepository, times(1)).deleteById(1);
+    }
 }

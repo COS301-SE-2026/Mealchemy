@@ -166,7 +166,7 @@ public class VaultFolderRecipeService {
 
         boolean isPersonWhoAdded = addedByUserId.equals(userId);
 
-        if (!isOwner && !isMember && !isPersonWhoAdded)
+        if (!isOwner && !(isMember && isPersonWhoAdded))
         {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only vault a member/owner can delete the folders.");
         }
