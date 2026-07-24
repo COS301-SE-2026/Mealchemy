@@ -103,4 +103,17 @@ public class VaultFolderRecipeServiceTest
         assertNotNull(result);
         assertEquals(1, result.get(0).addedByUserId());
     }
+
+    @Test
+    void getRecipesByFolderId_returnsListOfRecipes_whenFoundAndMember()
+    {
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(true);
+        when(vaultFolderRecipeRepository.findByFolder_FolderId(1)).thenReturn(List.of(folderRecipe));
+
+        List<VaultFolderRecipeResponse> result = vaultFolderRecipeService.getRecipesByFolderId(1, 3);
+
+        assertNotNull(result);
+        assertEquals(1, result.get(0).addedByUserId());
+    }
 }
