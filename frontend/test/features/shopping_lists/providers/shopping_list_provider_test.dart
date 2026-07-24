@@ -47,7 +47,7 @@ void main() {
 
     final notifier = container.read(shoppingListsProvider.notifier);
 
-    notifier.addItemToList(
+    await notifier.addItemToList(
       listId: 'general-list',
       name: 'Fresh Basil',
       quantity: '1 bunch',
@@ -58,7 +58,9 @@ void main() {
     final list = updatedState.getListById('general-list')!;
 
     expect(list.items.any((item) => item.name == 'Fresh Basil'), isTrue);
-    expect(list.items.last.category, 'PRODUCE');
+    expect(list.items.last.category, 'MANUAL');
+    expect(list.items.last.quantity, '1 bunch');
+    expect(list.items.last.unit, 'bunch');
   });
 
   //updates search query, filters shopping lists
@@ -91,7 +93,7 @@ void main() {
 
     final notifier = container.read(shoppingListsProvider.notifier);
 
-    notifier.addItemToList(
+    await notifier.addItemToList(
       listId: 'general-list',
       name: 'Fresh Basil',
       quantity: '1 bunch',

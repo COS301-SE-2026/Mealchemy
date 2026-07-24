@@ -152,34 +152,37 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     );
   }
 
-  //adds new item
-  void addItemToList({
+  //adds manual item through the active repository
+  Future<void> addItemToList({
     required String listId,
     required String name,
     required String quantity,
     required String category,
-  }) {
+  }) async {
     final current = state.valueOrNull;
     final cleanedName = name.trim();
     final cleanedQuantity = quantity.trim();
-    final cleanedCategory = category.trim().toUpperCase();
+    final cleanedCategory = category.trim();
 
-    if (current == null || cleanedName.isEmpty || cleanedCategory.isEmpty) {
+    if (current == null || cleanedName.isEmpty) {
       return;
     }
 
-    final newItem = ShoppingListItem(
-      id: cleanedName.toLowerCase().replaceAll(' ', '-'),
+    final parsed = _splitQuantityAndUnit(cleanedQuantity);
+
+    final createdItem = await _repository.addItemToShoppingList(
+      listId: listId,
       name: cleanedName,
-      quantity: cleanedQuantity.isEmpty ? '-' : cleanedQuantity,
-      category: cleanedCategory,
+      quantity: parsed.quantity,
+      unit: parsed.unit.isEmpty ? cleanedCategory : parsed.unit,
     );
 
     final updatedLists = current.lists.map((list) {
       if (list.id != listId) return list;
 
+      //backend-created item is source of truth now
       return list.copyWith(
-        items: [...list.items, newItem],
+        items: [...list.items, createdItem],
       );
     }).toList();
 
@@ -207,4 +210,22 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
       return ShoppingListsState(lists: lists);
     });
   }
+}
+
+//helper
+({String quantity, String unit}) _splitQuantityAndUnit(String rawQuantity) {
+  final cleaned = rawQuantity.trim();
+  if (cleaned.isEmpty) {
+    return (quantity: '', unit: '');
+  }
+
+  final parts = cleaned.split(RegExp(r'\s+'));
+  if (parts.length == 1) {
+    return (quantity: parts.first, unit: '');
+  }
+
+  return (
+    quantity: parts.first,
+    unit: parts.sublist(1).join(' '),
+  );
 }
