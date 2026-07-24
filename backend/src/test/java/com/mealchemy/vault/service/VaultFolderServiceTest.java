@@ -67,5 +67,16 @@ public class VaultFolderServiceTest
         request = new VaultFolderRequest(1, "General");
     }
 
+    @Test
+    void getVaultFolderByVaultId()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 1)).thenReturn(true);
+        when(vaultFolderRepository.findByVault_VaultId(1)).thenReturn(Optional.of(folder));
 
+        VaultFolderResponse result = vaultFolderService.getVaultFolderByVaultId(1, 1);
+
+        assertNotNull(result);
+        assertEquals("General", result.folderName());
+    }
 }
