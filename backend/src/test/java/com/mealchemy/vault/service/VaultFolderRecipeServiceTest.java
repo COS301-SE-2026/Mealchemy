@@ -254,11 +254,23 @@ public class VaultFolderRecipeServiceTest
     @Test
     void createVaultFolderRecipe_throwsException_whenFolderNotFound()
     {
-        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.empty());
+        when(vaultFolderRecipeRepository.findById(99)).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipe.createVaultFolderRecipe(request, 1, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipe.createVaultFolderRecipe(request, 1, 99));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Folder not found.", ex.getReason());
+    }
+
+    @Test
+    void createVaultFolderRecipe_throwsException_whenNotOwnerOrMember()
+    {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipe.createVaultFolderRecipe(request, 3, 1));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only vault a member/owner can can interact with folders/recipe relationships.", ex.getReason());
     }
 }
