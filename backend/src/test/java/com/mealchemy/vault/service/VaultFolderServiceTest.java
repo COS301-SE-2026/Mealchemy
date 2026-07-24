@@ -113,7 +113,7 @@ public class VaultFolderServiceTest
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.getVaultFolderByVaultId(1, 3));
 
         assertEquals(HttpsStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only vault a member/owner can view the folders.", ex.getReason());
+        assertEquals("Only a vault member/owner can view the folders.", ex.getReason());
     }
     
     @Test
@@ -162,7 +162,7 @@ public class VaultFolderServiceTest
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.getVaultFolderByVaultId("General", 1, 3));
 
         assertEquals(HttpsStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only vault a member/owner can view the folders.", ex.getReason());
+        assertEquals("Only a vault member/owner can view the folders.", ex.getReason());
     }
 
     @Test
@@ -224,7 +224,7 @@ public class VaultFolderServiceTest
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.getVaultFolderByVaultId(1, 1, 3));
 
         assertEquals(HttpsStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only vault a member/owner can view the folders.", ex.getReason());
+        assertEquals("Only a vault member/owner can view the folders.", ex.getReason());
     }
 
     @Test
@@ -241,10 +241,9 @@ public class VaultFolderServiceTest
     }
 
     @Test
-    void createVaultFolder_returnsCreatedVaultFolder()
+    void createVaultFolder_returnsCreatedVaultFolder_whenFoundAndOwner()
     {
-        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
-        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 1)).thenReturn(false);
+        when(vaultRepository.findById(request.vaultId)).thenReturn(Optional.of(vault));
         when(vaultFolderRepository.save(any(VaultFolder.class))).thenReturn(folder);
 
         VaultFolderResponse result = vaultFolderService.createVaultFolder(request, 1);
@@ -257,11 +256,22 @@ public class VaultFolderServiceTest
     @Test
     void createVaultFolder_throwsException_whenVaultNotFound()
     {
-        when(vaultRepository.findById(99)).thenReturn(Optional.empty());
+        when(vaultRepository.findById(request.vaultId())).thenReturn(Optional.empty());
         
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.createVaultFolder(request, 1));
 
         assertEquals(HttpsStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Vault not found.", ex.getReason());
+    }
+
+    @Test
+    void createVaultFolder_throwsException_whenNotOwner()
+    {
+        when(vaultRepository.findById(request.vaultId)).thenReturn(Optional.of(vault));
+        
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.createVaultFolder(request, 3));
+
+        assertEquals(HttpsStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only a vault owner can modify folders.", ex.getReason());
     }
 }
