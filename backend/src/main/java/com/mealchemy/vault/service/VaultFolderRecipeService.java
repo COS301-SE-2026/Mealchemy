@@ -146,7 +146,7 @@ public class VaultFolderRecipeService {
 
         if (!isOwner && !isMember)
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only vault a member/owner can can interact with folders/recipe relationships.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault member/owner can can interact with folders/recipe relationships.");
         }
     }
 
@@ -154,7 +154,7 @@ public class VaultFolderRecipeService {
     {
         if (!vault.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only vault a owner can interact with folders/recipe relationships.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault owner can interact with folders/recipe relationships.");
         }
     }
 
