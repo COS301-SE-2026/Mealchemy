@@ -106,13 +106,33 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     return ShoppingListsState(lists: lists);
   }
 
-  //checks/unchecks an item in a shopping list
-  void toggleItemChecked({
+  //checks/unchecks
+  Future<void> toggleItemChecked({
     required String listId,
     required String itemId,
-  }) {
+  }) async {
     final current = state.valueOrNull;
     if (current == null) return;
+
+    ShoppingListItem? existingItem;
+    for (final list in current.lists) {
+      if (list.id != listId) continue;
+
+      for (final item in list.items) {
+        if (item.id == itemId) {
+          existingItem = item;
+          break;
+        }
+      }
+    }
+
+    if (existingItem == null) return;
+
+    final updatedItem = await _repository.updateItemPurchased(
+      listId: listId,
+      itemId: itemId,
+      purchased: !existingItem.checked,
+    );
 
     final updatedLists = current.lists.map((list) {
       if (list.id != listId) return list;
@@ -120,7 +140,8 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
       final updatedItems = list.items.map((item) {
         if (item.id != itemId) return item;
 
-        return item.copyWith(checked: !item.checked);
+        //backend response
+        return updatedItem;
       }).toList();
 
       return list.copyWith(items: updatedItems);

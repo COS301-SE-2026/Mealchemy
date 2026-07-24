@@ -25,7 +25,7 @@ void main() {
 
     final notifier = container.read(shoppingListsProvider.notifier);
 
-    notifier.toggleItemChecked(
+    await notifier.toggleItemChecked(
       listId: 'general-list',
       itemId: 'baby-arugula',
     );
@@ -62,7 +62,8 @@ void main() {
   });
 
   //updates search query, filters shopping lists
-  test('shoppingListsProvider filters shopping lists by search query', () async {
+  test('shoppingListsProvider filters shopping lists by search query',
+      () async {
     //container used to read Riverpod providers in tests
     final container = ProviderContainer();
     addTearDown(container.dispose);
