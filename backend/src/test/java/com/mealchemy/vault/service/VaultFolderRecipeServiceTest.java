@@ -312,4 +312,15 @@ public class VaultFolderRecipeServiceTest
         assertEquals(1, result.id());
         verify(vaultFolderRecipeRepository, times(1)).save(any(VaultFolderRecipe.class));
     }
+
+    @Test
+    void updateVaultFolderRecipe_throwsException_whenRecordNotFound()
+    {
+        when(vaultFolderRecipeRepository.findById(99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(HttpStatus.NOT_FOUND, () -> vaultFolderRecipeService.updateVaultFolderRecipe(99, request, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("No record found.", ex.getReason());
+    }
 }

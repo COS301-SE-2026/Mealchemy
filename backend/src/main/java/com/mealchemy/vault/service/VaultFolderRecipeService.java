@@ -98,7 +98,7 @@ public class VaultFolderRecipeService {
     // Put to update a record
     public VaultFolderRecipeResponse updateVaultFolderRecipe(int id, VaultFolderRecipeMoveRequest request, Integer userId)
     {
-        VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("No record found"));
+        VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("No record found."));
 
         isOwner(vaultFolderRecipeForReturn.getFolder().getVault(), userId);
 
