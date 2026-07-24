@@ -165,4 +165,17 @@ public class VaultMemberServiceTest {
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("User not found.", ex.getReason());
     }
+
+    @Test
+    void removeVaultMember_callsDelete_whenOwner()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(userRepository.findByEmail("testUser@gmail.com")).thenReturn(Optional.of(user));
+        when(vaultMemberRepository.findByVault_VaultIdAndUser_UserId(vault.getVaultId(), user.getUserId())).thenReturn(Optional.of(vaultMember));
+        doNothing().when(vaultMemberRepository).delete(vaultMember);
+
+        vaultMemberService.delete(vaultMember);
+        
+        verify(vaultMemberRepository, times(1)).delete(vaultMember);
+    }
 }
