@@ -107,5 +107,6 @@ final appRouter = GoRouter(
       path: AppRoutes.discovery,
       builder: (context, state) => const DiscoveryScreen(),
     ),
+    
   ],
 );

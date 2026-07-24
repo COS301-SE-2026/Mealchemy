@@ -43,9 +43,7 @@ class VaultFolderList extends StatelessWidget {
         else
           for (final folder in folders)
             VaultFolderRow(
-              folder: folder,
-              // wiil add the on tap and on more tap function later 
-              onTap: () {},
+              folder: folder, 
               // will add the dialog with  (rename, delete, move recipes add a users)
               onMoreTap: () {},
             ),
