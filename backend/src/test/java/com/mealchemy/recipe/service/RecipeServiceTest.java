@@ -79,4 +79,15 @@ public class RecipeServiceTest {
 
         fullRequest = new RecipeFullRequest("FullReq Title", "Full Description", "Chinese", 10, 15, 2, null, null, null, false, ingredients, steps);
     }
+
+    @Test
+    void getAllRecipes_returnsListOfRecipes_whenFound()
+    {
+        when(recipeRepository.findAll()).thenReturn(List.of(recipe));
+
+        List<RecipeResponse> result = recipeRepository.getAllRecipes();
+
+        assertNotNull(result);
+        assertEquals("Recipe 1", result.get(0).title());
+    }
 }
