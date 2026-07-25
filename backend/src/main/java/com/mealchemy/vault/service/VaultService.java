@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import java.util.*;
 import org.springframework.web.server.*;
 import org.springframework.http.*;
+import java.util.stream.Stream;
 
 /* Import classes */
 import com.mealchemy.vault.model.Vault;
@@ -53,6 +54,16 @@ public class VaultService
         }
 
         return VaultResponse.from(vaultForReturn);
+    }
+
+    // Get all vaults available to the user
+    public List<VaultResponse> getAccessibleVaults(Integer userId)
+    {
+        List<Vault> owned = vaultRepository.findByOwnerId(userId); 
+
+        List<Vault> memberVaults = vaultMemberRepository.findByUser_UserId(userId).stream().map(VaultMember::getVault).toList();
+
+        return Stream.concat(owned.stream(), memberVaults.stream()).collect(Collectors.toMap(Vault::getVaultId, v -> v, (a, b) -> a)).values().stream().map(VaultResponse::from).collect(Collectors.toList());    
     }
 
     // Post to create a new vault

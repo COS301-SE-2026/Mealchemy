@@ -15,4 +15,5 @@ public interface VaultRepository extends JpaRepository<Vault, Integer>
 {
     List<Vault> findByOwnerId(Integer ownerId); 
     Optional<Vault> findByOwnerIdAndVaultType(Integer ownerId, VaultType vaultType);
+    List<Vault> findAllByOwnerIdAndVaultType(Integer ownerId, VaultType vaultType);
 }

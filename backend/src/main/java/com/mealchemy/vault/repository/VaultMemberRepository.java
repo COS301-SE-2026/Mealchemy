@@ -17,4 +17,5 @@ public interface VaultMemberRepository extends JpaRepository<VaultMember, Intege
     List<VaultMember> findByVault_VaultId(Integer vaultId);
     boolean existsByVault_VaultIdAndUser_UserId(Integer vaultId, Integer userId);
     Optional<VaultMember> findByVault_VaultIdAndUser_UserId(Integer vaultId, Integer userId);
+    List<VaultMember> findByUser_UserId(Integer userId);
 }

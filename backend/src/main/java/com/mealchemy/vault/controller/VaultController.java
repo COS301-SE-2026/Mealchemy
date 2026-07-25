@@ -39,6 +39,13 @@ public class VaultController
         return vaultService.getVault(id, Integer.parseInt(userId));
     }
 
+    // Get
+    @GetMapping("/accessible")
+    public List<VaultResponse> getAccessibleVaults(@AuthenticationPrincipal String userId)
+    {
+        return vaultService.getAccessibleVaults(Integer.parseInt(userId));
+    }
+
     // Post
     @PostMapping
     public VaultResponse createVault(@Valid @RequestBody VaultRequest request, @AuthenticationPrincipal String ownerId)
