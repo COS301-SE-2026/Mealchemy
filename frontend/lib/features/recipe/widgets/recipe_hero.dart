@@ -1,21 +1,23 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/recipe.dart';
+import 'save_to_vault_sheet.dart';
 
 //image with overlay, back/share buttons, recipe title
-class RecipeHero extends StatelessWidget {
+class RecipeHero extends ConsumerWidget {
   const RecipeHero({super.key, required this.recipe, this.height = 290});
 
   final Recipe recipe;
   final double height;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SizedBox(
       height: height,
       child: Stack(
@@ -53,8 +55,12 @@ class RecipeHero extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     _HeroCircleButton(
-                      icon: Icons.share_outlined,
-                      onTap: () {},
+                      icon: Icons.bookmark_add_outlined,
+                      onTap: () => showSaveToVaultSheet(
+                        context: context,
+                        ref: ref,
+                        recipeId: recipe.recipeId,
+                      ),
                       background: AppColors.textLight.withValues(alpha: 0.45),
                       iconColor: AppColors.textDark,
                       frosted: true,
