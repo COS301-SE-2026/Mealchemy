@@ -203,4 +203,15 @@ public class RecipeIngredientServiceTest {
 
         verify(recipeIngredientRepository, times(1)).deleteById(1);
     }
+
+    @Test
+    void deleteRecipeIngredient_throwsException_whenRecipeNotFound()
+    {
+        when(recipeRepository.findById(99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.deleteRecipeIngredient(1, 99, 1));
+        
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
+    }
 }
