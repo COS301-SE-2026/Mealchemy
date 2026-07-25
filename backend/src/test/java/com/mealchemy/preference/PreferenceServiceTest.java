@@ -46,7 +46,7 @@ public class PreferenceServiceTest {
         existingPreferences.setAllergies(List.of("peanuts"));
         existingPreferences.setDislikedIngredients(List.of("coriander"));
         existingPreferences.setFlavourProfile(List.of("mediterranean"));
-        existingPreferences.setFlavourProfile(List.of("low_carb"));
+        existingPreferences.setNutritionalGoals(List.of("low_carb"));
 
         // simulates what flutter puts in PUT req
         updateRequest = new PreferenceRequest(
@@ -132,7 +132,7 @@ public class PreferenceServiceTest {
         assertEquals(List.of("gluten"), response.allergies());
         assertEquals(List.of("anchovies"), response.dislikedIngredients());
         assertEquals(List.of("japanese"), response.flavourProfile());
-        assertEquals(List.of("low_carb"), response.nutritionalGoals());
+        assertEquals(List.of("high_fibre"), response.nutritionalGoals());
 
         // Verify save was called once
         verify(userPreferencesRepository).save(any(UserPreferences.class));

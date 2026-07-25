@@ -12,7 +12,7 @@ import com.mealchemy.category.model.IngredientCategory;
 // import repository
 import com.mealchemy.pantry.repository.PantryIngredientRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
-import com mealchemy.category.repository.IngredientCategoryRepository;
+import com.mealchemy.category.repository.IngredientCategoryRepository;
 // import service
 import com.mealchemy.pantry.service.PantryService;
 
@@ -45,7 +45,7 @@ public class PantryServiceTest {
     @InjectMocks
     private PantryService pantryService;
 
-    private PantryIngredient existingPantryIngredients;
+    private PantryIngredient existingPantryIngredient;
     private IngredientCatalogue catalogueInstance;
     private IngredientCategory categoryInstance;
 
@@ -65,10 +65,10 @@ public class PantryServiceTest {
         catalogueInstance.setCategoryId(5);
 
         categoryInstance = new IngredientCategory();
-        categoryInstance.setCategoryName("Legumes and Legume Products")
+        categoryInstance.setCategoryName("Legumes and Legume Products");
         
         // what flutter puts in req
-        updateRequest = new PantryIngredientRequest (
+        createRequest = new PantryIngredientRequest (
             2,
             new BigDecimal("150"),
             "g"
@@ -81,13 +81,13 @@ public class PantryServiceTest {
     @Test
     void pantry_whenUserHasNoItems_returnsEmptyList() {
         // Arrange - no ingredients in pantry returns empty array
-        when(pantryIngredientRepository.findByUserId(1)).thenReturn(List.of());
+        when(pantryIngredientRepository.findPantryIngredientsByUserId(1)).thenReturn(List.of());
 
         // Act
         List<PantryIngredientResponse> responses = pantryService.getUserPantryItems(1);
         
         // Assert
-        assertNotNull(response);
+        assertNotNull(responses);
         assertTrue(responses.isEmpty());
     }
 
@@ -95,15 +95,24 @@ public class PantryServiceTest {
     @Test
     void pantry_whenUserHasItems_returnsPantryIngredientResponses() {
         // Arrange 
-        when(pantryIngredientRepository.findByUserId(1)).thenReturn(List.of(existingPantryIngredient));
-        when(ingredientCatalogueRepository.findById(2)).thenReturn(Optional.of(catalogueInstance));
-        when(ingredientCategoryRepository.findById(5)).thenReturn(Optional.of(categoryInstance));
+        PantryIngredientResponse expected = new PantryIngredientResponse(
+            1,
+            2,
+            "Hummus",
+            "Legumes and Legume Products",
+            new BigDecimal("250"),
+            "g",
+            null,
+            null
+        );
+
+        when(pantryIngredientRepository.findPantryIngredientsByUserId(1)).thenReturn(List.of(expected));
 
         // Act
         List<PantryIngredientResponse> responses = pantryService.getUserPantryItems(1);
 
         // Assert
-        assertEquals(1, response.size());
+        assertEquals(1, responses.size());
         PantryIngredientResponse response = responses.get(0);
         assertEquals(2, response.ingId());
         assertEquals("Hummus", response.name());
@@ -131,7 +140,8 @@ public class PantryServiceTest {
     }
 
     // Happy path
-    @Test addIngredientManually_whenRequestIsValid_saveAndReturnResponse() {
+    @Test 
+    void addIngredientManually_whenRequestIsValid_saveAndReturnResponse() {
         // Arrange
         when(ingredientCatalogueRepository.findById(2)).thenReturn(Optional.of(catalogueInstance));
         when(ingredientCategoryRepository.findById(5)).thenReturn(Optional.of(categoryInstance));
@@ -189,7 +199,7 @@ public class PantryServiceTest {
         when(ingredientCategoryRepository.findById(5)).thenReturn(Optional.of(categoryInstance));
 
         // Act
-        Optional<PantryIngredientResponse> response = pantryService.updateIngredientManually(1, 1, createResponse);
+        Optional<PantryIngredientResponse> response = pantryService.updateIngredientManually(1, 1, createRequest);
 
         // Assert
         assertTrue(response.isPresent());
@@ -206,7 +216,7 @@ public class PantryServiceTest {
             "g"
         );
 
-        when(PantryIngredientRepository.findById(1)).thenReturn(Optional.of(existingPantryIngredient));
+        when(pantryIngredientRepository.findById(1)).thenReturn(Optional.of(existingPantryIngredient));
 
         // Act
         Optional<PantryIngredientResponse> response = pantryService.updateIngredientManually(1, 1, request);
@@ -265,7 +275,8 @@ public class PantryServiceTest {
 
     // ========== Search Pantry By Ingredient Name Testing ==========
 
-    @Test searchPantry_returnsMatchingResponses() {
+    @Test 
+    void searchPantry_returnsMatchingResponses() {
         // Arrange
         PantryIngredientResponse expected = new PantryIngredientResponse(
             1,
@@ -281,22 +292,23 @@ public class PantryServiceTest {
         when(pantryIngredientRepository.getIngredientByName(1, "hummus")).thenReturn(List.of(expected));
 
         // Act 
-        List<PantryIngredientResponse> responses = pantryService.getIngredientByName(1, "hummus");
+        List<PantryIngredientResponse> responses = pantryService.findPantryIngredientsByName(1, "hummus");
 
         // Assert
         assertEquals(1, responses.size());
-        assertEquals("Hummus", results.get(0).name());
+        assertEquals("Hummus", responses.get(0).name());
     }
 
-    @Test searchPantry_noMatchFound_returnEmptyArray() {
+    @Test 
+    void searchPantry_noMatchFound_returnEmptyArray() {
         // Arrange
         when(pantryIngredientRepository.getIngredientByName(1, "none")).thenReturn(List.of());
 
         // Act
-        List<PantryIngredientResponse> responses = pantryService.getIngredientByName(1, "none");
+        List<PantryIngredientResponse> responses = pantryService.findPantryIngredientsByName(1, "none");
         
         // Assert
-        assertNotNull(response);
+        assertNotNull(responses);
         assertTrue(responses.isEmpty());
     }
 }
