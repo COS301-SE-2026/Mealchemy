@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+
 import '../../../core/shared_widgets/Molecules/app_confirm_dialog.dart';
 import '../../../core/shared_widgets/atoms/app_button.dart';
 import '../../../core/shared_widgets/atoms/app_card.dart';
@@ -10,8 +11,12 @@ import '../../../core/shared_widgets/atoms/app_text_field.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../vault/providers/vault_provider.dart';
+import '../models/ingredient_catalogue_item.dart';
 import '../models/recipe.dart';
+import '../models/recipe_ingredient.dart';
 import '../providers/recipe_provider.dart';
+import '../widgets/ingredient_editor_row.dart';
+ 
 
 class AddRecipeScreen extends ConsumerStatefulWidget {
   const AddRecipeScreen({super.key});
@@ -32,6 +37,8 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
   bool _publishToGlobal = false;
   bool _showValidation = false;
 
+  final List<_IngredientRowData> _ingredientRows = [_IngredientRowData()];
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -39,6 +46,9 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     _prepTimeController.dispose();
     _cookTimeController.dispose();
     _servingsController.dispose();
+    for (final r in _ingredientRows) {
+      r.dispose();
+    }
     super.dispose();
   }
 
@@ -48,7 +58,10 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
         int.tryParse(_prepTimeController.text) != null &&
         int.tryParse(_cookTimeController.text) != null &&
         int.tryParse(_servingsController.text) != null;
-    if (!valid) {
+    final startedRows = _ingredientRows.where((r) => r.isStarted).toList();
+    final ingredientsValid = startedRows.every((r) => r.isValid);
+
+    if (!valid || !ingredientsValid) {
       setState(() => _showValidation = true);
       return;
     }
@@ -156,7 +169,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
       children: [
-        // centered header, pantry-entry style
+        // centered header
         Center(
           child: Column(
             children: [
@@ -268,9 +281,28 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
 
         _sectionHeader('Ingredients'),
         const SizedBox(height: 16),
-        const _ComingSoonCard(
-            icon: Icons.list_alt_outlined,
-            message: 'Ingredient editor coming soon.'),
+        for (int i = 0; i < _ingredientRows.length; i++)
+          IngredientEditorRow(
+            key: ValueKey(_ingredientRows[i]),
+            selectedItem: _ingredientRows[i].item,
+            quantityController: _ingredientRows[i].quantity,
+            unitController: _ingredientRows[i].unit,
+            onItemSelected: (item) =>
+                setState(() => _ingredientRows[i].item = item),
+            onRemove: () => setState(() {
+              if (_ingredientRows.length > 1) {
+                _ingredientRows.removeAt(i).dispose();
+              }
+            }),
+            showError:
+                _showValidation && _ingredientRows[i].isStarted && !_ingredientRows[i].isValid,
+          ),
+        const SizedBox(height: 4),
+        _AddRowButton(
+          label: 'Add Ingredient',
+          onTap: () =>
+              setState(() => _ingredientRows.add(_IngredientRowData())),
+        ),
         const SizedBox(height: 32),
         _sectionHeader('Preparation Steps'),
         const SizedBox(height: 16),
@@ -319,6 +351,28 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
         ),
       ],
     );
+  }
+}
+
+// holds one ingredient row's mutable state while composing
+class _IngredientRowData {
+  IngredientCatalogueItem? item;
+  final TextEditingController quantity = TextEditingController();
+  final TextEditingController unit = TextEditingController();
+
+  // the user has begun filling this row
+  bool get isStarted =>
+      item != null || quantity.text.isNotEmpty || unit.text.isNotEmpty;
+
+  // fully valid for saving
+  bool get isValid =>
+      item != null &&
+      double.tryParse(quantity.text) != null &&
+      unit.text.trim().isNotEmpty;
+
+  void dispose() {
+    quantity.dispose();
+    unit.dispose();
   }
 }
 
@@ -460,6 +514,36 @@ class _FieldError extends StatelessWidget {
       padding: const EdgeInsets.only(top: 8),
       child: Text(message,
           style: AppTextStyles.bodySmall.copyWith(color: AppColors.error)),
+    );
+  }
+}
+class _AddRowButton extends StatelessWidget {
+  const _AddRowButton({required this.label, required this.onTap});
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.accent, width: 1.2),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.add, size: 18, color: AppColors.primary),
+            const SizedBox(width: 8),
+            Text(label,
+                style: AppTextStyles.button.copyWith(color: AppColors.primary)),
+          ],
+        ),
+      ),
     );
   }
 }
