@@ -133,6 +133,7 @@ public class RecipeServiceTest {
 
         assertNotNull(result);
         assertEquals("Recipe 1", result.title());
+        verify(recipeRepository, times(1)).save(any(Recipe.class));
     }
 
     @Test
@@ -156,6 +157,8 @@ public class RecipeServiceTest {
 
         assertNotNull(result);
         assertEquals("Recipe 1", result.title());
+        verify(recipeRepository, times(1)).save(any(Recipe.class));
+
     }
 
     @Test
@@ -169,6 +172,7 @@ public class RecipeServiceTest {
 
         assertNotNull(result);
         assertEquals("Recipe 1", result.title());
+        verify(recipeRepository, times(1)).save(any(Recipe.class));
     }
 
     @Test
@@ -204,6 +208,19 @@ public class RecipeServiceTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         assertEquals("SOne of the ingredients you want to add does not exist.", ex.getReason());
+    }
+
+    @Test
+    void updateRecipe_updatesRecipe_whenFoundOwnerAndHasValidCuisineType()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(flavourProfileOptionsRepository.existsByValue(request.cuisineType())).thenReturn(true);
+
+        RecipeResponse result = recipeRepository.updateRecipe(1, request, 1);
+
+        assertNotNull(result);
+        assertEquals("Recipe 1", result.title());
+        verify(recipeRepository, times(1)).save(any(Recipe.class));
     }
 
 }
