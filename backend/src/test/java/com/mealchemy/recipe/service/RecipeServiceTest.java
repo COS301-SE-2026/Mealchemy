@@ -100,4 +100,15 @@ public class RecipeServiceTest {
 
         assertTrue(result.isEmpty());
     }
+
+    @Test
+    void getRecipeById_returnsRecipe_whenFound()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+
+        RecipeResponse result = recipeRepository.getRecipeById(1);
+
+        assertNotNull(result);
+        assertEquals("Recipe 1", result.title());
+    }
 }
