@@ -111,4 +111,15 @@ public class RecipeServiceTest {
         assertNotNull(result);
         assertEquals("Recipe 1", result.title());
     }
+
+    @Test
+    void getRecipeById_throwsException_whenNotFound()
+    {
+        when(recipeRepository.findById(99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.getRecipeById(99));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
+    }
 }

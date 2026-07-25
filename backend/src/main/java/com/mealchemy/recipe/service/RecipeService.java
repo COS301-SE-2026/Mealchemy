@@ -43,7 +43,7 @@ public class RecipeService
     // Get a single recipe by Id
     public RecipeResponse getRecipeById(Integer id)
     {
-        Recipe recipeForReturn = recipeRepository.findById(id).orElseThrow(() -> new RuntimeException("Recipe not found."));
+        Recipe recipeForReturn = recipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
         return RecipeResponse.from(recipeForReturn);
     }
 
@@ -72,7 +72,7 @@ public class RecipeService
 
         if (sourceRecipeId != null)
         {
-            Recipe sourceRecipe = recipeRepository.findById(sourceRecipeId).orElseThrow(() -> new RuntimeException("Source recipe not found."));
+            Recipe sourceRecipe = recipeRepository.findById(sourceRecipeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Source recipe not found."));
 
             recipeForReturn.setParentRecipe(sourceRecipe);
         }
@@ -110,7 +110,7 @@ public class RecipeService
     // Put to update an existing recipe
     public RecipeResponse updateRecipe(int id, RecipeRequest request, Integer ownerId)
     {
-        Recipe recipeForReturn = recipeRepository.findById(id).orElseThrow(() -> new RuntimeException("Recipe not found."));
+        Recipe recipeForReturn = recipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
         
         if (!recipeForReturn.getOwnerId().equals(ownerId))
         {
@@ -139,7 +139,7 @@ public class RecipeService
     // Delete a specific vault using id
     public void deleteRecipe(int id, Integer ownerId)
     {
-        Recipe recipeForDeletion = recipeRepository.findById(id).orElseThrow(() -> new RuntimeException("Recipe not found."));
+        Recipe recipeForDeletion = recipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         if (!recipeForDeletion.getOwnerId().equals(ownerId))
         {
