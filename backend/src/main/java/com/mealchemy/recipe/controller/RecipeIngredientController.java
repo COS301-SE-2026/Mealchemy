@@ -26,6 +26,15 @@ public class RecipeIngredientController
 
     /* Mapping functions */
 
+    // Get
+    @GetMapping("/recipe/{recipeId}")
+    {
+        public List<RecipeIngredientResponse> getAllIngredientsByRecipeId(@PathVariable Integer recipeId)
+        {
+            return recipeStepService.getAllIngredientsByRecipeId(recipeId);
+        }
+    }
+
     // Post
     @PostMapping("/recipe/{recipeId}/ingredient/create")
     public RecipeIngredientResponse createRecipeIngredient(@Valid @RequestBody RecipeIngredientRequest request, @PathVariable Integer recipeId, 
