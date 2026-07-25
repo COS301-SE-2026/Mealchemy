@@ -122,4 +122,16 @@ public class RecipeServiceTest {
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Recipe not found.", ex.getReason());
     }
+
+    @Test
+    void createRecipe_returnsCreatedRecipe_whenCuisineTypeValid()
+    {
+        when(flavourProfileOptionsRepository.existsByValue(request.cuisineType())).thenReturn(true);
+        when(recipeRepository.save(any(Recipe.class))).thenReturn(recipe);
+
+        RecipeResponse result = recipeRepository.createRecipe(request, 1);
+
+        assertNotNull(result);
+        assertEquals("Recipe 1", result.title());
+    }
 }
