@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-
 import '../../../core/shared_widgets/Molecules/app_confirm_dialog.dart';
 import '../../../core/shared_widgets/atoms/app_button.dart';
-import '../../../core/shared_widgets/atoms/app_card.dart';
-import '../../../core/shared_widgets/atoms/app_chip.dart';
 import '../../../core/shared_widgets/atoms/app_text_field.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
@@ -14,9 +11,10 @@ import '../../vault/providers/vault_provider.dart';
 import '../models/ingredient_catalogue_item.dart';
 import '../models/recipe.dart';
 import '../models/recipe_ingredient.dart';
+import '../models/recipe_step.dart';                        // ← ADDED
 import '../providers/recipe_provider.dart';
 import '../widgets/ingredient_editor_row.dart';
- 
+import '../widgets/step_editor_row.dart'; 
 
 class AddRecipeScreen extends ConsumerStatefulWidget {
   const AddRecipeScreen({super.key});
@@ -38,6 +36,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
   bool _showValidation = false;
 
   final List<_IngredientRowData> _ingredientRows = [_IngredientRowData()];
+  final List<_StepRowData> _stepRows = [_StepRowData()];
 
   @override
   void dispose() {
@@ -48,6 +47,9 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     _servingsController.dispose();
     for (final r in _ingredientRows) {
       r.dispose();
+    }
+    for (final s in _stepRows) {
+      s.dispose();
     }
     super.dispose();
   }
@@ -60,8 +62,10 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
         int.tryParse(_servingsController.text) != null;
     final startedRows = _ingredientRows.where((r) => r.isStarted).toList();
     final ingredientsValid = startedRows.every((r) => r.isValid);
+    final startedSteps = _stepRows.where((s) => s.isStarted).toList();
+    final stepsValid = startedSteps.every((s) => s.isValid);
 
-    if (!valid || !ingredientsValid) {
+    if (!valid || !ingredientsValid || !stepsValid) {
       setState(() => _showValidation = true);
       return;
     }
@@ -109,6 +113,47 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
           const SnackBar(content: Text('Recipe saved, but could not file it.')),
         );
       }
+    }
+
+    var saveFailed = false;
+    final validRows = _ingredientRows.where((r) => r.isValid).toList();
+    for (int i = 0; i < validRows.length; i++) {
+      final r = validRows[i];
+      final ingredient = RecipeIngredient(
+        ingId: r.item!.ingId,
+        quantity: double.tryParse(r.quantity.text),
+        unit: r.unit.text.trim(),
+        sortOrder: i,
+      );
+      try {
+        await ref
+            .read(recipeRepositoryProvider)
+            .addRecipeIngredient(created.recipeId, ingredient);
+      } catch (_) {
+        saveFailed = true;
+      }
+    }
+
+
+    final validSteps = _stepRows.where((s) => s.isValid).toList();
+    for (int i = 0; i < validSteps.length; i++) {
+      final step = RecipeStep(
+        stepNr: i + 1,
+        content: validSteps[i].content.text.trim(),
+      );
+      try {
+        await ref
+            .read(recipeRepositoryProvider)
+            .addRecipeStep(created.recipeId, step);
+      } catch (_) {
+        saveFailed = true;
+      }
+    }
+
+    if (saveFailed && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Recipe saved, but some items did not.')),
+      );
     }
   }
 
@@ -294,8 +339,9 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
                 _ingredientRows.removeAt(i).dispose();
               }
             }),
-            showError:
-                _showValidation && _ingredientRows[i].isStarted && !_ingredientRows[i].isValid,
+            showError: _showValidation &&
+                _ingredientRows[i].isStarted &&
+                !_ingredientRows[i].isValid,
           ),
         const SizedBox(height: 4),
         _AddRowButton(
@@ -306,9 +352,25 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
         const SizedBox(height: 32),
         _sectionHeader('Preparation Steps'),
         const SizedBox(height: 16),
-        const _ComingSoonCard(
-            icon: Icons.format_list_numbered,
-            message: 'Step-by-step editor coming soon.'),
+        for (int i = 0; i < _stepRows.length; i++)
+          StepEditorRow(
+            key: ValueKey(_stepRows[i]),
+            stepNumber: i + 1,
+            controller: _stepRows[i].content,
+            onRemove: () => setState(() {
+              if (_stepRows.length > 1) {
+                _stepRows.removeAt(i).dispose();
+              }
+            }),
+            showError: _showValidation &&
+                _stepRows[i].isStarted &&
+                !_stepRows[i].isValid,
+          ),
+        const SizedBox(height: 4),
+        _AddRowButton(
+          label: 'Add Step',
+          onTap: () => setState(() => _stepRows.add(_StepRowData())),
+        ),
         const SizedBox(height: 36),
 
         AppButton.primary(
@@ -374,6 +436,15 @@ class _IngredientRowData {
     quantity.dispose();
     unit.dispose();
   }
+}
+
+class _StepRowData {
+  final TextEditingController content = TextEditingController();
+
+  bool get isStarted => content.text.trim().isNotEmpty;
+  bool get isValid => content.text.trim().isNotEmpty;
+
+  void dispose() => content.dispose();
 }
 
 // Private folder dropdown "My Recipes (default)" when nothing is picked
@@ -479,31 +550,6 @@ class _CuisineSelector extends StatelessWidget {
   }
 }
 
-class _ComingSoonCard extends StatelessWidget {
-  const _ComingSoonCard({required this.icon, required this.message});
-  final IconData icon;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard.outlined(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
-      customBorderColor: AppColors.divider,
-      child: Row(
-        children: [
-          Icon(icon, color: AppColors.textMuted, size: 22),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(message,
-                style: AppTextStyles.bodySmall
-                    .copyWith(color: AppColors.textMuted)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _FieldError extends StatelessWidget {
   const _FieldError(this.message);
   final String message;
@@ -517,6 +563,7 @@ class _FieldError extends StatelessWidget {
     );
   }
 }
+
 class _AddRowButton extends StatelessWidget {
   const _AddRowButton({required this.label, required this.onTap});
   final String label;

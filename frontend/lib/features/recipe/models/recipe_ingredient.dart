@@ -1,7 +1,7 @@
 //one ingredient line in a recipe, mirrors recipe_ingredients table the new update database table
 class RecipeIngredient {
-  final int ingredientId;
-  final int recipeId;
+  final int? ingredientId;
+  final int? recipeId;
   final int ingId;
   final String? name;
   final double? quantity;
@@ -9,8 +9,8 @@ class RecipeIngredient {
   final int sortOrder;
 
   const RecipeIngredient({
-    required this.ingredientId,
-    required this.recipeId,
+    this.ingredientId,
+    this.recipeId,
     required this.ingId,
     this.name,
     this.quantity,
@@ -20,8 +20,8 @@ class RecipeIngredient {
 
  factory RecipeIngredient.fromJson(Map<String, dynamic> json) {
     return RecipeIngredient(
-      ingredientId: json['ingredientId'] as int,
-      recipeId: json['recipeId'] as int,
+      ingredientId: json['ingredientId'] as int?,
+      recipeId: json['recipeId'] as int?,
       ingId: json['ingId'] as int,
       quantity: (json['quantity'] as num?)?.toDouble(),
       unit: json['unit'] as String?,

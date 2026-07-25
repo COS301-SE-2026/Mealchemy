@@ -2,7 +2,8 @@ import 'package:dio/dio.dart';
 
 import '../models/recipe.dart';
 import 'recipe_repository.dart';
-
+import '../models/recipe_step.dart';
+import '../models/recipe_ingredient.dart';
 //placeholder for api integration
 class ApiRecipeRepository implements RecipeRepository {
   final Dio _dio;
@@ -43,6 +44,23 @@ class ApiRecipeRepository implements RecipeRepository {
   Future<List<String>> getCuisineTypes() {
     throw UnimplementedError(
       'Recipe API integration has not been implemented yet.',
+    );
+  }
+
+  @override
+  Future<void> addRecipeStep(int recipeId, RecipeStep step) async {
+    await _dio.post(
+      '/steps/recipe/$recipeId/step/create',
+      data: step.toJson(),
+    );
+  }
+
+  @override
+  Future<void> addRecipeIngredient(
+      int recipeId, RecipeIngredient ingredient) async {
+    await _dio.post(
+      '/ingredients/recipe/$recipeId/ingredient/create',
+      data: ingredient.toJson(),
     );
   }
 }

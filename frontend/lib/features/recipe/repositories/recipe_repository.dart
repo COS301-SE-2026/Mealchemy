@@ -1,4 +1,6 @@
 import '../models/recipe.dart';
+import '../models/recipe_step.dart';
+import '../models/recipe_ingredient.dart';
 //essentially an abstract class/interface
 
 //uses mock/API data
@@ -13,4 +15,6 @@ abstract class RecipeRepository {
 
   //cuisine type enum values
   Future<List<String>> getCuisineTypes();
+  Future<void> addRecipeStep(int recipeId, RecipeStep step);
+  Future<void> addRecipeIngredient(int recipeId, RecipeIngredient ingredient);
 }
