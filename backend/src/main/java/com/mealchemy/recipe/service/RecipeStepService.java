@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.stream.*;
 import org.springframework.web.server.*;
 import org.springframework.http.*;
+import org.springframework.transaction.annotation.Transactional;
 
 /* Import classes */
 
@@ -14,6 +15,7 @@ import com.mealchemy.recipe.model.RecipeStep;
 import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.recipe.dto.RecipeStepRequest;
 import com.mealchemy.recipe.dto.RecipeStepResponse;
+import com.mealchemy.recipe.dto.RecipeStepReorderRequest;
 import com.mealchemy.recipe.repository.RecipeStepRepository;
 import com.mealchemy.recipe.repository.RecipeRepository;
 
@@ -92,6 +94,38 @@ public class RecipeStepService {
         }
 
         recipeStepRepository.deleteById(id);
+    }
+
+    // Reorder recipe steps
+    @Transactional
+    public List<RecipeStepResponse> reorderSteps(Integer recipeId, RecipeStepReorderRequest request, Integer ownerId)
+    {
+        Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
+        
+        if (!recipeToCheck.getOwnerId().equals(ownerId))
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of the recipe can manipulate the order of the steps.");
+        }
+
+        List<RecipeStep> existingSteps = recipeStepRepository.findByRecipe_RecipeIdOrderByStepNrAsc(recipeId);
+
+        Map<Integer, RecipeStep> stepsById = existingSteps.stream().collect(Collectors.toMap(RecipeStep::getStepId, step -> step));
+
+        List<Integer> orderedStepIds = request.orderedStepIds();
+
+        if (orderedStepIds.size() != existingSteps.size() || !stepsById.keySet().containsAll(orderedStepIds))
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Provided step IDs must match the recipe's existing step.");
+        }
+
+        for (int i = 0; i < orderedStepIds.size(); i++)
+        {
+            RecipeStep step = stepsById.get(orderedStepIds.get(i));
+            step.setStepNr(i + 1);
+            recipeStepRepository.save(step);
+        }
+
+        return recipeStepRepository.findByRecipe_RecipeIdOrderByStepNrAsc(recipeId).stream().map(RecipeStepResponse::from).collect(Collectors.toList());
     }
 
     /* Mapping functions */
