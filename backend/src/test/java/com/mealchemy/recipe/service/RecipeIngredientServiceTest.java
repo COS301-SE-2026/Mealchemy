@@ -102,7 +102,7 @@ public class RecipeIngredientServiceTest {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.createRecipeIngredient(request, 1, 99));
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of this recipe can modify its steps.", ex.getReason());
+        assertEquals("Only the owner of this recipe can modify its ingredients.", ex.getReason());
     }
 
     @Test
@@ -137,9 +137,20 @@ public class RecipeIngredientServiceTest {
     {
         when(recipeRepository.findById(99)).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.createRecipeIngredient(1, request, 99, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.updateRecipeIngredient(1, request, 99, 1));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Recipe not found.", ex.getReason());
+    }
+
+    @Test
+    void updateRecipeIngredient_throwsException_whenNotOwner()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.updateRecipeIngredient(1, request, 1, 99));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only the owner of this recipe can modify its ingredients.", ex.getReason());
     }
 }
