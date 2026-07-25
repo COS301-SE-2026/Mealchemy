@@ -75,4 +75,15 @@ public class RecipeStepServiceTest {
         assertEquals(2, result.stepNr());
         verify(recipeStepRepository, times(1)).save(any(RecipeStep.class));
     }
+
+    @Test
+    void createRecipeStep_throwsException_whenRecipeNotFound()
+    {
+        when(recipeRepository.findById(99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.createRecipeStep(request, 99, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
+    }
 }
