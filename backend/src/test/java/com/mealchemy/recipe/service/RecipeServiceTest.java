@@ -193,4 +193,17 @@ public class RecipeServiceTest {
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Source recipe not found.", ex.getReason());
     }
+
+    @Test
+    void createFromFullRecipe_throwsException_whenIngredientNotInCatalogue()
+    {
+        when(flavourProfileOptionsRepository.existsByValue(fullRequest.cuisineType())).thenReturn(true);
+        when(ingredientCatalogueRepository.existsById(1)).thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.createRecipe(fullRequest, 1, null));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("SOne of the ingredients you want to add does not exist.", ex.getReason());
+    }
+
 }
