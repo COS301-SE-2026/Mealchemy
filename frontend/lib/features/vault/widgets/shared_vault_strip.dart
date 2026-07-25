@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
+import 'package:mealchemy/core/shared_widgets/Molecules/app_input_dialog.dart';
 
 import '../providers/vault_provider.dart';
 
@@ -29,7 +30,7 @@ class SharedVaultStrip extends ConsumerWidget {
               label: 'Add Vault',
               selected: false,
               //Implement the onTap to navigate to the add vault screen(doing this later)
-              onTap: () {},
+              onTap: () => _createVault(context, ref),
               child: const Icon(
                 Icons.add,
                 color: AppColors.accentMuted,
@@ -111,3 +112,19 @@ class _StripItem extends StatelessWidget {
     );
   }
 }
+
+Future<void> _createVault(BuildContext context, WidgetRef ref) async {
+    final name = await showAppInputDialog(
+      context: context,
+      title: 'New Shared Vault',
+      label: 'Vault Name',
+      hint: 'e.g. Family Recipes',
+      confirmLabel: 'Create',
+      prefixIcon: Icons.group_outlined,
+    );
+    if (name == null) return;
+
+    final vault = await ref.read(vaultRepositoryProvider).createVault(name);
+    ref.invalidate(vaultsProvider);
+    ref.read(selectedVaultIdProvider.notifier).state = vault.vaultId;
+  }
