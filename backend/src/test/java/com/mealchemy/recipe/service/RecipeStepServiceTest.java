@@ -97,4 +97,18 @@ public class RecipeStepServiceTest {
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only the owner of this recipe can modify its steps.", ex.getReason());
     }
+
+    @Test
+    void updateRecipeStep_returnsUpdatedStep_whenFoundOwnerAndBelongsToRecipe()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeStepRepository.findById(1)).thenReturn(Optional.of(recipeStep));
+        when(recipeStepRepository.save(any(RecipeStep.class))).thenReturn(recipeStep);
+
+        RecipeStepResponse result = recipeStepService.createRecipeStep(1, request, 1, 1);
+
+        assertNotNull(result);
+        assertEquals(2, result.stepNr());
+        verify(recipeStepRepository, times(1)).save(any(RecipeStep.class));
+    }
 }
