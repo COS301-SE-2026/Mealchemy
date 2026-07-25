@@ -17,6 +17,7 @@ public record RecipeRequest(
     String photoUrl,
     String videoUrl,
     String externalUrl,
-    boolean isCommunityPublished
+    boolean isCommunityPublished,
+    Integer folderId
 )
 {}

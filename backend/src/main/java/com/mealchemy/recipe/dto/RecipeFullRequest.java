@@ -19,6 +19,7 @@ public record RecipeFullRequest(
     String externalUrl,
     boolean isCommunityPublished,
     @NotEmpty List<RecipeIngredientRequest> ingredients,
-    @NotEmpty List<RecipeStepRequest> steps
+    @NotEmpty List<RecipeStepRequest> steps,
+    @NotNull Integer folderId
 )
 {}
