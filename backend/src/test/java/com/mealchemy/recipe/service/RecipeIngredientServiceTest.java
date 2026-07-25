@@ -225,4 +225,16 @@ public class RecipeIngredientServiceTest {
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only the owner of this recipe can modify its ingredients.", ex.getReason());
     }
+
+    @Test
+    void deleteRecipeIngredient_throwsException_whenIngredientRowNotFound()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeIngredientRepository.findById(99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.deleteRecipeIngredient(99, 1, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Ingredient not found.", ex.getReason());
+    }
 }
