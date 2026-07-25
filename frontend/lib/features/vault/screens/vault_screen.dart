@@ -8,7 +8,7 @@ import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/features/vault/models/vault.dart';
 import 'package:mealchemy/features/vault/providers/vault_provider.dart';
 import 'package:mealchemy/features/vault/widgets/vault_folder_list.dart';
-import '../providers/vault_provider.dart';
+
 import '../widgets/vault_hero.dart';
 
 // Vault screen with the main widgets and layout.
@@ -100,7 +100,7 @@ class _VaultFoldersLoader extends ConsumerWidget {
         style: AppTextStyles.body.copyWith(color: AppColors.error),
       ),
       data: (folders) => VaultFolderList(
-        sectionTitle: vault.name,
+        vault: vault,
         folders: folders,
       ),
     );

@@ -5,17 +5,20 @@ import '../../../core/theme/app_typography.dart';
 import '../models/vault_folder.dart';
 import '../providers/vault_provider.dart';
 import 'folder_recipe_row.dart';
+import 'folder_menu.dart';
+import '../models/vault.dart';
 
 //folder row that expands in place to reveal its recipes
 class VaultFolderRow extends ConsumerStatefulWidget {
   const VaultFolderRow({
     super.key,
     required this.folder,
-    this.onMoreTap,
+    required this.vault,
   });
 
+  final Vault vault;
   final VaultFolder folder;
-  final VoidCallback? onMoreTap;
+
 
   @override
   ConsumerState<VaultFolderRow> createState() => _VaultFolderRowState();
@@ -99,12 +102,9 @@ class _VaultFolderRowState extends ConsumerState<VaultFolderRow> {
                       size: 22,
                     ),
                   ),
-                  IconButton(
-                    onPressed: widget.onMoreTap,
-                    icon: Icon(
-                      Icons.more_vert,
-                      color: AppColors.inputBorder.withValues(alpha: 0.95),
-                    ),
+                  FolderMenuButton(
+                    vault: widget.vault,
+                    folder: widget.folder,
                   ),
                 ],
               ),

@@ -1,37 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
+import '../models/vault.dart';
 import '../models/vault_folder.dart';
+import '../providers/vault_provider.dart';
+import 'vault_menu.dart';
 import 'vault_folder_row.dart';
 
 //folder section vault name label plus one row per folder
-class VaultFolderList extends StatelessWidget {
+class VaultFolderList extends ConsumerWidget {
   const VaultFolderList({
     super.key,
-    required this.sectionTitle,
+    required this.vault,
     required this.folders,
   });
 
-  final String sectionTitle;
+  final Vault vault;
   final List<VaultFolder> folders;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isShared = ref.watch(isSharedModeProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Text(
-            sectionTitle.toUpperCase(),
-            style: AppTextStyles.label.copyWith(
-              color: AppColors.primary,
-              fontSize: 12,
-              letterSpacing: 2,
+        Row(
+          children: [
+            Text(
+              vault.name.toUpperCase(),
+              style: AppTextStyles.label.copyWith(
+                color: AppColors.primary,
+                fontSize: 12,
+                letterSpacing: 2,
+              ),
             ),
-          ),
+            const Spacer(),
+            // vault-level menu sits by the vault's own name, shared only
+            if (isShared) VaultMenuButton(vault: vault),
+          ],
         ),
+        const SizedBox(height: 8),
         if (folders.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
@@ -43,9 +53,8 @@ class VaultFolderList extends StatelessWidget {
         else
           for (final folder in folders)
             VaultFolderRow(
-              folder: folder, 
-              // will add the dialog with  (rename, delete, move recipes add a users)
-              onMoreTap: () {},
+              vault: vault,
+              folder: folder,
             ),
       ],
     );

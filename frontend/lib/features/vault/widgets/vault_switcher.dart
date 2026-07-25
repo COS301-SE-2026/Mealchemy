@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
-
 import '../providers/vault_provider.dart';
 
 class VaultSwitcher extends ConsumerWidget {
@@ -13,7 +12,10 @@ class VaultSwitcher extends ConsumerWidget {
     final vaults = ref.watch(vaultsProvider).valueOrNull;
     final isShared = ref.watch(isSharedModeProvider);
     if (vaults == null) return const SizedBox.shrink();
+    return _switcher(context, ref, isShared);
+  }
 
+  Widget _switcher(BuildContext context, WidgetRef ref, bool isShared) {
     return PopupMenuButton<bool>(
       // value is the target mode: false = private, true = shared
       onSelected: (toShared) {
@@ -49,11 +51,15 @@ class VaultSwitcher extends ConsumerWidget {
               color: AppColors.accent,
             ),
             const SizedBox(width: 8),
-            Text(
-              isShared ? 'Shared Vaults' : 'Private Vault',
-              style: AppTextStyles.heading2.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w700,
+            Flexible(
+              child: Text(
+                isShared ? 'Shared Vaults' : 'Private Vault',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.heading2.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             const SizedBox(width: 6),

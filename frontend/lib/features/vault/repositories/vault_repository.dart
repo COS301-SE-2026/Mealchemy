@@ -8,6 +8,7 @@ abstract class VaultRepository {
   Future<List<Vault>> getMyVaults();
   Future<Vault> getVaultById(int vaultId);
   Future<Vault> createVault(String name);
+  Future<void> deleteVault(int vaultId);
   //Future<Vault> renameVault(int vaultId, String vaultType, String name);
 
   // Folders
@@ -27,4 +28,6 @@ abstract class VaultRepository {
   Future<List<VaultMember>> getMembers(int vaultId);
   Future<VaultMember> addMember(int vaultId, String email);
   Future<void> removeMember(int vaultId, String email);
+
+    
 }

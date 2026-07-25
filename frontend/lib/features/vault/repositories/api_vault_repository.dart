@@ -128,4 +128,9 @@ class ApiVaultRepository implements VaultRepository {
       'email': email,
     });
   }
+
+  @override
+  Future<void> deleteVault(int vaultId) async {
+    await _dio.delete('/vaults/$vaultId');
+  }
 }

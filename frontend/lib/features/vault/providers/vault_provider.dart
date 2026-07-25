@@ -11,6 +11,7 @@ import '../models/vault_folder_recipe.dart';
 import '../repositories/vault_repository.dart';
 import '../repositories/mock_vault_repository.dart';
 import '../repositories/api_vault_repository.dart';
+import '../models/vault_member.dart';
 
 final vaultRepositoryProvider = Provider<VaultRepository>((ref) {
   if (AppConfig.useMockData) {
@@ -60,10 +61,10 @@ final folderRecipeDisplayProvider =
 
 //Selecting a vault 
 
-final selectedVaultIdProvider = StateProvider.autoDispose<int?>((ref) => null);
-final isSharedModeProvider = StateProvider.autoDispose<bool>((ref) => false);
+final selectedVaultIdProvider = StateProvider<int?>((ref) => null);
+final isSharedModeProvider = StateProvider<bool>((ref) => false);
 
-final selectedVaultProvider = Provider.autoDispose<Vault?>((ref) {
+final selectedVaultProvider = Provider<Vault?>((ref) {
   final vaults = ref.watch(vaultsProvider).valueOrNull;
   if (vaults == null || vaults.isEmpty) return null;
 
@@ -88,16 +89,21 @@ final selectedVaultProvider = Provider.autoDispose<Vault?>((ref) {
 });
 
 // Shared vaults for the strip
-final sharedVaultsProvider = Provider.autoDispose<List<Vault>>((ref) {
+final sharedVaultsProvider = Provider<List<Vault>>((ref) {
   final vaults = ref.watch(vaultsProvider).valueOrNull ?? const [];
   return vaults.where((v) => v.vaultType == VaultTypes.shared).toList();
 });
 
 // The users private vault
-final privateVaultProvider = Provider.autoDispose<Vault?>((ref) {
+final privateVaultProvider = Provider<Vault?>((ref) {
   final vaults = ref.watch(vaultsProvider).valueOrNull ?? const [];
   for (final v in vaults) {
     if (v.vaultType == VaultTypes.private) return v;
   }
   return null;
+});
+
+final vaultMembersProvider =
+    FutureProvider.family<List<VaultMember>, int>((ref, vaultId) {
+  return ref.watch(vaultRepositoryProvider).getMembers(vaultId);
 });
