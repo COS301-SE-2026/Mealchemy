@@ -72,6 +72,11 @@ public class RecipeIngredient
         recipe = recipeIn;
     }
 
+    public void setIngId(Integer ingIdIn)
+    {
+        ingId = ingIdIn;
+    }
+
     public void setQuantity(BigDecimal quantityIn)
     {
         quantity = quantityIn;

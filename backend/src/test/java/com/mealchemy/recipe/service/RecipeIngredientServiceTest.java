@@ -1,0 +1,71 @@
+package com.mealchemy.recipe.service;
+
+/* Importing libraries */
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.time.OffsetDateTime;
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+
+/* Import classes */
+
+import com.mealchemy.recipe.model.RecipeIngredient;
+import com.mealchemy.recipe.model.Recipe;
+import com.mealchemy.recipe.dto.RecipeIngredientRequest;
+import com.mealchemy.recipe.dto.RecipeIngredientResponse;
+import com.mealchemy.recipe.repository.RecipeIngredientRepository;
+import com.mealchemy.recipe.repository.RecipeRepository;
+import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
+
+@ExtendWith(MockitoExtension.class)
+public class RecipeIngredientServiceTest {
+    @Mock
+    private RecipeIngredientRepository recipeIngredientRepository;
+
+    @Mock
+    private RecipeRepository recipeRepository;
+
+    @Mock
+    private IngredientCatalogueRepository ingredientCatalogueRepository;
+
+    @InjectMocks
+    private RecipeIngredientService recipeIngredientService;
+
+    private RecipeIngredient recipeIngredient;
+    private Recipe recipe;
+    private Recipe otherRecipe;
+    private RecipeIngredientRequest request;
+
+    @BeforeEach
+    void setUp()
+    {
+        recipe = new Recipe();
+        recipe.setOwnerId(1);
+        ReflectionTestUtils.setField(recipe, "recipeId", 1);
+
+        otherRecipe = new Recipe();
+        ReflectionTestUtils.setField(otherRecipe, "recipeId", 2);
+
+        recipeIngredient = new RecipeIngredient();
+        recipeIngredient.setRecipe(recipe);
+        ReflectionTestUtils.setField(recipeIngredient, "ingredientId", 1);
+        recipeIngredient.setIngId(1);
+        recipeIngredient.setQuantity(2.75);
+        recipeIngredient.setUnit("grams");
+        recipeIngredient.setSortOrder(1);
+        
+        request = new RecipeIngredientRequest(2, 30, "ml", 1);
+    }
+}
