@@ -62,4 +62,17 @@ public class RecipeStepServiceTest {
 
         request = new RecipeStepRequest(2, "Add milk.");
     }
+
+    @Test
+    void createRecipeStep_returnsCreatedRecipe_whenFoundAndOwner()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeStepRepository.save(any(RecipeStep.class))).thenReturn(recipeStep);
+
+        RecipeStepResponse result = recipeStepService.createRecipeStep(request, 1, 1);
+
+        assertNotNull(result);
+        assertEquals(2, result.stepNr());
+        verify(recipeStepRepository, times(1)).save(any(RecipeStep.class));
+    }
 }
