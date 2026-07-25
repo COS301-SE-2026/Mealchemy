@@ -157,4 +157,17 @@ public class RecipeServiceTest {
         assertNotNull(result);
         assertEquals("Recipe 1", result.title());
     }
+
+    @Test
+    void createFromFullRecipe_returnsCreatedRecipe_whenSourceIdIsNotNull()
+    {
+        when(flavourProfileOptionsRepository.existsByValue(fullRequest.cuisineType())).thenReturn(true);
+        when(recipeRepository.save(any(Recipe.class))).thenReturn(recipe);
+        when(recipeRepository.findById(2)).thenReturn(Optional.of(sourceRecipe));
+
+        RecipeResponse result = recipeRepository.createFromFullRecipe(fullRequest, 1, 2);
+
+        assertNotNull(result);
+        assertEquals("Recipe 1", result.title());
+    }
 }
