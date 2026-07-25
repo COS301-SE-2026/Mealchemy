@@ -18,6 +18,19 @@ name: Frontend Delivery
   #then uploads the APK to firebase app distribution using the pinned firebase tools.
   #It taregts the testers group in the firebase project (to add emails still)
   #release notes include the comit SHA so testers can trace which code is in the build.
+#-------------
+
+  # main - had production url injected
+  # deployment has staging url injected
+  # maual dispatch from main -> production env linked
+  # maual dispatch from deployment -> staging env linked
+  # maual dispatch from any other branch -> staging env linked
+  # merged to main -> production env linked
+
+   #picks backend URL and env label based on branch
+   #only main can ever produce a prod APK so a feature branch dispatch cant accidentally ship to testers against prod backend
+
+
 
 #------------------------------------------------------------------------
 
@@ -26,6 +39,7 @@ on:
   push:
     branches:
       - main
+      - deployment
     paths:
       - 'frontend/**'
 
@@ -66,13 +80,34 @@ jobs:
         run: |
           echo "$KEYSTORE_BASE64" | base64 --decode > android/keystore.jks
 
+     #pick enviornment
+      - name: Resolve environment
+        id: env
+        working-directory: .
+        run: |
+          case "${{ github.ref_name }}" in
+            main)
+              echo "name=production" >> "$GITHUB_OUTPUT"
+              echo "backend_url=${{ secrets.PROD_BACKEND_URL }}" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "name=staging" >> "$GITHUB_OUTPUT"
+              echo "backend_url=${{ secrets.STAGING_BACKEND_URL }}" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
       - name: Build signed release APK
         env:
           KEY_STORE_PATH: ${{ github.workspace }}/frontend/android/keystore.jks
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: flutter build apk --release --build-number ${{ github.run_number }}
+        
+          BACKEND_URL: ${{ steps.env.outputs.backend_url }}
+        run: |
+          flutter build apk --release \
+            --build-number ${{ github.run_number }} \
+            --dart-define=BACKEND_URL=$BACKEND_URL
 
       - name: Distribute via Firebase App Distribution
         env:
