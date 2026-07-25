@@ -165,4 +165,17 @@ public class RecipeIngredientServiceTest {
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Ingredient not found.", ex.getReason());
     }
+
+    @Test
+    void updateRecipeIngredient_throwsException_whenIngredientNotFromRecipe()
+    {
+        recipeIngredient.setRecipe(otherRecipe);
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeIngredientRepository.findById(1)).thenReturn(Optional.of(recipeIngredient));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.updateRecipeIngredient(1, request, 1, 1));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Ingredient must be part of the recipe.", ex.getReason());
+    }
 }
