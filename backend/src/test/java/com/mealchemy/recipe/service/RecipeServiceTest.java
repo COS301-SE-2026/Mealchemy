@@ -170,4 +170,15 @@ public class RecipeServiceTest {
         assertNotNull(result);
         assertEquals("Recipe 1", result.title());
     }
+
+    @Test
+    void createFromFullRecipe_throwsException_whenCuisineTypeNotValid()
+    {
+        when(flavourProfileOptionsRepository.existsByValue(fullRequest.cuisineType())).thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.createRecipe(fullRequest, 1, null));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("Cuisine type is invalid.", ex.getReason());
+    }
 }
