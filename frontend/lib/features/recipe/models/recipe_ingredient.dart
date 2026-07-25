@@ -18,15 +18,14 @@ class RecipeIngredient {
     this.sortOrder = 0,
   });
 
-  factory RecipeIngredient.fromJson(Map<String, dynamic> json) {
+ factory RecipeIngredient.fromJson(Map<String, dynamic> json) {
     return RecipeIngredient(
-      ingredientId: json['ingredient_id'] as int,
-      recipeId: json['recipe_id'] as int,
-      ingId: json['ing_id'] as int,
-      name: json['name'] as String?,
+      ingredientId: json['ingredientId'] as int,
+      recipeId: json['recipeId'] as int,
+      ingId: json['ingId'] as int,
       quantity: (json['quantity'] as num?)?.toDouble(),
       unit: json['unit'] as String?,
-      sortOrder: (json['sort_order'] as int?) ?? 0,
+      sortOrder: (json['sortOrder'] as int?) ?? 0,
     );
   }
   Map<String, dynamic> toJson() => {
