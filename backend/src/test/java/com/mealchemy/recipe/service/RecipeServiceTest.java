@@ -181,4 +181,16 @@ public class RecipeServiceTest {
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         assertEquals("Cuisine type is invalid.", ex.getReason());
     }
+
+    @Test
+    void createFromFullRecipe_throwsException_whenSourceRecipeNotFound()
+    {
+        when(flavourProfileOptionsRepository.existsByValue(fullRequest.cuisineType())).thenReturn(true);
+        when(recipeRepository.findById(2)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.createRecipe(fullRequest, 1, 2));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Source recipe not found.", ex.getReason());
+    }
 }
