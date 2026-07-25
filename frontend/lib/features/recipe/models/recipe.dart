@@ -85,4 +85,18 @@ class Recipe {
         'ingredients': ingredients?.map((i) => i.toJson()).toList() ?? [],
         'steps': steps?.map((s) => s.toJson()).toList() ?? [],
       };
+
+//metadata-only body for POST /recipes/create and PUT /recipes/edit/{id}
+    Map<String, dynamic> toCreateRequestJson() => {
+        'title': title,
+        'description': description,
+        'cuisineType': cuisineType,
+        'prepTimeMins': prepTimeMins,
+        'cookingTimeMins': cookingTimeMins,
+        'servingSize': servingSize,
+        'photoUrl': photoUrl,
+        'videoUrl': videoUrl,
+        'externalUrl': externalUrl,
+        'isCommunityPublished': isCommunityPublished,
+      };
 }

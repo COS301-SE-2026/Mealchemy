@@ -70,27 +70,40 @@ class AddRecipeNotifier extends StateNotifier<AddRecipeState> {
   final RecipeRepository _repository;
   final Ref _ref;
 
-  Future<void> submit(Recipe recipe) async {
-    if (recipe.title.trim().isEmpty) {
-      state = const AddRecipeState(errorMessage: 'Title is required');
-      return;
+   Future<Recipe?> submit(Recipe recipe, {int? recipeId}) async {
+    final missing = recipe.title.trim().isEmpty ||
+        (recipe.cuisineType ?? '').isEmpty ||
+        recipe.prepTimeMins == null ||
+        recipe.cookingTimeMins == null ||
+        recipe.servingSize == null;
+    if (missing) {
+      state = const AddRecipeState(
+          errorMessage: 'Please fill in all required fields.');
+      return null;
     }
 
     //replace whole state
     state = const AddRecipeState(isSubmitting: true);
 
     try {
-      await _repository.addRecipe(recipe);
+      final result = recipeId != null
+          ? await _repository.updateRecipe(recipeId, recipe)
+          : await _repository.addRecipe(recipe);
       state = const AddRecipeState(isSuccess: true);
       _ref.invalidate(recipesProvider);
+      return result;
     } on DioException catch (e) {
       final serverMessage = e.response?.data is Map
           ? (e.response?.data as Map)['message'] as String?
           : null;
-      state = AddRecipeState( errorMessage: serverMessage ?? 'Could not save recipe. Try again.', );
+      state = AddRecipeState(
+        errorMessage: serverMessage ?? 'Could not save recipe. Try again.',
+      );
+      return null;
     } catch (_) {
       state = const AddRecipeState(
           errorMessage: 'Could not save recipe. Try again.');
+      return null;
     }
   }
 

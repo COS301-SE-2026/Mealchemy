@@ -19,14 +19,24 @@ class ApiRecipeRepository implements RecipeRepository {
   //Get a single recipe by ID
   @override
   Future<Recipe> getRecipeById(int id) async {
-    final response = await _dio.get('/recipes/$id');
+    final response = await _dio.get('/recipes/single/$id');
     return Recipe.fromJson(response.data as Map<String, dynamic>);
   }
 
-  //Creates a new full recipe with ingredients and steps
+  //Create the recipe with (metadata only) returns the new recipe with its id
   @override
-  Future<void> addRecipe(Recipe recipe) async {
-    await _dio.post('/recipes/copy', data: recipe.toFullRequestJson());
+  Future<Recipe> addRecipe(Recipe recipe) async {
+    final response =
+        await _dio.post('/recipes/create', data: recipe.toCreateRequestJson());
+    return Recipe.fromJson(response.data as Map<String, dynamic>);
+  }
+
+// Updates the recipe
+  @override
+  Future<Recipe> updateRecipe(int id, Recipe recipe) async {
+    final response =
+        await _dio.put('/recipes/edit/$id', data: recipe.toCreateRequestJson());
+    return Recipe.fromJson(response.data as Map<String, dynamic>);
   }
 
   @override
