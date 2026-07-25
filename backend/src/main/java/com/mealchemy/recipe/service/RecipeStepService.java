@@ -33,7 +33,7 @@ public class RecipeStepService {
     // Create a new step for a specific recipe
     public RecipeStepResponse createRecipeStep(RecipeStepRequest request, Integer recipeId, Integer ownerId)
     {
-        Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new RuntimeException("Recipe not found."));
+        Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         if(!recipeToCheck.getOwnerId().equals(ownerId))
         {
@@ -48,14 +48,14 @@ public class RecipeStepService {
     // Update a specific step in an existing recipe
     public RecipeStepResponse updateRecipeStep(int id, RecipeStepRequest request, Integer recipeId, Integer ownerId)
     {
-        Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new RuntimeException("Recipe not found."));
+        Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         if(!recipeToCheck.getOwnerId().equals(ownerId))
         {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its steps.");
         }
 
-        RecipeStep recipeStepForReturn = recipeStepRepository.findById(id).orElseThrow(() -> new RuntimeException("Step not found."));
+        RecipeStep recipeStepForReturn = recipeStepRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Step not found."));
 
         if(!recipeStepForReturn.getRecipe().getRecipeId().equals(recipeId))
         {
@@ -71,14 +71,14 @@ public class RecipeStepService {
     // Delete a specific step in an existing recipe
     public void deleteRecipeStep(int id, Integer recipeId, Integer ownerId)
     {
-        Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new RuntimeException("Recipe not found."));
+        Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         if (!recipeToCheck.getOwnerId().equals(ownerId))
         {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its steps.");
         }
 
-        RecipeStep recipeStepForReturn = recipeStepRepository.findById(id).orElseThrow(() -> new RuntimeException("step not found."));
+        RecipeStep recipeStepForReturn = recipeStepRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "step not found."));
 
         if (!recipeStepForReturn.getRecipe().getRecipeId().equals(recipeId))
         {
