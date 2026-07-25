@@ -244,4 +244,16 @@ public class RecipeServiceTest {
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only the owner of this recipe can edit it.", ex.getReason());
     }
+
+    @Test
+    void updateRecipe_throwsException_whenCuisineTypeNotValid()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(flavourProfileOptionsRepository.existsByValue(request.cuisineType())).thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.updateRecipe(1, request, 1));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("Cuisine type is invalid.", ex.getReason());
+    }
 }
