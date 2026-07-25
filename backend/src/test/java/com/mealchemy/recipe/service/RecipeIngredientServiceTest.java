@@ -178,4 +178,17 @@ public class RecipeIngredientServiceTest {
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Ingredient must be part of the recipe.", ex.getReason());
     }
+
+    @Test
+    void updateRecipeIngredient_throwsException_whenNotInCatalogue()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeIngredientRepository.findById(1)).thenReturn(Optional.of(recipeIngredient));
+        when(ingredientCatalogueRepository.existsById(request.ingId())).thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.updateRecipeIngredient(1, request, 1, 1));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("The ingredient you want to change to does not exist.", ex.getReason());
+    }
 }
