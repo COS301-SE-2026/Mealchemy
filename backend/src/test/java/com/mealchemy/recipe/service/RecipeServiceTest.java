@@ -224,13 +224,24 @@ public class RecipeServiceTest {
     }
 
     @Test
-    void updateRecipe_updatesRecipe_whenFoundOwnerAndHasValidCuisineType()
+    void updateRecipe_throwsException_whenRecipeNotFound()
     {
         when(recipeRepository.findById(99)).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.updateRecipe(1, request, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.updateRecipe(99, request, 1));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Recipe not found.", ex.getReason());
+    }
+
+    @Test
+    void updateRecipe_throwsException_whenNotOwner()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.updateRecipe(1, request, 99));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only the owner of this recipe can edit it.", ex.getReason());
     }
 }
