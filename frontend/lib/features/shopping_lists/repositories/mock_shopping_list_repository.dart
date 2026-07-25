@@ -37,18 +37,21 @@ class MockShoppingListRepository implements ShoppingListRepository {
       items: [
         ShoppingListItem(
           id: 'heirloom-tomatoes',
+          itemId: 201,
           name: 'Heirloom Tomatoes',
           quantity: '8g',
           category: 'PRODUCE',
         ),
         ShoppingListItem(
           id: 'baby-arugula',
+          itemId: 202,
           name: 'Baby Arugula',
           quantity: '142 g',
           category: 'PRODUCE',
         ),
         ShoppingListItem(
           id: 'shallots',
+          itemId: 203,
           name: 'Shallots',
           quantity: '2 ct',
           category: 'PRODUCE',
@@ -56,24 +59,28 @@ class MockShoppingListRepository implements ShoppingListRepository {
         ),
         ShoppingListItem(
           id: 'cultured-butter',
+          itemId: 204,
           name: 'Cultured Butter',
           quantity: '250g',
           category: 'DAIRY',
         ),
         ShoppingListItem(
           id: 'greek-yogurt',
+          itemId: 205,
           name: 'Greek Yogurt',
           quantity: '907 g',
           category: 'DAIRY',
         ),
         ShoppingListItem(
           id: 'maldon-sea-salt',
+          itemId: 206,
           name: 'Maldon Sea Salt',
           quantity: '1 box',
           category: 'PANTRY',
         ),
         ShoppingListItem(
           id: 'extra-virgin-olive-oil',
+          itemId: 207,
           name: 'Extra Virgin Olive Oil',
           quantity: '500ml',
           category: 'PANTRY',

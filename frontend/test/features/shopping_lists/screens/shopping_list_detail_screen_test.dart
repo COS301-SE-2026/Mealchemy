@@ -6,6 +6,108 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/features/shopping_lists/screens/shopping_list_detail_screen.dart';
 import 'package:mealchemy/features/shopping_lists/screens/shopping_lists_screen.dart';
+import 'package:mealchemy/features/shopping_lists/models/complete_shop_result.dart';
+import 'package:mealchemy/features/shopping_lists/models/shopping_list.dart';
+import 'package:mealchemy/features/shopping_lists/models/shopping_list_item.dart';
+import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
+import 'package:mealchemy/features/shopping_lists/repositories/shopping_list_repository.dart';
+
+class _DeleteMenuShoppingListRepository implements ShoppingListRepository {
+  @override
+  Future<List<ShoppingList>> getShoppingLists() async {
+    return [
+      ShoppingList(
+        id: '1',
+        shoppingListId: 1,
+        userId: 3,
+        title: 'General List',
+        subtitle: '2 items added by you',
+        section: 'FAVORITES',
+        iconType: 'list',
+        status: 'ACTIVE',
+        createdAt: DateTime.parse('2026-07-13T14:00:00Z'),
+        items: const [
+          ShoppingListItem(
+            id: '10',
+            itemId: 10,
+            shoppingListId: 1,
+            name: 'Greek Yogurt',
+            quantity: '907 g',
+            unit: 'g',
+            category: 'MANUAL',
+          ),
+          ShoppingListItem(
+            id: '11',
+            itemId: 11,
+            shoppingListId: 1,
+            name: 'Fresh Basil',
+            quantity: '1 bunch',
+            unit: 'bunch',
+            category: 'MANUAL',
+          ),
+        ],
+      ),
+    ];
+  }
+
+  @override
+  Future<ShoppingList?> getShoppingListById(String id) async {
+    final lists = await getShoppingLists();
+    return lists.firstWhere((list) => list.id == id);
+  }
+
+  @override
+  Future<List<ShoppingListItem>> selectAllItems(String listId) async {
+    final list = await getShoppingListById(listId);
+    return list!.items.map((item) => item.copyWith(checked: true)).toList();
+  }
+
+  @override
+  Future<List<ShoppingListItem>> deselectAllItems(String listId) async {
+    final list = await getShoppingListById(listId);
+    return list!.items.map((item) => item.copyWith(checked: false)).toList();
+  }
+
+  @override
+  Future<void> deleteShoppingListItems({
+    required String listId,
+    required List<int> itemIds,
+  }) async {
+    //fake backend accepts the delete request
+  }
+
+  @override
+  Future<ShoppingList> createShoppingList({
+    required String name,
+    String status = 'ACTIVE',
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ShoppingListItem> addItemToShoppingList({
+    required String listId,
+    required String name,
+    required String quantity,
+    required String unit,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ShoppingListItem> updateItemPurchased({
+    required String listId,
+    required String itemId,
+    required bool purchased,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<CompleteShopResult> completeShop(String listId) {
+    throw UnimplementedError();
+  }
+}
 
 void main() {
   setUpAll(() {
@@ -102,6 +204,63 @@ void main() {
 
     final checkboxes = tester.widgetList<Checkbox>(find.byType(Checkbox));
     expect(checkboxes.every((checkbox) => checkbox.value == false), isTrue);
+  });
+
+  testWidgets(
+      'ShoppingListDetailScreen shows message when deleting with no selection',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          shoppingListRepositoryProvider.overrideWithValue(
+            _DeleteMenuShoppingListRepository(),
+          ),
+        ],
+        child: const MaterialApp(
+          home: ShoppingListDetailScreen(listId: '1'),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Delete selected'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No selected items to delete.'), findsOneWidget);
+  });
+
+  testWidgets('ShoppingListDetailScreen deletes selected items from menu',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          shoppingListRepositoryProvider.overrideWithValue(
+            _DeleteMenuShoppingListRepository(),
+          ),
+        ],
+        child: const MaterialApp(
+          home: ShoppingListDetailScreen(listId: '1'),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Select all'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Delete selected'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('2 selected items deleted.'), findsOneWidget);
+    expect(find.byType(Checkbox), findsNothing);
   });
 
   testWidgets('ShoppingListDetailScreen adds item from dialog', (tester) async {

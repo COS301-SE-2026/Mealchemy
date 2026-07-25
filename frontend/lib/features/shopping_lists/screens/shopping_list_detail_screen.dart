@@ -60,6 +60,11 @@ class ShoppingListDetailScreen extends ConsumerWidget {
                   .read(shoppingListsProvider.notifier)
                   .deselectAllItems(list.id);
             },
+            onDeleteSelected: () async {
+              await ref
+                  .read(shoppingListsProvider.notifier)
+                  .deleteSelectedItems(list.id);
+            },
             onAddItem: ({
               required name,
               required quantity,
@@ -106,12 +111,15 @@ class _ShoppingListDetailContent extends StatelessWidget {
     required this.onDeselectAll,
     required this.onAddItem,
     required this.onCompleteShop,
+    required this.onDeleteSelected,
   });
 
   final ShoppingList list;
   final Future<void> Function(String itemId) onToggleItem;
   final Future<void> Function() onSelectAll;
   final Future<void> Function() onDeselectAll;
+  final Future<void> Function() onDeleteSelected;
+
   final Future<void> Function({
     required String name,
     required String quantity,
@@ -132,6 +140,28 @@ class _ShoppingListDetailContent extends StatelessWidget {
             children: [
               _DetailTopBar(
                 onBack: () => context.go(AppRoutes.shoppingLists),
+                onDeleteSelected: () async {
+                  final selectedCount =
+                      list.items.where((item) => item.checked).length;
+
+                  if (selectedCount == 0) {
+                    _showSnackBar(
+                      context,
+                      'No selected items to delete.',
+                    );
+                    return;
+                  }
+
+                  await onDeleteSelected();
+
+                  if (!context.mounted) return;
+
+                  final message = selectedCount == 1
+                      ? '1 selected item deleted.'
+                      : '$selectedCount selected items deleted.';
+
+                  _showSnackBar(context, message);
+                },
               ),
               const SizedBox(height: 42),
               ShoppingSectionHeader(title: list.title),
@@ -336,9 +366,11 @@ class _ShoppingListDetailContent extends StatelessWidget {
 class _DetailTopBar extends StatelessWidget {
   const _DetailTopBar({
     required this.onBack,
+    required this.onDeleteSelected,
   });
 
   final VoidCallback onBack;
+  final Future<void> Function() onDeleteSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -362,12 +394,30 @@ class _DetailTopBar extends StatelessWidget {
             ),
           ),
         ),
-        IconButton(
-          onPressed: () {},
+        PopupMenuButton<String>(
           icon: const Icon(
             Icons.more_vert,
             color: AppColors.tertiaryMuted,
           ),
+          color: AppColors.bgLight,
+          onSelected: (value) async {
+            if (value == 'delete-selected') {
+              await onDeleteSelected();
+            }
+          },
+          itemBuilder: (context) {
+            return [
+              PopupMenuItem(
+                value: 'delete-selected',
+                child: Text(
+                  'Delete selected',
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.error,
+                  ),
+                ),
+              ),
+            ];
+          },
         ),
       ],
     );
