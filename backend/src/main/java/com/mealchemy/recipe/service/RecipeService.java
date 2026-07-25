@@ -40,6 +40,12 @@ public class RecipeService
         return recipeRepository.findAll().stream().map(RecipeResponse::from).collect(Collectors.toList());
     }
 
+    // Get all community publishe recipes (global vault)
+    public List<RecipeResponse> getAllCommunityPublishedRecipes()
+    {
+        return recipeRepository.findByIsCommunityPublishedTrue().stream().map(RecipeResponse::from).collect(Collectors.toList());
+    }
+
     // Get a single recipe by Id
     public RecipeResponse getRecipeById(Integer id)
     {

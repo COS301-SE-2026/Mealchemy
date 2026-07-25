@@ -13,5 +13,5 @@ import com.mealchemy.recipe.model.Recipe;
 @Repository
 public interface RecipeRepository extends JpaRepository<Recipe, Integer>
 {
-
+    List<Recipe> findByIsCommunityPublishedTrue();
 }
