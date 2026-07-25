@@ -110,74 +110,91 @@ jobs:
           echo "suffix=${{ inputs.environment == 'production' && 'prod' || 'staging' }}" >> "$GITHUB_OUTPUT"
 
       # validation check
+      # protects against script injection since env vars are not evaluated as shell
       - name: Validate inputs
+        env:
+          SCHEMA_CONFIRMED: ${{ inputs.schema_compatible_confirmed }}
+          SERVICE: ${{ inputs.service }}
+          REVISION: ${{ inputs.revision }}
+          ENGINE_REVISION: ${{ inputs.engine_revision }}
         run: |
-          if [[ "${{ inputs.schema_compatible_confirmed }}" != "true" ]]; then
+          if [[ "${SCHEMA_CONFIRMED}" != "true" ]]; then
             echo "::error::You must confirm schema compatibility before rolling back. Check the box and re-run."
             exit 1
           fi
-          if [[ "${{ inputs.service }}" != "engine" && -z "${{ inputs.revision }}" ]]; then
+          if [[ "${SERVICE}" != "engine" && -z "${REVISION}" ]]; then
             echo "::error::revision is required when service is backend or both"
             exit 1
           fi
-          if [[ "${{ inputs.service }}" != "backend" && -z "${{ inputs.engine_revision }}" ]]; then
+          if [[ "${SERVICE}" != "backend" && -z "${ENGINE_REVISION}" ]]; then
             echo "::error::engine_revision is required when service is engine or both"
             exit 1
           fi
 
       - name: Roll back backend
         if: inputs.service == 'backend' || inputs.service == 'both'
+        env:
+          REVISION: ${{ inputs.revision }}
+          SUFFIX: ${{ steps.env.outputs.suffix }}
         run: |
-          gcloud run services update-traffic "mealchemy-backend-${{ steps.env.outputs.suffix }}" \
-            --to-revisions="${{ inputs.revision }}=100" \
+          gcloud run services update-traffic "mealchemy-backend-${SUFFIX}" \
+            --to-revisions="${REVISION}=100" \
             --region "${{ env.GCP_REGION }}" \
             --project "${{ env.GCP_PROJECT_ID }}"
 
       - name: Roll back engine
         if: inputs.service == 'engine' || inputs.service == 'both'
+        env:
+          ENGINE_REVISION: ${{ inputs.engine_revision }}
+          SUFFIX: ${{ steps.env.outputs.suffix }}
         run: |
-          gcloud run services update-traffic "mealchemy-engine-${{ steps.env.outputs.suffix }}" \
-            --to-revisions="${{ inputs.engine_revision }}=100" \
+          gcloud run services update-traffic "mealchemy-engine-${SUFFIX}" \
+            --to-revisions="${ENGINE_REVISION}=100" \
             --region "${{ env.GCP_REGION }}" \
             --project "${{ env.GCP_PROJECT_ID }}"
 
       - name: Confirm active revisions
+        env:
+          SERVICE: ${{ inputs.service }}
+          SUFFIX: ${{ steps.env.outputs.suffix }}
         run: |
-          ENV="${{ steps.env.outputs.suffix }}"
-          if [[ "${{ inputs.service }}" != "engine" ]]; then
+          if [[ "${SERVICE}" != "engine" ]]; then
             echo "=== backend ==="
-            gcloud run services describe "mealchemy-backend-${ENV}" \
+            gcloud run services describe "mealchemy-backend-${SUFFIX}" \
               --region "${{ env.GCP_REGION }}" \
               --project "${{ env.GCP_PROJECT_ID }}" \
               --format="value(status.traffic[0].revisionName,status.traffic[0].percent)"
           fi
-          if [[ "${{ inputs.service }}" != "backend" ]]; then
+          if [[ "${SERVICE}" != "backend" ]]; then
             echo "=== engine ==="
-            gcloud run services describe "mealchemy-engine-${ENV}" \
+            gcloud run services describe "mealchemy-engine-${SUFFIX}" \
               --region "${{ env.GCP_REGION }}" \
               --project "${{ env.GCP_PROJECT_ID }}" \
               --format="value(status.traffic[0].revisionName,status.traffic[0].percent)"
           fi
         #Tells in action logs if rollback was successful with revsion info. Doesn't say if rollback version works tho
 
-  
+
 
       #tells us if revision is actually serving incase rollback version doesn't actually work
       #backend gets http request for health check
       #has 3x retry incase of cold start
-      #engine is not publically acessible therefore check gcp ready condtion via gcloud. if the revision was unhealthy, containers would have failed cloud run's own health checks 
+      #engine is not publically acessible therefore check gcp ready condtion via gcloud. if the revision was unhealthy, containers would have failed cloud run's own health checks
       - name: Post-rollback health check
+        env:
+          SERVICE: ${{ inputs.service }}
+          SUFFIX: ${{ steps.env.outputs.suffix }}
+          ENGINE_REVISION: ${{ inputs.engine_revision }}
         run: |
-          ENV="${{ steps.env.outputs.suffix }}"
           FAILED=false
 
-          if [[ "${{ inputs.service }}" != "engine" ]]; then
+          if [[ "${SERVICE}" != "engine" ]]; then
             echo "--- backend HTTP health check ---"
-            BACKEND_URL=$(gcloud run services describe "mealchemy-backend-${ENV}" \
+            BACKEND_URL=$(gcloud run services describe "mealchemy-backend-${SUFFIX}" \
               --region "${{ env.GCP_REGION }}" \
               --project "${{ env.GCP_PROJECT_ID }}" \
               --format="value(status.url)")
-            
+
             for i in 1 2 3; do
               HTTP_STATUS=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 15 \
                 "${BACKEND_URL}/actuator/health" 2>/dev/null || echo "000")
@@ -185,7 +202,7 @@ jobs:
               if [[ "${HTTP_STATUS}" == "200" ]]; then
                 echo "Backend health check passed"
                 break
-              
+
               fi
               if [[ "${i}" == "3" ]]; then
                 echo "::error::Backend returned HTTP ${HTTP_STATUS} after 3 attempts, routing shifted but revision may not be healthy"
@@ -196,9 +213,9 @@ jobs:
             done
           fi
 
-          if [[ "${{ inputs.service }}" != "backend" ]]; then
+          if [[ "${SERVICE}" != "backend" ]]; then
             echo "--- engine GCP revision readiness check ---"
-            READY=$(gcloud run revisions describe "${{ inputs.engine_revision }}" \
+            READY=$(gcloud run revisions describe "${ENGINE_REVISION}" \
               --region "${{ env.GCP_REGION }}" \
               --project "${{ env.GCP_PROJECT_ID }}" \
               --format="json" \

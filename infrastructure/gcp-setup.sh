@@ -66,6 +66,8 @@ GITHUB_REPO="Mealchemy"
 AR_REPO="mealchemy"
 
 #workload idenitiy configuration pool and OICD Provider
+#WIF_LOCATION is always global for OIDC federation, made a constant instead
+WIF_LOCATION="global"
 WIF_POOL="github-pool"
 WIF_PROVIDER="github-provider"
 CD_SA="cd-deployer"
@@ -171,18 +173,18 @@ gcloud iam service-accounts add-iam-policy-binding "${ENGINE_SA_EMAIL}" \
 
 #creates the WIF pool, a container for external identity providers
 if ! gcloud iam workload-identity-pools describe "${WIF_POOL}" \
-    --location="global" --project="${PROJECT_ID}" &>/dev/null; then
+    --location="${WIF_LOCATION}" --project="${PROJECT_ID}" &>/dev/null; then
   gcloud iam workload-identity-pools create "${WIF_POOL}" \
-    --location="global" \
+    --location="${WIF_LOCATION}" \
     --display-name="GitHub Actions Pool"
 fi
 
 #create wif provider of type OIDC
 if ! gcloud iam workload-identity-pools providers describe "${WIF_PROVIDER}" \
     --workload-identity-pool="${WIF_POOL}" \
-    --location="global" --project="${PROJECT_ID}" &>/dev/null; then
+    --location="${WIF_LOCATION}" --project="${PROJECT_ID}" &>/dev/null; then
   gcloud iam workload-identity-pools providers create-oidc "${WIF_PROVIDER}" \
-    --location="global" \
+    --location="${WIF_LOCATION}" \
     --workload-identity-pool="${WIF_POOL}" \
     --display-name="GitHub Provider" \
     --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository,attribute.repository_owner=assertion.repository_owner" \
@@ -193,7 +195,7 @@ fi
 #repo check
 gcloud iam service-accounts add-iam-policy-binding "${CD_SA_EMAIL}" \
   --role="roles/iam.workloadIdentityUser" \
-  --member="principalSet://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${WIF_POOL}/attribute.repository/${GITHUB_ORG}/${GITHUB_REPO}"
+  --member="principalSet://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/${WIF_LOCATION}/workloadIdentityPools/${WIF_POOL}/attribute.repository/${GITHUB_ORG}/${GITHUB_REPO}"
 
 #Secret Manager, checks then creates
 for secret in \

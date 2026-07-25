@@ -109,11 +109,13 @@ jobs:
             --build-number ${{ github.run_number }} \
             --dart-define=BACKEND_URL=$BACKEND_URL
 
+    
+
       - name: Distribute via Firebase App Distribution
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_APP_DISTRIBUTION_TOKEN }}
         run: |
-          npx firebase-tools@15.22.4 appdistribution:distribute \
+          firebase appdistribution:distribute \
             build/app/outputs/flutter-apk/app-release.apk \
             --app 1:480345342713:android:490cec1011395be746d828 \
             --groups testers \
