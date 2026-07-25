@@ -157,6 +157,17 @@ void main() {
             return;
           }
 
+          if (options.method == 'POST' &&
+              options.path == '/api/shopping-lists/1/items/batch-delete') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 204,
+              ),
+            );
+            return;
+          }
+
           if (options.path == '/api/shopping-lists/1') {
             handler.resolve(
               Response(
@@ -246,6 +257,7 @@ void main() {
     expect(item.quantity, '907 g');
     expect(item.checked, isFalse);
   });
+
   test('updateItemPurchased patches purchased state and maps response',
       () async {
     final item = await repository.updateItemPurchased(
@@ -263,6 +275,7 @@ void main() {
     expect(item.name, 'Greek Yogurt');
     expect(item.checked, isTrue);
   });
+
   test('addItemToShoppingList posts manual item and maps response', () async {
     final item = await repository.addItemToShoppingList(
       listId: '1',
@@ -309,6 +322,7 @@ void main() {
       throwsArgumentError,
     );
   });
+
   test('completeShop puts complete-shop endpoint and maps response', () async {
     final result = await repository.completeShop('1');
 
@@ -319,6 +333,7 @@ void main() {
     expect(result.skippedManualItems, ['Fresh basil bunch']);
     expect(result.shoppingListDeleted, isFalse);
   });
+
   test('createShoppingList posts list metadata and maps response', () async {
     final list = await repository.createShoppingList(
       name: 'Weekend Braai',
@@ -343,6 +358,7 @@ void main() {
       throwsArgumentError,
     );
   });
+
   test('selectAllItems puts select-all endpoint and maps updated items',
       () async {
     final items = await repository.selectAllItems('1');
@@ -365,5 +381,26 @@ void main() {
     expect(items, hasLength(2));
     expect(items.every((item) => item.checked), isFalse);
     expect(items.last.name, 'Fresh Basil');
+  });
+
+  test('deleteShoppingListItems posts batch-delete request', () async {
+    await repository.deleteShoppingListItems(
+      listId: '1',
+      itemIds: [10, 11],
+    );
+
+    expect(lastRequest?.method, 'POST');
+    expect(lastRequest?.path, '/api/shopping-lists/1/items/batch-delete');
+    expect(lastRequest?.data['item_ids'], [10, 11]);
+  });
+
+  test('deleteShoppingListItems rejects empty item ids', () {
+    expect(
+      () => repository.deleteShoppingListItems(
+        listId: '1',
+        itemIds: [],
+      ),
+      throwsArgumentError,
+    );
   });
 }

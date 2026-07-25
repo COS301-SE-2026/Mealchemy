@@ -249,4 +249,16 @@ class MockShoppingListRepository implements ShoppingListRepository {
     //everything unchecked again
     return list.items.map((item) => item.copyWith(checked: false)).toList();
   }
+
+  @override
+  Future<void> deleteShoppingListItems({
+    required String listId,
+    required List<int> itemIds,
+  }) async {
+    if (itemIds.isEmpty) {
+      throw ArgumentError('At least one item id is required.');
+    }
+
+    //mock does not persist, but it still checks that ids were supplied
+  }
 }

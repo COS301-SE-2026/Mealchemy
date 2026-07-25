@@ -145,4 +145,21 @@ class ApiShoppingListRepository implements ShoppingListRepository {
         .map((item) => ShoppingListItem.fromJson(item as Map<String, dynamic>))
         .toList();
   }
+
+  @override
+  Future<void> deleteShoppingListItems({
+    required String listId,
+    required List<int> itemIds,
+  }) async {
+    if (itemIds.isEmpty) {
+      throw ArgumentError('At least one item id is required.');
+    }
+
+    await _dio.post<void>(
+      '/api/shopping-lists/$listId/items/batch-delete',
+      data: {
+        'item_ids': itemIds,
+      },
+    );
+  }
 }

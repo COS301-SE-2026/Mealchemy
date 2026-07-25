@@ -38,4 +38,9 @@ abstract class ShoppingListRepository {
 
   //marks every item in one shopping list as not purchased/unchecked
   Future<List<ShoppingListItem>> deselectAllItems(String listId);
+  //deletes several selected items from one shopping list
+  Future<void> deleteShoppingListItems({
+    required String listId,
+    required List<int> itemIds,
+  });
 }
