@@ -207,7 +207,7 @@ public class RecipeServiceTest {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.createRecipe(fullRequest, 1, null));
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
-        assertEquals("SOne of the ingredients you want to add does not exist.", ex.getReason());
+        assertEquals("One of the ingredients you want to add does not exist.", ex.getReason());
     }
 
     @Test
@@ -223,4 +223,14 @@ public class RecipeServiceTest {
         verify(recipeRepository, times(1)).save(any(Recipe.class));
     }
 
+    @Test
+    void updateRecipe_updatesRecipe_whenFoundOwnerAndHasValidCuisineType()
+    {
+        when(recipeRepository.findById(99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.updateRecipe(1, request, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
+    }
 }
