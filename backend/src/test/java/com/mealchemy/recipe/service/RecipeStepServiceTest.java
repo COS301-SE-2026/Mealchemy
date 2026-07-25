@@ -192,4 +192,16 @@ public class RecipeStepServiceTest {
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only the owner of this recipe can modify its steps.", ex.getReason());
     }
+
+    @Test
+    void deleteRecipeStep_throwsException_whenStepNotFound()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeStepRepository.findById(99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.updateRecipeStep(99, 1, 1));
+        
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Step not found.", ex.getReason());
+    }
 }
