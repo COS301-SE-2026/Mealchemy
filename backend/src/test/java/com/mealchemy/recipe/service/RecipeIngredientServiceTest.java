@@ -68,4 +68,18 @@ public class RecipeIngredientServiceTest {
         
         request = new RecipeIngredientRequest(2, 30, "ml", 1);
     }
+
+    @Test
+    void createRecipeIngredient_returnsNewIngredient_whenFoundOwnerAndInCatalogue()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(ingredientCatalogueRepository.existsById(request.ingId())).thenReturn(true);
+        when(recipeIngredientRepository.save(any(RecipeIngredient.class))).thenReturn(recipeIngredient);
+
+        RecipeIngredientResponse result = recipeIngredientService.createRecipeIngredient(request, 1, 1);
+
+        assertNotNull(result);
+        assertEquals(1, result.ingredientId());
+        verify(recipeIngredientRepository, times(1)).save(any(RecipeIngredient.class));
+    }
 }
