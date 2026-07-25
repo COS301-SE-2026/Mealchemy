@@ -128,7 +128,7 @@ public class RecipeIngredientServiceTest {
         RecipeIngredientResponse result = recipeIngredientService.updateRecipeIngredient(1, request, 1, 1);
 
         assertNotNull(result);
-        assertEquals(2, result.ingredientId());
+        assertEquals(2, result.ingId());
         verify(recipeIngredientRepository, times(1)).save(any(RecipeIngredient.class));
     }
 

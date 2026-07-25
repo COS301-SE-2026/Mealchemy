@@ -105,7 +105,7 @@ public class RecipeStepServiceTest {
         when(recipeStepRepository.findById(1)).thenReturn(Optional.of(recipeStep));
         when(recipeStepRepository.save(any(RecipeStep.class))).thenReturn(recipeStep);
 
-        RecipeStepResponse result = recipeStepService.createRecipeStep(1, request, 1, 1);
+        RecipeStepResponse result = recipeStepService.updateRecipeStep(1, request, 1, 1);
 
         assertNotNull(result);
         assertEquals(2, result.stepNr());
@@ -187,7 +187,7 @@ public class RecipeStepServiceTest {
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.updateRecipeStep(1, 1, 99));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.deleteRecipeStep(1, 1, 99));
         
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only the owner of this recipe can modify its steps.", ex.getReason());
@@ -199,7 +199,7 @@ public class RecipeStepServiceTest {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
         when(recipeStepRepository.findById(99)).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.updateRecipeStep(99, 1, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.deleteRecipeStep(99, 1, 1));
         
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Step not found.", ex.getReason());
@@ -212,7 +212,7 @@ public class RecipeStepServiceTest {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
         when(recipeStepRepository.findById(1)).thenReturn(Optional.of(recipeStep));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.updateRecipeStep(1, 1, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.deleteRecipeStep(1, 1, 1));
         
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Step must be part of the recipe.", ex.getReason());

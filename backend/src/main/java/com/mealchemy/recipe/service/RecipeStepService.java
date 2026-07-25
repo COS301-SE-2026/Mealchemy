@@ -78,7 +78,7 @@ public class RecipeStepService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its steps.");
         }
 
-        RecipeStep recipeStepForReturn = recipeStepRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "step not found."));
+        RecipeStep recipeStepForReturn = recipeStepRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Step not found."));
 
         if (!recipeStepForReturn.getRecipe().getRecipeId().equals(recipeId))
         {
