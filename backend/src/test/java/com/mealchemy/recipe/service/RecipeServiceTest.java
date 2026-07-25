@@ -11,6 +11,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -70,7 +71,7 @@ public class RecipeServiceTest {
         request = new RecipeRequest("Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false);
 
         List<RecipeIngredientRequest> ingredients = List.of(
-            new RecipeIngredientRequest(1, 2.0, "cup", 1)
+            new RecipeIngredientRequest(1, BigDecimal.valueOf(2.0), "cup", 1)
         );
 
         List<RecipeStepRequest> steps = List.of(

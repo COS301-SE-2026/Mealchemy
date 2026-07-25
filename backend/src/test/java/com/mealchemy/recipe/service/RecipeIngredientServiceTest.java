@@ -11,6 +11,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -62,11 +63,11 @@ public class RecipeIngredientServiceTest {
         recipeIngredient.setRecipe(recipe);
         ReflectionTestUtils.setField(recipeIngredient, "ingredientId", 1);
         recipeIngredient.setIngId(1);
-        recipeIngredient.setQuantity(2.75);
+        recipeIngredient.setQuantity(BigDecimal.valueOf(2.75));
         recipeIngredient.setUnit("grams");
         recipeIngredient.setSortOrder(1);
         
-        request = new RecipeIngredientRequest(2, 30, "ml", 1);
+        request = new RecipeIngredientRequest(2, BigDecimal.valueOf(30), "ml", 1);
     }
 
     @Test
