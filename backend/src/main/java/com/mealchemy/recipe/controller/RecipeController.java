@@ -35,6 +35,13 @@ public class RecipeController
     }
 
     // Get
+    @GetMapping("/community")
+    public List<RecipeResponse> getAllCommunityPublishedRecipes()
+    {
+        return recipeService.getAllCommunityPublishedRecipes();
+    }
+
+    // Get
     @GetMapping("/single/{id}")
     public RecipeResponse getRecipeById(@PathVariable Integer id)
     {
