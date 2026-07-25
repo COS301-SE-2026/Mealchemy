@@ -116,4 +116,19 @@ public class RecipeIngredientServiceTest {
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         assertEquals("The ingredient you want to add does not exist.", ex.getReason());
     }
+
+    @Test
+    void updateRecipeIngredient_returnsUpdatedIngredient_whenFoundOwnerBelongsToRecipeAndInCatalogue()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeIngredientRepository.findById(1)).thenReturn(Optional.of(recipeIngredient));
+        when(ingredientCatalogueRepository.existsById(request.ingId())).thenReturn(true);
+        when(recipeIngredientRepository.save(any(RecipeIngredient.class))).thenReturn(recipeIngredient);
+
+        RecipeIngredientResponse result = recipeIngredientService.updateRecipeIngredient(1, request, 1, 1);
+
+        assertNotNull(result);
+        assertEquals(2, result.ingredientId());
+        verify(recipeIngredientRepository, times(1)).save(any(RecipeIngredient.class));
+    }
 }
