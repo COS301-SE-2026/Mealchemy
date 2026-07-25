@@ -1,6 +1,109 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
+import 'package:mealchemy/features/shopping_lists/models/shopping_list.dart';
+import 'package:mealchemy/features/shopping_lists/models/shopping_list_item.dart';
+import 'package:mealchemy/features/shopping_lists/models/complete_shop_result.dart';
+import 'package:mealchemy/features/shopping_lists/repositories/shopping_list_repository.dart';
+
+class _ApiShapedShoppingListRepository implements ShoppingListRepository {
+  @override
+  Future<List<ShoppingList>> getShoppingLists() async {
+    return [
+      ShoppingList(
+        id: '1',
+        shoppingListId: 1,
+        userId: 3,
+        title: 'General List',
+        subtitle: '2 items added by you',
+        section: 'FAVORITES',
+        iconType: 'list',
+        status: 'ACTIVE',
+        createdAt: DateTime.parse('2026-07-13T14:00:00Z'),
+        items: const [
+          ShoppingListItem(
+            id: '10',
+            itemId: 10,
+            shoppingListId: 1,
+            name: 'Greek Yogurt',
+            quantity: '907 g',
+            unit: 'g',
+            category: 'MANUAL',
+          ),
+          ShoppingListItem(
+            id: '11',
+            itemId: 11,
+            shoppingListId: 1,
+            name: 'Fresh Basil',
+            quantity: '1 bunch',
+            unit: 'bunch',
+            category: 'MANUAL',
+          ),
+        ],
+      ),
+    ];
+  }
+
+  @override
+  Future<ShoppingList?> getShoppingListById(String id) async {
+    final lists = await getShoppingLists();
+    return lists.firstWhere((list) => list.id == id);
+  }
+
+  @override
+  Future<ShoppingList> createShoppingList({
+    required String name,
+    String status = 'ACTIVE',
+  }) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ShoppingListItem> addItemToShoppingList({
+    required String listId,
+    required String name,
+    required String quantity,
+    required String unit,
+  }) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ShoppingListItem> updateItemPurchased({
+    required String listId,
+    required String itemId,
+    required bool purchased,
+  }) async {
+    final list = await getShoppingListById(listId);
+    final item = list!.items.firstWhere((item) => item.id == itemId);
+    return item.copyWith(checked: purchased);
+  }
+
+  @override
+  Future<List<ShoppingListItem>> selectAllItems(String listId) async {
+    final list = await getShoppingListById(listId);
+    return list!.items.map((item) => item.copyWith(checked: true)).toList();
+  }
+
+  @override
+  Future<List<ShoppingListItem>> deselectAllItems(String listId) async {
+    final list = await getShoppingListById(listId);
+    return list!.items.map((item) => item.copyWith(checked: false)).toList();
+  }
+
+  @override
+  Future<void> deleteShoppingListItems({
+    required String listId,
+    required List<int> itemIds,
+  }) async {
+    //pretend the backend accepted the batch delete request
+  }
+
+  @override
+  Future<CompleteShopResult> completeShop(String listId) async {
+    throw UnimplementedError();
+  }
+}
 
 void main() {
   //loads mock shopping lists into provider state
@@ -73,6 +176,31 @@ void main() {
 
     expect(list.items, isNotEmpty);
     expect(list.items.every((item) => item.checked), isFalse);
+  });
+
+  //deletes checked API-shaped items from one shopping list
+  test('shoppingListsProvider deletes selected items from a list', () async {
+    //this fake gives items real backend itemIds, like the API does
+    final container = ProviderContainer(
+      overrides: [
+        shoppingListRepositoryProvider.overrideWithValue(
+          _ApiShapedShoppingListRepository(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(shoppingListsProvider.future);
+
+    final notifier = container.read(shoppingListsProvider.notifier);
+
+    await notifier.selectAllItems('1');
+    await notifier.deleteSelectedItems('1');
+
+    final updatedState = container.read(shoppingListsProvider).value!;
+    final list = updatedState.getListById('1')!;
+
+    expect(list.items, isEmpty);
   });
 
   //adds new item to provider state

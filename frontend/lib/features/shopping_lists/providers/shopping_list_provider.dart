@@ -205,6 +205,41 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     state = AsyncData(current.copyWith(lists: updatedLists));
   }
 
+  //deletes every checked item from one shopping list
+  Future<void> deleteSelectedItems(String listId) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final list = current.getListById(listId);
+    if (list == null) return;
+
+    final selectedItems = list.items.where((item) => item.checked).toList();
+
+    final selectedItemIds =
+        selectedItems.map((item) => item.itemId).whereType<int>().toList();
+
+    if (selectedItemIds.isEmpty) return;
+
+    await _repository.deleteShoppingListItems(
+      listId: listId,
+      itemIds: selectedItemIds,
+    );
+
+    final selectedItemIdSet = selectedItemIds.toSet();
+
+    final updatedLists = current.lists.map((list) {
+      if (list.id != listId) return list;
+
+      final remainingItems = list.items.where((item) {
+        return item.itemId == null || !selectedItemIdSet.contains(item.itemId);
+      }).toList();
+
+      return list.copyWith(items: remainingItems);
+    }).toList();
+
+    state = AsyncData(current.copyWith(lists: updatedLists));
+  }
+
   //adds manual item through the active repository
   Future<void> addItemToList({
     required String listId,
