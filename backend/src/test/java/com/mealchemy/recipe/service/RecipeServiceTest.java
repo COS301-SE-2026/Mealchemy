@@ -256,4 +256,15 @@ public class RecipeServiceTest {
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         assertEquals("Cuisine type is invalid.", ex.getReason());
     }
+
+    @Test
+    void deleteRecipe_callsDeleteById_whenFoundAndOwner()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        doNothing().when(recipeRepository).deleteById(1);
+
+        recipeRepository.deleteRecipe(1, 1);
+
+        verify(recipeRepository, times(1)).deleteById(1);
+    }
 }
