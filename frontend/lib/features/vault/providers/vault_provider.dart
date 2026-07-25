@@ -107,3 +107,10 @@ final vaultMembersProvider =
     FutureProvider.family<List<VaultMember>, int>((ref, vaultId) {
   return ref.watch(vaultRepositoryProvider).getMembers(vaultId);
 });
+
+// Private vault folders for the recipe folder picker
+final privateFoldersProvider = FutureProvider<List<VaultFolder>>((ref) async {
+  final private = ref.watch(privateVaultProvider);
+  if (private == null) return [];
+  return ref.watch(vaultRepositoryProvider).getFolders(private.vaultId);
+});

@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/shared_widgets/Molecules/app_section_header.dart';
+import '../../../core/shared_widgets/Molecules/app_confirm_dialog.dart';
 import '../../../core/shared_widgets/atoms/app_button.dart';
 import '../../../core/shared_widgets/atoms/app_card.dart';
 import '../../../core/shared_widgets/atoms/app_chip.dart';
 import '../../../core/shared_widgets/atoms/app_text_field.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../vault/providers/vault_provider.dart';
 import '../models/recipe.dart';
 import '../providers/recipe_provider.dart';
 
-//need consumer state widget for textediting controller and submission state needs consumer state
 class AddRecipeScreen extends ConsumerStatefulWidget {
   const AddRecipeScreen({super.key});
 
@@ -28,6 +28,9 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
   final _servingsController = TextEditingController();
 
   String? _selectedCuisine;
+  int? _selectedFolderId;
+  bool _publishToGlobal = false;
+  bool _showValidation = false;
 
   @override
   void dispose() {
@@ -39,33 +42,82 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     super.dispose();
   }
 
-  void _handleSubmit() {
-    final title = _titleController.text.trim();
-    final description = _descriptionController.text.trim();
+  Future<void> _handleSubmit() async {
+    final valid = _titleController.text.trim().isNotEmpty &&
+        _selectedCuisine != null &&
+        int.tryParse(_prepTimeController.text) != null &&
+        int.tryParse(_cookTimeController.text) != null &&
+        int.tryParse(_servingsController.text) != null;
+    if (!valid) {
+      setState(() => _showValidation = true);
+      return;
+    }
+
+    if (_publishToGlobal) {
+      final ok = await showAppConfirmDialog(
+        context: context,
+        title: 'Publish to Global Vault',
+        message:
+            'This recipe will be added to the Global Vault. Everyone will be able to see it. Are you sure you want to publish it?',
+        confirmLabel: 'Publish',
+      );
+      if (ok != true) return;
+    }
 
     final recipe = Recipe(
-      //place holder value 0, backend will generate value when inserting
       recipeId: 0,
-      title: title,
-      description: description.isEmpty ? null : description,
+      title: _titleController.text.trim(),
+      description: _descriptionController.text.trim().isEmpty
+          ? null
+          : _descriptionController.text.trim(),
       cuisineType: _selectedCuisine,
       prepTimeMins: int.tryParse(_prepTimeController.text),
       cookingTimeMins: int.tryParse(_cookTimeController.text),
       servingSize: int.tryParse(_servingsController.text),
+      isCommunityPublished: _publishToGlobal,
     );
 
-    ref.read(addRecipeProvider.notifier).submit(recipe);
+    final created = await ref.read(addRecipeProvider.notifier).submit(recipe);
+    if (created == null) return;
+
+    try {
+      final folderId = _selectedFolderId ?? await _ensureMyRecipesFolder();
+      await ref
+          .read(vaultRepositoryProvider)
+          .addRecipeToFolder(folderId, created.recipeId);
+      ref.invalidate(privateFoldersProvider);
+      final private = ref.read(privateVaultProvider);
+      if (private != null) {
+        ref.invalidate(vaultFoldersProvider(private.vaultId));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Recipe saved, but could not file it.')),
+        );
+      }
+    }
+  }
+
+  // finds or creates a "My Recipes" folder in the private vault
+  Future<int> _ensureMyRecipesFolder() async {
+    final vaultRepo = ref.read(vaultRepositoryProvider);
+    final private = ref.read(privateVaultProvider);
+    if (private == null) throw StateError('No private vault.');
+    final folders = await vaultRepo.getFolders(private.vaultId);
+    final existing = folders.where((f) => f.folderName == 'My Recipes');
+    if (existing.isNotEmpty) return existing.first.folderId;
+    final created = await vaultRepo.createFolder(private.vaultId, 'My Recipes');
+    return created.folderId;
   }
 
   @override
   Widget build(BuildContext context) {
-    //runs on every state change allows form to stays stateless
-    ref.listen<AddRecipeState>(addRecipeProvider, (previous, next) {
+    ref.listen<AddRecipeState>(addRecipeProvider, (prev, next) {
       if (next.isSuccess) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Recipe saved')),
         );
-        //reset clears isSucess
         ref.read(addRecipeProvider.notifier).reset();
         if (context.canPop()) context.pop();
       } else if (next.errorMessage != null) {
@@ -81,126 +133,85 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     return Scaffold(
       backgroundColor: AppColors.bgLight,
       appBar: AppBar(
+        backgroundColor: AppColors.bgLight,
+        elevation: 0,
         leading: IconButton(
           onPressed: () => context.pop(),
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           tooltip: 'Back',
         ),
-        title: const Text('Add Recipe'),
       ),
-      //error if cusines type fails to load
       body: SafeArea(
         child: cuisinesState.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => _AddRecipeError(message: '$error'),
-          data: (cuisines) => _AddRecipeContent(
-            cuisines: cuisines,
-            titleController: _titleController,
-            descriptionController: _descriptionController,
-            prepTimeController: _prepTimeController,
-            cookTimeController: _cookTimeController,
-            servingsController: _servingsController,
-            selectedCuisine: _selectedCuisine,
-            onCuisineSelected: (value) => setState(() => _selectedCuisine = value),
-            onSubmit: _handleSubmit,
-            isSubmitting: submissionState.isSubmitting,
-          ),
+          error: (error, _) => const _AddRecipeError(),
+          data: (cuisines) =>
+              _buildForm(cuisines, submissionState.isSubmitting),
         ),
       ),
     );
   }
-}
 
-class _AddRecipeContent extends StatelessWidget {
-  const _AddRecipeContent({
-    required this.cuisines,
-    required this.titleController,
-    required this.descriptionController,
-    required this.prepTimeController,
-    required this.cookTimeController,
-    required this.servingsController,
-    required this.selectedCuisine,
-    required this.onCuisineSelected,
-    required this.onSubmit,
-    required this.isSubmitting,
-  });
-
-  final List<String> cuisines;
-  final TextEditingController titleController;
-  final TextEditingController descriptionController;
-  final TextEditingController prepTimeController;
-  final TextEditingController cookTimeController;
-  final TextEditingController servingsController;
-  final String? selectedCuisine;
-  final ValueChanged<String?> onCuisineSelected;
-  final VoidCallback onSubmit;
-  final bool isSubmitting;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildForm(List<String> cuisines, bool isSubmitting) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
       children: [
-        Text(
-          'NEW RECIPE',
-          style: AppTextStyles.label.copyWith(
-            color: AppColors.primary,
-            letterSpacing: 1.1,
-          ),
-        ),
-        const SizedBox(height: 14),
-        Text(
-          'Add a Recipe\nto Your Vault',
-          style: AppTextStyles.heading1.copyWith(
-            color: AppColors.primary,
-            height: 1.05,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Capture the essentials now - ingredients and steps can be added on the editor screen in the next iteration.',
-          style: AppTextStyles.body.copyWith(
-            color: AppColors.textMuted,
-            height: 1.55,
+        // centered header, pantry-entry style
+        Center(
+          child: Column(
+            children: [
+              Text(
+                'Create Recipe',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.heading1
+                    .copyWith(color: AppColors.primary, fontSize: 28),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Add a new recipe to your vault',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 32),
 
-        //Recipe details
-        const AppSectionHeader(title: 'Recipe Details'),
-        const SizedBox(height: 14),
+        _sectionHeader('Recipe Details'),
+        const SizedBox(height: 16),
         AppTextField(
           label: 'Title',
           hint: 'e.g. Saffron-Infused Risotto',
-          controller: titleController,
+          controller: _titleController,
         ),
-        const SizedBox(height: 14),
+        if (_showValidation && _titleController.text.trim().isEmpty)
+          const _FieldError('Title is required.'),
+        const SizedBox(height: 16),
         AppTextField(
           label: 'Description',
           hint: 'A short summary of the dish',
-          controller: descriptionController,
+          controller: _descriptionController,
           maxLines: 3,
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 20),
         _CuisineSelector(
           cuisines: cuisines,
-          selected: selectedCuisine,
-          onSelected: onCuisineSelected,
+          selected: _selectedCuisine,
+          onSelected: (v) => setState(() => _selectedCuisine = v),
         ),
-        const SizedBox(height: 22),
-        const _PhotoUploadTile(),
-        const SizedBox(height: 28),
+        if (_showValidation && _selectedCuisine == null)
+          const _FieldError('Cuisine is required.'),
+        const SizedBox(height: 32),
 
-        //Time and servings
-        const AppSectionHeader(title: 'Time & Servings'),
-        const SizedBox(height: 14),
+        _sectionHeader('Time & Servings'),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
               child: AppTextField(
                 label: 'Prep (min)',
                 hint: '15',
-                controller: prepTimeController,
+                controller: _prepTimeController,
                 keyboardType: TextInputType.number,
               ),
             ),
@@ -209,7 +220,7 @@ class _AddRecipeContent extends StatelessWidget {
               child: AppTextField(
                 label: 'Cook (min)',
                 hint: '30',
-                controller: cookTimeController,
+                controller: _cookTimeController,
                 keyboardType: TextInputType.number,
               ),
             ),
@@ -218,45 +229,146 @@ class _AddRecipeContent extends StatelessWidget {
               child: AppTextField(
                 label: 'Servings',
                 hint: '4',
-                controller: servingsController,
+                controller: _servingsController,
                 keyboardType: TextInputType.number,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 28),
+        if (_showValidation &&
+            (int.tryParse(_prepTimeController.text) == null ||
+                int.tryParse(_cookTimeController.text) == null ||
+                int.tryParse(_servingsController.text) == null))
+          const _FieldError('Prep, cook, and servings are all required.'),
+        const SizedBox(height: 32),
 
-        //Ingredients placeholder
-        const AppSectionHeader(title: 'Ingredients'),
-        const SizedBox(height: 14),
-        const _ComingSoonCard(
-          icon: Icons.list_alt_outlined,
-          message: 'Ingredient editor coming soon.',
+        _sectionHeader('Save To'),
+        const SizedBox(height: 16),
+        _FolderDropdown(
+          selectedFolderId: _selectedFolderId,
+          onChanged: (id) => setState(() => _selectedFolderId = id),
         ),
-        const SizedBox(height: 28),
+        const SizedBox(height: 32),
 
-        //Steps placeholder
-        const AppSectionHeader(title: 'Preparation Steps'),
-        const SizedBox(height: 14),
-        const _ComingSoonCard(
-          icon: Icons.format_list_numbered,
-          message: 'Step-by-step editor coming soon.',
+        _sectionHeader('Sharing'),
+        const SizedBox(height: 8),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          activeColor: AppColors.primary,
+          title: Text('Publish to Global Vault',
+              style: AppTextStyles.body.copyWith(
+                  color: AppColors.textLight, fontWeight: FontWeight.w600)),
+          subtitle: Text('Everyone will be able to see this recipe.',
+              style:
+                  AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
+          value: _publishToGlobal,
+          onChanged: (v) => setState(() => _publishToGlobal = v),
         ),
+        const SizedBox(height: 32),
+
+        _sectionHeader('Ingredients'),
+        const SizedBox(height: 16),
+        const _ComingSoonCard(
+            icon: Icons.list_alt_outlined,
+            message: 'Ingredient editor coming soon.'),
+        const SizedBox(height: 32),
+        _sectionHeader('Preparation Steps'),
+        const SizedBox(height: 16),
+        const _ComingSoonCard(
+            icon: Icons.format_list_numbered,
+            message: 'Step-by-step editor coming soon.'),
         const SizedBox(height: 36),
 
         AppButton.primary(
-          label: 'Save Recipe',
-          onPressed: isSubmitting ? null : onSubmit,
+          label: 'Create Recipe',
+          onPressed: isSubmitting ? null : _handleSubmit,
           isLoading: isSubmitting,
           isFullWidth: true,
+          isRounded: true,
         ),
         const SizedBox(height: 14),
         AppButton.outlined(
           label: 'Cancel',
           onPressed: () => context.pop(),
           isFullWidth: true,
+          isRounded: true,
         ),
       ],
+    );
+  }
+
+  Widget _sectionHeader(String title) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          title,
+          style: AppTextStyles.heading2.copyWith(
+            color: AppColors.primary,
+            fontSize: 18,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Container(
+          width: 32,
+          height: 3,
+          decoration: BoxDecoration(
+            color: AppColors.accent,
+            borderRadius: BorderRadius.circular(99),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Private folder dropdown "My Recipes (default)" when nothing is picked
+class _FolderDropdown extends ConsumerWidget {
+  const _FolderDropdown({
+    required this.selectedFolderId,
+    required this.onChanged,
+  });
+
+  final int? selectedFolderId;
+  final ValueChanged<int?> onChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final foldersAsync = ref.watch(privateFoldersProvider);
+
+    return foldersAsync.when(
+      loading: () => const LinearProgressIndicator(),
+      error: (_, __) => Text('Could not load folders.',
+          style: AppTextStyles.bodySmall.copyWith(color: AppColors.error)),
+      data: (folders) => DropdownButtonFormField<int?>(
+        initialValue: selectedFolderId,
+        isExpanded: true,
+        icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.primary),
+        style: AppTextStyles.body.copyWith(color: AppColors.textLight),
+        dropdownColor: AppColors.surfaceWhite,
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: AppColors.surfaceMuted,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.inputBorder),
+          ),
+        ),
+        items: [
+          const DropdownMenuItem<int?>(
+            value: null,
+            child: Text('My Recipes (default)'),
+          ),
+          for (final f in folders)
+            DropdownMenuItem<int?>(
+              value: f.folderId,
+              child: Text(f.folderName),
+            ),
+        ],
+        onChanged: onChanged,
+      ),
     );
   }
 }
@@ -277,86 +389,44 @@ class _CuisineSelector extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Cuisine',
-          style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.textMuted,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        Text('Cuisine',
+            style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textMuted, fontWeight: FontWeight.w500)),
         const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: cuisines
-              .map(
-                (cuisine) => AppChip(
-                  label: _formatCuisine(cuisine),
-                  selected: cuisine == selected,
-                  //tap again to deselect
-                  onTap: () => onSelected(cuisine == selected ? null : cuisine),
-                ),
-              )
-              .toList(),
+        DropdownButtonFormField<String>(
+          initialValue: selected,
+          isExpanded: true,
+          icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.primary),
+          style: AppTextStyles.body.copyWith(color: AppColors.textLight),
+          dropdownColor: AppColors.surfaceWhite,
+          hint: Text('Select a cuisine',
+              style: AppTextStyles.body.copyWith(color: AppColors.textMuted)),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.surfaceMuted,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.inputBorder),
+            ),
+          ),
+          items: [
+            for (final c in cuisines)
+              DropdownMenuItem<String>(
+                value: c,
+                child: Text(_formatCuisine(c)),
+              ),
+          ],
+          onChanged: onSelected,
         ),
       ],
     );
   }
 }
 
-//no upload feature yet
-class _PhotoUploadTile extends StatelessWidget {
-  const _PhotoUploadTile();
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard.outlined(
-      onTap: () {},
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.accentLight,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.add_a_photo_outlined,
-              color: AppColors.accentMuted,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hero photo',
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.textLight,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Tap to upload an image of the dish',
-                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
-                ),
-              ],
-            ),
-          ),
-          const Icon(Icons.chevron_right, color: AppColors.textMuted),
-        ],
-      ),
-    );
-  }
-}
-
 class _ComingSoonCard extends StatelessWidget {
   const _ComingSoonCard({required this.icon, required this.message});
-
   final IconData icon;
   final String message;
 
@@ -370,10 +440,9 @@ class _ComingSoonCard extends StatelessWidget {
           Icon(icon, color: AppColors.textMuted, size: 22),
           const SizedBox(width: 14),
           Expanded(
-            child: Text(
-              message,
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
-            ),
+            child: Text(message,
+                style: AppTextStyles.bodySmall
+                    .copyWith(color: AppColors.textMuted)),
           ),
         ],
       ),
@@ -381,27 +450,35 @@ class _ComingSoonCard extends StatelessWidget {
   }
 }
 
-class _AddRecipeError extends StatelessWidget {
-  const _AddRecipeError({required this.message});
-
+class _FieldError extends StatelessWidget {
+  const _FieldError(this.message);
   final String message;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Unable to load form data.',
-        style: AppTextStyles.body.copyWith(color: AppColors.error),
-      ),
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Text(message,
+          style: AppTextStyles.bodySmall.copyWith(color: AppColors.error)),
     );
   }
 }
 
-//formatted version ui only. enum value is stored internally
+class _AddRecipeError extends StatelessWidget {
+  const _AddRecipeError();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text('Unable to load form data.',
+          style: AppTextStyles.body.copyWith(color: AppColors.error)),
+    );
+  }
+}
+
 String _formatCuisine(String raw) {
-  
   return raw
       .split('_')
-      .map((part) => part.isEmpty ? part : '${part[0].toUpperCase()}${part.substring(1)}')
+      .map((p) => p.isEmpty ? p : '${p[0].toUpperCase()}${p.substring(1)}')
       .join(' ');
 }
