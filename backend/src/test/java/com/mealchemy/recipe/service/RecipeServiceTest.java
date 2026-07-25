@@ -267,4 +267,15 @@ public class RecipeServiceTest {
 
         verify(recipeRepository, times(1)).deleteById(1);
     }
+
+    @Test
+    void deleteRecipe_throwsException_whenRecipeNotFound()
+    {
+        when(recipeRepository.findById(99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.deleteRecipe(99, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
+    }
 }
