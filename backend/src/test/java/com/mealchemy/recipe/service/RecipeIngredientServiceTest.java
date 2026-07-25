@@ -191,4 +191,16 @@ public class RecipeIngredientServiceTest {
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         assertEquals("The ingredient you want to change to does not exist.", ex.getReason());
     }
+
+    @Test
+    void deleteRecipeIngredient_callsDeleteById_whenFoundOwnerAndBelongsToRecipe()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeIngredientRepository.findById(1)).thenReturn(Optional.of(recipeIngredient));
+        doNothing().when(recipeIngredientRepository).deleteById(1);
+
+        recipeIngredientService.deleteRecipeIngredient(1, 1, 1);
+
+        verify(recipeIngredientRepository, times(1)).deleteById(1);
+    }
 }
