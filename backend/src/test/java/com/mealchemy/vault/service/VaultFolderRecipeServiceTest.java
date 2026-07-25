@@ -131,7 +131,7 @@ public class VaultFolderRecipeServiceTest
     @Test
     void getRecipesByFolderId_throwsException_whenNotOwnerOrMember()
     {
-        when(vaultFolderREpository.findById(1)).thenReturn(Optional.of(folder));
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
         when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(false);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.getRecipesByFolderId(1, 3));
@@ -179,7 +179,7 @@ public class VaultFolderRecipeServiceTest
     {
         when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
 
-        VaultFolderResponse result = vaultFolderRecipeService.getFolderRecipeById(1, 1);
+        VaultFolderRecipeResponse result = vaultFolderRecipeService.getFolderRecipeById(1, 1);
 
         assertNotNull(result);
         assertEquals(1, result.id());
@@ -191,7 +191,7 @@ public class VaultFolderRecipeServiceTest
         when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
         when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(true);
 
-        VaultFolderResponse result = vaultFolderRecipeService.getFolderRecipeById(1, 3);
+        VaultFolderRecipeResponse result = vaultFolderRecipeService.getFolderRecipeById(1, 3);
 
         assertNotNull(result);
         assertEquals(1, result.id());
@@ -223,40 +223,40 @@ public class VaultFolderRecipeServiceTest
     @Test
     void createVaultFolderRecipe_returnsNewVaultFolderRecipe_whenFoundAndOwner()
     {
-        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
         when(recipeRepository.findById(request.recipeId())).thenReturn(Optional.of(recipe));
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
-        when(vaultFolderRecipe.save(any(VaultFolderRecipe.class))).thenReturn(Optional.of(folderRecipe));
+        when(vaultFolderRecipeRepository.save(any(VaultFolderRecipe.class))).thenReturn(folderRecipe);
 
         VaultFolderRecipeResponse result = vaultFolderRecipeService.createVaultFolderRecipe(request, 1, 1);
 
         assertNotNull(result);
         assertEquals(1, result.id());
-        verify(vaultFolderRepository, times(1)).save(any(VaultFolderRecipe.class));
+        verify(vaultFolderRecipeRepository, times(1)).save(any(VaultFolderRecipe.class));
     }
 
     @Test
     void createVaultFolderRecipe_returnsNewVaultFolderRecipe_whenFoundAndMember()
     {
-        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
         when(recipeRepository.findById(request.recipeId())).thenReturn(Optional.of(recipe));
         when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(true);
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
-        when(vaultFolderRecipe.save(any(VaultFolderRecipe.class))).thenReturn(Optional.of(folderRecipe));
+        when(vaultFolderRecipeRepository.save(any(VaultFolderRecipe.class))).thenReturn(folderRecipe);
 
         VaultFolderRecipeResponse result = vaultFolderRecipeService.createVaultFolderRecipe(request, 3, 1);
 
         assertNotNull(result);
         assertEquals(1, result.id());
-        verify(vaultFolderRepository, times(1)).save(any(VaultFolderRecipe.class));
+        verify(vaultFolderRecipeRepository, times(1)).save(any(VaultFolderRecipe.class));
     }
 
     @Test
     void createVaultFolderRecipe_throwsException_whenFolderNotFound()
     {
-        when(vaultFolderRecipeRepository.findById(99)).thenReturn(Optional.empty());
+        when(vaultFolderRepository.findById(99)).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipe.createVaultFolderRecipe(request, 1, 99));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.createVaultFolderRecipe(request, 1, 99));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Folder not found.", ex.getReason());
@@ -265,10 +265,10 @@ public class VaultFolderRecipeServiceTest
     @Test
     void createVaultFolderRecipe_throwsException_whenNotOwnerOrMember()
     {
-        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
         when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(false);
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipe.createVaultFolderRecipe(request, 3, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.createVaultFolderRecipe(request, 3, 1));
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only a vault member/owner can can interact with folders/recipe relationships.", ex.getReason());
@@ -277,10 +277,10 @@ public class VaultFolderRecipeServiceTest
     @Test
     void createVaultFolderRecipe_throwsException_whenRecipeNotFound()
     {
-        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
         when(recipeRepository.findById(request.recipeId())).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipe.createVaultFolderRecipe(request, 3, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.createVaultFolderRecipe(request, 1, 1));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Recipe not found.", ex.getReason());
@@ -289,11 +289,11 @@ public class VaultFolderRecipeServiceTest
     @Test
     void createVaultFolderRecipe_throwsException_whenUserNotFound()
     {
-        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
         when(recipeRepository.findById(request.recipeId())).thenReturn(Optional.of(recipe));
         when(userRepository.findById(1)).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipe.createVaultFolderRecipe(request, 1, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.createVaultFolderRecipe(request, 1, 1));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("User not found.", ex.getReason());
@@ -304,9 +304,9 @@ public class VaultFolderRecipeServiceTest
     {
         when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
         when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
-        when(vaultFolderRecipeRepository.save(all(VaultFolderRecipe.class))).thenReturn(folderRecipe);
+        when(vaultFolderRecipeRepository.save(any(VaultFolderRecipe.class))).thenReturn(folderRecipe);
 
-        VaultFolderResponse result = vaultFolderRecipeService.updateVaultFolderRecipe(1, moveRequest, 1);
+        VaultFolderRecipeResponse result = vaultFolderRecipeService.updateVaultFolderRecipe(1, moveRequest, 1);
 
         assertNotNull(result);
         assertEquals(1, result.id());
@@ -339,7 +339,7 @@ public class VaultFolderRecipeServiceTest
     void updateVaultFolderRecipe_throwsException_whenNewFolderNotFound()
     {
         when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
-        when(vaultFolderRepository.findById(request.folderId())).thenReturn(Optional.empty());
+        when(vaultFolderRepository.findById(moveRequest.folderId())).thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.updateVaultFolderRecipe(1, moveRequest, 1));
 
@@ -355,13 +355,13 @@ public class VaultFolderRecipeServiceTest
         ReflectionTestUtils.setField(differentVault, "vaultId", 2);
 
         VaultFolder newFolder = new VaultFolder();
-        folder.setVault(differentVault);
-        ReflectionTestUtils.setField(folder, "folderId", 3);
+        newFolder.setVault(differentVault);
+        ReflectionTestUtils.setField(newFolder, "folderId", 3);
 
         VaultFolderRecipeMoveRequest moveRequestLocal = new VaultFolderRecipeMoveRequest(3);
 
         when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
-        when(vaultFolderRepository.findById(request.folderId())).thenReturn(Optional.of(folder));
+        when(vaultFolderRepository.findById(moveRequestLocal.folderId())).thenReturn(Optional.of(newFolder));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.updateVaultFolderRecipe(1, moveRequestLocal, 1));
 
@@ -375,7 +375,7 @@ public class VaultFolderRecipeServiceTest
         when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
         doNothing().when(vaultFolderRecipeRepository).deleteById(1);
 
-        VaultFolderRecipeResponse result = vaultFolderRecipeService.deleteVaultFolderRecipe(1, 1);
+        vaultFolderRecipeService.deleteVaultFolderRecipe(1, 1);
 
         verify(vaultFolderRecipeRepository, times(1)).deleteById(1);
     }
@@ -389,7 +389,7 @@ public class VaultFolderRecipeServiceTest
         
         vault.setOwnerId(3);
 
-        VaultFolderRecipeResponse result = vaultFolderRecipeService.deleteVaultFolderRecipe(1, 1);
+        vaultFolderRecipeService.deleteVaultFolderRecipe(1, 1);
 
         verify(vaultFolderRecipeRepository, times(1)).deleteById(1);
     }

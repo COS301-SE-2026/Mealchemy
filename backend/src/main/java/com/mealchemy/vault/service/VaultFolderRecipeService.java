@@ -48,7 +48,7 @@ public class VaultFolderRecipeService {
     // Get all recipes using folderId
     public List<VaultFolderRecipeResponse> getRecipesByFolderId(int folderId, Integer userId)
     {
-        VaultFolder vaultFolderForCheck = vaultFolderRepository.findById(folderId).orElseThrow(() -> new RuntimeException("Folder not found."));
+        VaultFolder vaultFolderForCheck = vaultFolderRepository.findById(folderId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
         Vault vaultForCheck = vaultFolderForCheck.getVault();
 
         isOwnerOrMember(vaultForCheck, userId);
@@ -59,7 +59,7 @@ public class VaultFolderRecipeService {
     // Get all folders containing a recipe
     public List<VaultFolderRecipeResponse> getFoldersByRecipeId(int recipeId, Integer userId)
     {
-        Recipe recipeForCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new RuntimeException("Recipe not found."));
+        Recipe recipeForCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         if (!recipeForCheck.getOwnerId().equals(userId))
         {
@@ -72,7 +72,7 @@ public class VaultFolderRecipeService {
     // Get a single record by id
     public VaultFolderRecipeResponse getFolderRecipeById(int id, Integer userId)
     {
-        VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("No record found."));
+        VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No record found."));
         Vault vaultForCheck = vaultFolderRecipeForReturn.getFolder().getVault();
         
         isOwnerOrMember(vaultForCheck, userId);
@@ -83,13 +83,13 @@ public class VaultFolderRecipeService {
     // Post create a new record
     public VaultFolderRecipeResponse createVaultFolderRecipe(VaultFolderRecipeRequest request, Integer userId, Integer folderId)
     {
-        VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(folderId).orElseThrow(() -> new RuntimeException("Folder not found."));
+        VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(folderId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
         Vault vaultForCheck = vaultFolderForReturn.getVault();
         isOwnerOrMember(vaultForCheck, userId);
 
-        Recipe recipeForReturn = recipeRepository.findById(request.recipeId()).orElseThrow(() -> new RuntimeException("Recipe not found."));
+        Recipe recipeForReturn = recipeRepository.findById(request.recipeId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
-        User userForReturn = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found."));
+        User userForReturn = userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found."));
 
         VaultFolderRecipe vaultFolderRecipeForReturn = mapRequestToEntity(vaultFolderForReturn, recipeForReturn, userForReturn);
         return VaultFolderRecipeResponse.from(vaultFolderRecipeRepository.save(vaultFolderRecipeForReturn));
@@ -98,11 +98,11 @@ public class VaultFolderRecipeService {
     // Put to update a record
     public VaultFolderRecipeResponse updateVaultFolderRecipe(int id, VaultFolderRecipeMoveRequest request, Integer userId)
     {
-        VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("No record found."));
+        VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No record found."));
 
         isOwner(vaultFolderRecipeForReturn.getFolder().getVault(), userId);
 
-        VaultFolder vaultFolderForCheck = vaultFolderRepository.findById(request.folderId()).orElseThrow(() -> new RuntimeException("New folder not found."));
+        VaultFolder vaultFolderForCheck = vaultFolderRepository.findById(request.folderId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "New folder not found."));
 
         if(!vaultFolderForCheck.getVault().getVaultId().equals(vaultFolderRecipeForReturn.getFolder().getVault().getVaultId()))
         {
@@ -117,7 +117,7 @@ public class VaultFolderRecipeService {
     // Delete a specific record using id
     public void deleteVaultFolderRecipe(int id, Integer userId)
     {
-        VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("No record found."));
+        VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No record found."));
 
         canDelete(vaultFolderRecipeForReturn.getFolder().getVault(), vaultFolderRecipeForReturn.getAddedBy().getUserId(), userId);
 
