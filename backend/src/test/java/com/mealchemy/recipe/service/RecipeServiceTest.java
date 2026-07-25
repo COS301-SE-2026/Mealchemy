@@ -90,4 +90,14 @@ public class RecipeServiceTest {
         assertNotNull(result);
         assertEquals("Recipe 1", result.get(0).title());
     }
+
+    @Test
+    void getAllRecipes_returnsEmptyList_whenNotFound()
+    {
+        when(recipeRepository.findAll()).thenReturn(List.of());
+
+        List<RecipeResponse> result = recipeRepository.getAllRecipes();
+
+        assertTrue(result.isEmpty());
+    }
 }
