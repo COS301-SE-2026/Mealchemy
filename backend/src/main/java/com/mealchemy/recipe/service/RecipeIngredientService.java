@@ -36,7 +36,7 @@ public class RecipeIngredientService
     // Create a new ingredient for a specific recipe
     public RecipeIngredientResponse createRecipeIngredient(RecipeIngredientRequest request, Integer recipeId, Integer ownerId)
     {
-        Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new RuntimeException("Recipe not found."));
+        Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         if (!recipeToCheck.getOwnerId().equals(ownerId))
         {
@@ -56,14 +56,14 @@ public class RecipeIngredientService
     // Update a specific ingredient in an existing recipe
     public RecipeIngredientResponse updateRecipeIngredient(int id, RecipeIngredientRequest request, Integer recipeId, Integer ownerId)
     {
-        Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new RuntimeException("Recipe not found."));
+        Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         if (!recipeToCheck.getOwnerId().equals(ownerId))
         {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its ingredients.");
         }
 
-        RecipeIngredient recipeIngredientForReturn = recipeIngredientRepository.findById(id).orElseThrow(() -> new RuntimeException("Ingredient not found."));
+        RecipeIngredient recipeIngredientForReturn = recipeIngredientRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found."));
         
         if (!recipeIngredientForReturn.getRecipe().getRecipeId().equals(recipeId))
         {
@@ -86,14 +86,14 @@ public class RecipeIngredientService
     // Delete a specific ingredient in an existing recipe
     public void deleteRecipeIngredient(int id, Integer recipeId, Integer ownerId)
     {
-        Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new RuntimeException("Recipe not found."));
+        Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         if (!recipeToCheck.getOwnerId().equals(ownerId))
         {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its ingredients.");
         }
 
-        RecipeIngredient recipeIngredientForReturn = recipeIngredientRepository.findById(id).orElseThrow(() -> new RuntimeException("Ingredient not found."));
+        RecipeIngredient recipeIngredientForReturn = recipeIngredientRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found."));
         
         if (!recipeIngredientForReturn.getRecipe().getRecipeId().equals(recipeId))
         {
