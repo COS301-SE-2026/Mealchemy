@@ -2,7 +2,7 @@
 
     /* Import libraries */
 
-    import jakarta.persistence.*;
+    import jakarta.persistence.*;  
     import java.time.OffsetDateTime;
     import java.util.*;
     import org.hibernate.annotations.JdbcTypeCode;
@@ -22,7 +22,7 @@
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         @Column(name = "vault_id")
-        private int vaultId;
+        private Integer vaultId;
         
         @Column(name = "owner_id")
         private Integer ownerId;
@@ -43,7 +43,7 @@
 
         /* Getters */
 
-        public int getVaultId()
+        public Integer getVaultId()
         {
             return vaultId;
         }

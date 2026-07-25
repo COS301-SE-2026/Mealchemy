@@ -18,7 +18,7 @@ public record RecipeStepResponse(
         return new RecipeStepResponse
         (
             recipeStep.getStepId(),
-            recipeStep.getRecipeId(),
+            recipeStep.getRecipe().getRecipeId(),
             recipeStep.getStepNr(),
             recipeStep.getContent()
         );

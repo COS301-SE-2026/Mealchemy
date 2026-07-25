@@ -4,7 +4,7 @@ package com.mealchemy.cuisinetype.model;
 
 import jakarta.persistence.*;
 import java.util.*;
-import org.hibernate.annotations.*;
+import org.hibernate.annotations.JdbcTypeCode;
 
 /* Import classes */
 

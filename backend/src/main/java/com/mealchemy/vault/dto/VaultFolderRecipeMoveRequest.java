@@ -8,6 +8,6 @@ import jakarta.validation.constraints.*;
 /* Import classes */
 
 public record VaultFolderRecipeMoveRequest(
-    @NotNull Integer folderId,
+    @NotNull Integer folderId
 ){
 }

@@ -5,8 +5,9 @@ package com.mealchemy.vault.model;
 import jakarta.persistence.*;
 import java.util.*;
 import java.time.OffsetDateTime;
-import org.hibernate.annotations.*;
-import org.hibernate.type.SqlType;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 /* Import classes */
 

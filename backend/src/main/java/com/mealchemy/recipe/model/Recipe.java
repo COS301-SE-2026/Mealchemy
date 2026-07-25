@@ -5,7 +5,9 @@ package com.mealchemy.recipe.model;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.*;
-import org.hibernate.annotations.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 /* Import Classes */
 
@@ -20,7 +22,7 @@ public class Recipe
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "recipe_id")
-    private int recipeId;
+    private Integer recipeId;
 
     @Column(name = "owner_id", nullable = false)
     private Integer ownerId;
@@ -78,7 +80,7 @@ public class Recipe
 
     /* Getters */
     
-    public int getRecipeId()
+    public Integer getRecipeId()
     {
         return recipeId;
     }

@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 /* Import classes */
 import com.mealchemy.vault.dto.VaultFolderRecipeRequest;
 import com.mealchemy.vault.dto.VaultFolderRecipeResponse;
+import com.mealchemy.vault.dto.VaultFolderRecipeMoveRequest;
 import com.mealchemy.vault.service.VaultFolderRecipeService;
 
 @RestController

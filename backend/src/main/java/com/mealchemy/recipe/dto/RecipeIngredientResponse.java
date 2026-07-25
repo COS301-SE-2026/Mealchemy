@@ -21,7 +21,7 @@ public record RecipeIngredientResponse(
     {
         return new RecipeIngredientResponse(
             recipeIngredient.getIngredientId(),
-            recipeIngredient.getRecipeId(),
+            recipeIngredient.getRecipe().getRecipeId(),
             recipeIngredient.getIngId(),
             recipeIngredient.getQuantity(),
             recipeIngredient.getUnit(),
