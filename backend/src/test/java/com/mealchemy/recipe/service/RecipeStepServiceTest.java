@@ -204,4 +204,17 @@ public class RecipeStepServiceTest {
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Step not found.", ex.getReason());
     }
+
+    @Test
+    void deleteRecipeStep_throwsException_whenStepNotFromRecipe()
+    {
+        recipeStep.setRecipe(otherRecipe);
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeStepRepository.findById(1)).thenReturn(Optional.of(recipeStep));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.updateRecipeStep(1, 1, 1));
+        
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Step must be part of the recipe.", ex.getReason());
+    }
 }
