@@ -85,7 +85,7 @@ public class RecipeServiceTest {
     {
         when(recipeRepository.findAll()).thenReturn(List.of(recipe));
 
-        List<RecipeResponse> result = recipeRepository.getAllRecipes();
+        List<RecipeResponse> result = recipeService.getAllRecipes();
 
         assertNotNull(result);
         assertEquals("Recipe 1", result.get(0).title());
@@ -96,7 +96,7 @@ public class RecipeServiceTest {
     {
         when(recipeRepository.findAll()).thenReturn(List.of());
 
-        List<RecipeResponse> result = recipeRepository.getAllRecipes();
+        List<RecipeResponse> result = recipeService.getAllRecipes();
 
         assertTrue(result.isEmpty());
     }
@@ -106,7 +106,7 @@ public class RecipeServiceTest {
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
 
-        RecipeResponse result = recipeRepository.getRecipeById(1);
+        RecipeResponse result = recipeService.getRecipeById(1);
 
         assertNotNull(result);
         assertEquals("Recipe 1", result.title());
@@ -117,7 +117,7 @@ public class RecipeServiceTest {
     {
         when(recipeRepository.findById(99)).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.getRecipeById(99));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.getRecipeById(99));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Recipe not found.", ex.getReason());
@@ -129,7 +129,7 @@ public class RecipeServiceTest {
         when(flavourProfileOptionsRepository.existsByValue(request.cuisineType())).thenReturn(true);
         when(recipeRepository.save(any(Recipe.class))).thenReturn(recipe);
 
-        RecipeResponse result = recipeRepository.createRecipe(request, 1);
+        RecipeResponse result = recipeService.createRecipe(request, 1);
 
         assertNotNull(result);
         assertEquals("Recipe 1", result.title());
@@ -141,7 +141,7 @@ public class RecipeServiceTest {
     {
         when(flavourProfileOptionsRepository.existsByValue(request.cuisineType())).thenReturn(false);
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.createRecipe(request, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.createRecipe(request, 1));
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         assertEquals("Cuisine type is invalid.", ex.getReason());
@@ -152,8 +152,9 @@ public class RecipeServiceTest {
     {
         when(flavourProfileOptionsRepository.existsByValue(fullRequest.cuisineType())).thenReturn(true);
         when(recipeRepository.save(any(Recipe.class))).thenReturn(recipe);
+        when(ingredientCatalogueRepository.existsById(1)).thenReturn(true);
 
-        RecipeResponse result = recipeRepository.createFromFullRecipe(fullRequest, 1, null);
+        RecipeResponse result = recipeService.createFromFullRecipe(fullRequest, 1, null);
 
         assertNotNull(result);
         assertEquals("Recipe 1", result.title());
@@ -167,8 +168,9 @@ public class RecipeServiceTest {
         when(flavourProfileOptionsRepository.existsByValue(fullRequest.cuisineType())).thenReturn(true);
         when(recipeRepository.save(any(Recipe.class))).thenReturn(recipe);
         when(recipeRepository.findById(2)).thenReturn(Optional.of(sourceRecipe));
+        when(ingredientCatalogueRepository.existsById(1)).thenReturn(true);
 
-        RecipeResponse result = recipeRepository.createFromFullRecipe(fullRequest, 1, 2);
+        RecipeResponse result = recipeService.createFromFullRecipe(fullRequest, 1, 2);
 
         assertNotNull(result);
         assertEquals("Recipe 1", result.title());
@@ -180,7 +182,7 @@ public class RecipeServiceTest {
     {
         when(flavourProfileOptionsRepository.existsByValue(fullRequest.cuisineType())).thenReturn(false);
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.createRecipe(fullRequest, 1, null));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.createFromFullRecipe(fullRequest, 1, null));
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         assertEquals("Cuisine type is invalid.", ex.getReason());
@@ -192,7 +194,7 @@ public class RecipeServiceTest {
         when(flavourProfileOptionsRepository.existsByValue(fullRequest.cuisineType())).thenReturn(true);
         when(recipeRepository.findById(2)).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.createRecipe(fullRequest, 1, 2));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.createFromFullRecipe(fullRequest, 1, 2));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Source recipe not found.", ex.getReason());
@@ -204,7 +206,7 @@ public class RecipeServiceTest {
         when(flavourProfileOptionsRepository.existsByValue(fullRequest.cuisineType())).thenReturn(true);
         when(ingredientCatalogueRepository.existsById(1)).thenReturn(false);
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.createRecipe(fullRequest, 1, null));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.createFromFullRecipe(fullRequest, 1, null));
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         assertEquals("One of the ingredients you want to add does not exist.", ex.getReason());
@@ -216,7 +218,7 @@ public class RecipeServiceTest {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
         when(flavourProfileOptionsRepository.existsByValue(request.cuisineType())).thenReturn(true);
 
-        RecipeResponse result = recipeRepository.updateRecipe(1, request, 1);
+        RecipeResponse result = recipeService.updateRecipe(1, request, 1);
 
         assertNotNull(result);
         assertEquals("Recipe 1", result.title());
@@ -228,7 +230,7 @@ public class RecipeServiceTest {
     {
         when(recipeRepository.findById(99)).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.updateRecipe(99, request, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.updateRecipe(99, request, 1));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Recipe not found.", ex.getReason());
@@ -239,7 +241,7 @@ public class RecipeServiceTest {
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.updateRecipe(1, request, 99));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.updateRecipe(1, request, 99));
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only the owner of this recipe can edit it.", ex.getReason());
@@ -251,7 +253,7 @@ public class RecipeServiceTest {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
         when(flavourProfileOptionsRepository.existsByValue(request.cuisineType())).thenReturn(false);
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.updateRecipe(1, request, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.updateRecipe(1, request, 1));
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         assertEquals("Cuisine type is invalid.", ex.getReason());
@@ -263,7 +265,7 @@ public class RecipeServiceTest {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
         doNothing().when(recipeRepository).deleteById(1);
 
-        recipeRepository.deleteRecipe(1, 1);
+        recipeService.deleteRecipe(1, 1);
 
         verify(recipeRepository, times(1)).deleteById(1);
     }
@@ -273,7 +275,7 @@ public class RecipeServiceTest {
     {
         when(recipeRepository.findById(99)).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.deleteRecipe(99, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.deleteRecipe(99, 1));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Recipe not found.", ex.getReason());
@@ -282,9 +284,9 @@ public class RecipeServiceTest {
     @Test
     void deleteRecipe_throwsException_whenNotOwner()
     {
-        when(recipeRepository.findById(1)).thenReturn(Optional.empty());
-
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeRepository.deleteRecipe(1, 3));
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.deleteRecipe(1, 3));
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only the owner of this recipe can delete it.", ex.getReason());
