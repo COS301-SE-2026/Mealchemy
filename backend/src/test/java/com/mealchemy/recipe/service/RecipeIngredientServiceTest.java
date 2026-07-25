@@ -104,4 +104,16 @@ public class RecipeIngredientServiceTest {
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only the owner of this recipe can modify its steps.", ex.getReason());
     }
+
+    @Test
+    void createRecipeIngredient_throwsException_whenNotInCatalogue()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(ingredientCatalogueRepository.existsById(request.ingId())).thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.createRecipeIngredient(request, 1, 1));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("The ingredient you want to add does not exist.", ex.getReason());
+    }
 }
