@@ -36,6 +36,44 @@ void main() {
 
     expect(item.checked, isTrue);
   });
+  //selects every item in one shopping list
+  test('shoppingListsProvider selects all items in a list', () async {
+    //container used to read Riverpod providers in tests
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await container.read(shoppingListsProvider.future);
+
+    final notifier = container.read(shoppingListsProvider.notifier);
+
+    await notifier.selectAllItems('general-list');
+
+    final updatedState = container.read(shoppingListsProvider).value!;
+    final list = updatedState.getListById('general-list')!;
+
+    expect(list.items, isNotEmpty);
+    expect(list.items.every((item) => item.checked), isTrue);
+  });
+
+  //clears every selected item in one shopping list
+  test('shoppingListsProvider deselects all items in a list', () async {
+    //container used to read Riverpod providers in tests
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await container.read(shoppingListsProvider.future);
+
+    final notifier = container.read(shoppingListsProvider.notifier);
+
+    await notifier.selectAllItems('general-list');
+    await notifier.deselectAllItems('general-list');
+
+    final updatedState = container.read(shoppingListsProvider).value!;
+    final list = updatedState.getListById('general-list')!;
+
+    expect(list.items, isNotEmpty);
+    expect(list.items.every((item) => item.checked), isFalse);
+  });
 
   //adds new item to provider state
   test('shoppingListsProvider adds item to list', () async {
