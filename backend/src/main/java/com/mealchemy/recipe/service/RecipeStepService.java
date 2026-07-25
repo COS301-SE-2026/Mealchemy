@@ -30,6 +30,12 @@ public class RecipeStepService {
         this.recipeRepository = recipeRepository;
     }
 
+    // Retrieve all steps relating to a specific recipe
+    public List<RecipeStepResponse> getAllStepsByRecipeId(Integer recipeId)
+    {
+        return recipeStepRepository.findByRecipe_RecipeIdOrderByStepNrAsc(recipeId).stream().map(RecipeStepResponse::from).collect(Collectors.toList());
+    }
+
     // Create a new step for a specific recipe
     public RecipeStepResponse createRecipeStep(RecipeStepRequest request, Integer recipeId, Integer ownerId)
     {

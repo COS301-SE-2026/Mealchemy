@@ -33,6 +33,12 @@ public class RecipeIngredientService
         this.ingredientCatalogueRepository = ingredientCatalogueRepository;
     }
 
+    // Retrieve all ingredients relating to a specific recipe
+    public List<RecipeIngredientResponse> getAllIngredientsByRecipeId(Integer recipeId)
+    {
+        return recipeIngredientRepository.findByRecipe_RecipeId(recipeId).stream().map(RecipeIngredientResponse::from).collect(Collectors.toList());
+    }
+
     // Create a new ingredient for a specific recipe
     public RecipeIngredientResponse createRecipeIngredient(RecipeIngredientRequest request, Integer recipeId, Integer ownerId)
     {
