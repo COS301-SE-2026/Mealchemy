@@ -84,15 +84,19 @@ jobs:
       - name: Resolve environment
         id: env
         working-directory: .
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          PROD_BACKEND_URL: ${{ secrets.PROD_BACKEND_URL }}
+          STAGING_BACKEND_URL: ${{ secrets.STAGING_BACKEND_URL }}
         run: |
-          case "${{ github.ref_name }}" in
+          case "$REF_NAME" in
             main)
               echo "name=production" >> "$GITHUB_OUTPUT"
-              echo "backend_url=${{ secrets.PROD_BACKEND_URL }}" >> "$GITHUB_OUTPUT"
+              echo "backend_url=$PROD_BACKEND_URL" >> "$GITHUB_OUTPUT"
               ;;
             *)
               echo "name=staging" >> "$GITHUB_OUTPUT"
-              echo "backend_url=${{ secrets.STAGING_BACKEND_URL }}" >> "$GITHUB_OUTPUT"
+              echo "backend_url=$STAGING_BACKEND_URL" >> "$GITHUB_OUTPUT"
               ;;
           esac
 
