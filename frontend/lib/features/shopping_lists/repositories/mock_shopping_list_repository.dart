@@ -231,4 +231,22 @@ class MockShoppingListRepository implements ShoppingListRepository {
       items: const [],
     );
   }
+
+  @override
+  Future<List<ShoppingListItem>> selectAllItems(String listId) async {
+    final list = await getShoppingListById(listId);
+    if (list == null) return [];
+
+    //mock behaves like backend by returning updated item list
+    return list.items.map((item) => item.copyWith(checked: true)).toList();
+  }
+
+  @override
+  Future<List<ShoppingListItem>> deselectAllItems(String listId) async {
+    final list = await getShoppingListById(listId);
+    if (list == null) return [];
+
+    //everything unchecked again
+    return list.items.map((item) => item.copyWith(checked: false)).toList();
+  }
 }

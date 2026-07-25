@@ -32,4 +32,10 @@ abstract class ShoppingListRepository {
   });
   //moves purchased list items into pantry and removes them from this list
   Future<CompleteShopResult> completeShop(String listId);
+
+  //marks every item in one shopping list as purchased/checked
+  Future<List<ShoppingListItem>> selectAllItems(String listId);
+
+  //marks every item in one shopping list as not purchased/unchecked
+  Future<List<ShoppingListItem>> deselectAllItems(String listId);
 }

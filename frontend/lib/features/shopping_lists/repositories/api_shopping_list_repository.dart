@@ -117,4 +117,32 @@ class ApiShoppingListRepository implements ShoppingListRepository {
 
     return CompleteShopResult.fromJson(response.data ?? {});
   }
+
+  @override
+  Future<List<ShoppingListItem>> selectAllItems(String listId) async {
+    final response = await _dio.put<List<dynamic>>(
+      '/api/shopping-lists/$listId/items/select-all',
+    );
+
+    final data = response.data ?? [];
+
+    //backend sends updated items back
+    return data
+        .map((item) => ShoppingListItem.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<List<ShoppingListItem>> deselectAllItems(String listId) async {
+    final response = await _dio.put<List<dynamic>>(
+      '/api/shopping-lists/$listId/items/deselect-all',
+    );
+
+    final data = response.data ?? [];
+
+    //same idea as select all
+    return data
+        .map((item) => ShoppingListItem.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
 }

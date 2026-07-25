@@ -91,6 +91,71 @@ void main() {
             );
             return;
           }
+          if (options.method == 'PUT' &&
+              options.path == '/api/shopping-lists/1/items/select-all') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: [
+                  {
+                    'item_id': 10,
+                    'shopping_list_id': 1,
+                    'ing_id': null,
+                    'name': 'Greek Yogurt',
+                    'category': null,
+                    'quantity': 907.000,
+                    'unit': 'g',
+                    'purchased': true,
+                  },
+                  {
+                    'item_id': 11,
+                    'shopping_list_id': 1,
+                    'ing_id': null,
+                    'name': 'Fresh Basil',
+                    'category': null,
+                    'quantity': 1,
+                    'unit': 'bunch',
+                    'purchased': true,
+                  },
+                ],
+              ),
+            );
+            return;
+          }
+
+          if (options.method == 'PUT' &&
+              options.path == '/api/shopping-lists/1/items/deselect-all') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: [
+                  {
+                    'item_id': 10,
+                    'shopping_list_id': 1,
+                    'ing_id': null,
+                    'name': 'Greek Yogurt',
+                    'category': null,
+                    'quantity': 907.000,
+                    'unit': 'g',
+                    'purchased': false,
+                  },
+                  {
+                    'item_id': 11,
+                    'shopping_list_id': 1,
+                    'ing_id': null,
+                    'name': 'Fresh Basil',
+                    'category': null,
+                    'quantity': 1,
+                    'unit': 'bunch',
+                    'purchased': false,
+                  },
+                ],
+              ),
+            );
+            return;
+          }
 
           if (options.path == '/api/shopping-lists/1') {
             handler.resolve(
@@ -277,5 +342,28 @@ void main() {
       () => repository.createShoppingList(name: '   '),
       throwsArgumentError,
     );
+  });
+  test('selectAllItems puts select-all endpoint and maps updated items',
+      () async {
+    final items = await repository.selectAllItems('1');
+
+    expect(lastRequest?.method, 'PUT');
+    expect(lastRequest?.path, '/api/shopping-lists/1/items/select-all');
+
+    expect(items, hasLength(2));
+    expect(items.every((item) => item.checked), isTrue);
+    expect(items.first.name, 'Greek Yogurt');
+  });
+
+  test('deselectAllItems puts deselect-all endpoint and maps updated items',
+      () async {
+    final items = await repository.deselectAllItems('1');
+
+    expect(lastRequest?.method, 'PUT');
+    expect(lastRequest?.path, '/api/shopping-lists/1/items/deselect-all');
+
+    expect(items, hasLength(2));
+    expect(items.every((item) => item.checked), isFalse);
+    expect(items.last.name, 'Fresh Basil');
   });
 }
