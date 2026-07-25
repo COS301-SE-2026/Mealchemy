@@ -59,6 +59,9 @@ jobs:
             --token "$FIREBASE_TOKEN" \
             --json 2>"$STDERR_FILE"); then
             echo "::error::App Distribution query failed, cannot verify versionCode"
+            echo "=== firebase-tools stdout (captured in RELEASES_JSON) ==="
+            echo "$RELEASES_JSON"
+            echo "=== firebase-tools stderr ==="
             cat "$STDERR_FILE"
             rm -f "$STDERR_FILE"
             exit 1
