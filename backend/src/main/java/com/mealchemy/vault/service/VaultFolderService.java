@@ -17,6 +17,8 @@ import com.mealchemy.vault.repository.VaultFolderRepository;
 import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.vault.repository.VaultMemberRepository;
 
+import com.mealchemy.shared.enums.VaultType;
+
 @Service
 public class VaultFolderService {
     private final VaultFolderRepository vaultFolderRepository;
@@ -54,6 +56,14 @@ public class VaultFolderService {
         VaultFolder vaultFolderForReturn = vaultFolderRepository.findByFolderName(name).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
 
         return VaultFolderResponse.from(vaultFolderForReturn);
+    }
+
+    // Get private vault folders
+    public List<VaultFolderResponse> getPrivateVaultFolders(Integer userId)
+    {
+        Vault privateVault = vaultRepository.findByOwnerIdAndVaultType(userId, VaultType.PRIVATE).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Private vault not found."));
+
+        return vaultFolderRepository.findByVault_VaultId(privateVault.getVaultId()).stream().map(VaultFolderResponse::from).collect(Collectors.toList());
     }
 
     // Get a single folder by id

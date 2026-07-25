@@ -25,6 +25,13 @@ public class VaultFolderController
     /* Mapping Functions */
 
     // Get
+    @GetMapping("/vault/private")
+    public List<VaultFolderResponse> getPrivateVaultFolders(@AuthenticationPrincipal String userId)
+    {
+        return vaultFolderService.getPrivateVaultFolders(Integer.parseInt(userId));
+    }
+
+    // Get
     @GetMapping("/vault/{vaultId}")
     public List<VaultFolderResponse> getVaultFolderByVaultId(@PathVariable int vaultId, @AuthenticationPrincipal String userId)
     {
