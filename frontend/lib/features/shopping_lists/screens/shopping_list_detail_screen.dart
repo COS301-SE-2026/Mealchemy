@@ -50,6 +50,16 @@ class ShoppingListDetailScreen extends ConsumerWidget {
                     itemId: itemId,
                   );
             },
+            onSelectAll: () async {
+              await ref
+                  .read(shoppingListsProvider.notifier)
+                  .selectAllItems(list.id);
+            },
+            onDeselectAll: () async {
+              await ref
+                  .read(shoppingListsProvider.notifier)
+                  .deselectAllItems(list.id);
+            },
             onAddItem: ({
               required name,
               required quantity,
@@ -92,12 +102,16 @@ class _ShoppingListDetailContent extends StatelessWidget {
   const _ShoppingListDetailContent({
     required this.list,
     required this.onToggleItem,
+    required this.onSelectAll,
+    required this.onDeselectAll,
     required this.onAddItem,
     required this.onCompleteShop,
   });
 
   final ShoppingList list;
   final Future<void> Function(String itemId) onToggleItem;
+  final Future<void> Function() onSelectAll;
+  final Future<void> Function() onDeselectAll;
   final Future<void> Function({
     required String name,
     required String quantity,
@@ -122,6 +136,11 @@ class _ShoppingListDetailContent extends StatelessWidget {
               const SizedBox(height: 42),
               ShoppingSectionHeader(title: list.title),
               const SizedBox(height: 30),
+              _BulkSelectionControls(
+                onSelectAll: onSelectAll,
+                onDeselectAll: onDeselectAll,
+              ),
+              const SizedBox(height: 22),
               ..._buildItemSections(groupedItems),
             ],
           ),
@@ -351,6 +370,73 @@ class _DetailTopBar extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _BulkSelectionControls extends StatelessWidget {
+  const _BulkSelectionControls({
+    required this.onSelectAll,
+    required this.onDeselectAll,
+  });
+
+  final Future<void> Function() onSelectAll;
+  final Future<void> Function() onDeselectAll;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _BulkSelectionButton(
+          icon: Icons.done_all,
+          label: 'Select all',
+          onPressed: onSelectAll,
+        ),
+        const SizedBox(width: 10),
+        _BulkSelectionButton(
+          icon: Icons.remove_done,
+          label: 'Deselect',
+          onPressed: onDeselectAll,
+        ),
+      ],
+    );
+  }
+}
+
+class _BulkSelectionButton extends StatelessWidget {
+  const _BulkSelectionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final Future<void> Function() onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: OutlinedButton.icon(
+        onPressed: () async {
+          await onPressed();
+        },
+        icon: Icon(icon, size: 18),
+        label: Text(label),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          side: BorderSide(
+            color: AppColors.primary.withValues(alpha: 0.45),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          textStyle: AppTextStyles.bodySmall.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
     );
   }
 }

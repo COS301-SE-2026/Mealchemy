@@ -63,6 +63,47 @@ void main() {
     expect(checkbox.value, isTrue);
   });
 
+  testWidgets('ShoppingListDetailScreen selects all items', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: ShoppingListDetailScreen(listId: 'general-list'),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Select all'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Checkbox), findsWidgets);
+
+    final checkboxes = tester.widgetList<Checkbox>(find.byType(Checkbox));
+    expect(checkboxes.every((checkbox) => checkbox.value == true), isTrue);
+  });
+
+  testWidgets('ShoppingListDetailScreen deselects all items', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: ShoppingListDetailScreen(listId: 'general-list'),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Select all'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Deselect'));
+    await tester.pumpAndSettle();
+
+    final checkboxes = tester.widgetList<Checkbox>(find.byType(Checkbox));
+    expect(checkboxes.every((checkbox) => checkbox.value == false), isTrue);
+  });
+
   testWidgets('ShoppingListDetailScreen adds item from dialog', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
