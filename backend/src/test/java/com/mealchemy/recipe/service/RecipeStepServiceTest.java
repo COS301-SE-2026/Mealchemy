@@ -158,4 +158,16 @@ public class RecipeStepServiceTest {
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Step must be part of the recipe.", ex.getReason());
     }
+
+    @Test
+    void deleteRecipeStep_callsDeleteById_whenFoundOwnerAndBelongsToRecipe()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeStepRepository.findById(1)).thenReturn(Optional.of(recipeStep));
+        doNothing().when(recipeStepRepository).deleteById(1);
+
+        recipeStepService.deleteRecipeStep(1, 1, 1);
+
+        verify(recipeStepRepository, times(1)).deleteById(1);
+    }
 }
