@@ -13,5 +13,5 @@ import com.mealchemy.recipe.model.RecipeStep;
 @Repository
 public interface RecipeStepRepository extends JpaRepository<RecipeStep, Integer>
 {
-
+    List<RecipeStep> findByRecipe_RecipeId(Integer recipeId); 
 }
