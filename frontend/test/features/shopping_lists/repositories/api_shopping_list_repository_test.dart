@@ -168,6 +168,17 @@ void main() {
             return;
           }
 
+          if (options.method == 'DELETE' &&
+              options.path == '/api/shopping-lists/1') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 204,
+              ),
+            );
+            return;
+          }
+
           if (options.path == '/api/shopping-lists/1') {
             handler.resolve(
               Response(
@@ -402,5 +413,12 @@ void main() {
       ),
       throwsArgumentError,
     );
+  });
+
+  test('deleteShoppingList deletes list endpoint', () async {
+    await repository.deleteShoppingList('1');
+
+    expect(lastRequest?.method, 'DELETE');
+    expect(lastRequest?.path, '/api/shopping-lists/1');
   });
 }

@@ -77,6 +77,11 @@ class _DeleteMenuShoppingListRepository implements ShoppingListRepository {
   }
 
   @override
+  Future<void> deleteShoppingList(String listId) async {
+    //not used in this detail screen test
+  }
+
+  @override
   Future<ShoppingList> createShoppingList({
     required String name,
     String status = 'ACTIVE',

@@ -268,4 +268,9 @@ class MockShoppingListRepository implements ShoppingListRepository {
 
     //mock does not persist, but it still checks that ids were supplied
   }
+
+  @override
+  Future<void> deleteShoppingList(String listId) async {
+    //mock accepts delete request and provider removes it from local state
+  }
 }

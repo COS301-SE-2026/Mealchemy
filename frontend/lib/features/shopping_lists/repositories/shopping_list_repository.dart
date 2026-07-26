@@ -43,4 +43,7 @@ abstract class ShoppingListRepository {
     required String listId,
     required List<int> itemIds,
   });
+
+  //deletes a whole shopping list
+  Future<void> deleteShoppingList(String listId);
 }

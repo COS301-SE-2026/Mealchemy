@@ -100,6 +100,10 @@ class _ApiShapedShoppingListRepository implements ShoppingListRepository {
   }
 
   @override
+  Future<void> deleteShoppingList(String listId) async {
+    //not used in this provider test
+  }
+  @override
   Future<CompleteShopResult> completeShop(String listId) async {
     throw UnimplementedError();
   }
