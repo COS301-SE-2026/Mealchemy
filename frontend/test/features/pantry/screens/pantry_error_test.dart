@@ -31,6 +31,30 @@ class _FailingPantryRepository implements PantryRepository {
   Future<List<String>> getIngredientCategories() {
     throw Exception('Category failure');
   }
+
+  @override
+  Future<PantryIngredient> addPantryIngredient({
+    required int ingId,
+    required String quantity,
+    required String unit,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> deletePantryIngredient(int pIngredientId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<PantryIngredient> updatePantryIngredient({
+    required int pIngredientId,
+    required int ingId,
+    required String quantity,
+    required String unit,
+  }) {
+    throw UnimplementedError();
+  }
 }
 
 void main() {
@@ -42,7 +66,8 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          pantryRepositoryProvider.overrideWithValue(_FailingPantryRepository()),
+          pantryRepositoryProvider
+              .overrideWithValue(_FailingPantryRepository()),
         ],
         child: const MaterialApp(
           home: PantryScreen(),
@@ -55,11 +80,13 @@ void main() {
     expect(find.text('Unable to load pantry data.'), findsOneWidget);
   });
 
-  testWidgets('AddIngredientScreen renders category error state', (tester) async {
+  testWidgets('AddIngredientScreen renders category error state',
+      (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          pantryRepositoryProvider.overrideWithValue(_FailingPantryRepository()),
+          pantryRepositoryProvider
+              .overrideWithValue(_FailingPantryRepository()),
         ],
         child: const MaterialApp(
           home: AddIngredientScreen(),

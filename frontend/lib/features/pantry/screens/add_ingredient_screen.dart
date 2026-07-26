@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,9 +9,26 @@ import '../../../core/shared_widgets/atoms/app_button.dart';
 import '../../../core/shared_widgets/atoms/app_text_field.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
+import '../models/ingredient_catalogue_item.dart';
 import '../providers/pantry_provider.dart';
 
-//stateless state to consumer widget
+const double _blurArea = 240;
+const double _sheetTop = 212;
+
+//units for the unit dropdown
+//need to be made dynamic in the future to support custom units and unit conversion
+const List<String> _unitOptions = [
+  'g',
+  'kg',
+  'ml',
+  'L',
+  'cups',
+  'tbsp',
+  'tsp',
+  'oz',
+  'pcs',
+];
+
 class AddIngredientScreen extends ConsumerWidget {
   const AddIngredientScreen({super.key});
 
@@ -18,21 +37,11 @@ class AddIngredientScreen extends ConsumerWidget {
     final categoriesState = ref.watch(ingredientCategoriesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
-      appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: const Icon(Icons.arrow_back),
-          tooltip: 'Back',
-        ),
-        title: const Text('Add Ingredient'),
-      ),
-      body: SafeArea(
-        child: categoriesState.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => _AddIngredientError(message: '$error'),
-          data: (categories) => _AddIngredientContent(categories: categories),
-        ),
+      backgroundColor: Colors.transparent,
+      body: categoriesState.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) => _AddIngredientError(message: '$error'),
+        data: (categories) => _AddIngredientContent(categories: categories),
       ),
     );
   }
@@ -50,147 +59,224 @@ class _AddIngredientContent extends ConsumerStatefulWidget {
 
 class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _quantityController = TextEditingController();
-  final TextEditingController _unitController = TextEditingController();
-  final TextEditingController _priceController = TextEditingController();
 
-  String _selectedCategory = 'produce';
-  bool _isOutOfStock = false;
+  final List<IngredientCatalogueItem> _ingredientOptions = [];
+
+  IngredientCatalogueItem? _selectedIngredient;
+  bool _isSearchingIngredients = false;
+  String? _ingredientSearchError;
+
+  //stepper starts at 1 so quantity can never be zero or negative
+  int _quantity = 1;
+  String? _selectedUnit;
+  String? _selectedCategory;
   bool _showValidation = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.categories.isNotEmpty) {
+      _selectedCategory = widget.categories.first;
+    }
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _quantityController.dispose();
-    _unitController.dispose();
-    _priceController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final hasName = _nameController.text.trim().isNotEmpty;
-    final hasQuantity = _quantityController.text.trim().isNotEmpty;
-    final hasUnit = _unitController.text.trim().isNotEmpty;
+    final hasUnit = _selectedUnit != null;
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
+    return Stack(
       children: [
-        Text(
-          'PANTRY ENTRY',
-          style: AppTextStyles.label.copyWith(
-            color: AppColors.primary,
-            letterSpacing: 1.1,
-          ),
+        const Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: _blurArea,
+          child: _PantryHeader(),
         ),
-        const SizedBox(height: 14),
-        Text(
-          'Add Ingredient\nManually',
-          style: AppTextStyles.heading1.copyWith(
-            color: AppColors.primary,
-            height: 1.05,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Capture the ingredient details you have on hand. This will later help Mealchemy match recipes to your pantry.',
-          style: AppTextStyles.body.copyWith(
-            color: AppColors.textMuted,
-            height: 1.55,
-          ),
-        ),
-        const SizedBox(height: 32),
-
-        //ingredients
-        const AppSectionHeader(title: 'Ingredient Details'),
-        const SizedBox(height: 14),
-        AppTextField(
-          controller: _nameController,
-          label: 'Ingredient name',
-          hint: 'e.g. Chicken breast',
-          onChanged: (_) => setState(() {}),
-        ),
-        if (_showValidation && !hasName)
-          const _ValidationText('Ingredient name is required.'),
-        const SizedBox(height: 14),
-        _CategorySelector(
-          categories: widget.categories,
-          selectedCategory: _selectedCategory,
-          onSelected: (category) {
-            setState(() {
-              _selectedCategory = category;
-            });
-          },
-        ),
-        const SizedBox(height: 28),
-
-        //amount and units
-        const AppSectionHeader(title: 'Quantity'),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            Expanded(
-              child: AppTextField(
-                controller: _quantityController,
-                label: 'Quantity',
-                hint: 'e.g. 800',
-                keyboardType: TextInputType.number,
-                onChanged: (_) => setState(() {}),
+        Positioned.fill(
+          top: _sheetTop,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: AppColors.bgCream,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: AppTextField(
-                controller: _unitController,
-                label: 'Unit',
-                hint: 'g, ml, cups',
-                onChanged: (_) => setState(() {}),
-              ),
-            ),
-          ],
-        ),
-        if (_showValidation && (!hasQuantity || !hasUnit))
-          const _ValidationText('Quantity and unit are required.'),
-        const SizedBox(height: 28),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+              children: [
+                const Align(
+                  alignment: Alignment.topCenter,
+                  child: _SheetHandle(),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Pantry Entry',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.heading2.copyWith(
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Add Ingredient Manually',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 26),
 
-        //purchase details
-        const AppSectionHeader(title: 'Purchase Info'),
-        const SizedBox(height: 14),
-        AppTextField(
-          controller: _priceController,
-          label: 'Price paid',
-          hint: 'e.g. 89.99',
-          keyboardType: TextInputType.number,
-          prefixIcon: Icons.payments_outlined,
-          onChanged: (_) {},
-        ),
-        const SizedBox(height: 28),
-        _StockToggle(
-          value: _isOutOfStock,
-          onChanged: (value) {
-            setState(() {
-              _isOutOfStock = value;
-            });
-          },
-        ),
-        const SizedBox(height: 36),
-        AppButton(
-          label: 'Save Ingredient',
-          onPressed: _saveIngredient,
-        ),
-        const SizedBox(height: 14),
-        AppButton(
-          label: 'Cancel',
-          onPressed: () => context.pop(),
+                //ingredient details
+                const AppSectionHeader(title: 'Ingredient Details'),
+                const SizedBox(height: 14),
+                AppTextField(
+                  controller: _nameController,
+                  label: 'Ingredient Name',
+                  hint: 'Search catalogue, e.g. Chicken Breast',
+                  prefixIcon: Icons.search,
+                  onChanged: _searchIngredients,
+                ),
+                if (_showValidation && !hasName)
+                  const _ValidationText('Ingredient name is required.'),
+                if (_showValidation && _selectedIngredient == null && hasName)
+                  const _ValidationText(
+                    'Please select an ingredient from the catalogue.',
+                  ),
+                if (_ingredientSearchError != null)
+                  _ValidationText(_ingredientSearchError!),
+                if (_isSearchingIngredients)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 10),
+                    child: LinearProgressIndicator(),
+                  ),
+                if (_ingredientOptions.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  _IngredientSearchResults(
+                    ingredients: _ingredientOptions,
+                    selectedIngredient: _selectedIngredient,
+                    onSelected: _selectIngredient,
+                  ),
+                ],
+                const SizedBox(height: 14),
+                _SelectedCategoryLabel(
+                  category: _selectedIngredient?.category ??
+                      _selectedCategory ??
+                      'Select an ingredient',
+                ),
+                const SizedBox(height: 28),
+
+                //quantity
+                const AppSectionHeader(title: 'Quantity'),
+                const SizedBox(height: 14),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _LabelledField(
+                        label: 'Quantity',
+                        child: _QuantityStepper(
+                          value: _quantity,
+                          onChanged: (value) =>
+                              setState(() => _quantity = value),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _LabelledDropdown(
+                        label: 'Unit',
+                        hint: 'e.g. oz',
+                        value: _selectedUnit,
+                        options: _unitOptions,
+                        onChanged: (value) =>
+                            setState(() => _selectedUnit = value),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_showValidation && !hasUnit)
+                  const _ValidationText('Unit is required.'),
+                const SizedBox(height: 36),
+                AppButton.primary(
+                  label: 'Save Ingredient',
+                  onPressed: _saveIngredient,
+                  isFullWidth: true,
+                  isRounded: true,
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
   }
 
-  void _saveIngredient() {
+  Future<void> _searchIngredients(String query) async {
+    setState(() {
+      _selectedIngredient = null;
+      _ingredientSearchError = null;
+    });
+
+    final cleanedQuery = query.trim();
+    if (cleanedQuery.length < 2) {
+      setState(() {
+        _ingredientOptions.clear();
+        _isSearchingIngredients = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isSearchingIngredients = true;
+    });
+
+    try {
+      final results = await ref
+          .read(ingredientCatalogueRepositoryProvider)
+          .searchIngredients(cleanedQuery);
+
+      if (!mounted || _nameController.text.trim() != cleanedQuery) return;
+
+      setState(() {
+        _ingredientOptions
+          ..clear()
+          ..addAll(results);
+        _isSearchingIngredients = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _ingredientOptions.clear();
+        _isSearchingIngredients = false;
+        _ingredientSearchError = 'Could not search ingredients right now.';
+      });
+    }
+  }
+
+  void _selectIngredient(IngredientCatalogueItem ingredient) {
+    setState(() {
+      _selectedIngredient = ingredient;
+      _selectedCategory = ingredient.category;
+      _nameController.text = ingredient.name;
+      _ingredientOptions.clear();
+      _ingredientSearchError = null;
+    });
+  }
+
+  Future<void> _saveIngredient() async {
     final hasRequiredFields = _nameController.text.trim().isNotEmpty &&
-        _quantityController.text.trim().isNotEmpty &&
-        _unitController.text.trim().isNotEmpty;
+        _selectedIngredient != null &&
+        _selectedUnit != null;
 
     if (!hasRequiredFields) {
       setState(() {
@@ -199,28 +285,208 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
       return;
     }
 
-    ref.read(pantryStateProvider.notifier).addIngredient(
-          name: _nameController.text,
-          quantity: _quantityController.text,
-          unit: _unitController.text,
-          category: _selectedCategory,
-          isOutOfStock: _isOutOfStock,
+    await ref.read(pantryStateProvider.notifier).addIngredient(
+          ingId: _selectedIngredient!.ingId,
+          quantity: '$_quantity',
+          unit: _selectedUnit!,
         );
 
-    context.pop();
+    if (mounted) {
+      context.pop();
+    }
   }
 }
 
-class _CategorySelector extends StatelessWidget {
-  const _CategorySelector({
-    required this.categories,
-    required this.selectedCategory,
+String _formatCategory(String raw) {
+  if (raw.isEmpty) return raw;
+  return raw[0].toUpperCase() + raw.substring(1);
+}
+
+class _PantryHeader extends StatelessWidget {
+  const _PantryHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: _blurArea,
+      width: double.infinity,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: const DecoratedBox(
+                decoration: BoxDecoration(color: AppColors.overlayLight),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _HeaderCircleButton(
+                    icon: Icons.arrow_back,
+                    onTap: () => context.pop(),
+                    background: AppColors.textMuted.withValues(alpha: 0.45),
+                    iconColor: AppColors.textDark,
+                  ),
+                  const Spacer(),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _HeaderCircleButton(
+                        icon: Icons.add,
+                        onTap: () {},
+                        background: AppColors.textMuted.withValues(alpha: 0.25),
+                        iconColor: AppColors.primary,
+                      ),
+                      const SizedBox(height: 10),
+                      _HeaderCircleButton(
+                        icon: Icons.photo_camera_outlined,
+                        onTap: () {},
+                        background: AppColors.textMuted.withValues(alpha: 0.25),
+                        iconColor: AppColors.primary,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderCircleButton extends StatelessWidget {
+  const _HeaderCircleButton({
+    required this.icon,
+    required this.onTap,
+    required this.background,
+    required this.iconColor,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final Color background;
+  final Color iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: background,
+        ),
+        child: Icon(icon, color: iconColor, size: 19),
+      ),
+    );
+  }
+}
+
+//small pill at the top of the sheet
+class _SheetHandle extends StatelessWidget {
+  const _SheetHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 4,
+      decoration: BoxDecoration(
+        color: AppColors.tertiaryMuted.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
+  }
+}
+
+class _IngredientSearchResults extends StatelessWidget {
+  const _IngredientSearchResults({
+    required this.ingredients,
+    required this.selectedIngredient,
     required this.onSelected,
   });
 
-  final List<String> categories;
-  final String selectedCategory;
-  final ValueChanged<String> onSelected;
+  final List<IngredientCatalogueItem> ingredients;
+  final IngredientCatalogueItem? selectedIngredient;
+  final ValueChanged<IngredientCatalogueItem> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: ingredients.map((ingredient) {
+        final selected = selectedIngredient?.ingId == ingredient.ingId;
+        return Material(
+          color: Colors.transparent,
+          child: ListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            leading: Icon(
+              selected ? Icons.check_circle : Icons.restaurant_outlined,
+              color: selected ? AppColors.primary : AppColors.textMuted,
+            ),
+            title: Text(
+              ingredient.name,
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.textLight,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            subtitle: Text(
+              _formatCategory(ingredient.category),
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textMuted,
+              ),
+            ),
+            onTap: () => onSelected(ingredient),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _SelectedCategoryLabel extends StatelessWidget {
+  const _SelectedCategoryLabel({required this.category});
+
+  final String category;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Icon(
+          Icons.category_outlined,
+          color: AppColors.primary,
+          size: 18,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'Category: ${_formatCategory(category)}',
+          style: AppTextStyles.bodySmall.copyWith(
+            fontWeight: FontWeight.w500,
+            color: AppColors.textLight,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LabelledField extends StatelessWidget {
+  const _LabelledField({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
@@ -228,69 +494,145 @@ class _CategorySelector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Category',
+          label,
           style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.textMuted,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textLight,
           ),
         ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: categories.map((category) {
-            final selected = category == selectedCategory;
-
-            return ChoiceChip(
-              label: Text(category.toUpperCase()),
-              selected: selected,
-              onSelected: (_) => onSelected(category),
-              selectedColor: AppColors.primary,
-              backgroundColor: AppColors.surfaceLight,
-              labelStyle: AppTextStyles.label.copyWith(
-                color: selected ? AppColors.textDark : AppColors.textLight,
-                letterSpacing: 0.5,
-              ),
-              side: BorderSide(
-                color: selected ? AppColors.primary : AppColors.divider,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            );
-          }).toList(),
-        ),
+        const SizedBox(height: 6),
+        child,
       ],
     );
   }
 }
 
-class _StockToggle extends StatelessWidget {
-  const _StockToggle({
+class _LabelledDropdown extends StatelessWidget {
+  const _LabelledDropdown({
+    required this.label,
+    required this.hint,
     required this.value,
+    required this.options,
     required this.onChanged,
   });
 
-  final bool value;
-  final ValueChanged<bool> onChanged;
+  final String label;
+  final String hint;
+  final String? value;
+  final List<String> options;
+  final ValueChanged<String?> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return SwitchListTile(
-      value: value,
-      onChanged: onChanged,
-      activeThumbColor: AppColors.primary,
-      contentPadding: EdgeInsets.zero,
-      title: Text(
-        'Mark as out of stock',
-        style: AppTextStyles.body.copyWith(
-          color: AppColors.textLight,
-          fontWeight: FontWeight.w600,
+    return _LabelledField(
+      label: label,
+      child: DropdownButtonFormField<String>(
+        initialValue: value,
+        onChanged: onChanged,
+        isExpanded: true,
+        icon: const Icon(
+          Icons.keyboard_arrow_down,
+          color: AppColors.primary,
+          size: 20,
         ),
+        hint: Text(
+          hint,
+          style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+        ),
+        style: AppTextStyles.body.copyWith(color: AppColors.textLight),
+        dropdownColor: AppColors.surfaceWhite,
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: AppColors.surfaceMuted,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide:
+                const BorderSide(color: AppColors.inputBorder, width: 1),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide:
+                const BorderSide(color: AppColors.inputBorder, width: 1),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          ),
+        ),
+        items: options
+            .map(
+              (option) => DropdownMenuItem<String>(
+                value: option,
+                child: Text(option),
+              ),
+            )
+            .toList(),
       ),
-      subtitle: Text(
-        'Use this when the item should stay listed but not count as available.',
-        style: AppTextStyles.bodySmall.copyWith(
-          color: AppColors.textMuted,
+    );
+  }
+}
+
+class _QuantityStepper extends StatelessWidget {
+  const _QuantityStepper({required this.value, required this.onChanged});
+
+  final int value;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 52,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.inputBorder, width: 1),
+      ),
+      child: Row(
+        children: [
+          _StepperButton(
+            icon: Icons.remove,
+            onTap: value > 1 ? () => onChanged(value - 1) : null,
+          ),
+          Expanded(
+            child: Center(
+              child: Text(
+                '$value',
+                style: AppTextStyles.title.copyWith(
+                  color: AppColors.textLight,
+                ),
+              ),
+            ),
+          ),
+          _StepperButton(
+            icon: Icons.add,
+            onTap: () => onChanged(value + 1),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StepperButton extends StatelessWidget {
+  const _StepperButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        width: 44,
+        height: double.infinity,
+        child: Icon(
+          icon,
+          size: 18,
+          color: onTap == null ? AppColors.textMuted : AppColors.primary,
         ),
       ),
     );

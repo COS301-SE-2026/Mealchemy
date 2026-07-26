@@ -1,8 +1,9 @@
 //mirrors the recipes table 
 //Lightweight summary shared with vault; ingredients/steps are null on the
 //list endpoint and populated on the detail endpoint.
-import 'recipe_ingredient.dart';
-import 'recipe_step.dart';
+import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
+import 'package:mealchemy/features/recipe/models/recipe_step.dart';
+
 
 class Recipe {
   final int recipeId;

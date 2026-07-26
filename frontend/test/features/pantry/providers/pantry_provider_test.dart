@@ -22,7 +22,8 @@ void main() {
     final summary = await container.read(pantrySummaryProvider.future);
     final filters = await container.read(pantryFiltersProvider.future);
     final ingredients = await container.read(pantryIngredientsProvider.future);
-    final categories = await container.read(ingredientCategoriesProvider.future);
+    final categories =
+        await container.read(ingredientCategoriesProvider.future);
 
     expect(summary.totalItems, 42);
     expect(filters.first.label, 'All');
@@ -90,45 +91,82 @@ void main() {
     expect(ingredient.status, PantryItemStatus.expired);
   });
 
-  test('removeIngredient removes ingredient from local pantry list', () async {
+  test('removeIngredient deletes ingredient by pantry id', () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await container.read(pantryStateProvider.future);
+
+    final pantryStateBefore = container.read(pantryStateProvider).value!;
+    final ingredientToDelete = pantryStateBefore.ingredients.first;
+
+    final notifier = container.read(pantryStateProvider.notifier);
+    await notifier.removeIngredient(ingredientToDelete.pIngredientId!);
+
+    final pantryStateAfter = container.read(pantryStateProvider).value!;
+
+    expect(
+      pantryStateAfter.ingredients.any(
+        (item) => item.pIngredientId == ingredientToDelete.pIngredientId,
+      ),
+      isFalse,
+    );
+  });
+
+  test('addIngredient adds repository-created ingredient to pantry list',
+      () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
     await container.read(pantryStateProvider.future);
 
     final notifier = container.read(pantryStateProvider.notifier);
-    notifier.removeIngredient('Chicken Breast');
+    await notifier.addIngredient(
+      ingId: 44,
+      quantity: '500',
+      unit: 'g',
+    );
 
     final pantryState = container.read(pantryStateProvider).value!;
-
-    expect(
-      pantryState.ingredients.any((item) => item.name == 'Chicken Breast'),
-      isFalse,
+    final ingredient = pantryState.ingredients.firstWhere(
+      (item) => item.ingId == 44,
     );
+
+    //the mock repo now behaves like the backend-shaped API response
+    expect(ingredient.pIngredientId, 999);
+    expect(ingredient.name, 'Mock ingredient');
+    expect(ingredient.details, '500g • Manual entry');
+    expect(ingredient.category, 'Other');
+    expect(ingredient.status, PantryItemStatus.fresh);
   });
 
-  test('addIngredient adds manual ingredient to local pantry list', () async {
-  final container = ProviderContainer();
-  addTearDown(container.dispose);
+  test('updateIngredient replaces pantry item with repository result',
+      () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
 
-  await container.read(pantryStateProvider.future);
+    await container.read(pantryStateProvider.future);
 
-  final notifier = container.read(pantryStateProvider.notifier);
-  notifier.addIngredient(
-    name: 'Brown Rice',
-    quantity: '500',
-    unit: 'g',
-    category: 'grains',
-    isOutOfStock: false,
-  );
+    final pantryStateBefore = container.read(pantryStateProvider).value!;
+    final ingredientToUpdate = pantryStateBefore.ingredients.first;
 
-  final pantryState = container.read(pantryStateProvider).value!;
-  final ingredient = pantryState.ingredients.firstWhere(
-    (item) => item.name == 'Brown Rice',
-  );
+    final notifier = container.read(pantryStateProvider.notifier);
+    await notifier.updateIngredient(
+      pIngredientId: ingredientToUpdate.pIngredientId!,
+      ingId: ingredientToUpdate.ingId!,
+      quantity: '123',
+      unit: 'g',
+    );
 
-  expect(ingredient.details, '500g • Manual entry');
-  expect(ingredient.category, 'Other');
-  expect(ingredient.status, PantryItemStatus.fresh);
-});
+    final pantryStateAfter = container.read(pantryStateProvider).value!;
+    final updatedIngredient = pantryStateAfter.ingredients.firstWhere(
+      (item) => item.pIngredientId == ingredientToUpdate.pIngredientId,
+    );
+
+    //provider swaps in backend-shaped updated pantry row
+    expect(updatedIngredient.ingId, ingredientToUpdate.ingId);
+    expect(updatedIngredient.details, '123g • Pantry');
+    expect(updatedIngredient.quantity, '123');
+    expect(updatedIngredient.unit, 'g');
+  });
 }

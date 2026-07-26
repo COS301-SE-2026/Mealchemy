@@ -1,0 +1,201 @@
+.showcase-layout {
+    display: grid;
+    grid-template-columns: minmax(250px, 0.72fr) minmax(320px, 0.88fr);
+    gap: clamp(22px, 4vw, 54px);
+    align-items: start;
+  }
+  
+  .showcase-controls {
+    display: grid;
+    gap: 12px;
+    align-self: start;
+    padding-top: 8px;
+  }
+  
+  .screen-tab {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    min-height: 94px;
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    color: var(--ink);
+    background: rgba(255, 255, 255, 0.62);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 180ms ease, background 180ms ease, border 180ms ease;
+  }
+  
+  .screen-tab:hover {
+    transform: translateX(8px);
+  }
+  
+  .screen-tab.active {
+    color: var(--surface);
+    border-color: rgba(212, 175, 55, 0.5);
+    background: linear-gradient(135deg, var(--primary-dark), var(--gradient-end));
+    box-shadow: 0 18px 44px rgba(92, 0, 24, 0.18);
+  }
+  
+  .screen-tab.active::after {
+    content: "";
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: 12px;
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), rgba(248, 243, 235, 0.9));
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: tab-progress 5000ms linear forwards;
+  }
+  
+  .showcase-controls.paused .screen-tab.active::after {
+    animation-play-state: paused;
+    opacity: 0.45;
+  }
+  
+  .screen-tab span {
+    display: block;
+    font-family: var(--display);
+    font-size: 1.35rem;
+    font-weight: 850;
+  }
+  
+  .screen-tab small {
+    display: block;
+    margin-top: 6px;
+    color: var(--muted);
+    font-weight: 800;
+  }
+  
+  .screen-tab.active small {
+    color: rgba(248, 243, 235, 0.76);
+  }
+  
+  .showcase-phone {
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 18px;
+    align-items: start;
+    min-width: 0;
+  }
+  
+  .showcase-phone .phone {
+    width: min(300px, 56vw);
+    aspect-ratio: 392 / 850;
+    transition: aspect-ratio 240ms ease;
+  }
+  
+  .showcase-phone .phone img {
+    object-fit: cover;
+    object-position: top center;
+    background: var(--cream);
+  }
+  
+  .screen-caption {
+    width: min(100%, 520px);
+    padding: 28px;
+    border: 1px solid rgba(212, 175, 55, 0.24);
+    border-radius: 28px;
+    background: rgba(87, 0, 19, 0.92);
+    color: var(--surface);
+    box-shadow: var(--shadow-dark);
+  }
+  
+  .screen-caption span {
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 950;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+  }
+  
+  .screen-caption strong {
+    display: block;
+    margin-top: 12px;
+    color: var(--white);
+    font-family: var(--display);
+    font-size: clamp(1.7rem, 3vw, 2.5rem);
+    line-height: 0.98;
+  }
+  
+  .screen-caption p {
+    margin: 14px 0 0;
+    color: rgba(248, 243, 235, 0.78);
+    font-weight: 700;
+  }
+  
+  .mockup-gallery {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    align-items: stretch;
+    margin-top: clamp(34px, 6vw, 76px);
+  }
+  
+  .mockup-card {
+    position: relative;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    overflow: hidden;
+    min-height: 590px;
+    padding: 18px;
+    border: 1px solid rgba(92, 0, 24, 0.12);
+    border-radius: 30px;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.18), transparent 14rem),
+      rgba(255, 255, 255, 0.68);
+    box-shadow: 0 18px 54px rgba(92, 0, 24, 0.11);
+  }
+  
+  .mockup-card img {
+    width: min(190px, 78%);
+    height: 412px;
+    margin: 0 auto;
+    object-fit: cover;
+    object-position: top center;
+    border: 10px solid #17040a;
+    border-radius: 32px;
+    background: var(--cream);
+    box-shadow: 0 22px 52px rgba(29, 28, 23, 0.22);
+    transition: transform 260ms ease;
+  }
+  
+  .mockup-card:hover img {
+    transform: translateY(-10px) rotate(-1deg);
+  }
+  
+  .mockup-card.tall img {
+    object-position: top center;
+  }
+  
+  .mockup-card div {
+    position: relative;
+    z-index: 1;
+    padding: 20px 4px 4px;
+  }
+  
+  .mockup-card span {
+    display: block;
+    color: var(--accent-muted);
+    font-size: 0.74rem;
+    font-weight: 950;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+  }
+  
+  .mockup-card strong {
+    display: block;
+    margin-top: 8px;
+    color: var(--primary-dark);
+    font-family: var(--display);
+    font-size: 1.45rem;
+    line-height: 1.04;
+    letter-spacing: -0.025em;
+  }
+  

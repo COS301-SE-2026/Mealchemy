@@ -1,0 +1,380 @@
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+  
+  @media (max-width: 980px) {
+    .site-header {
+      align-items: stretch;
+      border-radius: 28px;
+      flex-wrap: wrap;
+    }
+  
+    .nav {
+      order: 3;
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+  
+    .hero,
+    .solution-panel,
+    .preference-panel,
+    .vault-explainer,
+    .system-user-grid,
+    .showcase-layout,
+    .download-panel,
+    .showcase-phone {
+      grid-template-columns: 1fr;
+    }
+  
+    .hero {
+      min-height: 0;
+    }
+  
+    .hero-stage {
+      min-height: 590px;
+    }
+  
+    .problem-grid,
+    .feature-grid,
+    .wow-grid,
+    .mockup-gallery {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  
+    .flow {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+  
+    .flow-line {
+      width: 2px;
+      height: 28px;
+      margin-left: 28px;
+    }
+  
+    .showcase-phone {
+      justify-items: center;
+    }
+  
+    .preference-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  
+    .vault-scene-controls {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  
+    .vault-scene-stage {
+      min-height: 670px;
+    }
+  
+    .candidate-bank {
+      grid-template-columns: repeat(3, minmax(120px, 1fr));
+    }
+  
+    .phase-card-stack,
+    .phase-visual-layer,
+    .system-user-grid .swipe-phone {
+      grid-column: 1;
+    }
+  
+    .phase-visual-layer,
+    .system-user-grid .swipe-phone {
+      grid-row: 1;
+    }
+  
+    .phase-card-stack {
+      grid-row: 2;
+      min-height: 0;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: repeat(4, minmax(96px, auto));
+      margin-top: 24px;
+    }
+  
+  }
+  
+  @media (max-width: 680px) {
+    :root {
+      --max: min(100% - 24px, 1180px);
+    }
+  
+    .site-header {
+      margin-top: 8px;
+      padding: 10px;
+    }
+  
+    .brand span,
+    .nav-cta {
+      display: none;
+    }
+  
+    h1 {
+      font-size: clamp(3.4rem, 19vw, 5rem);
+    }
+  
+    .hero-metrics,
+    .problem-grid,
+    .feature-grid,
+    .wow-grid,
+    .mockup-gallery {
+      grid-template-columns: 1fr;
+    }
+  
+    .vault-model {
+      grid-template-columns: 1fr;
+      gap: 9px;
+    }
+  
+    .vault-model > i {
+      transform: rotate(90deg);
+    }
+  
+    .vault-explainer {
+      padding: 12px;
+    }
+  
+    .vault-scene-controls {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      padding-bottom: 6px;
+    }
+  
+    .vault-scene-button {
+      min-width: 225px;
+      scroll-snap-align: start;
+    }
+  
+    .vault-scene-stage {
+      min-height: 790px;
+    }
+  
+    .vault-scene-panel {
+      padding: 24px 18px;
+    }
+  
+    .vault-scene-copy h3 {
+      font-size: 2.15rem;
+    }
+  
+    .vault-scene-visual {
+      min-height: 500px;
+      padding-top: 16px;
+    }
+  
+    .private-visual,
+    .add-visual,
+    .copy-visual {
+      flex-direction: column;
+    }
+  
+    .private-visual .vault-motion-arrow,
+    .add-visual .vault-motion-arrow,
+    .copy-visual .clone-route {
+      width: 52px;
+      transform: rotate(90deg);
+    }
+  
+    .vault-object,
+    .vault-form-card,
+    .copy-source,
+    .copy-destination {
+      width: min(330px, 92%);
+    }
+  
+    .small-object {
+      width: 44%;
+      padding: 13px;
+    }
+  
+    .small-object .vault-object-head {
+      display: grid;
+    }
+  
+    .protect-visual {
+      flex-wrap: wrap;
+      align-content: center;
+    }
+  
+    .source-recipe-card,
+    .private-copy-card {
+      width: 42%;
+    }
+  
+    .copy-prompt {
+      order: 3;
+      width: 90%;
+    }
+  
+    .global-recipe {
+      width: 95px;
+    }
+  
+    .global-recipe.recipe-a { left: 0; }
+    .global-recipe.recipe-b { right: 0; }
+    .global-recipe.recipe-c { right: 2%; bottom: 8%; }
+  
+    .vault-stage-footer {
+      display: grid;
+      gap: 4px;
+    }
+  
+    .mockup-card {
+      min-height: auto;
+    }
+  
+    .mockup-card img,
+    .mockup-card img.live-screen-image {
+      width: min(200px, 72vw);
+      height: min(434px, 156vw);
+    }
+  
+    .hero-stage {
+      min-height: 500px;
+    }
+  
+    .heuristic-demo {
+      padding: 18px;
+    }
+  
+    .candidate-bank {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  
+    .phase-card-stack {
+      grid-template-columns: 1fr;
+      grid-template-rows: repeat(7, minmax(92px, auto));
+    }
+  
+    .phase-visual-layer {
+      min-height: 660px;
+    }
+  
+    .phase-visual-layer .candidate-bank {
+      inset: 28px 20px auto;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  
+    .phase-visual-layer .bank-card {
+      min-height: 105px;
+    }
+  
+    .phase-visual-layer .bank-card img {
+      height: 58px;
+    }
+  
+    .score-signals > div {
+      grid-template-columns: minmax(96px, 1fr) minmax(76px, 0.9fr) 34px;
+    }
+  
+    .allocation-heading,
+    .learning-flow {
+      grid-template-columns: 1fr;
+    }
+  
+    .allocation-heading {
+      display: grid;
+    }
+  
+    .allocation-heading > span {
+      width: fit-content;
+    }
+  
+    .learning-arrow {
+      justify-self: center;
+    }
+  
+    .ema-result {
+      grid-column: 1;
+    }
+  
+    .bank-card {
+      min-height: 126px;
+    }
+  
+    .bank-card img {
+      height: 78px;
+    }
+  
+    .preference-stats {
+      grid-template-columns: 1fr;
+    }
+  
+    .swipe-phone {
+      width: min(315px, 88vw);
+      min-height: 590px;
+      border-radius: 38px;
+    }
+  
+    .swipe-stack {
+      min-height: 370px;
+    }
+  
+    .meal-content h3 {
+      font-size: 1.22rem;
+    }
+  
+    .meal-content p {
+      font-size: 0.76rem;
+    }
+  
+    .preference-stats {
+      grid-template-columns: 1fr;
+    }
+  
+    .phone {
+      width: min(275px, 82vw);
+      border-radius: 34px;
+      border-width: 10px;
+    }
+  
+    .orbit-one {
+      width: 320px;
+      height: 320px;
+    }
+  
+    .orbit-two {
+      width: 440px;
+      height: 440px;
+    }
+  
+    .match-card {
+      left: -6px;
+      top: 8%;
+    }
+  
+    .swipe-card {
+      right: -4px;
+      bottom: 7%;
+    }
+  
+    .float-card {
+      max-width: 190px;
+      padding: 14px;
+    }
+  
+    .req-row {
+      grid-template-columns: 1fr;
+    }
+  
+    .req-row span:last-child {
+      padding-top: 0;
+    }
+  
+    .req-row.head {
+      display: none;
+    }
+  
+    .site-footer {
+      flex-direction: column;
+    }
+  }
+  

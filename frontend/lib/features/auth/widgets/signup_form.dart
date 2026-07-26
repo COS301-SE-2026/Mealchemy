@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/shared_widgets/atoms/app_button.dart';
 import 'package:mealchemy/core/shared_widgets/atoms/app_card.dart';
 import 'package:mealchemy/core/shared_widgets/atoms/app_text_field.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/core/utils/validators.dart';
+import '../providers/auth_provider.dart';
 
-class SignupForm extends StatefulWidget {
+class SignupForm extends ConsumerStatefulWidget {
   const SignupForm({super.key});
 
   @override
-  State<SignupForm> createState() => _SignupFormState();
+  ConsumerState<SignupForm> createState() => _SignupFormState();
 }
 
-class _SignupFormState extends State<SignupForm> {
+class _SignupFormState extends ConsumerState<SignupForm> {
   // Input controllers for the signup fields
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -53,15 +55,22 @@ class _SignupFormState extends State<SignupForm> {
   }
 
   //On click register button logic
-  void _handleRegister() {
+  Future<void> _handleRegister() async {
     if (!_validate()) return;
     setState(() => _isLoading = true);
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        context.go('/preference');
-      }
-    });
+    final success = await ref.read(authProvider.notifier).register(
+          _emailController.text.trim(),
+          _passwordController.text,
+          _nameController.text,
+        );
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    if (success) {
+      context.go('/preference');
+    } else {
+      final error = ref.read(authProvider).errorMessage;
+      setState(() => _confirmPasswordError = error);
+    }
   }
 
   //OR CONTINUE WITH divider row
@@ -116,7 +125,7 @@ class _SignupFormState extends State<SignupForm> {
 
             //Display name input field
             AppTextField.standard(
-              hint: 'e.g. Mutombo Kabau',
+              hint: 'e.g. Karen Smith',
               label: 'Display Name',
               controller: _nameController,
               keyboardType: TextInputType.name,
@@ -158,10 +167,9 @@ class _SignupFormState extends State<SignupForm> {
               controller: _passwordController,
               errorText: _passwordError,
               onChanged: (_) {
-                if (_passwordError != null){
-                   setState(() => _passwordError = null);
+                if (_passwordError != null) {
+                  setState(() => _passwordError = null);
                 }
-                 
               },
             ),
             const SizedBox(height: 16),
@@ -182,7 +190,7 @@ class _SignupFormState extends State<SignupForm> {
               controller: _confirmPasswordController,
               errorText: _confirmPasswordError,
               onChanged: (_) {
-                if (_confirmPasswordError != null){
+                if (_confirmPasswordError != null) {
                   setState(() => _confirmPasswordError = null);
                 }
               },
