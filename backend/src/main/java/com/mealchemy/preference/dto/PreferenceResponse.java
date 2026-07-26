@@ -9,5 +9,6 @@ public record PreferenceResponse( //records are immutable and auto generate cons
     @JsonProperty("dietary_restrictions") List<String> dietaryRestrictions,
     List<String> allergies,
     @JsonProperty("disliked_ingredients") List<String> dislikedIngredients,
-    @JsonProperty("flavour_profile") List<String> flavourProfile    
+    @JsonProperty("flavour_profile") List<String> flavourProfile,
+    @JsonProperty("nutritional_goals") List<String> nutritionalGoals
 ) {}

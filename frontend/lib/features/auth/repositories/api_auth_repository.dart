@@ -40,7 +40,7 @@ class ApiAuthRepository implements AuthRepository {
       final response = await _dio.post('/auth/register', data: {
         'email': email,
         'password': password,
-        'display_name': displayName,
+        'displayName': displayName,
       });
       return AuthResult.success(
         token: response.data['token'],

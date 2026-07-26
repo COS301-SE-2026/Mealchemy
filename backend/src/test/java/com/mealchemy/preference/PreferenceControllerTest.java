@@ -68,7 +68,8 @@ public class PreferenceControllerTest {
             List.of("vegetarian"),
             List.of("peanuts"),
             List.of("olives"),
-            List.of("mediterranean")
+            List.of("mediterranean"),
+            List.of("low_carb")
         );
 
         when(preferenceService.preferences(anyInt())).thenReturn(mockResponse);
@@ -81,7 +82,8 @@ public class PreferenceControllerTest {
             .andExpect(jsonPath("$.dietary_restrictions[0]").value("vegetarian"))
             .andExpect(jsonPath("$.allergies[0]").value("peanuts"))
             .andExpect(jsonPath("$.disliked_ingredients[0]").value("olives"))
-            .andExpect(jsonPath("$.flavour_profile[0]").value("mediterranean"));
+            .andExpect(jsonPath("$.flavour_profile[0]").value("mediterranean"))
+            .andExpect(jsonPath("$.nutritional_goals[0]").value("low_carb"));
     }
 
     @Test
@@ -106,14 +108,16 @@ public class PreferenceControllerTest {
             List.of("vegan"),
             List.of("gluten"),
             List.of("anchovies"),
-            List.of("japanese")
+            List.of("japanese"),
+            List.of("low_carb")
         );
 
         PreferenceResponse mockResponse = new PreferenceResponse(
             List.of("vegan"),
             List.of("gluten"),
             List.of("anchovies"),
-            List.of("japanese")
+            List.of("japanese"),
+            List.of("low_carb")
         );
 
         when(preferenceService.updatePreferences(anyInt(), any(PreferenceRequest.class)))
@@ -128,7 +132,8 @@ public class PreferenceControllerTest {
             .andExpect(jsonPath("$.dietary_restrictions[0]").value("vegan"))
             .andExpect(jsonPath("$.allergies[0]").value("gluten"))
             .andExpect(jsonPath("$.disliked_ingredients[0]").value("anchovies"))
-            .andExpect(jsonPath("$.flavour_profile[0]").value("japanese"));
+            .andExpect(jsonPath("$.flavour_profile[0]").value("japanese"))
+            .andExpect(jsonPath("$.nutritional_goals[0]").value("low_carb"));
     }
 
     @Test
@@ -138,7 +143,8 @@ public class PreferenceControllerTest {
             List.of("vegan"),
             List.of("gluten"),
             List.of("anchovies"),
-            List.of("japanese")
+            List.of("japanese"),
+            List.of("low_carb")
         );
 
         when(preferenceService.updatePreferences(anyInt(), any(PreferenceRequest.class)))

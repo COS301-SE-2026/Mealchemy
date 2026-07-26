@@ -1,0 +1,181 @@
+.download-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 0.44fr);
+    gap: 28px;
+    align-items: center;
+    padding: clamp(30px, 5vw, 54px);
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: 34px;
+    background:
+      radial-gradient(circle at 88% 12%, rgba(212, 175, 55, 0.2), transparent 17rem),
+      linear-gradient(135deg, rgba(87, 0, 19, 0.96), rgba(112, 23, 42, 0.94));
+    color: var(--surface);
+    box-shadow: var(--shadow-dark);
+  }
+
+  .download-panel h2 {
+    color: var(--surface);
+  }
+
+  .download-panel .eyebrow {
+    color: var(--accent);
+  }
+
+  /* shared lede style used in both dark-panel sections */
+  .download-panel p:not(.eyebrow),
+  .final-panel p {
+    max-width: 680px;
+    color: rgba(248, 243, 235, 0.8);
+    font-size: 1.08rem;
+    font-weight: 700;
+  }
+
+  .download-panel p:not(.eyebrow) {
+    margin: 18px 0 0;
+  }
+
+  .final-panel p {
+    margin: 18px 0 28px;
+    color: rgba(248, 243, 235, 0.82);
+  }
+
+  .android-badge {
+    min-height: 154px;
+    display: grid;
+    align-content: center;
+    padding: 24px;
+    border: 1px solid rgba(212, 175, 55, 0.44);
+    border-radius: 28px;
+    color: var(--primary-dark);
+    background:
+      linear-gradient(135deg, rgba(212, 175, 55, 0.96), rgba(248, 243, 235, 0.94));
+    text-decoration: none;
+    box-shadow: 0 22px 48px rgba(17, 5, 8, 0.24);
+    transition: transform 180ms ease;
+  }
+
+  .android-badge:hover {
+    transform: translateY(-6px);
+  }
+
+  /* shared label style: small uppercased kicker spans */
+  .android-badge span,
+  .wow-grid span {
+    font-size: 0.76rem;
+    font-weight: 950;
+    text-transform: uppercase;
+  }
+
+  .android-badge span { letter-spacing: 0.12em; }
+  .wow-grid span { letter-spacing: 0.1em; color: var(--accent); }
+
+  .android-badge strong {
+    margin-top: 8px;
+    font-family: var(--display);
+    font-size: clamp(1.7rem, 3vw, 2.45rem);
+    line-height: 0.95;
+  }
+
+  .android-badge small {
+    margin-top: 10px;
+    color: rgba(87, 0, 19, 0.74);
+    font-weight: 850;
+  }
+
+  .requirements-table {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.7);
+    box-shadow: var(--shadow);
+  }
+
+  .req-row {
+    display: grid;
+    grid-template-columns: 270px 1fr;
+    border-top: 1px solid rgba(92, 0, 24, 0.1);
+  }
+
+  .req-row:first-child {
+    border-top: 0;
+  }
+
+  .req-row span {
+    padding: 20px 22px;
+  }
+
+  .req-row span:first-child {
+    color: var(--primary-dark);
+    font-family: var(--display);
+    font-size: 1.2rem;
+    font-weight: 850;
+  }
+
+  .req-row span:last-child {
+    color: #554446;
+    font-weight: 680;
+  }
+
+  .req-row.head {
+    color: var(--surface);
+    background: var(--primary-dark);
+  }
+
+  .req-row.head span {
+    color: var(--surface);
+    font-family: var(--body);
+    font-size: 0.82rem;
+    font-weight: 950;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  .wow-card {
+    padding: clamp(30px, 5vw, 56px);
+  }
+
+  .wow-grid {
+    margin-top: 26px;
+  }
+
+  .wow-grid article {
+    min-height: 210px;
+    border-color: rgba(212, 175, 55, 0.22);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .wow-grid h3,
+  .wow-grid p {
+    color: var(--surface);
+  }
+
+  .final-panel {
+    display: grid;
+    justify-items: center;
+    padding: clamp(42px, 8vw, 78px);
+    text-align: center;
+  }
+
+  .final-panel img {
+    width: 136px;
+    margin-bottom: 14px;
+  }
+
+  .final-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+  }
+
+  .site-footer {
+    width: var(--max);
+    margin: 0 auto;
+    padding: 34px 0 44px;
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    color: #6b5559;
+    font-size: 0.9rem;
+    font-weight: 780;
+  }

@@ -1,1 +1,809 @@
-<!-- index for landing page placeholder-->
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Mealchemy is an intelligent recipe vault and discovery ecosystem that turns pantry ingredients, preferences, and nutrition goals into personalised meals and shopping decisions.">
+    <title>Mealchemy | Intelligent Recipe Discovery</title>
+    <link rel="icon" href="assets/logos/logo-mark.png">
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/recommendation-story.css">
+    <link rel="stylesheet" href="styles/vault-story.css">
+    <link rel="stylesheet" href="styles/showcase.css">
+    <link rel="stylesheet" href="styles/content-sections.css">
+    <link rel="stylesheet" href="styles/responsive.css">
+  </head>
+  <body>
+    <div class="scroll-meter" aria-hidden="true"><span></span></div>
+
+    <!-- header -->
+    <header class="site-header" data-elevate>
+      <a class="brand" href="#top" aria-label="Mealchemy home">
+        <img src="assets/logos/logo-mark.png" alt="" aria-hidden="true">
+        <span>Mealchemy</span>
+      </a>
+
+      <nav class="nav" aria-label="Landing page navigation">
+        <a href="#problem">Problem</a>
+        <a href="#swipe-demo">Swipe</a>
+        <a href="#vaults">Vaults</a>
+        <a href="#features">Features</a>
+        <a href="#showcase">Mockups</a>
+        <a href="#download">Android</a>
+        <a href="#requirements">Requirements</a>
+      </nav>
+
+      <a class="nav-cta" href="#showcase">Explore the system</a>
+    </header>
+
+    <main id="top">
+      <!-- hero -->
+      <section class="hero section-shell">
+        <div class="hero-copy reveal">
+          <p class="eyebrow"><span></span> Intelligent recipe management ecosystem</p>
+          <h1>Turn your pantry into personalised meals.</h1>
+          <p class="hero-lede">
+            Mealchemy is a recipe vault and guided discovery system that reduces mealtime decision fatigue by matching recipes to ingredients, preferences, nutrition goals, and shopping needs.
+          </p>
+
+          <div class="hero-actions" aria-label="Primary page actions">
+            <a class="button button-primary magnetic" href="#features">View core features</a>
+            <a class="button button-android magnetic" href="#download">Android download</a>
+            <a class="button button-ghost magnetic" href="#requirements">See requirement fit</a>
+          </div>
+
+          <dl class="hero-metrics" aria-label="Mealchemy experience summary">
+            <div>
+              <dt>Swipe</dt>
+              <dd>Tinder for food</dd>
+            </div>
+            <div>
+              <dt>Chef</dt>
+              <dd>A personal chef in your pocket</dd>
+            </div>
+            <div>
+              <dt>Learn</dt>
+              <dd>Smarter with every swipe</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="hero-stage reveal" aria-label="Mealchemy mobile app preview">
+          <div class="alchemy-orbit orbit-one"></div>
+          <div class="alchemy-orbit orbit-two"></div>
+
+          <article class="phone hero-phone uses-live-frame">
+            <img src="assets/screens/app-dashboard.png" alt="Real Mealchemy dashboard showing pantry count, smart suggestion, and recommended recipes">
+          </article>
+
+          <article class="float-card match-card">
+            <span class="mini-kicker">Smart match</span>
+            <strong>92% pantry ready</strong>
+            <p>Explains why a recipe is recommended.</p>
+          </article>
+
+          <article class="float-card swipe-card">
+            <span>Swipe</span>
+            <strong>Like → save</strong>
+            <small>Dislike → learn taste</small>
+          </article>
+        </div>
+      </section>
+      <!-- hero end -->
+
+      <!-- problem -->
+      <section class="problem section-shell" id="problem">
+        <div class="section-heading reveal">
+          <p class="eyebrow"><span></span> The problem</p>
+          <h2>Cooking should feel guided, not exhausting.</h2>
+          <p>
+            Users are juggling scattered recipes, half-known pantry stock, nutrition concerns, dietary preferences, and grocery decisions. Mealchemy brings those pieces into one calmer workflow.
+          </p>
+        </div>
+
+        <div class="problem-grid">
+          <article class="problem-card reveal">
+            <span>01</span>
+            <h3>Recipe fragmentation</h3>
+            <p>Recipes disappear into screenshots, bookmarks, notes, social media saves, and memory.</p>
+          </article>
+          <article class="problem-card reveal">
+            <span>02</span>
+            <h3>Decision fatigue</h3>
+            <p>Too many meal options can make choosing dinner feel harder than cooking it.</p>
+          </article>
+          <article class="problem-card reveal">
+            <span>03</span>
+            <h3>Shopping disconnect</h3>
+            <p>Users often decide on meals without knowing what they already have or still need to buy.</p>
+          </article>
+        </div>
+      </section>
+      <!-- solution -->
+      <section class="solution section-shell">
+        <div class="solution-panel reveal">
+          <div>
+            <p class="eyebrow"><span></span> The solution</p>
+            <h2>An intelligent path from pantry to plate.</h2>
+          </div>
+          <p>
+            Mealchemy combines a personal recipe vault, pantry-aware recommendations, guided swipe discovery, automated shopping lists, and nutrition insight into one mobile-first decision-support experience.
+          </p>
+        </div>
+
+        <div class="flow reveal" aria-label="Mealchemy workflow">
+          <div class="flow-step active">
+            <span>Vault</span>
+            <strong>Save recipes</strong>
+          </div>
+          <div class="flow-line"></div>
+          <div class="flow-step">
+            <span>Pantry</span>
+            <strong>Check ingredients</strong>
+          </div>
+          <div class="flow-line"></div>
+          <div class="flow-step">
+            <span>Discover</span>
+            <strong>Swipe smarter</strong>
+          </div>
+          <div class="flow-line"></div>
+          <div class="flow-step">
+            <span>Cook</span>
+            <strong>Shop only gaps</strong>
+          </div>
+        </div>
+      </section>
+      <!-- problem and solution end -->
+
+      <!-- recomendation engine -->
+      <section class="swipe-demo section-shell" id="swipe-demo">
+        <div class="section-heading reveal">
+          <p class="eyebrow"><span></span> Guided discovery</p>
+          <h2>See how Mealchemy turns a global recipe vault into a personal swipe deck.</h2>
+          <p>The engine is deterministic, explainable, and built as three clear phases. It knows the user, knows their pantry, blocks what cannot be served, and scores the rest.</p>
+        </div>
+
+        <div class="heuristic-demo reveal" data-engine-state="vault" aria-label="Interactive demonstration of Mealchemy's three recommendation phases and separate learning loop">
+          <div class="phase-strip" aria-hidden="true">
+            <span>Global vault</span>
+            <span>Phase 1: Safe pool</span>
+            <span>Tournament: 100</span>
+            <span>Phase 2: Scored</span>
+            <span>Phase 3: Final 20</span>
+          </div>
+
+          <div class="candidate-bank" aria-hidden="true">
+            <article class="bank-card survivor survivor-one">
+              <img src="assets/meals/garlic-chicken-stir-fry.jpg" alt="">
+              <span>Garlic Chicken</span>
+            </article>
+            <article class="bank-card survivor survivor-two">
+              <img src="assets/meals/pasta-carbonara.jpg" alt="">
+              <span>Carbonara</span>
+            </article>
+            <article class="bank-card survivor survivor-three">
+              <img src="assets/meals/japanese-omelette.jpg" alt="">
+              <span>Omelette</span>
+            </article>
+            <article class="bank-card survivor survivor-four">
+              <img src="assets/meals/chicken-rice-bowl.jpeg" alt="">
+              <span>Rice Bowl</span>
+            </article>
+            <article class="bank-card survivor survivor-five">
+              <img src="assets/meals/apple-tart.jpg" alt="">
+              <span>Apple Tart</span>
+            </article>
+            <article class="bank-card survivor survivor-six">
+              <img src="assets/meals/grilled-fish.jpg" alt="">
+              <span>Grilled Fish</span>
+            </article>
+            <article class="bank-card survivor survivor-seven">
+              <img src="assets/meals/salad-bowl.jpeg" alt="">
+              <span>Salad Bowl</span>
+            </article>
+            <article class="bank-card filtered allergy-card">
+              <img src="assets/meals/peanut-noodles.webp" alt="">
+              <span>Peanut Noodles</span>
+            </article>
+            <article class="bank-card filtered gluten-card">
+              <img src="assets/meals/gluten-pasta-bake.jpeg" alt="">
+              <span>Pasta Bake</span>
+            </article>
+            <article class="bank-card filtered liked-card">
+              <img src="assets/meals/pizza.webp" alt="">
+              <span>Pesto Pizza</span>
+            </article>
+            <article class="bank-card filtered recent-card">
+              <img src="assets/meals/ramen-wheat.jpeg" alt="">
+              <span>Beef Ramen</span>
+            </article>
+          </div>
+
+          <div class="system-user-grid">
+            <nav class="phase-card-stack" aria-label="Recommendation engine steps">
+              <button type="button" class="pipeline-card vault-step-card is-active" data-engine-phase="vault" aria-pressed="true">
+                <span>Source pool</span>
+                <strong>Global recipe vault</strong>
+                <p>Begin with every published recipe available to Mealchemy users.</p>
+              </button>
+              <button type="button" class="pipeline-card filter-step-card" data-engine-phase="filter" aria-pressed="false">
+                <span>Phase 1</span>
+                <strong>Hard filtering</strong>
+                <p>Remove allergens, dietary conflicts, already liked recipes, and recipes disliked within 30 days.</p>
+              </button>
+              <button type="button" class="pipeline-card tournament-step-card" data-engine-phase="tournament" aria-pressed="false">
+                <span>Eligible pool</span>
+                <strong>Tournament selection</strong>
+                <p>Randomly sample about 100 safe recipes from the remaining pool.</p>
+              </button>
+              <button type="button" class="pipeline-card score-card" data-engine-phase="score" aria-pressed="false">
+                <span>Phase 2</span>
+                <strong>Weighted affinity scoring</strong>
+                <p>Pantry coverage, cuisine affinity, nutritional goals, freshness, and novelty combine into a score from 0.0 to 1.0.</p>
+              </button>
+              <button type="button" class="pipeline-card allocation-card" data-engine-phase="allocation" aria-pressed="false">
+                <span>Phase 3</span>
+                <strong>Cuisine grouping and slot allocation</strong>
+                <p>Top cuisines receive proportional slots, with 1 to 2 wildcards protecting variety. The final 20 are returned to the app.</p>
+              </button>
+              <button type="button" class="pipeline-card user-card" data-engine-phase="swipe" aria-pressed="false">
+                <span>User experience</span>
+                <strong>The final 20 become a swipe deck</strong>
+                <p>The user sees a simple save or skip decision while the ranked batch has already been prepared.</p>
+              </button>
+              <button type="button" class="pipeline-card learn-card" data-engine-phase="learn" aria-pressed="false">
+                <span>Learning loop</span>
+                <strong>Two separate updates follow every swipe</strong>
+                <p>EMA adjusts global preference weights and the recipe's cuisine affinity without allowing one choice to overpower the profile.</p>
+              </button>
+            </nav>
+
+            <div class="phase-visual-layer" aria-live="polite">
+              <section class="phase-visual score-visual" data-phase-visual="score" aria-label="Phase 2 weighted affinity score animation">
+                <p class="visual-kicker">Phase 2 · One candidate</p>
+                <div class="score-demo-card">
+                  <div class="score-recipe-heading">
+                    <img src="assets/meals/garlic-chicken-stir-fry.jpg" alt="">
+                    <div>
+                      <strong>Garlic Chicken Stir-Fry</strong>
+                      <small>Five weighted signals</small>
+                    </div>
+                  </div>
+                  <div class="score-signals">
+                    <div style="--signal-value: 78%"><span>Pantry coverage</span><i></i><b>0.78</b></div>
+                    <div style="--signal-value: 85%"><span>Cuisine affinity</span><i></i><b>0.85</b></div>
+                    <div style="--signal-value: 68%"><span>Nutritional goal</span><i></i><b>0.68</b></div>
+                    <div style="--signal-value: 92%"><span>Freshness</span><i></i><b>0.92</b></div>
+                    <div style="--signal-value: 40%"><span>Novelty</span><i></i><b>0.40</b></div>
+                  </div>
+                  <div class="score-total"><span>Weighted affinity score</span><strong>0.78</strong></div>
+                </div>
+              </section>
+
+              <section class="phase-visual allocation-visual" data-phase-visual="allocation" aria-label="Phase 3 cuisine grouping and slot allocation animation">
+                <p class="visual-kicker">Phase 3 · Final batch</p>
+                <div class="allocation-board">
+                  <div class="allocation-heading">
+                    <div>
+                      <strong>20 recommendation slots</strong>
+                      <small>Grouped by cuisine affinity</small>
+                    </div>
+                    <span>1 to 2 wildcard slots</span>
+                  </div>
+                  <div class="cuisine-buckets" aria-hidden="true">
+                    <div class="cuisine-bucket japanese"><strong>Japanese</strong><span></span><span></span><span></span><span></span><span></span></div>
+                    <div class="cuisine-bucket mediterranean"><strong>Mediterranean</strong><span></span><span></span><span></span><span></span></div>
+                    <div class="cuisine-bucket italian"><strong>Italian</strong><span></span><span></span><span></span><span></span></div>
+                    <div class="cuisine-bucket indian"><strong>Indian</strong><span></span><span></span><span></span></div>
+                    <div class="cuisine-bucket wildcard"><strong>Wildcards</strong><span></span><span></span></div>
+                    <div class="cuisine-bucket overflow"><strong>Redistributed</strong><span></span><span></span></div>
+                  </div>
+                  <div class="allocation-result"><strong>Final 20</strong><span>Backend</span><span>Flutter swipe deck</span></div>
+                </div>
+              </section>
+
+              <section class="phase-visual learning-visual" data-phase-visual="learn" aria-label="Learning loop animation">
+                <p class="visual-kicker">After each swipe</p>
+                <div class="learning-flow">
+                  <article>
+                    <span>Update 1</span>
+                    <strong>Preference weights</strong>
+                    <small>How much each signal matters globally</small>
+                  </article>
+                  <div class="learning-arrow">+</div>
+                  <article>
+                    <span>Update 2</span>
+                    <strong>Cuisine affinity</strong>
+                    <small>How much the recipe's cuisine is liked</small>
+                  </article>
+                  <div class="ema-result">
+                    <span>EMA · α = 0.15</span>
+                    <strong>Profile updated gradually</strong>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div class="swipe-phone">
+              <div class="swipe-topbar">
+                <span>Discover</span>
+                <small>Final 20</small>
+              </div>
+
+              <div class="swipe-stack" aria-hidden="true">
+                <article class="recipe-swipe-card card-one">
+                  <img src="assets/meals/garlic-chicken-stir-fry.jpg" alt="">
+                  <div class="meal-content">
+                    <h3>Garlic Chicken Stir-Fry</h3>
+                  </div>
+                  <div class="swipe-stamp like">Save</div>
+                </article>
+
+                <article class="recipe-swipe-card card-two">
+                  <img src="assets/meals/apple-tart.jpg" alt="">
+                  <div class="meal-content">
+                    <h3>Apple Tart</h3>
+                  </div>
+                  <div class="swipe-stamp skip">Skip</div>
+                </article>
+
+                <article class="recipe-swipe-card card-three">
+                  <img src="assets/meals/japanese-omelette.jpg" alt="">
+                  <div class="meal-content">
+                    <h3>Japanese Omelette</h3>
+                  </div>
+                  <div class="swipe-stamp like">Save</div>
+                </article>
+
+                <article class="recipe-swipe-card card-four">
+                  <img src="assets/meals/chicken-rice-bowl.jpeg" alt="">
+                  <div class="meal-content">
+                    <h3>Chicken Rice Bowl</h3>
+                  </div>
+                  <div class="swipe-stamp skip">Skip</div>
+                </article>
+
+                <article class="recipe-swipe-card card-five">
+                  <img src="assets/meals/grilled-fish.jpg" alt="">
+                  <div class="meal-content">
+                    <h3>Grilled Fish</h3>
+                  </div>
+                  <div class="swipe-stamp like">Save</div>
+                </article>
+              </div>
+
+              <div class="swipe-actions" aria-hidden="true">
+                <span class="reject">×</span>
+                <span class="cook">🍴</span>
+                <span class="save">♥</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="preference-panel learning-reveal heuristic-output">
+          <div>
+            <p class="eyebrow"><span></span> The learning loop</p>
+            <h3>Each swipe updates two different parts of the profile.</h3>
+            <p>Global signal weights and cuisine affinity are updated separately. The exponential moving average keeps personalisation responsive without letting one decision cause a drastic change. The engine remains stateless, while the backend stores the updated profile.</p>
+          </div>
+          <div class="preference-stats" aria-label="Recommendation learning updates">
+            <article>
+              <span>Preference weights</span>
+              <strong>EMA adjusted</strong>
+              <small>Pantry, nutrition, freshness, novelty, and cuisine signals</small>
+            </article>
+            <article>
+              <span>Cuisine affinity</span>
+              <strong>Updated separately</strong>
+              <small>The cuisine attached to each swiped recipe</small>
+            </article>
+            <article>
+              <span>Learning rate</span>
+              <strong>&alpha; = 0.15</strong>
+              <small>Moderate adaptation is the recommended default</small>
+            </article>
+            <article>
+              <span>Hard constraints</span>
+              <strong>Remain active</strong>
+              <small>Learning never overrides allergies or dietary restrictions</small>
+            </article>
+          </div>
+        </div>
+      </section>
+      <!-- recomendation engine end -->
+
+      <!-- vault explanation -->
+      <section class="vault-story section-shell" id="vaults">
+        <div class="section-heading reveal">
+          <p class="eyebrow"><span></span> The vault system</p>
+          <h2>Three vault types. One organised recipe model.</h2>
+          <p>Private, shared, and global vaults serve different purposes, but every recipe follows the same containment rule. A vault contains folders, and folders contain recipes.</p>
+        </div>
+
+        <div class="vault-model reveal" aria-label="Vault containment hierarchy">
+          <div><span>01</span><strong>Vault</strong><small>Private, shared, or global</small></div>
+          <i aria-hidden="true">→</i>
+          <div><span>02</span><strong>Folder</strong><small>Organises recipes by context</small></div>
+          <i aria-hidden="true">→</i>
+          <div><span>03</span><strong>Recipe</strong><small>Always stored through a folder</small></div>
+        </div>
+
+        <div class="vault-explainer reveal" data-vault-scene="private">
+          <nav class="vault-scene-controls" aria-label="Complete vault journey">
+            <button type="button" class="vault-scene-button is-active" data-vault-step="private" aria-pressed="true">
+              <span>01</span><strong>Your private vault</strong><small>Created with your account</small>
+            </button>
+            <button type="button" class="vault-scene-button" data-vault-step="add" aria-pressed="false">
+              <span>02</span><strong>Add your recipe</strong><small>Create it, own it, file it</small>
+            </button>
+            <button type="button" class="vault-scene-button" data-vault-step="shared" aria-pressed="false">
+              <span>03</span><strong>Create a shared vault</strong><small>A distinct collaborative space</small>
+            </button>
+            <button type="button" class="vault-scene-button" data-vault-step="invite" aria-pressed="false">
+              <span>04</span><strong>Invite collaborators</strong><small>Accept and assign a role</small>
+            </button>
+            <button type="button" class="vault-scene-button" data-vault-step="protect" aria-pressed="false">
+              <span>05</span><strong>Protect the original</strong><small>Copy before you edit</small>
+            </button>
+            <button type="button" class="vault-scene-button" data-vault-step="global" aria-pressed="false">
+              <span>06</span><strong>Browse the global vault</strong><small>Discover the shared repository</small>
+            </button>
+            <button type="button" class="vault-scene-button" data-vault-step="copy" aria-pressed="false">
+              <span>07</span><strong>Save a personal copy</strong><small>Your version, your folder</small>
+            </button>
+          </nav>
+
+          <div class="vault-scene-stage" aria-live="polite">
+            <article class="vault-scene-panel is-active" data-vault-scene-panel="private">
+              <div class="vault-scene-copy">
+                <p class="visual-kicker">Scene 1 · Registration</p>
+                <h3>Your private vault begins with you.</h3>
+                <p>Registration creates the user, profile, preferences, and one private vault together. The locked space belongs to that user from the first session.</p>
+              </div>
+              <div class="vault-scene-visual private-visual" aria-hidden="true">
+                <div class="vault-user-node"><b>MA</b><span>New user</span></div>
+                <div class="vault-motion-arrow"><i></i></div>
+                <div class="vault-object private-vault-object">
+                  <div class="vault-object-head"><span>Private vault</span><b>Locked</b></div>
+                  <div class="vault-folder-object">
+                    <strong>Weeknight meals</strong>
+                    <div class="vault-recipe-mini"><img src="assets/meals/garlic-chicken-stir-fry.jpg" alt=""><span>Garlic Chicken</span></div>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="vault-scene-panel" data-vault-scene-panel="add">
+              <div class="vault-scene-copy">
+                <p class="visual-kicker">Scene 2 · Create</p>
+                <h3>Add the recipe, then choose its folder.</h3>
+                <p>Enter the title, ingredients, and steps. The owned recipe card moves into a selected folder inside the private vault.</p>
+              </div>
+              <div class="vault-scene-visual add-visual" aria-hidden="true">
+                <div class="vault-form-card"><span>New recipe</span><strong>Garlic Chicken</strong><i></i><i></i><i></i><b>Owner · You</b></div>
+                <div class="vault-motion-arrow"><i></i></div>
+                <div class="vault-object compact-vault-object">
+                  <div class="vault-object-head"><span>Private vault</span><b>Yours</b></div>
+                  <div class="vault-folder-object target-folder"><strong>Weeknight meals</strong><span>Recipe filed here</span></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="vault-scene-panel" data-vault-scene-panel="shared">
+              <div class="vault-scene-copy">
+                <p class="visual-kicker">Scene 3 · Collaborate</p>
+                <h3>A shared vault has its own identity.</h3>
+                <p>Create a second vault for a household, team, or cooking group. It stays visually and structurally distinct from every member's private vault.</p>
+              </div>
+              <div class="vault-scene-visual twin-vault-visual" aria-hidden="true">
+                <div class="vault-object private-vault-object small-object">
+                  <div class="vault-object-head"><span>Private</span><b>1 person</b></div>
+                  <div class="vault-folder-object"><strong>My recipes</strong><span>Personal space</span></div>
+                </div>
+                <div class="vault-vs">≠</div>
+                <div class="vault-object shared-vault-object small-object">
+                  <div class="vault-object-head"><span>Shared</span><b>Members</b></div>
+                  <div class="vault-folder-object"><strong>Family recipes</strong><span>Collaborative space</span></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="vault-scene-panel" data-vault-scene-panel="invite">
+              <div class="vault-scene-copy">
+                <p class="visual-kicker">Scene 4 · Membership</p>
+                <h3>Invite people into the same shared space.</h3>
+                <p>An invitation travels to another user. Once accepted, the shared vault appears in their vault list with an owner, editor, or viewer role.</p>
+              </div>
+              <div class="vault-scene-visual invite-visual" aria-hidden="true">
+                <div class="invite-user user-a"><b>MA</b><span>User A</span></div>
+                <div class="invite-path"><span>Invite</span><i>✉</i></div>
+                <div class="invite-user user-b"><b>LB</b><span>User B</span></div>
+                <div class="shared-arrival"><strong>Shared vault</strong><span>Editor</span></div>
+              </div>
+            </article>
+
+            <article class="vault-scene-panel" data-vault-scene-panel="protect">
+              <div class="vault-scene-copy">
+                <p class="visual-kicker">Scene 5 · Safe editing</p>
+                <h3>Edit your copy, never someone else's original.</h3>
+                <p>When a recipe is not yours, Mealchemy offers to save a personal copy. Editing opens on your version while the shared or global source stays unchanged.</p>
+              </div>
+              <div class="vault-scene-visual protect-visual" aria-hidden="true">
+                <div class="source-recipe-card"><img src="assets/meals/pasta-carbonara.jpg" alt=""><span>Shared original</span><strong>Carbonara</strong><small>Unchanged</small></div>
+                <div class="copy-prompt"><span>Original protected</span><strong>Save your own copy to edit</strong><b>Save copy</b></div>
+                <div class="private-copy-card"><img src="assets/meals/pasta-carbonara.jpg" alt=""><span>Your version</span><strong>Carbonara</strong><small>Editing enabled</small></div>
+              </div>
+            </article>
+
+            <article class="vault-scene-panel" data-vault-scene-panel="global">
+              <div class="vault-scene-copy">
+                <p class="visual-kicker">Scene 6 · Public repository</p>
+                <h3>The global vault is ready to browse.</h3>
+                <p>Open a pre-seeded repository of community recipes directly. There is no invitation or membership handshake, just browse, inspect, and save.</p>
+              </div>
+              <div class="vault-scene-visual global-visual" aria-hidden="true">
+                <div class="global-orbit"><span>Global vault</span><small>Shared recipe repository</small></div>
+                <div class="global-recipe recipe-a"><img src="assets/meals/grilled-fish.jpg" alt=""><span>Grilled Fish</span></div>
+                <div class="global-recipe recipe-b"><img src="assets/meals/salad-bowl.jpeg" alt=""><span>Salad Bowl</span></div>
+                <div class="global-recipe recipe-c"><img src="assets/meals/apple-tart.jpg" alt=""><span>Apple Tart</span></div>
+                <div class="global-browse-label">Browse · No invitation</div>
+              </div>
+            </article>
+
+            <article class="vault-scene-panel" data-vault-scene-panel="copy">
+              <div class="vault-scene-copy">
+                <p class="visual-kicker">Scene 7 · Personal copy</p>
+                <h3>Save a copy. Keep the source intact.</h3>
+                <p>The recipe is copied, not moved or synchronised. The new personal version is placed inside a folder in the user's private vault.</p>
+              </div>
+              <div class="vault-scene-visual copy-visual" aria-hidden="true">
+                <div class="copy-source"><span>Global vault</span><div class="vault-recipe-mini"><img src="assets/meals/grilled-fish.jpg" alt=""><strong>Grilled Fish</strong></div><small>Original remains</small></div>
+                <div class="clone-route"><i></i><span>Copy</span></div>
+                <div class="copy-destination"><span>Private vault</span><div class="vault-folder-object"><strong>Saved from global</strong><div class="vault-recipe-mini"><img src="assets/meals/grilled-fish.jpg" alt=""><strong>Your copy</strong></div></div></div>
+              </div>
+            </article>
+
+            <div class="vault-stage-footer">
+              <strong>Complete vault experience</strong>
+              <span>Mealchemy Vault Demonstration.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- vault end -->
+
+      <!-- features -->
+      <section class="features section-shell" id="features">
+        <div class="section-heading reveal">
+          <p class="eyebrow"><span></span> Core functionality</p>
+          <h2>Built around the product’s highest-value capabilities.</h2>
+          <p>Each feature connects the user’s pantry, preferences, recipes, and shopping decisions into one clear cooking workflow.</p>
+        </div>
+
+        <div class="feature-grid">
+          <article class="feature-card reveal" data-tilt>
+            <span class="feature-icon">▣</span>
+            <h3>Recipe Vault</h3>
+            <p>Centralised storage for custom recipes, external links, saved suggestions, and shared recipe content.</p>
+          </article>
+          <article class="feature-card reveal" data-tilt>
+            <span class="feature-icon">◌</span>
+            <h3>Pantry-Aware Recommendations</h3>
+            <p>Heuristic matching uses available ingredients, cooking styles, dietary constraints, and nutrition targets.</p>
+          </article>
+          <article class="feature-card reveal" data-tilt>
+            <span class="feature-icon">↔</span>
+            <h3>Guided Discovery</h3>
+            <p>A swipe-based decision interface helps users quickly like, reject, and refine recipe suggestions.</p>
+          </article>
+          <article class="feature-card reveal" data-tilt>
+            <span class="feature-icon">✓</span>
+            <h3>Smart Shopping List</h3>
+            <p>Selected recipes become ingredient gap lists, connecting meal choice directly to grocery planning.</p>
+          </article>
+          <article class="feature-card reveal" data-tilt>
+            <span class="feature-icon">≋</span>
+            <h3>Nutrition Calculator</h3>
+            <p>Calories and macronutrients are calculated from recipe ingredients and cooking methods.</p>
+          </article>
+          <article class="feature-card reveal" data-tilt>
+            <span class="feature-icon">✦</span>
+            <h3>Preference Engine</h3>
+            <p>Profiles account for dietary restrictions, allergies, dislikes, and flavour preferences.</p>
+          </article>
+        </div>
+      </section>
+      <!-- features -->
+
+      <!-- product showcase -->
+      <section class="showcase section-shell" id="showcase">
+        <div class="section-heading reveal">
+          <p class="eyebrow"><span></span> Product screens</p>
+          <h2>A mobile-first experience that explains itself quickly.</h2>
+          <p>Real current-build screens across all core features.</p>
+        </div>
+
+        <div class="showcase-layout">
+          <div class="showcase-controls reveal" role="tablist" aria-label="Choose a Mealchemy screen">
+            <button class="screen-tab active" type="button" role="tab" aria-selected="true" data-screen="dashboard">
+              <span>Dashboard</span>
+              <small>Smart home hub</small>
+            </button>
+            <button class="screen-tab" type="button" role="tab" aria-selected="false" data-screen="swipe">
+              <span>Guided Discovery</span>
+              <small>Swipe decisions</small>
+            </button>
+            <button class="screen-tab" type="button" role="tab" aria-selected="false" data-screen="pantry">
+              <span>Pantry</span>
+              <small>Ingredient inventory</small>
+            </button>
+            <button class="screen-tab" type="button" role="tab" aria-selected="false" data-screen="recipe">
+              <span>Recipe</span>
+              <small>Step-by-step cooking</small>
+            </button>
+            <button class="screen-tab" type="button" role="tab" aria-selected="false" data-screen="shopping">
+              <span>Shopping Lists</span>
+              <small>Recipe gaps to groceries</small>
+            </button>
+          </div>
+
+          <div class="showcase-phone reveal">
+            <article class="phone uses-live-frame">
+              <img id="active-screen" src="assets/screens/app-dashboard.png" alt="Real Mealchemy dashboard screen">
+            </article>
+            <div class="screen-caption" aria-live="polite">
+              <span id="screen-kicker">Dashboard · Live app</span>
+              <strong id="screen-title">A calm command centre for cooking decisions.</strong>
+              <p id="screen-copy">The dashboard surfaces pantry status, smart suggestions, recommended recipes, and trending ideas without overwhelming the user.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mockup-gallery reveal" aria-label="Additional Mealchemy product screens">
+          <article class="mockup-card tall">
+            <img src="assets/screens/app-discover.png" alt="Mealchemy Discover screen with recipe browsing and cuisine categories">
+            <div>
+              <span>Discover · Live app</span>
+              <strong>Browse meals by context, category, and appetite.</strong>
+            </div>
+          </article>
+
+          <article class="mockup-card">
+            <img src="assets/screens/Recipe-Intstructions-page-real-app.png" alt=" Mealchemy recipe instructions screen showing ingredients and cooking steps">
+            <div>
+              <span>Recipe · Live app</span>
+              <strong>Step-by-step cooking with full ingredient detail.</strong>
+            </div>
+          </article>
+
+          <article class="mockup-card">
+            <img src="assets/screens/Shopping-List-Real-app.png" alt="Mealchemy shopping list screen showing organised grocery items">
+            <div>
+              <span>Shopping List · Live app</span>
+              <strong>Turn selected meals into organised grocery actions.</strong>
+            </div>
+          </article>
+
+          <article class="mockup-card">
+            <img src="assets/screens/app-profile.png" alt="Mealchemy profile screen for dietary directives, allergies, and flavour choices">
+            <div>
+              <span>Profile · Live app</span>
+              <strong>Personalise recommendations around diet and taste.</strong>
+            </div>
+          </article>
+        </div>
+      </section>
+      <!-- product showcase -->
+
+      <!-- andorid download -->
+      <section class="download section-shell" id="download">
+        <div class="download-panel reveal">
+          <div>
+            <p class="eyebrow"><span></span> Android app</p>
+            <h2>Dive into Mealchemy.</h2>
+          </div>
+          <a class="android-badge" href="#" aria-disabled="true" data-placeholder-link>
+            <span>Android</span>
+            <strong>download here</strong>
+            
+          </a>
+        </div>
+      </section>
+      <!-- android download link end -->
+
+      <!-- requirementents -->
+      <section class="requirements section-shell" id="requirements">
+        <div class="section-heading reveal">
+          <p class="eyebrow"><span></span> Assessment alignment</p>
+          <h2>Clear mapping between the system goals and the product experience.</h2>
+          <p>Mealchemy’s core functionality is shown in a way that makes the system’s purpose, value, and scope easy to understand at a glance.</p>
+        </div>
+
+        <div class="requirements-table reveal" role="table" aria-label="Client requirement alignment">
+          <div class="req-row head" role="row">
+            <span role="columnheader">Requirement</span>
+            <span role="columnheader">How Mealchemy addresses it</span>
+          </div>
+          <div class="req-row" role="row">
+            <span role="cell">Recipe Vault</span>
+            <span role="cell">Stores custom, external, suggested, and shared recipes in one organised space.</span>
+          </div>
+          <div class="req-row" role="row">
+            <span role="cell">Heuristic Generator</span>
+            <span role="cell">Combines pantry inventory, preferences, constraints, and nutrition goals to recommend meals.</span>
+          </div>
+          <div class="req-row" role="row">
+            <span role="cell">Guided Discovery</span>
+            <span role="cell">Uses a swipe-style flow to reduce choice overload and learn user taste quickly.</span>
+          </div>
+          <div class="req-row" role="row">
+            <span role="cell">Shopping List</span>
+            <span role="cell">Identifies missing ingredients after a recipe is selected.</span>
+          </div>
+          <div class="req-row" role="row">
+            <span role="cell">Nutrition Calculator</span>
+            <span role="cell">Shows calorie and macro information from ingredients and cooking methods.</span>
+          </div>
+          <div class="req-row" role="row">
+            <span role="cell">Accessibility</span>
+            <span role="cell">Prioritises readable text, high contrast, labels, focus states, and mobile touch targets.</span>
+          </div>
+        </div>
+      </section>
+      <!-- requirements -->
+
+      <!-- closing section -->
+      <section class="wow section-shell">
+        <div class="wow-card reveal">
+          <p class="eyebrow"><span></span> Future wow factors</p>
+          <h2>Stretch capabilities that extend the ecosystem.</h2>
+          <div class="wow-grid">
+            <article>
+              <span>Camera</span>
+              <h3>Pantry scanning</h3>
+              <p>Use a phone camera to populate inventory from ingredients.</p>
+            </article>
+            <article>
+              <span>Voice</span>
+              <h3>Hands-free cooking</h3>
+              <p>Read steps aloud and respond to “next” or “repeat”.</p>
+            </article>
+            <article>
+              <span>Cost</span>
+              <h3>Per-serving estimates</h3>
+              <p>Estimate meal cost using ingredient pricing data.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="final-cta section-shell">
+        <div class="final-panel reveal">
+          <img src="assets/logos/logo-full.png" alt="Mealchemy logo">
+          <h2>A smarter way to decide what’s for dinner.</h2>
+          <p>Mealchemy turns fragmented recipe storage and grocery uncertainty into a guided, intelligent cooking workflow.</p>
+          <div class="final-actions">
+            <a class="button button-primary magnetic" href="#top">Return to top</a>
+            <a class="button button-android magnetic" href="#download">Android download placeholder</a>
+          </div>
+        </div>
+      </section>
+      <!-- closing -->
+    </main>
+
+    <!-- footer -->
+    <footer class="site-footer">
+      <span>Mealchemy landing page</span>
+      <span>Recipe discovery, pantry intelligence, and smarter cooking decisions.</span>
+    </footer>
+    <!-- footer -->
+
+    <script src="scripts/shared.js"></script>
+    <script src="scripts/base.js"></script>
+    <script src="scripts/recommendation-story.js"></script>
+    <script src="scripts/vault-story.js"></script>
+    <script src="scripts/showcase.js"></script>
+  </body>
+</html>
