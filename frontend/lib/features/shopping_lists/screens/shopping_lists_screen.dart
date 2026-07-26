@@ -32,6 +32,11 @@ class ShoppingListsScreen extends ConsumerWidget {
                   name: name,
                 );
           },
+          onDeleteList: (listId) async {
+            await ref
+                .read(shoppingListsProvider.notifier)
+                .deleteShoppingList(listId);
+          },
         ),
         loading: () => const Center(
           child: CircularProgressIndicator(
@@ -75,11 +80,13 @@ class _ShoppingListsContent extends StatelessWidget {
     required this.state,
     required this.onSearchChanged,
     required this.onCreateList,
+    required this.onDeleteList,
   });
 
   final ShoppingListsState state;
   final ValueChanged<String> onSearchChanged;
   final Future<void> Function(String name) onCreateList;
+  final Future<void> Function(String listId) onDeleteList;
 
   @override
   Widget build(BuildContext context) {
@@ -89,6 +96,7 @@ class _ShoppingListsContent extends StatelessWidget {
         : _buildSections(
             context: context,
             groupedLists: groupedLists,
+            onDeleteList: onDeleteList,
           );
 
     return SafeArea(
@@ -119,6 +127,7 @@ class _ShoppingListsContent extends StatelessWidget {
   List<Widget> _buildSections({
     required BuildContext context,
     required Map<String, List<ShoppingList>> groupedLists,
+    required Future<void> Function(String listId) onDeleteList,
   }) {
     final widgets = <Widget>[];
 
@@ -146,6 +155,11 @@ class _ShoppingListsContent extends StatelessWidget {
                 context.go('/shopping-lists/${list.id}');
               }
             },
+            onMoreTap: () => _showListActionsMenu(
+              context: context,
+              list: list,
+              onDeleteList: onDeleteList,
+            ),
           ),
         );
       }
@@ -428,6 +442,24 @@ Future<void> _showCreateListDialog(
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text('$cleanedName created.'),
+      backgroundColor: AppColors.primary,
+      behavior: SnackBarBehavior.floating,
+    ),
+  );
+}
+
+Future<void> _showListActionsMenu({
+  required BuildContext context,
+  required ShoppingList list,
+  required Future<void> Function(String listId) onDeleteList,
+}) async {
+  await onDeleteList(list.id);
+
+  if (!context.mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('${list.title} deleted.'),
       backgroundColor: AppColors.primary,
       behavior: SnackBarBehavior.floating,
     ),

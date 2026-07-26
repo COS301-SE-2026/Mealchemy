@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/features/shopping_lists/screens/shopping_list_detail_screen.dart';
 import 'package:mealchemy/features/shopping_lists/screens/shopping_lists_screen.dart';
+import 'package:mealchemy/features/shopping_lists/widgets/shopping_list_row.dart';
 
 void main() {
   setUpAll(() {
@@ -151,5 +152,39 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Weekend Braai'), findsOneWidget);
+  });
+
+  testWidgets('ShoppingListsScreen deletes list from row menu', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: ShoppingListsScreen(),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('General List'), findsOneWidget);
+
+    final generalListRow = find.ancestor(
+      of: find.text('General List'),
+      matching: find.byType(ShoppingListRow),
+    );
+
+    await tester.tap(
+      find.descendant(
+        of: generalListRow,
+        matching: find.byIcon(Icons.more_vert),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Delete list'));
+    await tester.pumpAndSettle();
+
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('General List'), findsNothing);
   });
 }

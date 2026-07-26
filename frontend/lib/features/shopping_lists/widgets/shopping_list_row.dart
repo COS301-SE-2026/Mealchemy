@@ -33,12 +33,31 @@ class ShoppingListRow extends StatelessWidget {
               Expanded(
                 child: _ListText(list: list),
               ),
-              IconButton(
-                onPressed: onMoreTap,
+              PopupMenuButton<String>(
                 icon: Icon(
                   Icons.more_vert,
                   color: AppColors.inputBorder.withValues(alpha: 0.95),
                 ),
+                color: AppColors.bgLight,
+                onSelected: (value) async {
+                  if (value == 'delete-list') {
+                    onMoreTap?.call();
+                  }
+                },
+                itemBuilder: (context) {
+                  return [
+                    PopupMenuItem(
+                      value: 'delete-list',
+                      child: Text(
+                        'Delete list',
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.error,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ];
+                },
               ),
             ],
           ),
