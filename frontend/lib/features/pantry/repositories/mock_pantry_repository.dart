@@ -16,9 +16,7 @@ class MockPantryRepository implements PantryRepository {
   }
 
   @override
-  Future<void> addPantryIngredient(PantryIngredient ingredient) async {
-    await Future.delayed(const Duration(milliseconds: 800));
-  }
+
 
   @override
   Future<List<PantryFilter>> getPantryFilters() async {

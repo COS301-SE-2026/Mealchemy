@@ -147,7 +147,7 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
                   label: 'Ingredient Name',
                   hint: 'Search catalogue, e.g. Chicken Breast',
                   prefixIcon: Icons.search,
-                  onChanged: _searchIngredients,
+                  onChanged: (value) {},
                 ),
                 if (_showValidation && !hasName)
                   const _ValidationText('Ingredient name is required.'),
@@ -167,7 +167,7 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
                   _IngredientSearchResults(
                     ingredients: _ingredientOptions,
                     selectedIngredient: _selectedIngredient,
-                    onSelected: _selectIngredient,
+                    onSelected: (item) {},
                   ),
                 ],
                 const SizedBox(height: 14),
@@ -248,11 +248,9 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
 
     try {
       await ref.read(pantryStateProvider.notifier).addIngredient(
-            name: _nameController.text,
+            ingId: 0,
             quantity: '$_quantity',
             unit: _selectedUnit!,
-            category: _selectedCategory ?? 'produce',
-            isOutOfStock: false,
           );
       if (!mounted) return;
       setState(() => _saveStatus = AppButtonStatus.success);
