@@ -18,11 +18,13 @@ import static org.mockito.Mockito.*;
 
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /* Importing classes */
 import com.mealchemy.vault.dto.VaultRequest;
 import com.mealchemy.vault.dto.VaultResponse;
 import com.mealchemy.vault.model.Vault;
+import com.mealchemy.vault.model.VaultMember;
 import com.mealchemy.auth.model.User;
 import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.vault.repository.VaultMemberRepository;
@@ -45,6 +47,8 @@ public class VaultServiceTest
     private VaultService vaultService;
 
     private Vault vault;
+    private Vault memberVault;
+    private VaultMember vaultMember;
     private VaultRequest request;
 
     @BeforeEach
@@ -54,6 +58,17 @@ public class VaultServiceTest
         vault.setOwnerId(1);
         vault.setVaultType(VaultType.SHARED);
         vault.setName("Test Vault");
+        ReflectionTestUtils.setField(vault, "vaultId", 1);
+
+
+        memberVault = new Vault();
+        memberVault.setOwnerId(2);
+        memberVault.setVaultType(VaultType.SHARED);
+        memberVault.setName("Shared Vault");
+        ReflectionTestUtils.setField(memberVault, "vaultId", 2);
+
+        vaultMember = new VaultMember();
+        vaultMember.setVault(memberVault)
 
         request = new VaultRequest(VaultType.SHARED, "Test Vault");
     }
@@ -120,6 +135,66 @@ public class VaultServiceTest
         List<VaultResponse> result = vaultService.getVaultsByOwnerId(99);
 
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getAccessibleVaults_returnsOwnedAndMemberVaults_whenBothPresent()
+    {
+        when(vaultRepository.findByOwnerId(1)).thenReturn(List.of(vault));
+        when(vaultMemberRepository.findByUser_UserId(1)).thenReturn(List.of(vaultMember));
+
+        List<VaultResponse> result = vaultService.getAccessibleVaults(1);
+
+        assertEquals(2, result.size());
+    }
+
+    @Test
+    void getAccessibleVaults_returnsOwnedOnly_whenNoMemberships()
+    {
+        when(vaultRepository.findByOwnerId(1)).thenReturn(List.of(vault));
+        when(vaultMemberRepository.findByUser_UserId(1)).thenReturn(List.of());
+
+        List<VaultResponse> result = vaultService.getAccessibleVaults(1);
+
+        assertEquals(1, result.size());
+        assertEquals("Test Vault", result.get(0).name());
+    }
+
+    @Test
+    void getAccessibleVaults_returnsMemberOnly_whenNoOwnedVaults()
+    {
+        when(vaultRepository.findByOwnerId(1)).thenReturn(List.of());
+        when(vaultMemberRepository.findByUser_UserId(1)).thenReturn(List.of(vaultMember));
+
+        List<VaultResponse> result = vaultService.getAccessibleVaults(1);
+
+        assertEquals(1, result.size());
+        assertEquals("Shared Vault", result.get(0).name());
+    }
+
+    @Test
+    void getAccessibleVaults_returnsEmptyList_whenNeitherPresent()
+    {
+        when(vaultRepository.findByOwnerId(1)).thenReturn(List.of());
+        when(vaultMemberRepository.findByUser_UserId(1)).thenReturn(List.of());
+
+        List<VaultResponse> result = vaultService.getAccessibleVaults(1);
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getAccessibleVaults_dedupesVault_whenOwnedAndMemberOfSameVault()
+    {
+        VaultMember duplicateMembership = new VaultMember();
+        duplicateMembership.setVault(vault);
+
+        when(vaultRepository.findByOwnerId(1)).thenReturn(List.of(vault));
+        when(vaultMemberRepository.findByUser_UserId(1)).thenReturn(List.of(duplicateMembership));
+
+        List<VaultResponse> result = vaultService.getAccessibleVaults(1);
+
+        assertEquals(1, result.size());
     }
 
     @Test
