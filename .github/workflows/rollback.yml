@@ -1,0 +1,232 @@
+name: Rollback
+
+
+#------notes----------------------------------------------------------------------------------------------------
+# our traffic shift mechanism
+# handles three cases, backend only, engine only, both
+# this is manually triggered when smething goes wrong
+# doesnt rebuild or touch the databse. 
+# what it does is point live traffic at a cloud run revision that already exists and already known to work
+# doesn't figure out which revision to rollback to.
+# for a destructive migration, roll forward with a new fix instead
+
+# NB!!!!! The container can be rolled back instantly but the schema can not. Therefore can only rollback if revision rolling back to can still run against current scheme
+
+# Potential issues include 
+#   a bad deploy having a destructive migration (dropped coloumn, a new constratint) if old code expecets a coloumn that doesn't exist anymore rolling back will still break the system 
+
+#-----how to find revision names---------------------------
+# GCP Console, Cloud Run, service, Revisions tab
+
+#-----steps on how workflow works---------------------------
+
+# - manually triger workflow
+# - enter info: service rollling back, revsion name, accept acknoledgement of schema compatibility
+# - github environment gate fires. Required reviewer
+# - Authenticate to GCP. via workload identity federation. same method as cd.yml
+# - set up gcloud CLI on the runner
+# - resolve the environment suffix
+# - validate inputs. confirms all details needed supplied otherwise fails
+# -  roll back backend if service was backend or both
+# - roll back engine if service was engine or both. both is sequential possible for backend to succeed and engine to fail
+# - confirmation of active revsions. queries cloud run directly and prints which revsions now actually receiving traffic. Confirms routing
+# - post rollback health check. Checks is backend is healthy via http request to /actuator/health on public url. 
+# - health check on engine asks Cloud Run's if revsion is ready using cloud run's built in container health/readiness checks. Can't call engine directly as not public accessible via a url
+# - if either comes back as unhealthy, job fails and rollback is unsucessfull
+# - note, if backend only rolledback. engine healthcheck doesn't run and only backend health check is needed for successful rollback and vise versa.
+
+
+#------------------------------------------------------------------------------------------------------------
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to roll back'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      #drop down option for environment and service
+      service:
+        description: 'Service to roll back (both rolls back backend then engine atomically)'
+        required: true
+        type: choice
+        options:
+          - backend
+          - engine
+          - both
+        #manually type Cloud Run revision name
+
+        #added note on schema to double check before rollback
+      schema_compatible_confirmed:
+        description: 'I have confirmed the revision I am rolling back to is compatible with the current database schema'
+        required: true
+        type: boolean
+      revision:
+        description: 'Backend revision name (required for backend or both)'
+        required: false
+        type: string
+      engine_revision:
+        description: 'Engine revision name (required for engine or both)'
+        required: false
+        type: string
+
+env:
+  GCP_PROJECT_ID: mealchemy
+  GCP_PROJECT_NUMBER: "309582551982"
+  GCP_REGION: europe-west3
+  WIF_POOL_ID: github-pool
+  WIF_PROVIDER_ID: github-provider
+  CD_SA_EMAIL: cd-deployer@mealchemy.iam.gserviceaccount.com
+
+jobs:
+  rollback:
+    name: Rollback ${{ inputs.service }} on ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+
+    environment: ${{ inputs.environment }}
+    #this links job to github environment based on chosen input. production has required reviewer. rolling back also requires same reviewer and approval.
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: >-
+            projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.WIF_POOL_ID }}/providers/${{ env.WIF_PROVIDER_ID }}
+          service_account: ${{ env.CD_SA_EMAIL }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+
+      - name: Resolve environment suffix
+        id: env
+        run: |
+          echo "suffix=${{ inputs.environment == 'production' && 'prod' || 'staging' }}" >> "$GITHUB_OUTPUT"
+
+      # validation check
+      # protects against script injection since env vars are not evaluated as shell
+      - name: Validate inputs
+        env:
+          SCHEMA_CONFIRMED: ${{ inputs.schema_compatible_confirmed }}
+          SERVICE: ${{ inputs.service }}
+          REVISION: ${{ inputs.revision }}
+          ENGINE_REVISION: ${{ inputs.engine_revision }}
+        run: |
+          if [[ "${SCHEMA_CONFIRMED}" != "true" ]]; then
+            echo "::error::You must confirm schema compatibility before rolling back. Check the box and re-run."
+            exit 1
+          fi
+          if [[ "${SERVICE}" != "engine" && -z "${REVISION}" ]]; then
+            echo "::error::revision is required when service is backend or both"
+            exit 1
+          fi
+          if [[ "${SERVICE}" != "backend" && -z "${ENGINE_REVISION}" ]]; then
+            echo "::error::engine_revision is required when service is engine or both"
+            exit 1
+          fi
+
+      - name: Roll back backend
+        if: inputs.service == 'backend' || inputs.service == 'both'
+        env:
+          REVISION: ${{ inputs.revision }}
+          SUFFIX: ${{ steps.env.outputs.suffix }}
+        run: |
+          gcloud run services update-traffic "mealchemy-backend-${SUFFIX}" \
+            --to-revisions="${REVISION}=100" \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}"
+
+      - name: Roll back engine
+        if: inputs.service == 'engine' || inputs.service == 'both'
+        env:
+          ENGINE_REVISION: ${{ inputs.engine_revision }}
+          SUFFIX: ${{ steps.env.outputs.suffix }}
+        run: |
+          gcloud run services update-traffic "mealchemy-engine-${SUFFIX}" \
+            --to-revisions="${ENGINE_REVISION}=100" \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}"
+
+      - name: Confirm active revisions
+        env:
+          SERVICE: ${{ inputs.service }}
+          SUFFIX: ${{ steps.env.outputs.suffix }}
+        run: |
+          if [[ "${SERVICE}" != "engine" ]]; then
+            echo "=== backend ==="
+            gcloud run services describe "mealchemy-backend-${SUFFIX}" \
+              --region "${{ env.GCP_REGION }}" \
+              --project "${{ env.GCP_PROJECT_ID }}" \
+              --format="value(status.traffic[0].revisionName,status.traffic[0].percent)"
+          fi
+          if [[ "${SERVICE}" != "backend" ]]; then
+            echo "=== engine ==="
+            gcloud run services describe "mealchemy-engine-${SUFFIX}" \
+              --region "${{ env.GCP_REGION }}" \
+              --project "${{ env.GCP_PROJECT_ID }}" \
+              --format="value(status.traffic[0].revisionName,status.traffic[0].percent)"
+          fi
+        #Tells in action logs if rollback was successful with revsion info. Doesn't say if rollback version works tho
+
+
+
+      #tells us if revision is actually serving incase rollback version doesn't actually work
+      #backend gets http request for health check
+      #has 3x retry incase of cold start
+      #engine is not publically acessible therefore check gcp ready condtion via gcloud. if the revision was unhealthy, containers would have failed cloud run's own health checks
+      - name: Post-rollback health check
+        env:
+          SERVICE: ${{ inputs.service }}
+          SUFFIX: ${{ steps.env.outputs.suffix }}
+          ENGINE_REVISION: ${{ inputs.engine_revision }}
+        run: |
+          FAILED=false
+
+          if [[ "${SERVICE}" != "engine" ]]; then
+            echo "--- backend HTTP health check ---"
+            BACKEND_URL=$(gcloud run services describe "mealchemy-backend-${SUFFIX}" \
+              --region "${{ env.GCP_REGION }}" \
+              --project "${{ env.GCP_PROJECT_ID }}" \
+              --format="value(status.url)")
+
+            for i in 1 2 3; do
+              HTTP_STATUS=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 15 \
+                "${BACKEND_URL}/actuator/health" 2>/dev/null || echo "000")
+              echo "Attempt ${i}: HTTP ${HTTP_STATUS}"
+              if [[ "${HTTP_STATUS}" == "200" ]]; then
+                echo "Backend health check passed"
+                break
+
+              fi
+              if [[ "${i}" == "3" ]]; then
+                echo "::error::Backend returned HTTP ${HTTP_STATUS} after 3 attempts, routing shifted but revision may not be healthy"
+                FAILED=true
+              else
+                sleep 10
+              fi
+            done
+          fi
+
+          if [[ "${SERVICE}" != "backend" ]]; then
+            echo "--- engine GCP revision readiness check ---"
+            READY=$(gcloud run revisions describe "${ENGINE_REVISION}" \
+              --region "${{ env.GCP_REGION }}" \
+              --project "${{ env.GCP_PROJECT_ID }}" \
+              --format="json" \
+              | jq -r '.status.conditions[] | select(.type=="Ready") | .status')
+            echo "Engine revision Ready=${READY}"
+
+            if [[ "${READY}" != "True" ]]; then
+              echo "::error::Engine revision is not Ready, routing shifted but revision may not be healthy"
+              FAILED=true
+            fi
+          fi
+
+          [[ "${FAILED}" == "true" ]] && exit 1 || echo "All health checks passed."
+      #checks backend and engine are healthy on revised version

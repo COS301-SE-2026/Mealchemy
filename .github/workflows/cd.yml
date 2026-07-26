@@ -1,0 +1,623 @@
+name: CD
+
+
+#------------------------------------notes---------------------------------------------------------------
+# this is build and deploy. 
+# ci has to pass first for this to run. Runs on merge (pr accpeted)
+# push to deploymnet = builds and deploys to staging
+# push tomain =builds and deploys to production
+# - occurs on merge into main or deployment therefore ci.yml should pass first
+
+#----------------------------------------jobs------------------------------------------------------------------------
+
+# 1 migrate 
+  # Runs Flyway against the real target database before any new image is deployed.
+  # Uses the non-pooled Neon connection so advisory locks work for the full migration.
+  # The deploy job only starts if this succeeds a migration failure leaves the current backend container serving traffic untouched.
+  #steps
+  # - checkout code
+  # - set environment name. prod or staging. stored as step output for later
+  # - authenticate to GCP - WIF mints short lived gcp token from github's signed OIDC token.
+  # - setup gcloud cli. this installs gcloud on runner
+  # - run flyway migrations. fetches nonpooled db url, user, password from secret manager. masks each immedidatly, runs flyaway in disposable docker container against database sqk files.concurrency: 
+  #- environment gate: staging or production links job to github environment. production has a required reviewer rule. push to main will pause here until reviewer approves.
+
+# 2 build-backend
+  # build, size-check and push backend docker image.concurrency: 
+  # depends on migrate and check-registry storage job
+  # steps:
+    #same as above upto CLI
+    # Configure docker for artifact registry. uses Wif credentials obtained
+    #build backend docker image. tags with github sha
+    #check backend image size. warns at 500MG, fails at 700MG. runs before push.
+    #push backend image. pushes both tags
+
+# 3 build-engine
+  #same pattern with different dockerfile
+
+# 4 deploy-backend
+  #deploy backend to cloud run. Does not shift traffic yet
+  #depends on build-backend job and outputs url which deploy-engine uses.
+
+# 5 deploy-engine
+  #deploy engine to cloud run. does not shift traffic yet
+  #depends on build-engine and deploy-backend. if deploy-backend fails this is skipped. Ensures new engine doesn't run on old deployed backend.concurrency: 
+    # - grants runtime_sa_email the run.invoker role on the engine service, this lets the backend call the engine
+
+# 6 cutover
+  # shifts traffic for both services, only runs if both deploy succeeded
+  #depends on deploy-backend, deploy- engine
+  # - shifts traffic for both backend and engine to new deployed versions
+  # - prints deployed service urls
+
+# 7 deploy-status
+  # aggregate backend,engine,cutover results into one pass/fail
+  #depends on deploy backend, deploy engine and cutover jobs. If all three succeed this succeeds.
+
+# 8 check-registry-storage
+  # reports cumulative Artifact Registry storage usage against free tier quota.
+  # runs in parallel. Both build jobs depend on it.
+  # - queries actual total repo size via gcloud artifacts repositories describe 
+  # - warns at 80 percent of 512MB and fails at 95MB.
+  #this means storage has run out on free tier and backup storage plan will have to be implemented.
+
+#added 25/July
+# Only redeploy backend/engine when files that actually affect them change.
+# Changes to frontend, wiki, landing page docs, other workflow files, or the CI workflow won't triger a redeploy.
+#landing page now own job so that can manually trigger workflows without redeploying backend or engine
+
+
+
+#------------------------------------------------------------------------------------------------------------
+
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - deployment
+      - main
+    
+    paths:
+      - 'backend/**'
+      - 'engine/**'
+      - 'database/**'
+      - 'infrastructure/Dockerfile.backend'
+      - 'infrastructure/Dockerfile.engine'
+      - '.github/workflows/cd.yml'
+
+#identifiers
+env:
+  GCP_PROJECT_ID: mealchemy
+  GCP_PROJECT_NUMBER: "309582551982"
+  GCP_REGION: europe-west3
+  AR_REPOSITORY: mealchemy
+  WIF_POOL_ID: github-pool
+  WIF_PROVIDER_ID: github-provider
+  CD_SA_EMAIL: cd-deployer@mealchemy.iam.gserviceaccount.com
+  RUNTIME_SA_EMAIL: mealchemy-backend-runtime@mealchemy.iam.gserviceaccount.com
+  ENGINE_RUNTIME_SA_EMAIL: mealchemy-engine-runtime@mealchemy.iam.gserviceaccount.com
+
+
+
+jobs:
+  #------------------------------ MIGRATE ------------------------------
+
+  migrate:
+    name: Migrate DB (${{ github.ref_name == 'main' && 'production' || 'staging' }})
+    runs-on: ubuntu-latest
+    #added environment gate here instead of deploy job
+    #deploy job already depends on migration
+    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+
+    permissions:
+      contents: read
+      id-token: write
+      #write for id token lets job mint OIDC token to WIF
+    steps:
+      - name: Checkout code
+      #sha tag v4.1.1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+
+        #names environment based on branch, later steps use to pick secrets/services depending
+      - name: Set environment name
+        id: env
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "name=prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=staging" >> "$GITHUB_OUTPUT"
+          fi
+
+        #where WIF used. passed pool path to cd_sa_email
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: >-
+            projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.WIF_POOL_ID }}/providers/${{ env.WIF_PROVIDER_ID }}
+          service_account: ${{ env.CD_SA_EMAIL }}
+
+            #installs gcloud command line tool on runner
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+
+
+      #fetches non-pooled url secret into shell varible passed directly to docker
+      #ensures not in github output or actions log
+      #::add-mask:: redacts value from logs so password doesnt show.
+      #applied for db user, db password.
+      - name: Run Flyway migrations
+        env:
+          ENV: ${{ steps.env.outputs.name }}
+        run: |
+          MIGRATE_URL=$(gcloud secrets versions access latest --secret="mealchemy-migrate-url-${ENV}")
+          echo "::add-mask::${MIGRATE_URL}"
+
+          DB_USER=$(gcloud secrets versions access latest --secret="mealchemy-db-username-${ENV}")
+          echo "::add-mask::${DB_USER}"
+
+          DB_PASSWORD=$(gcloud secrets versions access latest --secret="mealchemy-db-password-${ENV}")
+          echo "::add-mask::${DB_PASSWORD}"
+
+          docker run --rm \
+            -v "$(pwd)/database:/flyway/sql" \
+            -e FLYWAY_URL="${MIGRATE_URL}" \
+            -e FLYWAY_USER="${DB_USER}" \
+            -e FLYWAY_PASSWORD="${DB_PASSWORD}" \
+            flyway/flyway:10 \
+            -locations="filesystem:/flyway/sql" \
+            migrate
+
+  # ------------------------------ BUILD BACKEND -------------------------------------------------------
+  # blocked by migrate and checks artifact storage 
+
+  build-backend:
+    name: Build backend (${{ github.ref_name == 'main' && 'production' || 'staging' }})
+    runs-on: ubuntu-latest
+    needs: [migrate, check-registry-storage]
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+      #sha tag v4.1.1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: >-
+            projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.WIF_POOL_ID }}/providers/${{ env.WIF_PROVIDER_ID }}
+          service_account: ${{ env.CD_SA_EMAIL }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+
+      #Configure Docker to push to Artifact Registry
+      #docker push doesnt need another login step because local Docker CLI on this runner will authenticate against Artifact Registry using WIF credentials just obtained.
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "${{ env.GCP_REGION }}-docker.pkg.dev" --quiet
+
+      # --cache-from tries to reuse layers from previously pushed latest images as starting poijnt to speed up build. only changed layers get rebuilt
+      #--pull always fetches latest base image, instead of stale local cashe
+      - name: Build backend Docker image
+        env:
+          BACKEND_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/backend
+        run: |
+          docker build --pull \
+            --cache-from "${{ env.BACKEND_IMAGE }}:latest" \
+            -f infrastructure/Dockerfile.backend \
+            -t "${{ env.BACKEND_IMAGE }}:${{ github.sha }}" \
+            .
+
+      # Image-size gate for Artefact Registry
+      # over 700mb failure. 500-700 visible warning but job continues
+      #free tier only give 0.5mb, aim is to catch bloat/image size being too big to avoid incurring fees
+
+      - name: Check backend image size
+        env:
+          BACKEND_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/backend
+        run: |
+          SIZE=$(docker image inspect "${BACKEND_IMAGE}:${{ github.sha }}" --format '{{.Size}}')
+          SIZE_MB=$((SIZE / 1024 / 1024))
+
+          echo "Backend image size: ${SIZE_MB} MB (uncompressed)"
+          if [ "$SIZE_MB" -gt "700" ]; then
+
+            echo "::error::Backend image (${SIZE_MB} MB) exceeds 700 MB limit, push blocked."
+            exit 1
+
+          elif [ "$SIZE_MB" -gt "500" ]; then
+            echo "::warning::Backend image (${SIZE_MB} MB) exceeds 500 MB warn threshold."
+          fi
+        #push to send built image to artifact registry
+      - name: Push backend image
+        env:
+          BACKEND_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/backend
+        run: |
+          docker push "${{ env.BACKEND_IMAGE }}:${{ github.sha }}"
+
+  # ------------------------------ BUILD ENGINE ---------------------------------------------------------
+  # Parallel with build-backend
+
+  build-engine:
+    name: Build engine (${{ github.ref_name == 'main' && 'production' || 'staging' }})
+    runs-on: ubuntu-latest
+    needs: [migrate, check-registry-storage]
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: >-
+            projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.WIF_POOL_ID }}/providers/${{ env.WIF_PROVIDER_ID }}
+          service_account: ${{ env.CD_SA_EMAIL }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "${{ env.GCP_REGION }}-docker.pkg.dev" --quiet
+
+      - name: Build engine Docker image
+        env:
+          ENGINE_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/engine
+        run: |
+          docker build --pull \
+            --cache-from "${{ env.ENGINE_IMAGE }}:latest" \
+            -f infrastructure/Dockerfile.engine \
+            -t "${{ env.ENGINE_IMAGE }}:${{ github.sha }}" \
+            .
+
+      # Warn at 400 MB, fail at 600 MB
+      - name: Check engine image size
+        env:
+          ENGINE_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/engine
+        run: |
+          SIZE=$(docker image inspect "${ENGINE_IMAGE}:${{ github.sha }}" --format '{{.Size}}')
+          SIZE_MB=$((SIZE / 1024 / 1024))
+          echo "Engine image size: ${SIZE_MB} MB (uncompressed)"
+          if [ "$SIZE_MB" -gt "600" ]; then
+            echo "::error::Engine image (${SIZE_MB} MB) exceeds 600 MB limit, push blocked."
+            exit 1
+          elif [ "$SIZE_MB" -gt "400" ]; then
+            echo "::warning::Engine image (${SIZE_MB} MB) exceeds 400 MB warn threshold."
+          fi
+
+      - name: Push engine image
+        env:
+          ENGINE_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/engine
+        run: |
+          docker push "${{ env.ENGINE_IMAGE }}:${{ github.sha }}"
+
+  # ------------------------------ DEPLOY BACKEND -------------------------------------------------------
+  # Outputs the live backend URL so deploy-engine can pass it as BACKEND_URL
+
+  deploy-backend:
+    name: Deploy backend (${{ github.ref_name == 'main' && 'production' || 'staging' }})
+    runs-on: ubuntu-latest
+    needs: [build-backend]
+
+    outputs:
+      url: ${{ steps.get_url.outputs.url }}
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Set environment name
+        id: env
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "name=prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=staging" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: >-
+            projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.WIF_POOL_ID }}/providers/${{ env.WIF_PROVIDER_ID }}
+          service_account: ${{ env.CD_SA_EMAIL }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+
+      # Secrets injected from Secret Manager at runtime
+      # --no-traffic only valid on existing services. first deploy omits it.
+      - name: Deploy backend to Cloud Run
+        env:
+          ENV: ${{ steps.env.outputs.name }}
+          BACKEND_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/backend
+        run: |
+          SECRETS="SPRING_DATASOURCE_URL=mealchemy-db-url-${ENV}:latest,"
+          SECRETS+="SPRING_DATASOURCE_USERNAME=mealchemy-db-username-${ENV}:latest,"
+          SECRETS+="SPRING_DATASOURCE_PASSWORD=mealchemy-db-password-${ENV}:latest,"
+          SECRETS+="JWT_SECRET=mealchemy-jwt-secret:latest"
+
+          SERVICE_EXISTS=false
+          if gcloud run services describe "mealchemy-backend-${ENV}" \
+              --region "${{ env.GCP_REGION }}" \
+              --project "${{ env.GCP_PROJECT_ID }}" &>/dev/null; then
+            SERVICE_EXISTS=true
+          fi
+
+          DEPLOY_ARGS=(
+            "mealchemy-backend-${ENV}"
+            --image "${BACKEND_IMAGE}:${{ github.sha }}"
+            --region "${{ env.GCP_REGION }}"
+            --project "${{ env.GCP_PROJECT_ID }}"
+            --service-account "${{ env.RUNTIME_SA_EMAIL }}"
+            --set-secrets "${SECRETS}"
+            --set-env-vars "SPRING_FLYWAY_ENABLED=false,JWT_EXPIRATION_MS=86400000"
+            --allow-unauthenticated
+            --min-instances 0
+            --max-instances 3
+            --memory 512Mi
+            --cpu 1
+            --port 8080
+            --timeout 60
+          )
+
+          if [[ "${SERVICE_EXISTS}" == "true" ]]; then
+            DEPLOY_ARGS+=(--no-traffic)
+          fi
+
+          gcloud run deploy "${DEPLOY_ARGS[@]}"
+         
+          
+         #--memory 512Mi caps each running container instance at 512 megabytes
+        #--allow-unauthenticated backend is public facing service reachable without gcp level auth token. application auth still applies on requests. This flag is for network reachability not app secruity
+        # --min-instances 0 - scales to 0 when idle. No costs while no one is using but cold start hapen after idle periods
+        # --max-instances 3 - a ceiling to ensure traffic spike or runaway bug from scaling infinitnly and using free tier compute
+        # cloud run expects conatiner to listen on port 8080
+        #requests taking loger 60s are killed. 
+        # traffic shift deferred. switch together only after both deploys succeed.
+
+      - name: Get backend Cloud Run URL
+        id: get_url
+        env:
+          ENV: ${{ steps.env.outputs.name }}
+        run: |
+          URL=$(gcloud run services describe "mealchemy-backend-${ENV}" \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --format="value(status.url)")
+          echo "url=${URL}" >> "$GITHUB_OUTPUT"
+
+  # ------------------------------ DEPLOY ENGINE --------------------------------------------------------
+  # Depends on deploy-backend
+  # prevents a mismatch pair
+  # Receives the backend URL as a job output from deploy-backend
+
+  deploy-engine:
+    name: Deploy engine (${{ github.ref_name == 'main' && 'production' || 'staging' }})
+    runs-on: ubuntu-latest
+    needs: [build-engine, deploy-backend]
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Set environment name
+        id: env
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "name=prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=staging" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: >-
+            projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.WIF_POOL_ID }}/providers/${{ env.WIF_PROVIDER_ID }}
+          service_account: ${{ env.CD_SA_EMAIL }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+
+     
+ # --no-allow-unauthenticated flag as engine not public reachable. backend calls it only
+      # Uses ENGINE_RUNTIME_SA_EMAIL, a separate SA with no db secret access. ensures engine never touches db
+
+      - name: Deploy engine to Cloud Run
+        env:
+          ENV: ${{ steps.env.outputs.name }}
+          ENGINE_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/engine
+        run: |
+          SERVICE_EXISTS=false
+          if gcloud run services describe "mealchemy-engine-${ENV}" \
+              --region "${{ env.GCP_REGION }}" \
+              --project "${{ env.GCP_PROJECT_ID }}" &>/dev/null; then
+            SERVICE_EXISTS=true
+          fi
+
+          DEPLOY_ARGS=(
+            "mealchemy-engine-${ENV}"
+            --image "${ENGINE_IMAGE}:${{ github.sha }}"
+            --region "${{ env.GCP_REGION }}"
+            --project "${{ env.GCP_PROJECT_ID }}"
+            --service-account "${{ env.ENGINE_RUNTIME_SA_EMAIL }}"
+            --set-env-vars "BACKEND_URL=${{ needs.deploy-backend.outputs.url }}"
+            --no-allow-unauthenticated
+            --min-instances 0
+            --max-instances 2
+            --memory 512Mi
+            --cpu 1
+            --port 8000
+            --timeout 60
+          )
+
+          if [[ "${SERVICE_EXISTS}" == "true" ]]; then
+            DEPLOY_ARGS+=(--no-traffic)
+          fi
+
+          gcloud run deploy "${DEPLOY_ARGS[@]}"
+       
+
+     # Grant the backend runtime SA invoker access on the engine so the backend can call it.
+      - name: Grant backend runtime SA invoker access on engine
+        env:
+          ENV: ${{ steps.env.outputs.name }}
+        run: |
+          gcloud run services add-iam-policy-binding "mealchemy-engine-${ENV}" \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --member="serviceAccount:${{ env.RUNTIME_SA_EMAIL }}" \
+            --role="roles/run.invoker"
+
+  # ------------------------------ CUTOVER -------------------------------------------------------------
+
+  cutover:
+    name: Cutover (${{ github.ref_name == 'main' && 'production' || 'staging' }})
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-engine]
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Set environment name
+        id: env
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "name=prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=staging" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: >-
+            projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.WIF_POOL_ID }}/providers/${{ env.WIF_PROVIDER_ID }}
+          service_account: ${{ env.CD_SA_EMAIL }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+
+      - name: Shift backend traffic to latest revision
+        env:
+          ENV: ${{ steps.env.outputs.name }}
+        run: |
+          gcloud run services update-traffic "mealchemy-backend-${ENV}" \
+            --to-latest \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}"
+
+      - name: Shift engine traffic to latest revision
+        env:
+          ENV: ${{ steps.env.outputs.name }}
+        run: |
+          gcloud run services update-traffic "mealchemy-engine-${ENV}" \
+            --to-latest \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}"
+
+      - name: Print deployed service URLs
+        env:
+          ENV: ${{ steps.env.outputs.name }}
+        run: |
+          BACKEND_URL=$(gcloud run services describe "mealchemy-backend-${ENV}" \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --format="value(status.url)")
+          ENGINE_URL=$(gcloud run services describe "mealchemy-engine-${ENV}" \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --format="value(status.url)")
+          echo "Environment : ${ENV}"
+          echo "Backend URL : ${BACKEND_URL}"
+          echo "Engine URL  : ${ENGINE_URL} (private)"
+          echo "Flutter app : flutter run --dart-define=BACKEND_URL=${BACKEND_URL}"
+
+  # ------------------------------ DEPLOY STATUS --------------------------------------------------------
+  #if alwasy ensures if dependency fails this job isn't skipped. We want to see the fail job here
+
+
+  deploy-status:
+    name: Deploy status (${{ github.ref_name == 'main' && 'production' || 'staging' }})
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-engine, cutover]
+    if: always()
+
+    steps:
+      - name: Check deploy results
+        run: |
+          BACKEND="${{ needs.deploy-backend.result }}"
+          ENGINE="${{ needs.deploy-engine.result }}"
+          CUTOVER="${{ needs.cutover.result }}"
+          echo "deploy-backend : ${BACKEND}"
+          echo "deploy-engine  : ${ENGINE}"
+          echo "cutover        : ${CUTOVER}"
+
+          if [[ "${BACKEND}" == "success" && "${ENGINE}" == "success" && "${CUTOVER}" == "success" ]]; then
+            echo "Both services deployed and traffic shifted successfully."
+            exit 0
+          fi
+
+          [[ "${BACKEND}"  != "success" ]] && echo "::error::deploy-backend did not succeed (result: ${BACKEND})"
+          [[ "${ENGINE}"   != "success" ]] && echo "::error::deploy-engine did not succeed (result: ${ENGINE})"
+          [[ "${CUTOVER}"  != "success" ]] && echo "::error::cutover did not succeed (result: ${CUTOVER}) , traffic was not shifted; old revisions are still serving"
+          exit 1
+
+  #-------------------------------Artifact Registry storage check---------------------------
+
+  check-registry-storage:
+    name: Artifact Registry storage check
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: >-
+            projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.WIF_POOL_ID }}/providers/${{ env.WIF_PROVIDER_ID }}
+          service_account: ${{ env.CD_SA_EMAIL }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+
+      - name: Report Artifact Registry storage usage
+        run: |
+          SIZE_BYTES=$(gcloud artifacts repositories describe "${{ env.AR_REPOSITORY }}" \
+            --location="${{ env.GCP_REGION }}" \
+            --project="${{ env.GCP_PROJECT_ID }}" \
+            --format="value(sizeBytes)" 2>/dev/null || echo "0")
+
+         
+          SIZE_BYTES=${SIZE_BYTES:-0}
+          SIZE_MB=$(( SIZE_BYTES / 1024 / 1024 ))
+          FREE_TIER_MB=512
+
+          echo "Artifact Registry storage: ${SIZE_MB} MB used of ${FREE_TIER_MB} MB free-tier quota"
+
+         
+          WARN_MB=$(( FREE_TIER_MB * 80 / 100 ))
+          FAIL_MB=$(( FREE_TIER_MB * 95 / 100 ))
+          if [ "${SIZE_MB}" -ge "${FAIL_MB}" ]; then
+            echo "::error::Artifact Registry storage (${SIZE_MB} MB) has exceeded 95% of the 0.5 GB free-tier quota."
+            exit 1
+          elif [ "${SIZE_MB}" -ge "${WARN_MB}" ]; then
+            echo "::warning::Artifact Registry storage (${SIZE_MB} MB) has exceeded 80% of the 0.5 GB free-tier quota."
+          fi
