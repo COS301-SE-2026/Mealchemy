@@ -143,6 +143,7 @@ void main() {
 
     expect(item.checked, isTrue);
   });
+
   //selects every item in one shopping list
   test('shoppingListsProvider selects all items in a list', () async {
     //container used to read Riverpod providers in tests
@@ -324,5 +325,26 @@ void main() {
     expect(createdList.shoppingListId, 999);
     expect(createdList.section, 'OTHER LISTS');
     expect(createdList.items, isEmpty);
+  });
+
+  //deletes a whole shopping list from provider state
+  test('shoppingListsProvider deletes shopping list', () async {
+    //container used to read Riverpod providers in tests
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await container.read(shoppingListsProvider.future);
+
+    final notifier = container.read(shoppingListsProvider.notifier);
+
+    await notifier.deleteShoppingList('general-list');
+
+    final updatedState = container.read(shoppingListsProvider).value!;
+
+    expect(updatedState.getListById('general-list'), isNull);
+    expect(
+      updatedState.lists.any((list) => list.id == 'general-list'),
+      isFalse,
+    );
   });
 }

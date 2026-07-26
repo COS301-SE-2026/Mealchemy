@@ -127,6 +127,19 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     );
   }
 
+  //deletes whole shopping list and removes it from local state
+  Future<void> deleteShoppingList(String listId) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    await _repository.deleteShoppingList(listId);
+
+    final updatedLists =
+        current.lists.where((list) => list.id != listId).toList();
+
+    state = AsyncData(current.copyWith(lists: updatedLists));
+  }
+
   //checks/unchecks
   Future<void> toggleItemChecked({
     required String listId,
