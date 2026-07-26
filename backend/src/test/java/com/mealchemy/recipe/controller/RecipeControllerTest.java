@@ -70,11 +70,11 @@ public class RecipeControllerTest {
         );
 
         fullRequest = new RecipeFullRequest(
-            "Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, ingredients, steps
+            "Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, ingredients, steps, 1
         );
 
         request = new RecipeRequest(
-            "Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false
+            "Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, 1
         );
     }
 
@@ -84,6 +84,14 @@ public class RecipeControllerTest {
         when(recipeService.getAllRecipes()).thenReturn(List.of(response));
         
         mockMvc.perform(get("/recipes/all")).andExpect(status().isOk()).andExpect(jsonPath("$[0].title").value("Recipe 1"));
+    }
+
+    @Test
+    void getAllCommunityPublishedRecipes_returns200_withList() throws Exception
+    {
+        when(recipeService.getAllCommunityPublishedRecipes()).thenReturn(List.of(response));
+ 
+        mockMvc.perform(get("/recipes/community")).andExpect(status().isOk()).andExpect(jsonPath("$[0].title").value("Recipe 1"));
     }
 
     @Test
@@ -118,13 +126,29 @@ public class RecipeControllerTest {
     @Test
     void createRecipe_returns400_whenTitleBlank() throws Exception
     {
-        RecipeRequest invalidRequest = new RecipeRequest("", "Description", "Chinese", 10, 15, 2, null, null, null, false);
+        RecipeRequest invalidRequest = new RecipeRequest("", "Description", "Chinese", 10, 15, 2, null, null, null, false, 1);
 
         mockMvc.perform(post("/recipes/create")
             .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(invalidRequest)))
             .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createRecipe_returns400_whenServiceRejectsNullFolderId() throws Exception
+    {
+        RecipeRequest noFolderRequest = new RecipeRequest("Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, null);
+ 
+        when(recipeService.createRecipe(any(RecipeRequest.class), eq(1)))
+            .thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "A folder must be specified when creating a recipe."));
+ 
+        mockMvc.perform(post("/recipes/create")
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(noFolderRequest)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("A folder must be specified when creating a recipe."));
     }
 
     @Test
@@ -138,6 +162,23 @@ public class RecipeControllerTest {
             .content(objectMapper.writeValueAsString(fullRequest)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.title").value("Recipe 1"));
+    }
+
+    @Test
+    void createFromFullRecipe_returns400_whenFolderIdNull() throws Exception
+    {
+        RecipeFullRequest invalidFullRequest = new RecipeFullRequest(
+            "Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false,
+            List.of(new RecipeIngredientRequest(1, BigDecimal.valueOf(2.0), "cup", 1)),
+            List.of(new RecipeStepRequest(1, "Mix everything together.")),
+            null
+        );
+ 
+        mockMvc.perform(post("/recipes/1/copy")
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(invalidFullRequest)))
+            .andExpect(status().isBadRequest());
     }
 
     @Test
