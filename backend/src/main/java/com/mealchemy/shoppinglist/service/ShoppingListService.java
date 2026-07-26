@@ -49,7 +49,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-// TODO automatic shopping list completion (remove from shopping list and add to pantry)
 @Service 
 public class ShoppingListService {
 
