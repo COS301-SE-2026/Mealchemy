@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 /* Import classes */
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.auth.model.User;
+import com.mealchemy.vault.model.VaultMember;
 import com.mealchemy.vault.dto.VaultResponse;
 import com.mealchemy.vault.dto.VaultRequest;
 import com.mealchemy.vault.repository.VaultRepository;

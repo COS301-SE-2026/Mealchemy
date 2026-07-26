@@ -241,7 +241,7 @@ public class VaultFolderRecipeServiceTest
         when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
         when(recipeRepository.findById(request.recipeId())).thenReturn(Optional.of(recipe));
         when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(true);
-        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+        when(userRepository.findById(3)).thenReturn(Optional.of(user));
         when(vaultFolderRecipeRepository.save(any(VaultFolderRecipe.class))).thenReturn(folderRecipe);
 
         VaultFolderRecipeResponse result = vaultFolderRecipeService.createVaultFolderRecipe(request, 3, 1);

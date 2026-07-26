@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import com.mealchemy.recipe.dto.RecipeIngredientRequest;
 import com.mealchemy.recipe.dto.RecipeIngredientResponse;
 import com.mealchemy.recipe.service.RecipeIngredientService;
+import com.mealchemy.recipe.service.RecipeStepService;
 
 @RestController
 @RequestMapping("/ingredients")
@@ -28,18 +29,9 @@ public class RecipeIngredientController
 
     // Get
     @GetMapping("/recipe/{recipeId}")
+    public List<RecipeIngredientResponse> getAllIngredientsByRecipeId(@PathVariable Integer recipeId)
     {
-        public List<RecipeIngredientResponse> getAllIngredientsByRecipeId(@PathVariable Integer recipeId)
-        {
-            return recipeStepService.getAllIngredientsByRecipeId(recipeId);
-        }
-    }
-
-    // Get
-    @GetMapping("/recipe/{recipeId}")
-    public List<RecipeIngredientResponse> getIngredientsByRecipeId(@PathVariable Integer recipeId)
-    {
-        return recipeIngredientService.getIngredientsByRecipeId(recipeId);
+        return recipeIngredientService.getAllIngredientsByRecipeId(recipeId);
     }
 
     // Post

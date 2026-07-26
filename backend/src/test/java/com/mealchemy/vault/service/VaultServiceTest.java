@@ -68,7 +68,7 @@ public class VaultServiceTest
         ReflectionTestUtils.setField(memberVault, "vaultId", 2);
 
         vaultMember = new VaultMember();
-        vaultMember.setVault(memberVault)
+        vaultMember.setVault(memberVault);
 
         request = new VaultRequest(VaultType.SHARED, "Test Vault");
     }

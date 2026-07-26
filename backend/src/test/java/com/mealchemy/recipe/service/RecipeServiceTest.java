@@ -323,11 +323,12 @@ public class RecipeServiceTest {
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
         when(flavourProfileOptionsRepository.existsByValue(request.cuisineType())).thenReturn(true);
+        when(recipeRepository.save(any(Recipe.class))).thenReturn(recipe);
 
         RecipeResponse result = recipeService.updateRecipe(1, request, 1);
 
         assertNotNull(result);
-        assertEquals("Recipe 1", result.title());
+        assertEquals("Req Title", result.title());
         verify(recipeRepository, times(1)).save(any(Recipe.class));
     }
 

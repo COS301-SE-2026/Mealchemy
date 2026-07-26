@@ -5,7 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -36,15 +36,19 @@ import com.mealchemy.recipe.dto.RecipeIngredientRequest;
 import com.mealchemy.recipe.dto.RecipeStepRequest;
 import com.mealchemy.recipe.dto.RecipeResponse;
 import com.mealchemy.recipe.service.RecipeService;
+import com.mealchemy.config.WithMockJwtUser;
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(RecipeController.class)
-@WithMockUser(username = "1")
+@WithMockJwtUser(userId = "1")
 public class RecipeControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean 
+    private JwtUtil jwtUtil;
+
+    @MockitoBean
     private RecipeService recipeService;
 
     @Autowired

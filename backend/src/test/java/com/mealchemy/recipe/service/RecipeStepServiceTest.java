@@ -103,7 +103,7 @@ public class RecipeStepServiceTest {
     void createRecipeStep_returnsCreatedRecipe_whenFoundAndOwner()
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
-        when(recipeStepRepository.save(any(RecipeStep.class))).thenReturn(recipeStep);
+        when(recipeStepRepository.save(any(RecipeStep.class))).thenReturn(recipeStep2);
 
         RecipeStepResponse result = recipeStepService.createRecipeStep(request, 1, 1);
 

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 /* Import classes */
 
 import com.mealchemy.recipe.model.RecipeIngredient;
+import java.util.*;
 
 @Repository
 public interface RecipeIngredientRepository extends JpaRepository<RecipeIngredient, Integer>

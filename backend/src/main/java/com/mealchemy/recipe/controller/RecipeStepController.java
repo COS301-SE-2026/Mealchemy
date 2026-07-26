@@ -29,15 +29,6 @@ public class RecipeStepController
 
     // Get
     @GetMapping("/recipe/{recipeId}")
-    {
-        public List<RecipeStepResponse> getAllStepsByRecipeId(@PathVariable Integer recipeId)
-        {
-            return recipeStepService.getAllStepsByRecipeId(recipeId);
-        }
-    }
-
-    // Get
-    @GetMapping("/recipe/{recipeId}")
     public List<RecipeStepResponse> getAllStepsByRecipeId(@PathVariable Integer recipeId)
     {
         return recipeStepService.getAllStepsByRecipeId(recipeId);

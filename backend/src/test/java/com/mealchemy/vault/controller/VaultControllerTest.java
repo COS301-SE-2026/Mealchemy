@@ -15,6 +15,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
  
 import java.time.OffsetDateTime;
 import java.util.List;
+import com.mealchemy.config.JwtUtil;
  
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -31,10 +32,11 @@ import com.mealchemy.vault.dto.VaultRequest;
 import com.mealchemy.vault.dto.VaultResponse;
 import com.mealchemy.vault.service.VaultService;
 import com.mealchemy.shared.enums.VaultType;
+import com.mealchemy.config.WithMockJwtUser;
  
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(VaultController.class)
-@WithMockUser(username = "1")
+@WithMockJwtUser(userId = "1")
 public class VaultControllerTest {
     @Autowired
     private MockMvc mockMvc;

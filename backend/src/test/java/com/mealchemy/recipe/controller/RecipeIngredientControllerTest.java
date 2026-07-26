@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -15,6 +15,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 
 import java.math.BigDecimal;
 import java.util.List;
+import com.mealchemy.config.JwtUtil;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -30,15 +31,20 @@ import org.springframework.http.HttpStatus;
 import com.mealchemy.recipe.dto.RecipeIngredientRequest;
 import com.mealchemy.recipe.dto.RecipeIngredientResponse;
 import com.mealchemy.recipe.service.RecipeIngredientService;
+import com.mealchemy.config.WithMockJwtUser;
+
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(RecipeIngredientController.class)
-@WithMockUser(username = "1")
+@WithMockJwtUser(userId = "1")
 public class RecipeIngredientControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean 
+    private JwtUtil jwtUtil;
+
+    @MockitoBean
     private RecipeIngredientService recipeIngredientService;
 
     @Autowired
@@ -56,17 +62,17 @@ public class RecipeIngredientControllerTest {
     }
 
     @Test
-    void getIngredientsByRecipeId_returns200_withList() throws Exception
+    void getAllIngredientsByRecipeId_returns200_withList() throws Exception
     {
-        when(recipeIngredientService.getIngredientsByRecipeId(1)).thenReturn(List.of(response));
+        when(recipeIngredientService.getAllIngredientsByRecipeId(1)).thenReturn(List.of(response));
 
         mockMvc.perform(get("/ingredients/recipe/1")).andExpect(status().isOk()).andExpect(jsonPath("$[0].unit").value("grams"));
     }
 
     @Test
-    void getIngredientsByRecipeId_returns200_withEmptyList() throws Exception
+    void getAllIngredientsByRecipeId_returns200_withEmptyList() throws Exception
     {
-        when(recipeIngredientService.getIngredientsByRecipeId(99)).thenReturn(List.of());
+        when(recipeIngredientService.getAllIngredientsByRecipeId(99)).thenReturn(List.of());
 
         mockMvc.perform(get("/ingredients/recipe/99")).andExpect(status().isOk()).andExpect(jsonPath("$").isEmpty());
     }

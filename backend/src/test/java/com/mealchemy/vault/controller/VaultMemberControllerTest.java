@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -15,6 +15,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import com.mealchemy.config.JwtUtil;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -30,15 +31,19 @@ import org.springframework.http.HttpStatus;
 import com.mealchemy.vault.dto.VaultMemberRequest;
 import com.mealchemy.vault.dto.VaultMemberResponse;
 import com.mealchemy.vault.service.VaultMemberService;
+import com.mealchemy.config.WithMockJwtUser;
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(VaultMemberController.class)
-@WithMockUser(username = "1")
+@WithMockJwtUser(userId = "1")
 public class VaultMemberControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean 
+    private JwtUtil jwtUtil;
+
+    @MockitoBean
     private VaultMemberService vaultMemberService;
 
     @Autowired

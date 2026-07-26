@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -14,6 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 import java.util.List;
+import com.mealchemy.config.JwtUtil;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -30,15 +31,19 @@ import com.mealchemy.recipe.dto.RecipeStepRequest;
 import com.mealchemy.recipe.dto.RecipeStepReorderRequest;
 import com.mealchemy.recipe.dto.RecipeStepResponse;
 import com.mealchemy.recipe.service.RecipeStepService;
+import com.mealchemy.config.WithMockJwtUser;
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(RecipeStepController.class)
-@WithMockUser(username = "1")
+@WithMockJwtUser(userId = "1")
 public class RecipeStepControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean 
+    private JwtUtil jwtUtil;
+
+    @MockitoBean
     private RecipeStepService recipeStepService;
 
     @Autowired
