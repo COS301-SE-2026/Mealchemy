@@ -14,7 +14,9 @@ public interface PantryIngredientRepository extends JpaRepository<PantryIngredie
     // pantry ingredients needed per user
     List<PantryIngredient> findByUserId(Integer userId);
 
-    List<PantryIngredient> findByIngId(Integer ingId);
+    List<PantryIngredient> findByIngId(Integer ingId); //could have multiple of same ingredient in pantry
+
+    List<PantryIngredient> findByUserIdAndIngId(Integer userId, Integer ingId);
 
     @Query("""
         SELECT new com.mealchemy.pantry.dto.PantryIngredientResponse(
