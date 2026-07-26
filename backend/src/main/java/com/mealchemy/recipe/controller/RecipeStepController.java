@@ -35,6 +35,13 @@ public class RecipeStepController
         }
     }
 
+    // Get
+    @GetMapping("/recipe/{recipeId}")
+    public List<RecipeStepResponse> getAllStepsByRecipeId(@PathVariable Integer recipeId)
+    {
+        return recipeStepService.getAllStepsByRecipeId(recipeId);
+    }
+
     // Post
     @PostMapping("/recipe/{recipeId}/step/create")
     public RecipeStepResponse createRecipeStep(@Valid @RequestBody RecipeStepRequest request, @PathVariable Integer recipeId, 
@@ -49,6 +56,14 @@ public class RecipeStepController
         @PathVariable Integer recipeId, @AuthenticationPrincipal String ownerId)
     {
         return recipeStepService.updateRecipeStep(id, request, recipeId, Integer.parseInt(ownerId));
+    }
+
+    // Put
+    @PutMapping("/recipe/{recipeId}/reorder")
+    public List<RecipeStepResponse> reorderSteps(@PathVariable Integer recipeId, @Valid @RequestBody RecipeStepReorderRequest request,
+    @AuthenticationPrincipal String ownerId)
+    {
+        return recipeStepService.reorderSteps(recipeId, request, Integer.parseInt(ownerId));
     }
 
     // Delete
