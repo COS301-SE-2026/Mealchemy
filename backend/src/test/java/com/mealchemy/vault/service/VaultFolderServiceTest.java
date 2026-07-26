@@ -48,6 +48,7 @@ public class VaultFolderServiceTest
 
     private VaultFolder folder;
     private Vault vault;
+    private Vault privateVault;
     private VaultFolderRequest request;
 
     @BeforeEach
@@ -58,6 +59,12 @@ public class VaultFolderServiceTest
         vault.setVaultType(VaultType.SHARED);
         vault.setName("Test Vault");
         ReflectionTestUtils.setField(vault, "vaultId", 1);
+
+        privateVault = new Vault();
+        privateVault.setOwnerId(1);
+        privateVault.setVaultType(VaultType.PRIVATE);
+        privateVault.setName("Private Vault");
+        ReflectionTestUtils.setField(privateVault, "vaultId", 2);
 
         folder = new VaultFolder();
         folder.setVault(vault);
@@ -238,6 +245,34 @@ public class VaultFolderServiceTest
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Folder not found.", ex.getReason());
+    }
+
+    @Test
+    void getPrivateVaultFolders_returnsFolders_whenPrivateVaultFound()
+    {
+        VaultFolder privateFolder = new VaultFolder();
+        privateFolder.setVault(privateVault);
+        privateFolder.setFolderName("Private Folder");
+        ReflectionTestUtils.setField(privateFolder, "folderId", 2);
+
+        when(vaultRepository.findByOwnerIdAndVaultType(1, VaultType.PRIVATE)).thenReturn(Optional.of(privateVault));
+        when(vaultFolderRepository.findByVault_VaultId(2)).thenReturn(List.of(privateFolder));
+
+        List<VaultFolderResponse> result = vaultFolderService.getPrivateVaultFolders(1);
+
+        assertEquals(1, result.size());
+        assertEquals("Private Folder", result.get(0).folderName());
+    }
+
+    @Test
+    void getPrivateVaultFolders_throwsException_whenPrivateVaultNotFound()
+    {
+        when(vaultRepository.findByOwnerIdAndVaultType(1, VaultType.PRIVATE)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.getPrivateVaultFolders(1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Private vault not found.", ex.getReason());
     }
 
     @Test
