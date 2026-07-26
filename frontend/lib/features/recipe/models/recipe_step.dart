@@ -15,10 +15,14 @@ class RecipeStep {
 
   factory RecipeStep.fromJson(Map<String, dynamic> json) {
     return RecipeStep(
-      stepId: json['step_id'] as int,
-      recipeId: json['recipe_id'] as int,
-      stepNr: json['step_nr'] as int,
+      stepId: json['stepId'] as int,
+      recipeId: json['recipeId'] as int,
+      stepNr: json['stepNr'] as int,
       content: json['content'] as String,
     );
   }
+  Map<String, dynamic> toJson() => {
+        'stepNr': stepNr,
+        'content': content,
+      };
 }

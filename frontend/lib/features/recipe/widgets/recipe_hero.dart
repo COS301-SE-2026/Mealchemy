@@ -1,4 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colours.dart';
@@ -20,42 +22,45 @@ class RecipeHero extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           _HeroImage(photoUrl: recipe.photoUrl),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.transparent, AppColors.bgDark.withValues(alpha: 0.8)],
-                stops: const [0.35, 1.0],
-              ),
-            ),
+          const DecoratedBox(
+            decoration: BoxDecoration(gradient: AppColors.heroScrim),
           ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Row(
-                children: [
-                  _HeroCircleButton(
-                    icon: Icons.arrow_back,
-                    onTap: () => context.pop(),
-                    background: AppColors.surfaceWhite.withValues(alpha: 0.95),
-                    iconColor: AppColors.textLight,
-                  ),
-                  const Spacer(),
-                  _HeroCircleButton(
-                    icon: Icons.favorite_border,
-                    onTap: () {},
-                    background: AppColors.textLight.withValues(alpha: 0.45),
-                    iconColor: AppColors.textDark,
-                  ),
-                  const SizedBox(width: 10),
-                  _HeroCircleButton(
-                    icon: Icons.share_outlined,
-                    onTap: () {},
-                    background: AppColors.textLight.withValues(alpha: 0.45),
-                    iconColor: AppColors.textDark,
-                  ),
-                ],
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Row(
+                  children: [
+                    _HeroCircleButton(
+                      icon: Icons.arrow_back,
+                      onTap: () => context.pop(),
+                      background:
+                          AppColors.surfaceWhite.withValues(alpha: 0.95),
+                      iconColor: AppColors.textLight,
+                      frosted: false,
+                    ),
+                    const Spacer(),
+                    _HeroCircleButton(
+                      icon: Icons.favorite_border,
+                      onTap: () {},
+                      background: AppColors.textLight.withValues(alpha: 0.45),
+                      iconColor: AppColors.textDark,
+                      frosted: true,
+                    ),
+                    const SizedBox(width: 10),
+                    _HeroCircleButton(
+                      icon: Icons.share_outlined,
+                      onTap: () {},
+                      background: AppColors.textLight.withValues(alpha: 0.45),
+                      iconColor: AppColors.textDark,
+                      frosted: true,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -120,26 +125,37 @@ class _HeroCircleButton extends StatelessWidget {
     required this.onTap,
     required this.background,
     required this.iconColor,
+    this.frosted = false,
   });
 
   final IconData icon;
   final VoidCallback onTap;
   final Color background;
   final Color iconColor;
+  final bool frosted;
 
   @override
   Widget build(BuildContext context) {
+    final button = Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: background,
+      ),
+      child: Icon(icon, color: iconColor, size: 19),
+    );
+
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: background,
-        ),
-        child: Icon(icon, color: iconColor, size: 19),
-      ),
+      child: frosted
+          ? ClipOval(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                child: button,
+              ),
+            )
+          : button,
     );
   }
 }

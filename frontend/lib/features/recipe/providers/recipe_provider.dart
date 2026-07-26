@@ -1,7 +1,9 @@
 //holds recipe list, per-recipe detail, cuisine types, and add-recipe submission state
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_config.dart';
+import '../../../core/providers/api_service_provider.dart';
 import '../models/recipe.dart';
 import '../repositories/api_recipe_repository.dart';
 import '../repositories/mock_recipe_repository.dart';
@@ -13,7 +15,7 @@ final recipeRepositoryProvider = Provider<RecipeRepository>((ref) {
     return MockRecipeRepository();
   }
 
-  return ApiRecipeRepository();
+  return ApiRecipeRepository(ref.read(dioProvider));
 });
 
 //list of recipes (for list / vault views)
@@ -62,24 +64,33 @@ class AddRecipeState {
 }
 
 class AddRecipeNotifier extends StateNotifier<AddRecipeState> {
-  AddRecipeNotifier(this._repository) : super(const AddRecipeState());
+  AddRecipeNotifier(this._repository, this._ref)
+      : super(const AddRecipeState());
 
   final RecipeRepository _repository;
+  final Ref _ref;
 
   Future<void> submit(Recipe recipe) async {
     if (recipe.title.trim().isEmpty) {
-      state = state.copyWith(errorMessage: 'Title is required');
+      state = const AddRecipeState(errorMessage: 'Title is required');
       return;
     }
 
-  //replace whole state
+    //replace whole state
     state = const AddRecipeState(isSubmitting: true);
 
     try {
       await _repository.addRecipe(recipe);
       state = const AddRecipeState(isSuccess: true);
+      _ref.invalidate(recipesProvider);
+    } on DioException catch (e) {
+      final serverMessage = e.response?.data is Map
+          ? (e.response?.data as Map)['message'] as String?
+          : null;
+      state = AddRecipeState( errorMessage: serverMessage ?? 'Could not save recipe. Try again.', );
     } catch (_) {
-      state = const AddRecipeState(errorMessage: 'Could not save recipe. Try again.');
+      state = const AddRecipeState(
+          errorMessage: 'Could not save recipe. Try again.');
     }
   }
 
@@ -91,5 +102,5 @@ class AddRecipeNotifier extends StateNotifier<AddRecipeState> {
 
 final addRecipeProvider =
     StateNotifierProvider<AddRecipeNotifier, AddRecipeState>((ref) {
-  return AddRecipeNotifier(ref.watch(recipeRepositoryProvider));
+   return AddRecipeNotifier(ref.watch(recipeRepositoryProvider), ref);
 });

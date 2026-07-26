@@ -52,6 +52,16 @@ class AppColors {
     end: Alignment.centerRight,
   );
 
+static const heroScrim = LinearGradient(
+  begin: Alignment.topCenter,
+  end: Alignment.bottomCenter,
+  colors: [
+    Color(0x00570013), 
+    Color(0xE6570013), 
+  ],
+  stops: [0.4, 1.0],
+);
+
   static const LinearGradient warmBg = LinearGradient(
     colors: [AppColors.bgLight, AppColors.bgDark],
     begin: Alignment.topCenter,
