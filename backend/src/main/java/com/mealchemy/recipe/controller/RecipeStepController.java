@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import com.mealchemy.recipe.dto.RecipeStepRequest;
 import com.mealchemy.recipe.dto.RecipeStepResponse;
 import com.mealchemy.recipe.service.RecipeStepService;
+import com.mealchemy.recipe.dto.RecipeStepReorderRequest;
 
 @RestController
 @RequestMapping("/steps")
