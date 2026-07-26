@@ -71,6 +71,27 @@ public class RecipeIngredientServiceTest {
     }
 
     @Test
+    void getIngredientsByRecipeId_returnsListOfIngredients_whenFound()
+    {
+        when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(recipeIngredient));
+
+        List<RecipeIngredientResponse> result = recipeIngredientService.getIngredientsByRecipeId(1);
+
+        assertEquals(1, result.size());
+        assertEquals(1, result.get(0).ingredientId());
+    }
+
+    @Test
+    void getIngredientsByRecipeId_returnsEmptyList_whenNoneFound()
+    {
+        when(recipeIngredientRepository.findByRecipe_RecipeId(99)).thenReturn(List.of());
+
+        List<RecipeIngredientResponse> result = recipeIngredientService.getIngredientsByRecipeId(99);
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
     void createRecipeIngredient_returnsNewIngredient_whenFoundOwnerAndInCatalogue()
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
