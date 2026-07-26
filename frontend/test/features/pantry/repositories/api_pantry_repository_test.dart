@@ -1,31 +1,220 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mealchemy/features/pantry/repositories/api_pantry_repository.dart';
+import 'package:mealchemy/features/pantry/widgets/pantry_item_card.dart';
 
 void main() {
-  //throw
-  test('ApiPantryRepository throws for summary until API is implemented', () {
-    //create repo instance
-    final repository = ApiPantryRepository();
+  late ApiPantryRepository repository;
+  late RequestOptions? lastRequest;
 
-    expect(repository.getPantrySummary, throwsA(isA<UnimplementedError>()));
+  setUp(() {
+    final dio = Dio();
+    lastRequest = null;
+
+    //keep the repo test fast and offline
+    //without calling the real backend
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          lastRequest = options;
+          if (options.method == 'DELETE' && options.path == '/api/pantry/5') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 204,
+              ),
+            );
+            return;
+          }
+          if (options.method == 'PUT' && options.path == '/api/pantry/5') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: {
+                  'p_ingredient_id': 5,
+                  'ing_id': options.data['ing_id'],
+                  'name': 'Rice',
+                  'category': 'grain',
+                  'quantity': options.data['quantity'],
+                  'unit': options.data['unit'],
+                  'created_at': '2026-07-20T10:00:00Z',
+                  'updated_at': '2026-07-20T10:30:00Z',
+                },
+              ),
+            );
+            return;
+          }
+          if (options.method == 'POST' && options.path == '/api/pantry') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: {
+                  'p_ingredient_id': 5,
+                  'ing_id': options.data['ing_id'],
+                  'name': 'Rice',
+                  'category': 'grain',
+                  'quantity': options.data['quantity'],
+                  'unit': options.data['unit'],
+                  'created_at': '2026-07-20T10:00:00Z',
+                  'updated_at': '2026-07-20T10:00:00Z',
+                },
+              ),
+            );
+            return;
+          }
+
+          handler.resolve(
+            Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: [
+                {
+                  'p_ingredient_id': 1,
+                  'ing_id': 2,
+                  'name': 'Chicken Breast',
+                  'category': 'poultry',
+                  'quantity': 800,
+                  'unit': 'g',
+                  'created_at': '2026-07-19T10:00:00Z',
+                  'updated_at': '2026-07-19T10:00:00Z',
+                },
+                {
+                  'p_ingredient_id': 2,
+                  'ing_id': 3,
+                  'name': 'Full Cream Milk',
+                  'category': 'dairy',
+                  'quantity': 1,
+                  'unit': 'L',
+                  'created_at': '2026-07-19T10:00:00Z',
+                  'updated_at': '2026-07-19T10:00:00Z',
+                },
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    repository = ApiPantryRepository(dio);
   });
 
-  test('ApiPantryRepository throws for filters until API is implemented', () {
-    final repository = ApiPantryRepository();
+  test('getPantryIngredients maps backend pantry JSON into UI ingredients',
+      () async {
+    final ingredients = await repository.getPantryIngredients();
 
-    //ensure it fails (not returning invalid data)
-    expect(repository.getPantryFilters, throwsA(isA<UnimplementedError>()));
+    expect(ingredients, hasLength(2));
+
+    //first item keeps both the UI display data and backend ids
+    expect(ingredients.first.pIngredientId, 1);
+    expect(ingredients.first.ingId, 2);
+    expect(ingredients.first.name, 'Chicken Breast');
+    expect(ingredients.first.details, '800g • Pantry');
+    expect(ingredients.first.category, 'Proteins');
+    expect(ingredients.first.status, PantryItemStatus.fresh);
+    expect(ingredients.first.quantity, '800');
+    expect(ingredients.first.unit, 'g');
+
+    //second item proves mapper handles another category/unit too
+    expect(ingredients.last.pIngredientId, 2);
+    expect(ingredients.last.ingId, 3);
+    expect(ingredients.last.name, 'Full Cream Milk');
+    expect(ingredients.last.details, '1L • Pantry');
+    expect(ingredients.last.category, 'Dairy');
+    expect(ingredients.last.quantity, '1');
+    expect(ingredients.last.unit, 'L');
   });
 
-  test('ApiPantryRepository throws for ingredients until API is implemented', () {
-    final repository = ApiPantryRepository();
+  test('getPantrySummary builds summary values from API pantry items',
+      () async {
+    final summary = await repository.getPantrySummary();
 
-    expect(repository.getPantryIngredients, throwsA(isA<UnimplementedError>()));
+    expect(summary.totalItems, 2);
+    expect(summary.freshnessPercent, 100);
+    expect(summary.categoryCount, 2);
+    expect(summary.optimizationPercent, 72);
   });
 
-  test('ApiPantryRepository throws for categories until API is implemented', () {
-    final repository = ApiPantryRepository();
+  test('getPantryFilters builds filter counts from API pantry items', () async {
+    final filters = await repository.getPantryFilters();
 
-    expect(repository.getIngredientCategories, throwsA(isA<UnimplementedError>()));
+    expect(filters.map((filter) => filter.label),
+        containsAll(['All', 'Proteins', 'Dairy']));
+    expect(filters.first.label, 'All');
+    expect(filters.first.count, 2);
+  });
+
+  test(
+      'getIngredientCategories returns sorted categories from API pantry items',
+      () async {
+    final categories = await repository.getIngredientCategories();
+
+    expect(categories, ['Dairy', 'Proteins']);
+  });
+  test('addPantryIngredient posts pantry item and maps response', () async {
+    final ingredient = await repository.addPantryIngredient(
+      ingId: 9,
+      quantity: '2',
+      unit: 'kg',
+    );
+
+    expect(ingredient.pIngredientId, 5);
+    expect(ingredient.ingId, 9);
+    expect(ingredient.name, 'Rice');
+    expect(ingredient.details, '2kg • Pantry');
+    expect(ingredient.category, 'grain');
+    expect(ingredient.quantity, '2');
+    expect(ingredient.unit, 'kg');
+  });
+
+  test('addPantryIngredient rejects invalid quantity before API call', () {
+    expect(
+      () => repository.addPantryIngredient(
+        ingId: 9,
+        quantity: 'two',
+        unit: 'kg',
+      ),
+      throwsArgumentError,
+    );
+  });
+  test('deletePantryIngredient calls delete pantry endpoint', () async {
+    await repository.deletePantryIngredient(5);
+
+    expect(lastRequest?.method, 'DELETE');
+    expect(lastRequest?.path, '/api/pantry/5');
+  });
+  test('updatePantryIngredient puts pantry item and maps response', () async {
+    final ingredient = await repository.updatePantryIngredient(
+      pIngredientId: 5,
+      ingId: 9,
+      quantity: '3',
+      unit: 'kg',
+    );
+
+    expect(lastRequest?.method, 'PUT');
+    expect(lastRequest?.path, '/api/pantry/5');
+    expect(lastRequest?.data['ing_id'], 9);
+    expect(lastRequest?.data['quantity'], 3);
+    expect(lastRequest?.data['unit'], 'kg');
+
+    expect(ingredient.pIngredientId, 5);
+    expect(ingredient.ingId, 9);
+    expect(ingredient.name, 'Rice');
+    expect(ingredient.details, '3kg • Pantry');
+    expect(ingredient.quantity, '3');
+    expect(ingredient.unit, 'kg');
+  });
+
+  test('updatePantryIngredient rejects invalid quantity before API call', () {
+    expect(
+      () => repository.updatePantryIngredient(
+        pIngredientId: 5,
+        ingId: 9,
+        quantity: 'three',
+        unit: 'kg',
+      ),
+      throwsArgumentError,
+    );
   });
 }

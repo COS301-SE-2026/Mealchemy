@@ -4,6 +4,7 @@ package com.mealchemy.vault.model;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+import java.util.*;
 
 /* Import classes */
 
@@ -18,14 +19,18 @@ public class VaultFolder {
     @Column(name = "folder_id")
     private int folderId;
 
-    @Column(name = "vault_id", nullable = false)
-    private int vaultId;
+    @ManyToOne
+    @JoinColumn(name = "vault_id", nullable = false)
+    private Vault vault;
 
     @Column(name = "name", nullable = false, length = 100)
     private String folderName;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
+
+    @OneToMany(mappedBy = "folder", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<VaultFolderRecipe> vaultFolderRecipes = new ArrayList<>();
 
     /* Getters */
 
@@ -34,9 +39,9 @@ public class VaultFolder {
         return folderId;
     }
     
-    public int getVaultId()
+    public Vault getVault()
     {
-        return vaultId;
+        return vault;
     }
 
     public String getFolderName()
@@ -49,15 +54,25 @@ public class VaultFolder {
         return createdAt;
     }
 
+    public List<VaultFolderRecipe> getVaultFolderRecipes()
+    {
+        return vaultFolderRecipes;
+    }
+
     /* Setters */
 
-    public void setVaultId(int vaultIdIn)
+    public void setVault(Vault vaultIn)
     {
-        vaultId = vaultIdIn;
+        vault = vaultIn;
     }
 
     public void setFolderName(String folderNameIn)
     {
         folderName = folderNameIn;
+    }
+
+    public void setVaultFolderRecipes(List<VaultFolderRecipe> vaultFolderRecipesIn)
+    {
+        vaultFolderRecipes = vaultFolderRecipesIn;
     }
 }
