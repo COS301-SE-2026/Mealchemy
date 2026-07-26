@@ -469,14 +469,26 @@ public class ShoppingListService {
             for (RecipeIngredient ingredient : recipeIngredients) {
                 // find match to current recipe ingredient
                 List<PantryIngredient> currentPantryIngredient = pantryIngredientRepository.findByUserIdAndIngId(userId, ingredient.getIngId());
+                
+                // if multiple of same ingredient is in pantry, check if all there quantities added are > recipe ingredients quantity else add ingredient to list
+                BigDecimal totalIngredientQuantity = BigDecimal.ZERO;
+                Boolean isEnough = true;
+                if (!currentPantryIngredient.isEmpty()) {
+                    for (PantryIngredient ing : currentPantryIngredient) {
+                        totalIngredientQuantity = totalIngredientQuantity.add(ing.getQuantity());
+                    }
+                    if (totalIngredientQuantity.compareTo(ingredient.getQuantity()) < 0) {
+                        isEnough = false; // not enough of the ingredient in the pantry- will need to add it
+                    }
+                }
                 // if list is empty - no match already in pantry therfore add item
-                if (currentPantryIngredient.isEmpty()) {
+                if (currentPantryIngredient.isEmpty() || !isEnough) {
                     //create new item
                     ShoppingListItem newItem = new ShoppingListItem();
                     newItem.setShoppingListId(saved.getShoppingListId());
                     newItem.setIngId(ingredient.getIngId());
                     newItem.setName(null); // because ingId from recipe will never be null
-                    newItem.setQuantity(ingredient.getQuantity());
+                    newItem.setQuantity(ingredient.getQuantity().subtract(totalIngredientQuantity)); //subtract the difference - if pantry has some of quantity, shopping list adds the rest
                     newItem.setUnit(ingredient.getUnit());
                     newItem.setPurchased(false);
                     // save item to repository
