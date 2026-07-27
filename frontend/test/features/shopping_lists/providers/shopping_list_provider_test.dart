@@ -63,8 +63,13 @@ class _ApiShapedShoppingListRepository implements ShoppingListRepository {
     required String listId,
     required String name,
     String status = 'ACTIVE',
-  }) {
-    throw UnimplementedError();
+  }) async {
+    final list = await getShoppingListById(listId);
+
+    return list!.copyWith(
+      title: name.trim(),
+      status: status,
+    );
   }
 
   @override
@@ -355,5 +360,36 @@ void main() {
       updatedState.lists.any((list) => list.id == 'general-list'),
       isFalse,
     );
+  });
+
+  //renames a shopping list in provider state
+  test('shoppingListsProvider updates shopping list name', () async {
+    //container used to read Riverpod providers in tests
+    final container = ProviderContainer(
+      overrides: [
+        shoppingListRepositoryProvider.overrideWithValue(
+          _ApiShapedShoppingListRepository(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(shoppingListsProvider.future);
+
+    final notifier = container.read(shoppingListsProvider.notifier);
+
+    await notifier.updateShoppingListName(
+      listId: '1',
+      name: 'Weekend Braai',
+    );
+
+    final updatedState = container.read(shoppingListsProvider).value!;
+    final list = updatedState.getListById('1')!;
+
+    expect(list.title, 'Weekend Braai');
+    expect(list.status, 'ACTIVE');
+
+    //items stay loaded because update endpoint only returns list
+    expect(list.items, isNotEmpty);
   });
 }

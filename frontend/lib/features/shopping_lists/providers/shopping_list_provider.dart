@@ -140,6 +140,35 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     state = AsyncData(current.copyWith(lists: updatedLists));
   }
 
+  //renames a shopping list and keeps local state in sync
+  Future<void> updateShoppingListName({
+    required String listId,
+    required String name,
+  }) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final existingList = current.getListById(listId);
+    if (existingList == null) return;
+
+    final updatedList = await _repository.updateShoppingList(
+      listId: listId,
+      name: name,
+      status: existingList.status ?? 'ACTIVE',
+    );
+
+    final updatedLists = current.lists.map((list) {
+      if (list.id != listId) return list;
+
+      return updatedList.copyWith(
+        //keep loaded items because the update endpoint returns list only
+        items: list.items,
+      );
+    }).toList();
+
+    state = AsyncData(current.copyWith(lists: updatedLists));
+  }
+
   //checks/unchecks
   Future<void> toggleItemChecked({
     required String listId,
