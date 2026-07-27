@@ -4,15 +4,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/ingredient_catalogue_item.dart';
+import '../models/unit_of_measurement.dart';
 import '../providers/ingredient_catalogue_provider.dart';
-
 
 class IngredientEditorRow extends ConsumerStatefulWidget {
   const IngredientEditorRow({
     super.key,
     required this.selectedItem,
     required this.quantityController,
-    required this.unitController,
+    required this.units,
+    required this.selectedUnit,
+    required this.onUnitChanged,
     required this.onItemSelected,
     required this.onRemove,
     this.showError = false,
@@ -20,7 +22,9 @@ class IngredientEditorRow extends ConsumerStatefulWidget {
 
   final IngredientCatalogueItem? selectedItem;
   final TextEditingController quantityController;
-  final TextEditingController unitController;
+  final List<UnitOfMeasurement> units;
+  final String? selectedUnit;
+  final ValueChanged<String?> onUnitChanged;
   final ValueChanged<IngredientCatalogueItem> onItemSelected;
   final VoidCallback onRemove;
   final bool showError;
@@ -54,20 +58,35 @@ class _IngredientEditorRowState extends ConsumerState<IngredientEditorRow> {
                 flex: 2,
                 child: TextField(
                   controller: widget.quantityController,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
                   decoration: _fieldDecoration('Qty'),
-                  style: AppTextStyles.body.copyWith(color: AppColors.textLight),
+                  style:
+                      AppTextStyles.body.copyWith(color: AppColors.textLight),
                 ),
               ),
               const SizedBox(width: 8),
               // unit
               Expanded(
-                flex: 2,
-                child: TextField(
-                  controller: widget.unitController,
+                flex: 3,
+                child: DropdownButtonFormField<String>(
+                  initialValue: widget.selectedUnit,
+                  isExpanded: true,
+                  icon: const Icon(Icons.keyboard_arrow_down,
+                      size: 18, color: AppColors.primary),
+                  style:
+                      AppTextStyles.body.copyWith(color: AppColors.textLight),
+                  dropdownColor: AppColors.surfaceWhite,
+                  hint: Text('Unit',
+                      style: AppTextStyles.body
+                          .copyWith(color: AppColors.textMuted)),
                   decoration: _fieldDecoration('Unit'),
-                  style: AppTextStyles.body.copyWith(color: AppColors.textLight),
+                  items: [
+                    for (final u in widget.units)
+                      DropdownMenuItem<String>(
+                        value: u.name,
+                        child: Text(u.name, overflow: TextOverflow.ellipsis),
+                      ),
+                  ],
+                  onChanged: widget.onUnitChanged,
                 ),
               ),
               // remove
@@ -111,7 +130,8 @@ class _IngredientEditorRowState extends ConsumerState<IngredientEditorRow> {
 }
 
 class _CataloguePickerField extends StatelessWidget {
-  const _CataloguePickerField({required this.selected, required this.onSelected});
+  const _CataloguePickerField(
+      {required this.selected, required this.onSelected});
 
   final IngredientCatalogueItem? selected;
   final ValueChanged<IngredientCatalogueItem> onSelected;
@@ -143,9 +163,8 @@ class _CataloguePickerField extends StatelessWidget {
           children: [
             Icon(Icons.search,
                 size: 18,
-                color: selected == null
-                    ? AppColors.textMuted
-                    : AppColors.primary),
+                color:
+                    selected == null ? AppColors.textMuted : AppColors.primary),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -166,7 +185,6 @@ class _CataloguePickerField extends StatelessWidget {
   }
 }
 
-
 class _CatalogueSearchSheet extends ConsumerStatefulWidget {
   const _CatalogueSearchSheet();
 
@@ -175,8 +193,7 @@ class _CatalogueSearchSheet extends ConsumerStatefulWidget {
       _CatalogueSearchSheetState();
 }
 
-class _CatalogueSearchSheetState
-    extends ConsumerState<_CatalogueSearchSheet> {
+class _CatalogueSearchSheetState extends ConsumerState<_CatalogueSearchSheet> {
   String _query = '';
 
   @override
@@ -195,8 +212,8 @@ class _CatalogueSearchSheetState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('SEARCH INGREDIENT',
-              style: AppTextStyles.label.copyWith(
-                  color: AppColors.accentMuted, letterSpacing: 2)),
+              style: AppTextStyles.label
+                  .copyWith(color: AppColors.accentMuted, letterSpacing: 2)),
           const SizedBox(height: 12),
           TextField(
             autofocus: true,
@@ -216,11 +233,9 @@ class _CatalogueSearchSheetState
           SizedBox(
             height: 320,
             child: resultsAsync.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (_, __) => Text('Search failed.',
-                  style:
-                      AppTextStyles.body.copyWith(color: AppColors.error)),
+                  style: AppTextStyles.body.copyWith(color: AppColors.error)),
               data: (items) => items.isEmpty
                   ? Center(
                       child: Text('No matches.',
@@ -233,13 +248,13 @@ class _CatalogueSearchSheetState
                         return ListTile(
                           contentPadding: EdgeInsets.zero,
                           title: Text(item.name,
-                              style: AppTextStyles.title.copyWith(
-                                  color: AppColors.textLight)),
+                              style: AppTextStyles.title
+                                  .copyWith(color: AppColors.textLight)),
                           subtitle: item.category == null
                               ? null
                               : Text(item.category!,
-                                  style: AppTextStyles.caption.copyWith(
-                                      color: AppColors.textMuted)),
+                                  style: AppTextStyles.caption
+                                      .copyWith(color: AppColors.textMuted)),
                           onTap: () => Navigator.pop(context, item),
                         );
                       },

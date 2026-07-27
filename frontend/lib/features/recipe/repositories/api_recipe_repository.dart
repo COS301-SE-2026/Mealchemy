@@ -4,6 +4,7 @@ import '../models/recipe.dart';
 import 'recipe_repository.dart';
 import '../models/recipe_step.dart';
 import '../models/recipe_ingredient.dart';
+import '../models/unit_of_measurement.dart';
 
 //placeholder for api integration
 class ApiRecipeRepository implements RecipeRepository {
@@ -84,6 +85,15 @@ class ApiRecipeRepository implements RecipeRepository {
     final data = response.data as List<dynamic>;
     return data
         .map((e) => RecipeStep.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<List<UnitOfMeasurement>> getUnits() async {
+    final response = await _dio.get('/api/units-of-measurement');
+    final data = response.data as List<dynamic>;
+    return data
+        .map((e) => UnitOfMeasurement.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 }

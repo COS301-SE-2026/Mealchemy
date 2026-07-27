@@ -1,6 +1,7 @@
 import '../models/recipe.dart';
 import '../models/recipe_step.dart';
 import '../models/recipe_ingredient.dart';
+import '../models/unit_of_measurement.dart';
 //essentially an abstract class/interface
 
 //uses mock/API data
@@ -19,4 +20,5 @@ abstract class RecipeRepository {
   Future<void> addRecipeIngredient(int recipeId, RecipeIngredient ingredient);
   Future<List<RecipeIngredient>> getRecipeIngredients(int recipeId);
   Future<List<RecipeStep>> getRecipeSteps(int recipeId);
+  Future<List<UnitOfMeasurement>> getUnits();
 }

@@ -10,6 +10,7 @@ import '../../vault/models/vault.dart';
 import '../models/recipe.dart';
 import '../models/recipe_ingredient.dart';
 import '../models/recipe_step.dart';
+import '../models/unit_of_measurement.dart';
 import '../repositories/api_recipe_repository.dart';
 import '../repositories/mock_recipe_repository.dart';
 import '../repositories/recipe_repository.dart';
@@ -164,4 +165,9 @@ final addRecipeProvider =
     ref.watch(vaultRepositoryProvider),
     ref,
   );
+});
+
+final unitsProvider = FutureProvider<List<UnitOfMeasurement>>((ref) {
+  final repository = ref.watch(recipeRepositoryProvider);
+  return repository.getUnits();
 });

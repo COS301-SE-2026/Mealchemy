@@ -15,6 +15,7 @@ import '../models/recipe_step.dart';
 import '../providers/recipe_provider.dart';
 import '../widgets/ingredient_editor_row.dart';
 import '../widgets/step_editor_row.dart';
+import '../models/unit_of_measurement.dart';
 
 class AddRecipeScreen extends ConsumerStatefulWidget {
   const AddRecipeScreen({super.key});
@@ -108,7 +109,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       final ingredient = RecipeIngredient(
         ingId: r.item!.ingId,
         quantity: double.tryParse(r.quantity.text),
-        unit: r.unit.text.trim(),
+        unit: r.unit!,
         sortOrder: i,
       );
       try {
@@ -126,7 +127,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       );
       try {
         await recipeRepo.addRecipeStep(created.recipeId, step);
-      } catch (e, st) {
+      } catch (e) {
         saveFailed = true;
       }
     }
@@ -166,6 +167,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     });
 
     final cuisinesState = ref.watch(cuisineTypesProvider);
+    final unitsState = ref.watch(unitsProvider);
     final submissionState = ref.watch(addRecipeProvider);
 
     return Scaffold(
@@ -183,14 +185,18 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
         child: cuisinesState.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => const _AddRecipeError(),
-          data: (cuisines) =>
-              _buildForm(cuisines, submissionState.isSubmitting),
+          data: (cuisines) => unitsState.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, _) => const _AddRecipeError(),
+            data: (units) =>
+                _buildForm(cuisines, units, submissionState.isSubmitting),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildForm(List<String> cuisines, bool isSubmitting) {
+  Widget _buildForm(List<String> cuisines, List<UnitOfMeasurement> units, bool isSubmitting) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
       children: [
@@ -311,7 +317,9 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
             key: ValueKey(_ingredientRows[i]),
             selectedItem: _ingredientRows[i].item,
             quantityController: _ingredientRows[i].quantity,
-            unitController: _ingredientRows[i].unit,
+            units: units,
+            selectedUnit: _ingredientRows[i].unit,
+            onUnitChanged: (u) => setState(() => _ingredientRows[i].unit = u),
             onItemSelected: (item) =>
                 setState(() => _ingredientRows[i].item = item),
             onRemove: () => setState(() {
@@ -400,22 +408,17 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
 class _IngredientRowData {
   IngredientCatalogueItem? item;
   final TextEditingController quantity = TextEditingController();
-  final TextEditingController unit = TextEditingController();
+  String? unit;
 
   // the user has begun filling this row
   bool get isStarted =>
-      item != null || quantity.text.isNotEmpty || unit.text.isNotEmpty;
+      item != null || quantity.text.isNotEmpty || unit != null;
 
   // fully valid for saving
   bool get isValid =>
-      item != null &&
-      double.tryParse(quantity.text) != null &&
-      unit.text.trim().isNotEmpty;
+      item != null && double.tryParse(quantity.text) != null && unit != null;
 
-  void dispose() {
-    quantity.dispose();
-    unit.dispose();
-  }
+  void dispose() => quantity.dispose();
 }
 
 class _StepRowData {
