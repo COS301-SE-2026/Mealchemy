@@ -46,4 +46,11 @@ abstract class ShoppingListRepository {
 
   //deletes a whole shopping list
   Future<void> deleteShoppingList(String listId);
+
+  //updates a shopping list name/status
+  Future<ShoppingList> updateShoppingList({
+    required String listId,
+    required String name,
+    String status = 'ACTIVE',
+  });
 }

@@ -167,4 +167,26 @@ class ApiShoppingListRepository implements ShoppingListRepository {
   Future<void> deleteShoppingList(String listId) async {
     await _dio.delete<void>('/api/shopping-lists/$listId');
   }
+
+  @override
+  Future<ShoppingList> updateShoppingList({
+    required String listId,
+    required String name,
+    String status = 'ACTIVE',
+  }) async {
+    final cleanedName = name.trim();
+    if (cleanedName.isEmpty) {
+      throw ArgumentError('Shopping list name is required.');
+    }
+
+    final response = await _dio.put<Map<String, dynamic>>(
+      '/api/shopping-lists/$listId',
+      data: {
+        'name': cleanedName,
+        'status': status,
+      },
+    );
+
+    return ShoppingList.fromJson(response.data ?? {});
+  }
 }

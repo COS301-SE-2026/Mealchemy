@@ -179,6 +179,24 @@ void main() {
             return;
           }
 
+          if (options.method == 'PUT' &&
+              options.path == '/api/shopping-lists/1') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: {
+                  'shopping_list_id': 1,
+                  'user_id': 3,
+                  'name': options.data['name'],
+                  'status': options.data['status'],
+                  'created_at': '2026-07-13T14:00:00Z',
+                },
+              ),
+            );
+            return;
+          }
+
           if (options.path == '/api/shopping-lists/1') {
             handler.resolve(
               Response(
@@ -420,5 +438,41 @@ void main() {
 
     expect(lastRequest?.method, 'DELETE');
     expect(lastRequest?.path, '/api/shopping-lists/1');
+  });
+  test('updateShoppingList puts updated list details and maps response',
+      () async {
+    final list = await repository.updateShoppingList(
+      listId: '1',
+      name: 'Weekend Braai',
+    );
+
+    expect(lastRequest?.method, 'PUT');
+    expect(lastRequest?.path, '/api/shopping-lists/1');
+    expect(lastRequest?.data['name'], 'Weekend Braai');
+    expect(lastRequest?.data['status'], 'ACTIVE');
+
+    expect(list.id, '1');
+    expect(list.shoppingListId, 1);
+    expect(list.title, 'Weekend Braai');
+    expect(list.status, 'ACTIVE');
+  });
+
+  test('updateShoppingList trims name before sending request', () async {
+    await repository.updateShoppingList(
+      listId: '1',
+      name: '  Weekly Shop  ',
+    );
+
+    expect(lastRequest?.data['name'], 'Weekly Shop');
+  });
+
+  test('updateShoppingList rejects blank name', () {
+    expect(
+      () => repository.updateShoppingList(
+        listId: '1',
+        name: '   ',
+      ),
+      throwsArgumentError,
+    );
   });
 }

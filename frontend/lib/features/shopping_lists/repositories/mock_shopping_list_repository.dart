@@ -273,4 +273,28 @@ class MockShoppingListRepository implements ShoppingListRepository {
   Future<void> deleteShoppingList(String listId) async {
     //mock accepts delete request and provider removes it from local state
   }
+
+  @override
+  Future<ShoppingList> updateShoppingList({
+    required String listId,
+    required String name,
+    String status = 'ACTIVE',
+  }) async {
+    final cleanedName = name.trim();
+    if (cleanedName.isEmpty) {
+      throw ArgumentError('Shopping list name is required.');
+    }
+
+    final existingList = await getShoppingListById(listId);
+
+    if (existingList == null) {
+      throw StateError('Shopping list not found.');
+    }
+
+    //mock returns the renamed list, just like the backend would
+    return existingList.copyWith(
+      title: cleanedName,
+      status: status,
+    );
+  }
 }

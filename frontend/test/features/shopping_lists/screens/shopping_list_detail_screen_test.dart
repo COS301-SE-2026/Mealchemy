@@ -90,6 +90,15 @@ class _DeleteMenuShoppingListRepository implements ShoppingListRepository {
   }
 
   @override
+  Future<ShoppingList> updateShoppingList({
+    required String listId,
+    required String name,
+    String status = 'ACTIVE',
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<ShoppingListItem> addItemToShoppingList({
     required String listId,
     required String name,
