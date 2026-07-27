@@ -14,6 +14,6 @@ import org.springframework.data.repository.query.Param;
 public interface UnitOfMeasurementRepository extends JpaRepository<UnitOfMeasurement, Integer> {
     // built-in types
 
-    List<UnitOfMeasurement> findByMeasurementSystem(MeasurementSystem system);
+    List<UnitOfMeasurement> findBySystem(MeasurementSystem system);
     
 }

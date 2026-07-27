@@ -9,17 +9,8 @@ import '../models/vault.dart';
 import '../models/vault_folder.dart';
 import '../models/vault_folder_recipe.dart';
 import '../repositories/vault_repository.dart';
-import '../repositories/mock_vault_repository.dart';
-import '../repositories/api_vault_repository.dart';
+import '../providers/vault_repository_provider.dart';
 import '../models/vault_member.dart';
-
-final vaultRepositoryProvider = Provider<VaultRepository>((ref) {
-  if (AppConfig.useMockData) {
-    return MockVaultRepository();
-  }
-
-  return ApiVaultRepository(ref.read(dioProvider));
-});
 
 // Vaults provider
 final vaultsProvider = FutureProvider<List<Vault>>((ref) async {
@@ -28,6 +19,7 @@ final vaultsProvider = FutureProvider<List<Vault>>((ref) async {
   if (auth.userId == null) return [];
   return ref.watch(vaultRepositoryProvider).getMyVaults();
 });
+
 
 // Vault folders provider
 final vaultFoldersProvider = FutureProvider.family<List<VaultFolder>, int>((ref, vaultId) {

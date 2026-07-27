@@ -5,7 +5,7 @@ import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_confirm_dialog.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_input_dialog.dart';
 import 'package:mealchemy/features/auth/providers/auth_provider.dart';
-
+import '../providers/vault_repository_provider.dart';
 import '../models/vault.dart';
 import '../providers/vault_provider.dart';
 

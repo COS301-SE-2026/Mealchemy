@@ -4,6 +4,7 @@ import '../models/recipe.dart';
 import 'recipe_repository.dart';
 import '../models/recipe_step.dart';
 import '../models/recipe_ingredient.dart';
+
 //placeholder for api integration
 class ApiRecipeRepository implements RecipeRepository {
   final Dio _dio;
@@ -26,9 +27,9 @@ class ApiRecipeRepository implements RecipeRepository {
 
   //Create the recipe with (metadata only) returns the new recipe with its id
   @override
-  Future<Recipe> addRecipe(Recipe recipe) async {
+  Future<Recipe> addRecipe(Recipe recipe, int folderId) async {
     final response =
-        await _dio.post('/recipes/create', data: recipe.toCreateRequestJson());
+        await _dio.post('/recipes/create', data: { ...recipe.toCreateRequestJson(), 'folderId': folderId,});
     return Recipe.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -41,10 +42,12 @@ class ApiRecipeRepository implements RecipeRepository {
   }
 
   @override
-  Future<List<String>> getCuisineTypes() {
-    throw UnimplementedError(
-      'Recipe API integration has not been implemented yet.',
-    );
+  Future<List<String>> getCuisineTypes() async {
+    final response = await _dio.get('/flavourprofileoptions/all');
+    final data = response.data as List<dynamic>;
+    return data
+        .map((e) => (e as Map<String, dynamic>)['value'] as String)
+        .toList();
   }
 
   @override

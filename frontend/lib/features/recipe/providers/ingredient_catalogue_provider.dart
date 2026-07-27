@@ -9,7 +9,7 @@ import '../repositories/mock_ingredient_catalogue_repository.dart';
 
 final ingredientCatalogueRepositoryProvider =
     Provider<IngredientCatalogueRepository>((ref) {
-  if (AppConfig.useMockData) {
+  if (AppConfig.mockRecipe) {
     return MockIngredientCatalogueRepository();
   }
   return ApiIngredientCatalogueRepository(ref.read(dioProvider));

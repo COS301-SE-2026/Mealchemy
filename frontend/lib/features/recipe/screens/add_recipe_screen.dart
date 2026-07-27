@@ -11,10 +11,11 @@ import '../../vault/providers/vault_provider.dart';
 import '../models/ingredient_catalogue_item.dart';
 import '../models/recipe.dart';
 import '../models/recipe_ingredient.dart';
-import '../models/recipe_step.dart';                        // ← ADDED
+import '../models/recipe_step.dart'; 
 import '../providers/recipe_provider.dart';
 import '../widgets/ingredient_editor_row.dart';
-import '../widgets/step_editor_row.dart'; 
+import '../widgets/step_editor_row.dart';
+import '../../vault/providers/vault_repository_provider.dart';
 
 class AddRecipeScreen extends ConsumerStatefulWidget {
   const AddRecipeScreen({super.key});
@@ -94,26 +95,8 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       isCommunityPublished: _publishToGlobal,
     );
 
-    final created = await ref.read(addRecipeProvider.notifier).submit(recipe);
+    final created = await ref.read(addRecipeProvider.notifier).submit(recipe , folderId: _selectedFolderId);
     if (created == null) return;
-
-    try {
-      final folderId = _selectedFolderId ?? await _ensureMyRecipesFolder();
-      await ref
-          .read(vaultRepositoryProvider)
-          .addRecipeToFolder(folderId, created.recipeId);
-      ref.invalidate(privateFoldersProvider);
-      final private = ref.read(privateVaultProvider);
-      if (private != null) {
-        ref.invalidate(vaultFoldersProvider(private.vaultId));
-      }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Recipe saved, but could not file it.')),
-        );
-      }
-    }
 
     var saveFailed = false;
     final validRows = _ingredientRows.where((r) => r.isValid).toList();
@@ -133,7 +116,6 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
         saveFailed = true;
       }
     }
-
 
     final validSteps = _stepRows.where((s) => s.isValid).toList();
     for (int i = 0; i < validSteps.length; i++) {
@@ -157,22 +139,15 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     }
   }
 
-  // finds or creates a "My Recipes" folder in the private vault
-  Future<int> _ensureMyRecipesFolder() async {
-    final vaultRepo = ref.read(vaultRepositoryProvider);
-    final private = ref.read(privateVaultProvider);
-    if (private == null) throw StateError('No private vault.');
-    final folders = await vaultRepo.getFolders(private.vaultId);
-    final existing = folders.where((f) => f.folderName == 'My Recipes');
-    if (existing.isNotEmpty) return existing.first.folderId;
-    final created = await vaultRepo.createFolder(private.vaultId, 'My Recipes');
-    return created.folderId;
-  }
-
   @override
   Widget build(BuildContext context) {
     ref.listen<AddRecipeState>(addRecipeProvider, (prev, next) {
       if (next.isSuccess) {
+        ref.invalidate(vaultsProvider);         
+        ref.invalidate(vaultFoldersProvider);    
+        ref.invalidate(folderRecipesProvider); 
+        ref.invalidate(privateFoldersProvider);  
+        ref.invalidate(recipesProvider);        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Recipe saved')),
         );

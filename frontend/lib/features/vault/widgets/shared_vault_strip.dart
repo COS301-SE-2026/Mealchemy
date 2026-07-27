@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_input_dialog.dart';
-
+import '../providers/vault_repository_provider.dart';
 import '../providers/vault_provider.dart';
 
 // Horizontal strip of shared vault avatars with a trailing add circle,

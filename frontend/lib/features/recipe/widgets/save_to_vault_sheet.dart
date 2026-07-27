@@ -7,6 +7,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../vault/models/vault.dart';
 import '../../vault/models/vault_folder.dart';
 import '../../vault/providers/vault_provider.dart';
+import '../../vault/providers/vault_repository_provider.dart';
 
 // You pick a vault, then a folder in it, then save the recipe into that folder.
 Future<void> showSaveToVaultSheet({

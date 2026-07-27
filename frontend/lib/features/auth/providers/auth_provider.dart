@@ -8,7 +8,7 @@ import '../repositories/mock_auth_repository.dart';
 import '../../../core/providers/api_service_provider.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  if (AppConfig.useMockData) {
+  if (AppConfig.mockAuth) {
     return MockAuthRepository();
   }
   return ApiAuthRepository(ref.read(dioProvider));

@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_config.dart';
 import '../../../core/providers/api_service_provider.dart';
+import '../../vault/providers/vault_repository_provider.dart';
+import '../../vault/repositories/vault_repository.dart';
+import '../../vault/models/vault.dart';
 import '../models/recipe.dart';
 import '../repositories/api_recipe_repository.dart';
 import '../repositories/mock_recipe_repository.dart';
@@ -11,7 +14,7 @@ import '../repositories/recipe_repository.dart';
 
 //selects mock/API repo
 final recipeRepositoryProvider = Provider<RecipeRepository>((ref) {
-  if (AppConfig.useMockData) {
+  if (AppConfig.mockRecipe) {
     return MockRecipeRepository();
   }
 
@@ -64,13 +67,33 @@ class AddRecipeState {
 }
 
 class AddRecipeNotifier extends StateNotifier<AddRecipeState> {
-  AddRecipeNotifier(this._repository, this._ref)
+  AddRecipeNotifier(this._repository, this._vaultRepository, this._ref)
       : super(const AddRecipeState());
 
   final RecipeRepository _repository;
+  final VaultRepository _vaultRepository;
   final Ref _ref;
 
-   Future<Recipe?> submit(Recipe recipe, {int? recipeId}) async {
+  static const _defaultFolderName = 'My Recipes';
+  Future<int> _resolveDefaultFolderId() async {
+    final vaults = await _vaultRepository.getMyVaults();
+    final privateVault = vaults.firstWhere(
+      (v) => v.vaultType == VaultTypes.private,
+      orElse: () => throw StateError('No private vault found for this user.'),
+    );
+
+    final folders = await _vaultRepository.getFolders(privateVault.vaultId);
+    final existing = folders.where((f) => f.folderName == _defaultFolderName);
+    if (existing.isNotEmpty) return existing.first.folderId;
+
+    final created = await _vaultRepository.createFolder(
+      privateVault.vaultId,
+      _defaultFolderName,
+    );
+    return created.folderId;
+  }
+
+  Future<Recipe?> submit(Recipe recipe, {int? folderId, int? recipeId}) async {
     final missing = recipe.title.trim().isEmpty ||
         (recipe.cuisineType ?? '').isEmpty ||
         recipe.prepTimeMins == null ||
@@ -85,10 +108,14 @@ class AddRecipeNotifier extends StateNotifier<AddRecipeState> {
     //replace whole state
     state = const AddRecipeState(isSubmitting: true);
 
-    try {
-      final result = recipeId != null
-          ? await _repository.updateRecipe(recipeId, recipe)
-          : await _repository.addRecipe(recipe);
+     try {
+      final Recipe result;
+      if (recipeId != null) {
+        result = await _repository.updateRecipe(recipeId, recipe);
+      } else {
+        final targetFolderId = folderId ?? await _resolveDefaultFolderId();
+        result = await _repository.addRecipe(recipe, targetFolderId);
+      }
       state = const AddRecipeState(isSuccess: true);
       _ref.invalidate(recipesProvider);
       return result;
@@ -115,5 +142,5 @@ class AddRecipeNotifier extends StateNotifier<AddRecipeState> {
 
 final addRecipeProvider =
     StateNotifierProvider<AddRecipeNotifier, AddRecipeState>((ref) {
-   return AddRecipeNotifier(ref.watch(recipeRepositoryProvider), ref);
+  return AddRecipeNotifier(ref.watch(recipeRepositoryProvider),  ref.watch(vaultRepositoryProvider), ref,);
 });

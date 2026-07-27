@@ -20,7 +20,7 @@ import '../../features/shopping_lists/screens/shopping_list_detail_screen.dart';
 import '../../features/guided_discovery/screens/guided_discovery_screen.dart';
 
 final appRouter = GoRouter(
-  initialLocation: AppRoutes.dashboard,
+  initialLocation: AppRoutes.login,
     // Sets the first screen shown when the app launches. 
                                     // During development: change this to your screen (e.g. AppRoutes.pantry)
                                     // Before committing: ALWAYS reset this back to AppRoutes.login
