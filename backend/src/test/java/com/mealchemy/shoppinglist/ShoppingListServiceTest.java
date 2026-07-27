@@ -22,6 +22,11 @@ import com.mealchemy.shared.enums.ShoppingListStatus;
 import com.mealchemy.ingredient.model.IngredientCatalogue;
 import com.mealchemy.category.model.IngredientCategory;
 import com.mealchemy.pantry.model.PantryIngredient;
+import com.mealchemy.recipe.model.Recipe;
+import com.mealchemy.recipe.model.RecipeIngredient; // can get recipeId from recipe ingredients table
+import com.mealchemy.vault.model.Vault;
+import com.mealchemy.vault.model.VaultFolderRecipe;
+
 
 //repositories
 import com.mealchemy.shoppinglist.repository.ShoppingListRepository;
@@ -29,6 +34,10 @@ import com.mealchemy.shoppinglist.repository.ShoppingListItemRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.category.repository.IngredientCategoryRepository;
 import com.mealchemy.pantry.repository.PantryIngredientRepository;
+import com.mealchemy.recipe.repository.RecipeRepository;
+import com.mealchemy.recipe.repository.RecipeIngredientRepository;
+import com.mealchemy.vault.repository.VaultFolderRecipeRepository;
+import com.mealchemy.vault.repository.VaultMemberRepository;
 
 // import service
 import com.mealchemy.shoppinglist.service.ShoppingListService;
@@ -60,6 +69,10 @@ public class ShoppingListServiceTest {
     @Mock private IngredientCatalogueRepository ingredientCatalogueRepository;
     @Mock private IngredientCategoryRepository ingredientCategoryRepository;
     @Mock private PantryIngredientRepository pantryIngredientRepository;
+    @Mock private RecipeRepository recipeRepository;
+    @Mock private RecipeIngredientRepository recipeIngredientRepository;
+    @Mock private VaultFolderRecipeRepository vaultFolderRecipeRepository;
+    @Mock private VaultMemberRepository vaultMemberRepository; 
     
     // @InjectMocks creates the real PantryService and injects the mocks above into it - actually testing ShoppingListService
     @InjectMocks
@@ -69,6 +82,8 @@ public class ShoppingListServiceTest {
     private ShoppingListItem existingShoppingListItem;
     private IngredientCatalogue catalogueInstance;
     private IngredientCategory categoryInstance;
+    private Recipe existingRecipe;
+    private PantryIngredient existingPantryIngredient;
 
     // requests that have bodies that need to be mocked
     private CreateShoppingListRequest createShoppingListRequest;
@@ -76,6 +91,7 @@ public class ShoppingListServiceTest {
     private CreateShoppingListItemRequest createShoppingListItemRequest;
     private UpdateShoppingListItemRequest updateShoppingListItemRequest;
     private PurchasedUpdateRequest purchasedUpdateRequest;
+    private PantryRecipeComparisonRequest pantryRecipeComparisonRequest;
     
 
     @BeforeEach
@@ -102,6 +118,23 @@ public class ShoppingListServiceTest {
 
         categoryInstance = new IngredientCategory();
         categoryInstance.setCategoryName("Legumes and Legume Products");
+
+        existingRecipe = new Recipe();
+        existingRecipe.setOwnerId(1);
+        existingRecipe.setTitle("Braised Short Rib");
+        existingRecipe.setDescription("A slow-braised short rib recipe.");
+        existingRecipe.setCuisineType("French");
+        existingRecipe.setPrepTimeMins(20);
+        existingRecipe.setCookingTimeMins(180);
+        existingRecipe.setServingSize(4);
+        existingRecipe.setIsCommunityPublished(false);
+        
+        existingPantryIngredient = new PantryIngredient();
+        existingPantryIngredient.setUserId(1);
+        existingPantryIngredient.setIngredientId(2);
+        existingPantryIngredient.setQuantity(new BigDecimal("500"));
+        existingPantryIngredient.setUnit("g");
+        
 
         // what flutter sends when creating new shopping list
         createShoppingListRequest = new CreateShoppingListRequest(
@@ -134,6 +167,13 @@ public class ShoppingListServiceTest {
 
         // what flutter sends to dedicated purchased toggle 
         purchasedUpdateRequest = new PurchasedUpdateRequest(true);
+
+        // generate shopping list request
+        pantryRecipeComparisonRequest = new PantryRecipeComparisonRequest(
+            "Generate with all ingredients",
+            false
+        );
+
     }
 
 
@@ -1214,5 +1254,186 @@ public class ShoppingListServiceTest {
 
         assertFalse(response.shoppingListDeleted());
         verify(shoppingListRepository, never()).delete(any(ShoppingList.class));
+    }
+
+
+    // ========== Generating Shopping List Items (Compares recipe to current pantry ingredients and inserts the rest into shopping list) Testing ==========
+
+    @Test
+    void generateShoppingListFromRecipe_whenRecipeNotFound_throwNotFound() {
+        // Arrange
+        ReflectionTestUtils.setField(existingRecipe, "recipeId", 1);
+        when(recipeRepository.findById(1)).thenReturn(Optional.empty());
+        
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.generateShoppingListFromRecipe(1, 1, pantryRecipeComparisonRequest)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void generateShoppingListFromRecipe_whenUserIsOwner_allowsAccess() {
+        // Arrange
+        existingRecipe.setOwnerId(1);
+        ReflectionTestUtils.setField(existingRecipe, "recipeId", 1);
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
+        when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of());
+
+        ShoppingList savedList = new ShoppingList();
+        savedList.setUserId(1);
+        savedList.setName("Generate with all ingredients");
+        savedList.setStatus(ShoppingListStatus.ACTIVE);
+        ReflectionTestUtils.setField(savedList, "shoppingListId", 10);
+        when(shoppingListRepository.save(any(ShoppingList.class))).thenReturn(savedList);
+
+        // Act
+        ShoppingListResponse response = shoppingListService.generateShoppingListFromRecipe(1, 1, pantryRecipeComparisonRequest);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(10, response.shoppingListId());
+        assertEquals(1, response.userId());
+    }
+
+    @Test
+    void generateShoppingListFromRecipe_userDoesNotHaveAccess_throwsNotFound() {
+        // Arrange
+        existingRecipe.setOwnerId(1);
+        existingRecipe.setIsCommunityPublished(false);
+        ReflectionTestUtils.setField(existingRecipe, "recipeId", 1);
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
+        when(vaultFolderRecipeRepository.findByRecipe_RecipeId(1)).thenReturn(List.of());
+
+        // Act 
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.generateShoppingListFromRecipe(1, 1, pantryRecipeComparisonRequest)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+
+    }
+
+    @Test
+    void generateShoppingListFromRecipe_addAllRecipeIngredients() {
+        // Arrange
+        RecipeIngredient ingredient1 = new RecipeIngredient();
+        ingredient1.setIngId(2);
+        ingredient1.setQuantity(new BigDecimal("100"));
+        ingredient1.setUnit("g");
+
+        RecipeIngredient ingredient2 = new RecipeIngredient();
+        ingredient2.setIngId(3);
+        ingredient2.setQuantity(new BigDecimal("50"));
+        ingredient2.setUnit("ml");
+
+        existingRecipe.setOwnerId(1);
+        ReflectionTestUtils.setField(existingRecipe, "recipeId", 1);
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
+        when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(ingredient1, ingredient2));
+
+        ShoppingList savedList = new ShoppingList();
+        savedList.setUserId(1);
+        savedList.setName("Generate with all ingredients");
+        savedList.setStatus(ShoppingListStatus.ACTIVE);
+        ReflectionTestUtils.setField(savedList, "shoppingListId", 10);
+        when(shoppingListRepository.save(any(ShoppingList.class))).thenReturn(savedList);
+
+        shoppingListService.generateShoppingListFromRecipe(1, 1, pantryRecipeComparisonRequest);
+
+        // Assert
+        verify(shoppingListItemRepository, times(2)).save(any(ShoppingListItem.class));
+        verify(pantryIngredientRepository, never()).findByUserIdAndIngId(any(), any());
+    }
+
+    @Test
+    void generateShoppingListFromRecipe_addOnlyItemsNotInPantry() {
+        // Arrange
+        pantryRecipeComparisonRequest = new PantryRecipeComparisonRequest(
+                " Generate missing only",
+                true
+        );
+
+        RecipeIngredient ingredient1 = new RecipeIngredient();
+        ingredient1.setIngId(2);
+        ingredient1.setQuantity(new BigDecimal("100"));
+        ingredient1.setUnit("g");
+
+        RecipeIngredient ingredient2 = new RecipeIngredient();
+        ingredient2.setIngId(3);
+        ingredient2.setQuantity(new BigDecimal("50"));
+        ingredient2.setUnit("ml");
+
+        existingRecipe.setOwnerId(1);
+        ReflectionTestUtils.setField(existingRecipe, "recipeId", 1);
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
+        when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(ingredient1, ingredient2));
+
+        when(pantryIngredientRepository.findByUserIdAndIngId(1, 2)).thenReturn(List.of());
+        when(pantryIngredientRepository.findByUserIdAndIngId(1, 3)).thenReturn(List.of());
+
+        ShoppingList savedList = new ShoppingList();
+        savedList.setUserId(1);
+        savedList.setName("Generate with all ingredients");
+        savedList.setStatus(ShoppingListStatus.ACTIVE);
+        ReflectionTestUtils.setField(savedList, "shoppingListId", 10);
+        when(shoppingListRepository.save(any(ShoppingList.class))).thenReturn(savedList);
+
+        // Act
+        shoppingListService.generateShoppingListFromRecipe(1, 1, pantryRecipeComparisonRequest);
+
+        // Assert
+        verify(shoppingListItemRepository, times(2)).save(any(ShoppingListItem.class));
+    }
+
+    @Test
+    void generateShoppingListFromRecipe_mixedSomeAlreadyInPantry_addOnlyItemsNotInPantry() {
+        // Arrange
+        pantryRecipeComparisonRequest = new PantryRecipeComparisonRequest(
+                " Generate missing only",
+                true
+        );
+
+        RecipeIngredient ingredient1 = new RecipeIngredient();
+        ingredient1.setIngId(2);
+        ingredient1.setQuantity(new BigDecimal("100"));
+        ingredient1.setUnit("g");
+
+        RecipeIngredient ingredient2 = new RecipeIngredient();
+        ingredient2.setIngId(3);
+        ingredient2.setQuantity(new BigDecimal("50"));
+        ingredient2.setUnit("ml");
+
+        existingRecipe.setOwnerId(1);
+        ReflectionTestUtils.setField(existingRecipe, "recipeId", 1);
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
+        when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(ingredient1, ingredient2));
+
+        PantryIngredient existingPantryIngredient = new PantryIngredient();
+        existingPantryIngredient.setUserId(1);
+        existingPantryIngredient.setIngredientId(2);
+        existingPantryIngredient.setQuantity(new BigDecimal("500"));
+        existingPantryIngredient.setUnit("g");
+
+        // ingredient1 (id = 2) already in pantry - will be skipped
+        when(pantryIngredientRepository.findByUserIdAndIngId(1, 2)).thenReturn(List.of(existingPantryIngredient));
+        // ingredient2
+        when(pantryIngredientRepository.findByUserIdAndIngId(1, 3)).thenReturn(List.of());
+
+        ShoppingList savedList = new ShoppingList();
+        savedList.setUserId(1);
+        savedList.setName("Generate missing only");
+        savedList.setStatus(ShoppingListStatus.ACTIVE);
+        ReflectionTestUtils.setField(savedList, "shoppingListId", 10);
+        when(shoppingListRepository.save(any(ShoppingList.class))).thenReturn(savedList);
+        // Act
+        shoppingListService.generateShoppingListFromRecipe(1, 1, pantryRecipeComparisonRequest);
+
+        // Assert
+        verify(shoppingListItemRepository, times(1)).save(any(ShoppingListItem.class));
     }
 }
