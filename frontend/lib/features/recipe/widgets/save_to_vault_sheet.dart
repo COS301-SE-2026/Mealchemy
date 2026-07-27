@@ -56,22 +56,22 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
 
           // vault picker
           Text('Vault',
-              style: AppTextStyles.bodySmall
-                  .copyWith(color: AppColors.textMuted)),
+              style:
+                  AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted)),
           const SizedBox(height: 8),
           vaultsAsync.when(
             loading: () => const LinearProgressIndicator(),
             error: (_, __) => Text('Could not load vaults.',
-                style: AppTextStyles.bodySmall
-                    .copyWith(color: AppColors.error)),
+                style:
+                    AppTextStyles.bodySmall.copyWith(color: AppColors.error)),
             data: (vaults) => _vaultDropdown(vaults),
           ),
           const SizedBox(height: 16),
 
           // folder picker (depends on chosen vault)
           Text('Folder',
-              style: AppTextStyles.bodySmall
-                  .copyWith(color: AppColors.textMuted)),
+              style:
+                  AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted)),
           const SizedBox(height: 8),
           if (_vaultId == null)
             _disabledField('Pick a vault first')
@@ -159,6 +159,9 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
       await ref
           .read(vaultRepositoryProvider)
           .addRecipeToFolder(_folderId!, widget.recipeId);
+      ref.invalidate(vaultFoldersProvider(_vaultId!));
+      ref.invalidate(folderRecipesProvider(_folderId!));
+      ref.invalidate(folderRecipeDisplayProvider(_folderId!));
       ref.invalidate(vaultFoldersProvider(_vaultId!));
       if (mounted) {
         Navigator.pop(context);
