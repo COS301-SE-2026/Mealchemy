@@ -187,4 +187,48 @@ void main() {
 
     expect(find.text('General List'), findsNothing);
   });
+
+  testWidgets('ShoppingListsScreen edits list name from row menu',
+      (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: ShoppingListsScreen(),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('General List'), findsOneWidget);
+
+    final generalListRow = find.ancestor(
+      of: find.text('General List'),
+      matching: find.byType(ShoppingListRow),
+    );
+
+    await tester.tap(
+      find.descendant(
+        of: generalListRow,
+        matching: find.byIcon(Icons.more_vert),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Edit name'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit Shopping List'), findsOneWidget);
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'List name'),
+      'Weekend Braai',
+    );
+
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Weekend Braai'), findsOneWidget);
+    expect(find.text('General List'), findsNothing);
+  });
 }

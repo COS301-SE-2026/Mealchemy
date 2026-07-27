@@ -10,11 +10,13 @@ class ShoppingListRow extends StatelessWidget {
     super.key,
     required this.list,
     this.onTap,
+    this.onEditTap,
     this.onMoreTap,
   });
 
   final ShoppingList list;
   final VoidCallback? onTap;
+  final VoidCallback? onEditTap;
   final VoidCallback? onMoreTap;
 
   @override
@@ -40,12 +42,26 @@ class ShoppingListRow extends StatelessWidget {
                 ),
                 color: AppColors.bgLight,
                 onSelected: (value) async {
+                  if (value == 'edit-name') {
+                    onEditTap?.call();
+                  }
+
                   if (value == 'delete-list') {
                     onMoreTap?.call();
                   }
                 },
                 itemBuilder: (context) {
                   return [
+                    PopupMenuItem(
+                      value: 'edit-name',
+                      child: Text(
+                        'Edit name',
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.textLight,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
                     PopupMenuItem(
                       value: 'delete-list',
                       child: Text(

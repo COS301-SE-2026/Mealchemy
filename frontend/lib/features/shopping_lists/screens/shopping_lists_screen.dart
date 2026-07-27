@@ -32,6 +32,17 @@ class ShoppingListsScreen extends ConsumerWidget {
                   name: name,
                 );
           },
+          onUpdateListName: ({
+            required listId,
+            required name,
+          }) async {
+            await ref
+                .read(shoppingListsProvider.notifier)
+                .updateShoppingListName(
+                  listId: listId,
+                  name: name,
+                );
+          },
           onDeleteList: (listId) async {
             await ref
                 .read(shoppingListsProvider.notifier)
@@ -80,12 +91,17 @@ class _ShoppingListsContent extends StatelessWidget {
     required this.state,
     required this.onSearchChanged,
     required this.onCreateList,
+    required this.onUpdateListName,
     required this.onDeleteList,
   });
 
   final ShoppingListsState state;
   final ValueChanged<String> onSearchChanged;
   final Future<void> Function(String name) onCreateList;
+  final Future<void> Function({
+    required String listId,
+    required String name,
+  }) onUpdateListName;
   final Future<void> Function(String listId) onDeleteList;
 
   @override
@@ -96,6 +112,7 @@ class _ShoppingListsContent extends StatelessWidget {
         : _buildSections(
             context: context,
             groupedLists: groupedLists,
+            onUpdateListName: onUpdateListName,
             onDeleteList: onDeleteList,
           );
 
@@ -127,6 +144,10 @@ class _ShoppingListsContent extends StatelessWidget {
   List<Widget> _buildSections({
     required BuildContext context,
     required Map<String, List<ShoppingList>> groupedLists,
+    required Future<void> Function({
+      required String listId,
+      required String name,
+    }) onUpdateListName,
     required Future<void> Function(String listId) onDeleteList,
   }) {
     final widgets = <Widget>[];
@@ -155,6 +176,11 @@ class _ShoppingListsContent extends StatelessWidget {
                 context.go('/shopping-lists/${list.id}');
               }
             },
+            onEditTap: () => _showEditListNameDialog(
+              context: context,
+              list: list,
+              onUpdateListName: onUpdateListName,
+            ),
             onMoreTap: () => _showListActionsMenu(
               context: context,
               list: list,
@@ -460,6 +486,100 @@ Future<void> _showListActionsMenu({
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text('${list.title} deleted.'),
+      backgroundColor: AppColors.primary,
+      behavior: SnackBarBehavior.floating,
+    ),
+  );
+}
+
+Future<void> _showEditListNameDialog({
+  required BuildContext context,
+  required ShoppingList list,
+  required Future<void> Function({
+    required String listId,
+    required String name,
+  }) onUpdateListName,
+}) async {
+  final nameController = TextEditingController(text: list.title);
+
+  final result = await showDialog<String>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: AppColors.bgLight,
+        title: Text(
+          'Edit Shopping List',
+          style: AppTextStyles.heading2.copyWith(
+            color: AppColors.primary,
+          ),
+        ),
+        content: TextField(
+          controller: nameController,
+          autofocus: true,
+          style: AppTextStyles.body.copyWith(
+            color: AppColors.textLight,
+          ),
+          decoration: InputDecoration(
+            labelText: 'List name',
+            labelStyle: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.tertiaryMuted,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderSide: const BorderSide(
+                color: AppColors.inputBorder,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: const BorderSide(
+                color: AppColors.primary,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Cancel',
+              style: AppTextStyles.button.copyWith(
+                color: AppColors.textMuted,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop(nameController.text);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.textDark,
+            ),
+            child: const Text('Save'),
+          ),
+        ],
+      );
+    },
+  );
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    nameController.dispose();
+  });
+
+  final cleanedName = result?.trim() ?? '';
+  if (cleanedName.isEmpty || cleanedName == list.title) return;
+
+  await onUpdateListName(
+    listId: list.id,
+    name: cleanedName,
+  );
+
+  if (!context.mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('$cleanedName saved.'),
       backgroundColor: AppColors.primary,
       behavior: SnackBarBehavior.floating,
     ),
