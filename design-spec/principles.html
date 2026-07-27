@@ -9,7 +9,7 @@
   </head>
   <body>
     
-    <header class="site-header"><nav class="nav-shell" aria-label="Design specification navigation"><a class="brand-mark" href="index.html"><img class="nav-logo" src="assets/logos/logo-mark.png" alt="" aria-hidden="true"><span>Mealchemy</span></a><div class="nav-links"><a href="colours.html">Colours</a><a href="typography.html">Type</a><a href="logo.html">Logo</a><a href="principles.html">Design Principles</a><a href="components.html">Components</a><a href="spacing.html">Spacing</a><a href="accessibility.html">Accessibility</a><a href="wireframes.html">Wireframes</a></div></nav></header>
+    <header class="site-header"><nav class="nav-shell" aria-label="Design specification navigation"><a class="brand-mark" href="index.html"><img class="nav-logo" src="assets/logos/logo-mark.png" alt="" aria-hidden="true"><span>Mealchemy</span></a><div class="nav-links"><a href="colours.html">Colours</a><a href="typography.html">Type</a><a href="logo.html">Logo</a><a href="principles.html">Design Principles</a><a href="components.html">Components</a><a href="spacing.html">Spacing</a><a href="accessibility.html">Accessibility</a><a href="wireframes.html">Wireframes</a><a href="change-log.html">Changelog</a></div></nav></header>
 
     <main class="page">
       <section class="section reveal">
@@ -21,6 +21,66 @@
           <article class="card interactive"><div class="principle-number">4</div><h3>Accessibility</h3><p>Text is readable from a countertop distance, touch targets support imprecise taps, and colour is never the only indicator of state.</p></article>
           <article class="card interactive"><div class="principle-number">5</div><h3>Warmth, Modernity & Luxury</h3><p>Warm surfaces, refined spacing, serif headings, rich food photography, and gold accents create a modern, luxurious kitchen experience.</p></article>
           <article class="card interactive"><div class="principle-number">6</div><h3>Intelligence Made Visible</h3><p>Match percentages, pantry indicators, and suggestion cards explain why the system recommends something.</p></article>
+        </div>
+      </section>
+
+      <section class="section reveal">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Voice & Tone</p>
+            <h2>UI copy rules</h2>
+          </div>
+          <p class="section-lede">Mealchemy should feel helpful, calm, and direct. It should guide the user through cooking and planning without sounding technical or vague.</p>
+        </div>
+
+        <div class="tone-rule-grid">
+          <article>
+            <span>Voice</span>
+            <strong>Warm and useful</strong>
+            <p>Use friendly language that helps the user take the next step.</p>
+          </article>
+          <article>
+            <span>Clarity</span>
+            <strong>Plain action words</strong>
+            <p>Prefer short labels like Save recipe, Add item, Update pantry, and View recipes.</p>
+          </article>
+          <article>
+            <span>Errors</span>
+            <strong>Specific recovery</strong>
+            <p>Explain what happened and how to fix it. Avoid blame or vague alerts.</p>
+          </article>
+          <article>
+            <span>Empty states</span>
+            <strong>Reassuring next step</strong>
+            <p>Say what is missing, then offer the clearest action to continue.</p>
+          </article>
+        </div>
+
+        <div class="copy-example-grid">
+          <article class="copy-example">
+            <h3>Button Labels</h3>
+            <div class="copy-row good button-copy"><span>Use</span><button type="button">Save recipe</button></div>
+            <div class="copy-row avoid button-copy"><span>Avoid</span><button type="button">Submit</button></div>
+            <p>Buttons should describe the result of the action.</p>
+          </article>
+          <article class="copy-example">
+            <h3>Error Messages</h3>
+            <div class="copy-row good form-copy"><span>Use</span><label for="tone-servings">Servings</label><input id="tone-servings" value="Missing servings"><strong>Add the number of servings before saving.</strong></div>
+            <div class="copy-row avoid form-copy"><span>Avoid</span><label for="tone-error">Servings</label><input id="tone-error" value="Missing servings"><strong>Error occurred.</strong></div>
+            <p>Error copy should be specific and fixable.</p>
+          </article>
+          <article class="copy-example">
+            <h3>Empty States</h3>
+            <div class="copy-row good empty-copy"><span>Use</span><div class="empty-icon">+</div><strong>No recipes saved yet.</strong><p>Add one to start your vault.</p><button type="button">Add recipe</button></div>
+            <div class="copy-row avoid empty-copy"><span>Avoid</span><div class="empty-icon muted">!</div><strong>No data.</strong></div>
+            <p>Empty states should explain the state and the next action.</p>
+          </article>
+          <article class="copy-example">
+            <h3>Helper Text</h3>
+            <div class="copy-row good helper-copy"><span>Use</span><label for="tone-ingredients">Ingredients</label><input id="tone-ingredients" placeholder="Tomatoes, pasta, basil"><strong>Choose ingredients you already have.</strong></div>
+            <div class="copy-row avoid helper-copy"><span>Avoid</span><label for="tone-values">Ingredients</label><input id="tone-values" placeholder="Values"><strong>Input valid values.</strong></div>
+            <p>Helper text should make forms easier before an error happens.</p>
+          </article>
         </div>
       </section>
 

@@ -9,7 +9,7 @@
   </head>
   
   <body>
-    <header class="site-header"><nav class="nav-shell" aria-label="Design specification navigation"><a class="brand-mark" href="index.html"><img class="nav-logo" src="assets/logos/logo-mark.png" alt="" aria-hidden="true"><span>Mealchemy</span></a><div class="nav-links"><a href="colours.html">Colours</a><a href="typography.html">Type</a><a href="logo.html">Logo</a><a href="principles.html">Design Principles</a><a href="components.html">Components</a><a href="spacing.html">Spacing</a><a href="accessibility.html">Accessibility</a><a href="wireframes.html">Wireframes</a></div></nav></header>
+    <header class="site-header"><nav class="nav-shell" aria-label="Design specification navigation"><a class="brand-mark" href="index.html"><img class="nav-logo" src="assets/logos/logo-mark.png" alt="" aria-hidden="true"><span>Mealchemy</span></a><div class="nav-links"><a href="colours.html">Colours</a><a href="typography.html">Type</a><a href="logo.html">Logo</a><a href="principles.html">Design Principles</a><a href="components.html">Components</a><a href="spacing.html">Spacing</a><a href="accessibility.html">Accessibility</a><a href="wireframes.html">Wireframes</a><a href="change-log.html">Changelog</a></div></nav></header>
 
     <main class="page">
       <section class="section reveal">
@@ -36,16 +36,79 @@
 
       <section class="section reveal">
         <h2>Usage Rules</h2>
-        <div class="grid two">
-          <article class="card interactive"><h3>Keep clear space</h3><p>Maintain clear space equal to the height of the M lettermark on all four sides.</p></article>
-          <article class="card interactive"><h3>Do not stretch</h3><p>Scale proportionally only.</p></article>
-          <article class="card interactive"><h3>Use approved colours</h3><p>Burgundy, gold, cream, and dark surfaces only.</p></article>
-          <article class="card interactive"><h3>Preserve contrast</h3><p>Never place the gold mark on low-contrast backgrounds.</p></article>
-          <article class="card interactive"><h3>Minimum size</h3><p>Keep the wordmark at least 120px wide and the monogram at least 40x40px.</p></article>
-          <article class="card interactive"><h3>Icon style</h3><p>Use Material Symbols Outlined at 24dp standard size, 20dp in dense contexts.</p></article>
+        <div class="logo-rule-grid">
+          <article class="logo-rule-card">
+            <span>Clear space</span>
+            <div class="clear-space-demo" aria-label="Mealchemy monogram clear space guide">
+              <div class="clear-space-frame">
+                <div class="drawn-logo-mark">M</div>
+              </div>
+            </div>
+            <p>Leave space equal to the M lettermark height on every side.</p>
+          </article>
+          <article class="logo-rule-card">
+            <span>Minimum size</span>
+            <div class="size-demo" aria-label="Mealchemy minimum logo size guide">
+              <div class="size-row"><div class="drawn-logo-mark small">M</div><strong>40 x 40px</strong></div>
+              <div class="size-row wordmark-row"><div class="drawn-wordmark">MEALCHEMY</div><strong>120px wide</strong></div>
+            </div>
+            <p>Monogram minimum is 40x40px. Wordmark minimum width is 120px.</p>
+          </article>
+          <article class="logo-rule-card">
+            <span>Approved colours</span>
+            <div class="colour-demo"><i></i><i></i><i></i><i></i></div>
+            <p>Use burgundy, gold, cream, and dark surfaces only.</p>
+          </article>
+          <article class="logo-rule-card">
+            <span>Avoid</span>
+            <div class="avoid-demo"><b>Stretch</b><b>Recolour</b><b>Shadow</b></div>
+            <p>Do not stretch, recolour, rotate, outline, or add drop shadows.</p>
+          </article>
         </div>
-        <p class="gold-note">Other icons, used to sufficiently aid context while maintaining simplicity.</p>
-        <div class="icon-grid"><span class="icon-tile">+</span><span class="icon-tile">✓</span><span class="icon-tile">⌕</span><span class="icon-tile">♡</span><span class="icon-tile">↗</span><span class="icon-tile">⋯</span></div>
+      </section>
+
+      <section class="section reveal">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Iconography</p>
+            <h2>Icon system</h2>
+          </div>
+          <p class="section-lede">Use Flutter Material Icons with a simple outlined style. Icons support actions and states but should not replace visible labels.</p>
+        </div>
+
+        <div class="icon-showcase">
+          <article class="icon-preview-panel">
+            <div class="mock-toolbar">
+              <button type="button" aria-label="Search"><span class="material-symbol">⌕</span></button>
+              <button type="button" aria-label="Add ingredient"><span class="material-symbol">+</span></button>
+              <button type="button" aria-label="Save recipe"><span class="material-symbol">♡</span></button>
+              <button type="button" aria-label="More options"><span class="material-symbol">⋯</span></button>
+            </div>
+            <div class="mock-input-row">
+              <span class="material-symbol">⌕</span>
+              <p>Search pantry ingredients</p>
+            </div>
+            <button class="mock-action-button" type="button"><span class="material-symbol">✓</span> Add to list</button>
+          </article>
+
+          <div class="icon-rules-grid">
+            <article><span>Library</span><strong>Flutter Material Icons</strong><p>Outlined icons for navigation, fields, and utility actions.</p></article>
+            <article><span>Stroke</span><strong>Regular weight</strong><p>Keep icons visually light so they match the rounded app components.</p></article>
+            <article><span>Navbar</span><strong>22dp</strong><p>Use for tab and navigation icons.</p></article>
+            <article><span>Fields</span><strong>18dp</strong><p>Use for input prefix and helper icons.</p></article>
+            <article><span>Buttons</span><strong>14, 18, or 20dp</strong><p>Match the icon size to the button size.</p></article>
+            <article><span>Meaning</span><strong>Icon plus label</strong><p>Use labels for primary actions and important states.</p></article>
+          </div>
+        </div>
+
+        <div class="icon-grid" aria-label="Approved icon examples">
+          <span class="icon-tile"><b>+</b><small>Add</small></span>
+          <span class="icon-tile"><b>✓</b><small>Done</small></span>
+          <span class="icon-tile"><b>⌕</b><small>Search</small></span>
+          <span class="icon-tile"><b>♡</b><small>Save</small></span>
+          <span class="icon-tile"><b>↗</b><small>Open</small></span>
+          <span class="icon-tile"><b>⋯</b><small>More</small></span>
+        </div>
       </section>
 
     </main>
