@@ -28,8 +28,10 @@ class ApiRecipeRepository implements RecipeRepository {
   //Create the recipe with (metadata only) returns the new recipe with its id
   @override
   Future<Recipe> addRecipe(Recipe recipe, int folderId) async {
-    final response =
-        await _dio.post('/recipes/create', data: { ...recipe.toCreateRequestJson(), 'folderId': folderId,});
+    final response = await _dio.post('/recipes/create', data: {
+      ...recipe.toCreateRequestJson(),
+      'folderId': folderId,
+    });
     return Recipe.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -65,5 +67,23 @@ class ApiRecipeRepository implements RecipeRepository {
       '/ingredients/recipe/$recipeId/ingredient/create',
       data: ingredient.toJson(),
     );
+  }
+
+  @override
+  Future<List<RecipeIngredient>> getRecipeIngredients(int recipeId) async {
+    final response = await _dio.get('/ingredients/recipe/$recipeId');
+    final data = response.data as List<dynamic>;
+    return data
+        .map((e) => RecipeIngredient.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<List<RecipeStep>> getRecipeSteps(int recipeId) async {
+    final response = await _dio.get('/steps/recipe/$recipeId');
+    final data = response.data as List<dynamic>;
+    return data
+        .map((e) => RecipeStep.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

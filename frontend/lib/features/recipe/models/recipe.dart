@@ -87,7 +87,7 @@ class Recipe {
       };
 
 //metadata-only body for POST /recipes/create and PUT /recipes/edit/{id}
-    Map<String, dynamic> toCreateRequestJson() => {
+  Map<String, dynamic> toCreateRequestJson() => {
         'title': title,
         'description': description,
         'cuisineType': cuisineType,
@@ -99,4 +99,42 @@ class Recipe {
         'externalUrl': externalUrl,
         'isCommunityPublished': isCommunityPublished,
       };
+      
+  Recipe copyWith({
+    int? recipeId,
+    int? ownerId,
+    String? title,
+    String? description,
+    String? cuisineType,
+    int? prepTimeMins,
+    int? cookingTimeMins,
+    int? servingSize,
+    String? photoUrl,
+    String? videoUrl,
+    String? externalUrl,
+    bool? isCommunityPublished,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<RecipeIngredient>? ingredients,
+    List<RecipeStep>? steps,
+  }) {
+    return Recipe(
+      recipeId: recipeId ?? this.recipeId,
+      ownerId: ownerId ?? this.ownerId,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      cuisineType: cuisineType ?? this.cuisineType,
+      prepTimeMins: prepTimeMins ?? this.prepTimeMins,
+      cookingTimeMins: cookingTimeMins ?? this.cookingTimeMins,
+      servingSize: servingSize ?? this.servingSize,
+      photoUrl: photoUrl ?? this.photoUrl,
+      videoUrl: videoUrl ?? this.videoUrl,
+      externalUrl: externalUrl ?? this.externalUrl,
+      isCommunityPublished: isCommunityPublished ?? this.isCommunityPublished,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      ingredients: ingredients ?? this.ingredients,
+      steps: steps ?? this.steps,
+    );
+  }
 }

@@ -11,11 +11,10 @@ import '../../vault/providers/vault_provider.dart';
 import '../models/ingredient_catalogue_item.dart';
 import '../models/recipe.dart';
 import '../models/recipe_ingredient.dart';
-import '../models/recipe_step.dart'; 
+import '../models/recipe_step.dart';
 import '../providers/recipe_provider.dart';
 import '../widgets/ingredient_editor_row.dart';
 import '../widgets/step_editor_row.dart';
-import '../../vault/providers/vault_repository_provider.dart';
 
 class AddRecipeScreen extends ConsumerStatefulWidget {
   const AddRecipeScreen({super.key});
@@ -71,6 +70,8 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       return;
     }
 
+    final recipeRepo = ref.read(recipeRepositoryProvider);
+
     if (_publishToGlobal) {
       final ok = await showAppConfirmDialog(
         context: context,
@@ -95,7 +96,9 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       isCommunityPublished: _publishToGlobal,
     );
 
-    final created = await ref.read(addRecipeProvider.notifier).submit(recipe , folderId: _selectedFolderId);
+    final created = await ref
+        .read(addRecipeProvider.notifier)
+        .submit(recipe, folderId: _selectedFolderId);
     if (created == null) return;
 
     var saveFailed = false;
@@ -109,9 +112,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
         sortOrder: i,
       );
       try {
-        await ref
-            .read(recipeRepositoryProvider)
-            .addRecipeIngredient(created.recipeId, ingredient);
+        await recipeRepo.addRecipeIngredient(created.recipeId, ingredient);
       } catch (_) {
         saveFailed = true;
       }
@@ -124,10 +125,8 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
         content: validSteps[i].content.text.trim(),
       );
       try {
-        await ref
-            .read(recipeRepositoryProvider)
-            .addRecipeStep(created.recipeId, step);
-      } catch (_) {
+        await recipeRepo.addRecipeStep(created.recipeId, step);
+      } catch (e, st) {
         saveFailed = true;
       }
     }
@@ -137,22 +136,28 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
         const SnackBar(content: Text('Recipe saved, but some items did not.')),
       );
     }
+    if (saveFailed && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Recipe saved, but some items did not.')),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Recipe saved')),
+      );
+    }
+    ref.read(addRecipeProvider.notifier).reset();
+    if (mounted && context.canPop()) context.pop();
   }
 
   @override
   Widget build(BuildContext context) {
     ref.listen<AddRecipeState>(addRecipeProvider, (prev, next) {
       if (next.isSuccess) {
-        ref.invalidate(vaultsProvider);         
-        ref.invalidate(vaultFoldersProvider);    
-        ref.invalidate(folderRecipesProvider); 
-        ref.invalidate(privateFoldersProvider);  
-        ref.invalidate(recipesProvider);        
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Recipe saved')),
-        );
-        ref.read(addRecipeProvider.notifier).reset();
-        if (context.canPop()) context.pop();
+        ref.invalidate(vaultsProvider);
+        ref.invalidate(vaultFoldersProvider);
+        ref.invalidate(folderRecipesProvider);
+        ref.invalidate(privateFoldersProvider);
+        ref.invalidate(recipesProvider);
       } else if (next.errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(next.errorMessage!)),

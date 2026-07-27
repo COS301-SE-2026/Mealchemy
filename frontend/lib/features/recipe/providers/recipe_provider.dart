@@ -8,6 +8,8 @@ import '../../vault/providers/vault_repository_provider.dart';
 import '../../vault/repositories/vault_repository.dart';
 import '../../vault/models/vault.dart';
 import '../models/recipe.dart';
+import '../models/recipe_ingredient.dart';
+import '../models/recipe_step.dart';
 import '../repositories/api_recipe_repository.dart';
 import '../repositories/mock_recipe_repository.dart';
 import '../repositories/recipe_repository.dart';
@@ -32,6 +34,21 @@ final recipesProvider = FutureProvider<List<Recipe>>((ref) {
 final recipeByIdProvider = FutureProvider.family<Recipe, int>((ref, id) {
   final repository = ref.watch(recipeRepositoryProvider);
   return repository.getRecipeById(id);
+});
+
+//full recipe for the with metadata  ingredients  steps
+final recipeDetailProvider =
+    FutureProvider.family<Recipe, int>((ref, id) async {
+  final repository = ref.watch(recipeRepositoryProvider);
+  final results = await Future.wait([
+    repository.getRecipeById(id),
+    repository.getRecipeIngredients(id),
+    repository.getRecipeSteps(id),
+  ]);
+  final recipe = results[0] as Recipe;
+  final ingredients = results[1] as List<RecipeIngredient>;
+  final steps = results[2] as List<RecipeStep>;
+  return recipe.copyWith(ingredients: ingredients, steps: steps);
 });
 
 //cuisine_type_enum values (used by add-recipe selector)
@@ -108,7 +125,7 @@ class AddRecipeNotifier extends StateNotifier<AddRecipeState> {
     //replace whole state
     state = const AddRecipeState(isSubmitting: true);
 
-     try {
+    try {
       final Recipe result;
       if (recipeId != null) {
         result = await _repository.updateRecipe(recipeId, recipe);
@@ -142,5 +159,9 @@ class AddRecipeNotifier extends StateNotifier<AddRecipeState> {
 
 final addRecipeProvider =
     StateNotifierProvider<AddRecipeNotifier, AddRecipeState>((ref) {
-  return AddRecipeNotifier(ref.watch(recipeRepositoryProvider),  ref.watch(vaultRepositoryProvider), ref,);
+  return AddRecipeNotifier(
+    ref.watch(recipeRepositoryProvider),
+    ref.watch(vaultRepositoryProvider),
+    ref,
+  );
 });
