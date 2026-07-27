@@ -8,11 +8,11 @@
     <link rel="stylesheet" href="css/spacing.css">
   </head>
   <body>
-    <header class="site-header"><nav class="nav-shell" aria-label="Design specification navigation"><a class="brand-mark" href="index.html"><img class="nav-logo" src="assets/logos/logo-mark.png" alt="" aria-hidden="true"><span>Mealchemy</span></a><div class="nav-links"><a href="colours.html">Colours</a><a href="typography.html">Type</a><a href="logo.html">Logo</a><a href="principles.html">Design Principles</a><a href="components.html">Components</a><a href="spacing.html">Spacing</a><a href="accessibility.html">Accessibility</a><a href="wireframes.html">Wireframes</a></div></nav></header>
+    <header class="site-header"><nav class="nav-shell" aria-label="Design specification navigation"><a class="brand-mark" href="index.html"><img class="nav-logo" src="assets/logos/logo-mark.png" alt="" aria-hidden="true"><span>Mealchemy</span></a><div class="nav-links"><a href="colours.html">Colours</a><a href="typography.html">Type</a><a href="logo.html">Logo</a><a href="principles.html">Design Principles</a><a href="components.html">Components</a><a href="spacing.html">Spacing</a><a href="accessibility.html">Accessibility</a><a href="wireframes.html">Wireframes</a><a href="change-log.html">Changelog</a></div></nav></header>
 
     <main class="page">
       <section class="section reveal">
-        <div class="section-heading"><div><p class="section-kicker">06 Spacing & Shape</p><h1>Spacing and Shape</h1></div><p class="section-lede">Spacing controls the distance between elements. Radius controls how rounded a component's corners are, helping users recognise buttons, cards, sheets, and tags consistently.</p></div>
+        <div class="section-heading"><div><p class="section-kicker">06 Layout & Spacing</p><h1>Layout and Spacing</h1></div><p class="section-lede">The layout system uses compact spacing, rounded surfaces, and flexible sections that stack cleanly from desktop-width previews down to mobile screens.</p></div>
 
         <div class="card">
           <div class="scale-row"><strong>4px</strong><div class="scale-block" style="width:4px"></div><code>xs</code></div>
@@ -20,17 +20,97 @@
           <div class="scale-row"><strong>16px</strong><div class="scale-block" style="width:16px"></div><code>md</code></div>
           <div class="scale-row"><strong>24px</strong><div class="scale-block" style="width:24px"></div><code>lg</code></div>
           <div class="scale-row"><strong>32px</strong><div class="scale-block" style="width:32px"></div><code>xl</code></div>
-          <p class="scale-note">This is the spacing scale: each token is a reusable distance between interface elements. Small steps such as 4px and 8px separate tight items like icons and labels, while 24px and 32px create clearer breaks between cards, sections, and page groups.</p>
+          <p class="scale-note">The screens uses 4, 8, 16, 24, and 32px. Component-specific values add 6, 10, 14, and 20px where tighter controls need them.</p>
         </div>
 
       </section>
+
+      <section class="section reveal">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Responsive Layout</p>
+            <h2>How screens adapt</h2>
+          </div>
+          <p class="section-lede">Mealchemy is mobile-first. Larger screens add columns and wider content areas, while mobile screens stack sections into one readable column.</p>
+        </div>
+
+        <div class="responsive-layout-grid">
+          <article class="breakpoint-card desktop-layout">
+            <div class="breakpoint-header"><span>Desktop</span><strong>Two-column content</strong></div>
+            <div class="layout-device wide">
+              <div class="layout-top"></div>
+              <div class="layout-main"></div>
+              <div class="layout-side"></div>
+              <div class="layout-card one"></div>
+              <div class="layout-card two"></div>
+              <div class="layout-card three"></div>
+            </div>
+            <p>Wide screens can show main content, supporting panels, and card rows side by side.</p>
+          </article>
+
+          <article class="breakpoint-card tablet-layout">
+            <div class="breakpoint-header"><span>Tablet</span><strong>Reduced columns</strong></div>
+            <div class="layout-device medium">
+              <div class="layout-top"></div>
+              <div class="layout-main"></div>
+              <div class="layout-card one"></div>
+              <div class="layout-card two"></div>
+            </div>
+            <p>Medium screens keep two-card groupings but reduce extra side content.</p>
+          </article>
+
+          <article class="breakpoint-card mobile-layout">
+            <div class="breakpoint-header"><span>Mobile</span><strong>Single column</strong></div>
+            <div class="layout-device narrow">
+              <div class="layout-top"></div>
+              <div class="layout-main"></div>
+              <div class="layout-card one"></div>
+              <div class="layout-card two"></div>
+              <div class="layout-nav"></div>
+            </div>
+            <p>Small screens stack all cards, keep 20px page gutters, and keep navigation fixed at the bottom.</p>
+          </article>
+        </div>
+
+        <div class="adaptation-strip">
+          <article><span>Desktop</span><strong>24 to 32px section spacing</strong><p>More breathing room around grouped content.</p></article>
+          <article><span>Tablet</span><strong>16 to 24px gaps</strong><p>Sections stay grouped while preserving scanability.</p></article>
+          <article><span>Mobile</span><strong>12 to 20px gutters</strong><p>Content stacks vertically with full-width controls.</p></article>
+        </div>
+      </section>
+
+      <section class="section reveal">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Design Tokens</p>
+            <h2>Spacing tokens</h2>
+          </div>
+          <p class="section-lede">These values describe the spacing, radius, shadow, motion, and layout rules used across the interface.</p>
+        </div>
+        <table class="token-table">
+          <tr><th>Token type</th><th>Values</th><th>Usage</th></tr>
+          <tr><td>Spacing scale</td><td>4, 8, 16, 24, 32px</td><td>Base page, section gaps, and grouped content spacing.</td></tr>
+          <tr><td>Component spacing</td><td>6, 10, 14, 20px</td><td>Compact gaps inside chips, buttons, fields, rows, and cards.</td></tr>
+          <tr><td>Button height</td><td>36px small, 48px medium, 56px large</td><td>Action hierarchy and touch targets.</td></tr>
+          <tr><td>Button padding</td><td>20px horizontal, 8px vertical small, 14px vertical medium/large</td><td>Consistent action sizing.</td></tr>
+          <tr><td>Text field padding</td><td>16px horizontal, 14px vertical</td><td>Readable form fields with clear focus states.</td></tr>
+          <tr><td>Chip padding</td><td>14px left/right, 10px top/bottom, 8px icon gap</td><td>Filter chips and removable tags.</td></tr>
+          <tr><td>Card padding</td><td>16px default</td><td>Recipe cards, panels, and grouped content.</td></tr>
+          <tr><td>Navbar padding</td><td>10px horizontal, 8px vertical, 6px item vertical</td><td>Bottom navigation spacing.</td></tr>
+          <tr><td>Motion</td><td>180ms transition</td><td>Selected navigation and small interactive changes.</td></tr>
+          <tr><td>Shadow</td><td>Primary at 6% opacity, 12px blur, 4px y-offset</td><td>Light and accent card elevation.</td></tr>
+          <tr><td>Responsive behaviour</td><td>Flexible rows, columns, scroll areas, and stacked content</td><td>Layouts adapt without fixed desktop-only breakpoints.</td></tr>
+        </table>
+      </section>
+
       <section class="section reveal">
         <h2>Radius Scale</h2>
-        <p class="section-lede">Small radius feels precise and compact. Medium radius is used for buttons and inputs. Larger radius softens cards and panels, while pill radius is reserved for tags and rounded actions.</p>
+        <p class="section-lede">Radius values are deliberately small and repeatable. Buttons and inputs use 12px, cards use 16px, chips use 8px, selected nav pills use 14px, and fully rounded buttons use 100px.</p>
         <div class="grid">
-          <div class="radius-demo" style="border-radius:8px">sm 8px</div>
-          <div class="radius-demo" style="border-radius:12px">md 12px</div>
-          <div class="radius-demo" style="border-radius:16px">lg 16px</div>
+          <div class="radius-demo" style="border-radius:8px">chip 8px</div>
+          <div class="radius-demo" style="border-radius:12px">button/input 12px</div>
+          <div class="radius-demo" style="border-radius:14px">nav pill 14px</div>
+          <div class="radius-demo" style="border-radius:16px">card 16px</div>
         </div>
         <div class="radius-showcase">
           <article class="radius-example radius-input">
@@ -45,14 +125,14 @@
             <p>Used for recipe cards, panels, and grouped content.</p>
           </article>
           <article class="radius-example radius-sheet">
-            <div class="radius-ui radius-bottom-sheet"><i></i><strong>Meal filters</strong><span>Dinner · Quick · High protein</span></div>
-            <strong>Bottom Sheet · 20px top</strong>
-            <p>Used for modal sheets with rounded top corners.</p>
+            <div class="radius-ui radius-chip-example"><span>Dinner</span><span>Quick</span><span>High protein</span></div>
+            <strong>Chip · 8px</strong>
+            <p>Used for selectable and removable filter chips.</p>
           </article>
           <article class="radius-example radius-pill">
-            <div class="radius-ui radius-filter-tag"><span>✓</span> Vegetarian</div>
-            <strong>Filter Tag · 9999px</strong>
-            <p>Used for category tags and rounded controls.</p>
+            <div class="radius-ui radius-filter-tag"><span>✓</span> Rounded primary</div>
+            <strong>Rounded Action · 100px</strong>
+            <p>Used when a button is intentionally pill-shaped.</p>
           </article>
         </div>
       </section>
