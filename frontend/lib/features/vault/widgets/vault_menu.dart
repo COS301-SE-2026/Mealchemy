@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
@@ -84,9 +85,23 @@ class VaultMenuButton extends ConsumerWidget {
           prefixIcon: Icons.email_outlined,
         );
         if (email == null) return;
-        await ref.read(vaultRepositoryProvider).addMember(vault.vaultId, email);
-        ref.invalidate(vaultMembersProvider(vault.vaultId));
-
+        final messenger = ScaffoldMessenger.of(context);
+        try {
+          await ref
+              .read(vaultRepositoryProvider)
+              .addMember(vault.vaultId, email);
+          ref.invalidate(vaultMembersProvider(vault.vaultId));
+          messenger.showSnackBar(
+            SnackBar(content: Text('$email added to the vault')),
+          );
+        } catch (e) {
+          final message = e is DioException && e.response?.data is Map
+              ? (e.response?.data as Map)['message'] as String? ??
+                  'Could not add member.'
+              : 'Could not add member.';
+          messenger.showSnackBar(SnackBar(content: Text(message)));
+        }
+        
       case _VaultAction.deleteVault:
         final ok = await showAppConfirmDialog(
           context: context,
@@ -102,9 +117,9 @@ class VaultMenuButton extends ConsumerWidget {
         ref.read(selectedVaultIdProvider.notifier).state = null;
 
       case _VaultAction.leaveVault:
-    //Fake and not implemented will be done later 
+        //Fake and not implemented will be done later
         return;
-      
+
       case _VaultAction.createFolder:
         final name = await showAppInputDialog(
           context: context,
