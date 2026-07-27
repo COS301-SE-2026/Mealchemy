@@ -13,9 +13,10 @@ abstract class RecipeRepository {
   Future<Recipe> addRecipe(Recipe recipe, int folderId);
   Future<Recipe> updateRecipe(int id, Recipe recipe);
 
-
   //cuisine type enum values
   Future<List<String>> getCuisineTypes();
   Future<void> addRecipeStep(int recipeId, RecipeStep step);
   Future<void> addRecipeIngredient(int recipeId, RecipeIngredient ingredient);
+  Future<List<RecipeIngredient>> getRecipeIngredients(int recipeId);
+  Future<List<RecipeStep>> getRecipeSteps(int recipeId);
 }

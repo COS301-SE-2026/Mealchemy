@@ -1,16 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/constants/app_config.dart';
-import 'package:mealchemy/features/discovery/models/discovery_category.dart';
+import 'package:mealchemy/core/providers/api_service_provider.dart';
+import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/discovery/repositories/api_discovery_repository.dart';
 import 'package:mealchemy/features/discovery/repositories/discovery_repository.dart';
 import 'package:mealchemy/features/discovery/repositories/mock_discovery_repository.dart';
-import 'package:mealchemy/features/discovery/models/explore_item.dart';
+
+
 //Switch between the mock and API repository based on the app configuration
 final discoveryRepositoryProvider = Provider<DiscoveryRepository>((ref) {
-  if (AppConfig.useMockData) {
+  if (AppConfig.mockDiscovery) {
     return MockDiscoveryRepository();
   }
-  return ApiDiscoveryRepository();
+  return ApiDiscoveryRepository(ref.read(dioProvider));
 });
 
 //State
@@ -18,31 +20,36 @@ final discoveryRepositoryProvider = Provider<DiscoveryRepository>((ref) {
 class DiscoveryState {
   final bool isLoading;
   final String? errorMessage;
-  final List<DiscoveryCategory> categories;
-  final int? selectedCategoryId;
-  final List<ExploreItem> exploreItems;
+  final List<Recipe> recipes;
+  final List<String> cuisines;
+  final String? selectedCuisine; 
 
   const DiscoveryState({
     this.isLoading = false,
     this.errorMessage,
-    this.categories = const [],
-    this.selectedCategoryId ,
-    this.exploreItems = const [],
+    this.recipes = const [],
+    this.selectedCuisine,
+    this.cuisines = const [],
   });
 
+   List<Recipe> get visibleRecipes {
+    if (selectedCuisine == null) return recipes;
+    return recipes.where((r) => r.cuisineType == selectedCuisine).toList();
+  }
   DiscoveryState copyWith({
     bool? isLoading,
     String? errorMessage,
-    List<DiscoveryCategory>? categories,
-    int? selectedCategoryId,
-    List<ExploreItem>? exploreItems,
+    List<String>? cuisines,
+    String? selectedCuisine,
+    bool clearSelectedCuisine = false,
+    List<Recipe>? recipes,
   }) {
     return DiscoveryState(
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
-      categories: categories ?? this.categories,
-      selectedCategoryId: selectedCategoryId ?? this.selectedCategoryId,
-      exploreItems: exploreItems ?? this.exploreItems,
+      cuisines: cuisines ?? this.cuisines,
+      selectedCuisine: clearSelectedCuisine ? null : (selectedCuisine ?? this.selectedCuisine),
+      recipes: recipes ?? this.recipes,
     );
   }
 }
@@ -55,13 +62,12 @@ class DiscoveryNotifier extends StateNotifier<DiscoveryState> {
   Future<void> loadDiscovery() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final categories = await _repository.getCategories();
-      final exploreItems = await _repository.getExploreItems();
+      final recipes = await _repository.getPublishedRecipes();
+      final cuisines = await _repository.getCuisineTypes();
       state = state.copyWith(
         isLoading: false,
-        categories: categories,
-        selectedCategoryId: categories.isNotEmpty ? categories.first.id : null,
-        exploreItems: exploreItems,
+        recipes: recipes,
+        cuisines: cuisines,
       );
     } catch (e) {
       state = state.copyWith(
@@ -71,12 +77,16 @@ class DiscoveryNotifier extends StateNotifier<DiscoveryState> {
     }
   }
 
-  void selectCategory(int id) {
-    state = state.copyWith(selectedCategoryId: id);
+  //null clears the filter (All)
+  void selectCuisine(String? cuisine) {
+    if (cuisine == null) {
+      state = state.copyWith(clearSelectedCuisine: true);
+    } else {
+      state = state.copyWith(selectedCuisine: cuisine);
+    }
   }
 }
 
-// Provider
 final discoveryProvider =
     StateNotifierProvider<DiscoveryNotifier, DiscoveryState>((ref) {
   return DiscoveryNotifier(ref.watch(discoveryRepositoryProvider));

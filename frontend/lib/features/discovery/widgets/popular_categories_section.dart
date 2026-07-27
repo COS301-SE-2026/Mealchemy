@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_section_header.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
-import 'package:mealchemy/features/discovery/models/discovery_category.dart';
 import 'package:mealchemy/features/discovery/providers/discovery_provider.dart';
 
 class PopularCategoriesSection extends ConsumerWidget {
@@ -12,6 +11,8 @@ class PopularCategoriesSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(discoveryProvider);
+    final notifier = ref.read(discoveryProvider.notifier);
+    final entries = <String?>[null, ...state.cuisines];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -20,24 +21,21 @@ class PopularCategoriesSection extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: AppSectionHeader(title: 'Popular Categories'),
         ),
-
         const SizedBox(height: 16),
         SizedBox(
           height: 96,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: state.categories.length,
+            itemCount: entries.length,
             separatorBuilder: (_, __) => const SizedBox(width: 20),
             itemBuilder: (context, index) {
-              final category = state.categories[index];
-              final isSelected = category.id == state.selectedCategoryId;
+              final cuisine = entries[index];
+              final isSelected = cuisine == state.selectedCuisine;
               return _CategoryItem(
-                category: category,
+                label: cuisine == null ? 'All' : _formatCuisine(cuisine),
                 isSelected: isSelected,
-                onTap: () => ref
-                    .read(discoveryProvider.notifier)
-                    .selectCategory(category.id),
+                onTap: () => notifier.selectCuisine(cuisine),
               );
             },
           ),
@@ -49,12 +47,12 @@ class PopularCategoriesSection extends ConsumerWidget {
 
 class _CategoryItem extends StatelessWidget {
   const _CategoryItem({
-    required this.category,
+    required this.label,
     required this.isSelected,
     required this.onTap,
   });
 
-  final DiscoveryCategory category;
+  final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -76,19 +74,24 @@ class _CategoryItem extends StatelessWidget {
             ),
             child: Padding(
               padding: const EdgeInsets.all(2),
-              child: ClipOval(
-                child: _CategoryImage(imageUrl: category.imageUrl),
+              child: const ClipOval(
+                child: _GradientPlaceholder(),
               ),
             ),
           ),
 
           const SizedBox(height: 6),
-          //Category name
-          Text(
-            category.name,
-            style: AppTextStyles.caption.copyWith(
-              color: isSelected ? AppColors.primary : AppColors.textMuted,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+          SizedBox(
+            width: 68,
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.caption.copyWith(
+                color: isSelected ? AppColors.primary : AppColors.textMuted,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              ),
             ),
           ),
         ],
@@ -97,44 +100,24 @@ class _CategoryItem extends StatelessWidget {
   }
 }
 
-class _CategoryImage extends StatelessWidget {
-  const _CategoryImage({this.imageUrl});
- 
-  final String? imageUrl;
- 
-  @override
-  Widget build(BuildContext context) {
-    if (imageUrl == null || imageUrl!.isEmpty) {
-      return _GradientPlaceholder();
-    }
- 
-    return Image.network(
-      imageUrl!,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => _GradientPlaceholder(),
-      loadingBuilder: (_, child, progress) {
-        if (progress == null) return child;
-        return _GradientPlaceholder();
-      },
-    );
-  }
-}
- 
 class _GradientPlaceholder extends StatelessWidget {
+  const _GradientPlaceholder();
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: AppColors.brand,
-      ),
+      decoration: const BoxDecoration(gradient: AppColors.brand),
       child: const Center(
-        child: Icon(
-          Icons.soup_kitchen_outlined,
-          color: AppColors.textDark,
-          size: 26,
-        ),
+        child: Icon(Icons.soup_kitchen_outlined,
+            color: AppColors.textDark, size: 26),
       ),
     );
   }
 }
- 
+
+String _formatCuisine(String raw) {
+  return raw
+      .split('_')
+      .map((p) => p.isEmpty ? p : '${p[0].toUpperCase()}${p.substring(1)}')
+      .join(' ');
+}
