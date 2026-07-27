@@ -9,61 +9,185 @@
   </head>
   <body>
 
-    <header class="site-header"><nav class="nav-shell" aria-label="Design specification navigation"><a class="brand-mark" href="index.html"><img class="nav-logo" src="assets/logos/logo-mark.png" alt="" aria-hidden="true"><span>Mealchemy</span></a><div class="nav-links"><a href="colours.html">Colours</a><a href="typography.html">Type</a><a href="logo.html">Logo</a><a href="principles.html">Design Principles</a><a href="components.html">Components</a><a href="spacing.html">Spacing</a><a href="accessibility.html">Accessibility</a><a href="wireframes.html">Wireframes</a></div></nav></header>
+    <header class="site-header"><nav class="nav-shell" aria-label="Design specification navigation"><a class="brand-mark" href="index.html"><img class="nav-logo" src="assets/logos/logo-mark.png" alt="" aria-hidden="true"><span>Mealchemy</span></a><div class="nav-links"><a href="colours.html">Colours</a><a href="typography.html">Type</a><a href="logo.html">Logo</a><a href="principles.html">Design Principles</a><a href="components.html">Components</a><a href="spacing.html">Spacing</a><a href="accessibility.html">Accessibility</a><a href="wireframes.html">Wireframes</a><a href="change-log.html">Changelog</a></div></nav></header>
     <main class="page">
         
       <section class="section reveal">
-        <div class="section-heading"><div><p class="section-kicker">05 UI Components</p><h1>UI Component Styling</h1></div><p class="section-lede">Components: the building blocks per page. Elevated buttons, input decorations, bottom navigation, cards, filter tags, and icon-button rules.</p></div>
+        <div class="section-heading"><div><p class="section-kicker">05 UI Components</p><h1>Component Library</h1></div><p class="section-lede">Reusable UI elements follow the brand palette, 12px control radius, compact spacing, and clear state changes.</p></div>
         <div class="component-grid">
 
           <article class="component-card">
-            <h3>App Bar</h3>
-            <p>App bars have no elevation, centre the title, and switch foreground/background colours between light and dark mode.</p>
+            <div class="component-header"><span>Navigation</span><h3>App Bar</h3></div>
             <div class="app-bar-demo"><span>‹</span><strong>Meal Plan</strong><span>⋯</span></div>
+            <p>Centered title with compact edge actions.</p>
           </article>
 
           <article class="component-card">
-            <h3>Elevated Buttons</h3>
-            <p>Elevated buttons use the primary maroon fill for key actions, gold for secondary actions, and muted styling for low-emphasis actions.</p>
-            <div class="button-row"><button class="btn btn-primary">Save plan</button><button class="btn btn-secondary">Add meal</button><button class="btn btn-muted">Skip</button></div>
+            <div class="component-header"><span>Actions</span><h3>Buttons</h3></div>
+            <div class="button-stack">
+              <button class="btn btn-primary">Save plan</button>
+              <button class="btn btn-secondary">Add meal</button>
+              <button class="btn btn-ghost">View details</button>
+              <button class="btn btn-text">Skip</button>
+              <button class="btn btn-muted">Disabled</button>
+            </div>
+            <p>Primary, secondary, outlined, text, loading, disabled, full-width, rounded, and icon states.</p>
           </article>
 
           <article class="component-card">
-            <h3>Input Decoration</h3>
-            <p>Inputs use surface fill, 16px horizontal padding, primary focus borders, and error borders for validation.</p>
+            <div class="component-header"><span>Forms</span><h3>Text Fields</h3></div>
             <label class="field-label" for="recipe-name">Recipe name</label>
             <input class="field" id="recipe-name" placeholder="e.g. Roasted tomato pasta">
             <div style="height:12px"></div>
             <label class="field-label" for="servings">Servings</label>
             <input class="field error" id="servings" value="Missing servings" aria-describedby="servings-error">
             <p class="field-error" id="servings-error">Add the number of servings before saving.</p>
+            <p>Standard, private, focused, disabled, icon, and error states.</p>
           </article>
 
           <article class="component-card">
-            <h3>Bottom Navigation</h3>
-            <p>The selected item uses primary maroon, while unselected items use muted text to keep focus clear.</p>
-            <div class="bottom-nav-demo"><a class="active" href="#">Home</a><a href="#">Discover</a><a href="#">Vault</a><a href="#">Pantry</a></div>
+            <div class="component-header"><span>Forms</span><h3>Selects</h3></div>
+            <div class="select-demo"><span>Category</span><strong>Vegetables</strong><b>⌄</b></div>
+            <div class="select-menu-demo"><span>Fruit</span><span class="active">Vegetables</span><span>Grains</span></div>
+            <p>Dropdown fields use the same radius, border, label, and focus language as text inputs.</p>
           </article>
 
           <article class="component-card">
-            <h3>Cards</h3>
-            <p>Cards are flat, use a 16px radius, surface fill, and grouped content spacing.</p>
-            <div class="mini-card"><strong>Roasted tomato pasta</strong><span>35 min · pantry friendly</span></div>
+            <div class="component-header"><span>Navigation</span><h3>Bottom Navigation</h3></div>
+            <div class="bottom-nav-demo"><a class="active" href="#">Home</a><a href="#">Swipes</a><a href="#">Discover</a><a href="#">Vault</a><a href="#">Pantry</a></div>
+            <p>Five fixed tabs with selected and unselected states.</p>
           </article>
 
           <article class="component-card">
-            <h3>Filter Tags</h3>
-            <p>Filter tags are small pill-shaped labels used to select or show categories such as meal type, speed, or dietary preference.</p>
-            <div class="filter-tag-row"><span class="filter-tag">Dinner</span><span class="filter-tag">Quick</span><span class="filter-tag">Vegetarian</span><span class="filter-tag">High protein</span></div>
+            <div class="component-header"><span>Surfaces</span><h3>Cards</h3></div>
+            <div class="card-variant-grid">
+              <div class="mini-card light"><strong>Light</strong><span>Recipe content</span></div>
+              <div class="mini-card dark"><strong>Dark</strong><span>Priority content</span></div>
+              <div class="mini-card accent"><strong>Accent</strong><span>Helpful tip</span></div>
+              <div class="mini-card outlined"><strong>Outlined</strong><span>Grouped item</span></div>
+            </div>
+            <p>Light, dark, accent, outlined, gradient, tappable, and custom-radius variants.</p>
           </article>
 
           <article class="component-card">
-            <h3>Icons</h3>
-            <p>Material-style outlined icons aid context while keeping the interface simple and restrained.</p>
-            <div class="icon-button-row"><button>＋</button><button>⌕</button><button>♡</button><button>↗</button><button>⋯</button></div>
+            <div class="component-header"><span>Filters</span><h3>Chips</h3></div>
+            <div class="filter-tag-row"><span class="filter-tag selected">Dinner</span><span class="filter-tag">Quick</span><span class="filter-tag">Vegetarian</span><span class="filter-tag removable">High protein ×</span></div>
+            <p>Selected, unselected, removable, and tappable states.</p>
+          </article>
+
+          <article class="component-card">
+            <div class="component-header"><span>Controls</span><h3>Icon Buttons</h3></div>
+            <div class="icon-button-row"><button class="primary">＋</button><button class="secondary">⌕</button><button class="outlined">♡</button><button class="ghost">↗</button><button class="disabled">⋯</button></div>
+            <p>Primary, secondary, outlined, ghost, loading, and disabled states.</p>
+          </article>
+
+          <article class="component-card">
+            <div class="component-header"><span>Feedback</span><h3>Modal</h3></div>
+            <div class="modal-demo"><strong>Edit pantry item?</strong><p>Confirm changes before updating your pantry.</p><div><button class="btn btn-ghost">Cancel</button><button class="btn btn-primary">Update</button></div></div>
+            <p>Dialogs and bottom sheets use clear titles, short body copy, and paired actions.</p>
+          </article>
+
+          <article class="component-card">
+            <div class="component-header"><span>Feedback</span><h3>Toast</h3></div>
+            <div class="toast-demo success"><b>✓</b><span>Recipe saved</span></div>
+            <div class="toast-demo error"><b>!</b><span>Could not save recipe</span></div>
+            <p>Snackbars confirm success or error without blocking the current screen.</p>
+          </article>
+
+          <article class="component-card component-system-card">
+            <div class="component-header"><span>System</span><h3>State Pattern</h3></div>
+            <div class="state-stack">
+              <div><b>Default</b><span>Ready for interaction</span></div>
+              <div><b>Hover / focus</b><span>Visible border or lift</span></div>
+              <div><b>Loading</b><span>Spinner replaces label</span></div>
+              <div><b>Error</b><span>Red border plus helper text</span></div>
+            </div>
+            <p>States stay visible through colour, shape, text, and spacing.</p>
           </article>
 
         </div>
+      </section>
+
+      <section class="section reveal">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Variant Examples</p>
+            <h2>Every standard state</h2>
+          </div>
+          <p class="section-lede">Each component below shows its main variants and states as visual examples.</p>
+        </div>
+
+        <div class="variant-example-grid">
+          <article class="variant-panel">
+            <h3>Buttons</h3>
+            <div class="variant-row"><button class="btn btn-primary">Primary</button><button class="btn btn-secondary">Secondary</button><button class="btn btn-ghost">Outlined</button><button class="btn btn-text">Text</button></div>
+            <div class="variant-row size-row"><button class="btn btn-primary small">Small</button><button class="btn btn-primary">Medium</button><button class="btn btn-primary large">Large</button></div>
+            <div class="variant-row"><button class="btn btn-primary loading"><span></span>Loading</button><button class="btn btn-muted">Disabled</button><button class="btn btn-primary rounded">Rounded</button></div>
+          </article>
+
+          <article class="variant-panel">
+            <h3>Inputs</h3>
+            <label class="field-label" for="default-field">Default</label>
+            <input class="field" id="default-field" value="Tomatoes">
+            <label class="field-label" for="focused-field">Focus</label>
+            <input class="field focus-demo" id="focused-field" value="Pasta">
+            <label class="field-label" for="disabled-field">Disabled</label>
+            <input class="field disabled-demo" id="disabled-field" value="Locked" disabled>
+            <label class="field-label" for="private-field">Private</label>
+            <input class="field" id="private-field" value="••••••••">
+          </article>
+
+          <article class="variant-panel">
+            <h3>Cards</h3>
+            <div class="card-variant-grid wide">
+              <div class="mini-card light"><strong>Light</strong><span>Default surface</span></div>
+              <div class="mini-card dark"><strong>Dark</strong><span>High contrast</span></div>
+              <div class="mini-card accent"><strong>Accent</strong><span>Warm highlight</span></div>
+              <div class="mini-card outlined"><strong>Outlined</strong><span>Grouped content</span></div>
+              <div class="mini-card gradient"><strong>Gradient</strong><span>Brand surface</span></div>
+            </div>
+          </article>
+
+          <article class="variant-panel">
+            <h3>Chips</h3>
+            <div class="filter-tag-row examples"><span class="filter-tag">Default</span><span class="filter-tag selected">Selected</span><span class="filter-tag removable">Removable ×</span><span class="filter-tag focus-chip">Focus</span></div>
+          </article>
+
+          <article class="variant-panel">
+            <h3>Icon Buttons</h3>
+            <div class="icon-button-row examples"><button class="primary">＋</button><button class="secondary">⌕</button><button class="outlined">♡</button><button class="ghost">↗</button><button class="loading">◌</button><button class="disabled">⋯</button></div>
+          </article>
+
+          <article class="variant-panel">
+            <h3>Navigation, Selects, and Feedback</h3>
+            <div class="bottom-nav-demo compact"><a class="active" href="#">Home</a><a href="#">Vault</a><a href="#">Pantry</a></div>
+            <div class="select-demo compact"><span>Filter</span><strong>Quick meals</strong><b>⌄</b></div>
+            <div class="toast-demo success compact"><b>✓</b><span>Shopping list updated</span></div>
+            <div class="modal-demo compact"><strong>Remove item?</strong><p>This action needs confirmation.</p></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section reveal">
+        <div class="section-heading">
+          <div>
+          <p class="section-kicker">Component Tokens</p>
+            <h2>Variants, sizes, and states</h2>
+          </div>
+          <p class="section-lede">These values define the visible component variants, dimensions, and interaction states.</p>
+        </div>
+        <table class="token-table component-spec-table">
+          <tr><th>Component</th><th>Variants</th><th>Sizes / Radius</th><th>States</th></tr>
+          <tr><td>Button</td><td>primary, secondary, outlined, text</td><td>36, 48, 56px high. Radius 12px or 100px rounded.</td><td>default, loading, disabled, full-width, left icon, right icon</td></tr>
+          <tr><td>Text field</td><td>standard, private</td><td>12px radius. Padding 16px horizontal, 14px vertical.</td><td>default, focus, error, disabled, private visibility toggle</td></tr>
+          <tr><td>Select</td><td>dropdown field</td><td>12px radius. Matches text field padding and border.</td><td>default, focus, selected, disabled</td></tr>
+          <tr><td>Card</td><td>light, dark, accent, outlined, gradient</td><td>16px default radius. 16px default padding.</td><td>default, tappable, custom width, custom height, custom radius</td></tr>
+          <tr><td>Chip</td><td>selected, unselected</td><td>8px radius. Padding 14px by 10px.</td><td>default, selected, removable, tappable</td></tr>
+          <tr><td>Icon button</td><td>primary, secondary, outlined, ghost</td><td>48px default size. Icon uses 45% of button size.</td><td>default, loading, disabled, custom colour</td></tr>
+          <tr><td>Bottom navigation</td><td>fixed tab navigation</td><td>10px horizontal padding, 8px vertical padding, 14px selected pill radius.</td><td>selected, unselected, route change</td></tr>
+          <tr><td>Modal</td><td>dialog, bottom sheet</td><td>Rounded surface with 16px plus internal spacing.</td><td>open, confirm, cancel, dismissed</td></tr>
+          <tr><td>Toast</td><td>success, error</td><td>Floating snackbar surface with compact icon and label.</td><td>shown, dismissed</td></tr>
+        </table>
       </section>
       <section class="section reveal">
         <div class="component-preview-row">
@@ -71,7 +195,7 @@
             <h3>Planner</h3>
             <div class="card"><strong>Roasted tomato pasta</strong><p>35 min · pantry friendly</p></div>
             <div style="height:16px"></div>
-            <div class="bottom-nav-demo"><a class="active" href="#">Home</a><a href="#">Discover</a><a href="#">Vault</a><a href="#">Pantry</a></div>
+            <div class="bottom-nav-demo"><a class="active" href="#">Home</a><a href="#">Swipes</a><a href="#">Discover</a><a href="#">Vault</a><a href="#">Pantry</a></div>
           </div>
           <p class="gold-note component-note">Component preview: this mobile-style card shows how recipe cards and bottom navigation sit together in the product UI.</p>
         </div>
