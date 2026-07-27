@@ -24,6 +24,7 @@ import org.springframework.http.HttpStatus;
 
 import com.mealchemy.recipe.model.RecipeIngredient;
 import com.mealchemy.recipe.model.Recipe;
+import com.mealchemy.ingredient.model.IngredientCatalogue;
 import com.mealchemy.recipe.dto.RecipeIngredientRequest;
 import com.mealchemy.recipe.dto.RecipeIngredientResponse;
 import com.mealchemy.recipe.repository.RecipeIngredientRepository;
@@ -48,6 +49,8 @@ public class RecipeIngredientServiceTest {
     private Recipe recipe;
     private Recipe otherRecipe;
     private RecipeIngredientRequest request;
+    private IngredientCatalogue existingIngredientCatalogue;
+    private IngredientCatalogue newIngredientCatalogue;
 
     @BeforeEach
     void setUp()
@@ -68,17 +71,27 @@ public class RecipeIngredientServiceTest {
         recipeIngredient.setSortOrder(1);
         
         request = new RecipeIngredientRequest(2, BigDecimal.valueOf(30), "ml", 1);
+
+        existingIngredientCatalogue = new IngredientCatalogue();
+        existingIngredientCatalogue.setName("Flour");
+        ReflectionTestUtils.setField(existingIngredientCatalogue, "ingId", 1);
+
+        newIngredientCatalogue = new IngredientCatalogue();
+        newIngredientCatalogue.setName("Sugar");
+        ReflectionTestUtils.setField(newIngredientCatalogue, "ingId", 2);
     }
 
     @Test
     void getAllIngredientsByRecipeId_returnsListOfIngredients_whenFound()
     {
         when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(recipeIngredient));
+        when(ingredientCatalogueRepository.findAllById(List.of(1))).thenReturn(List.of(existingIngredientCatalogue));
 
         List<RecipeIngredientResponse> result = recipeIngredientService.getAllIngredientsByRecipeId(1);
 
         assertEquals(1, result.size());
         assertEquals(1, result.get(0).ingredientId());
+        assertEquals("Flour", result.get(0).ingName());
     }
 
     @Test
@@ -95,14 +108,27 @@ public class RecipeIngredientServiceTest {
     void createRecipeIngredient_returnsNewIngredient_whenFoundOwnerAndInCatalogue()
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
-        when(ingredientCatalogueRepository.existsById(request.ingId())).thenReturn(true);
+        when(ingredientCatalogueRepository.findById(request.ingId())).thenReturn(Optional.of(newIngredientCatalogue));
         when(recipeIngredientRepository.save(any(RecipeIngredient.class))).thenReturn(recipeIngredient);
 
         RecipeIngredientResponse result = recipeIngredientService.createRecipeIngredient(request, 1, 1);
 
         assertNotNull(result);
         assertEquals(1, result.ingredientId());
+        assertEquals("Sugar", result.ingName());
         verify(recipeIngredientRepository, times(1)).save(any(RecipeIngredient.class));
+    }
+
+    @Test
+    void getAllIngredientsByRecipeId_returnsUnknownIngredient_whenOrphaned()
+    {
+        when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(recipeIngredient));
+        when(ingredientCatalogueRepository.findAllById(List.of(1))).thenReturn(List.of()); // orphaned - not found
+
+        List<RecipeIngredientResponse> result = recipeIngredientService.getAllIngredientsByRecipeId(1);
+
+        assertEquals(1, result.size());
+        assertEquals("Unknown ingredient", result.get(0).ingName());
     }
 
     @Test
@@ -131,7 +157,7 @@ public class RecipeIngredientServiceTest {
     void createRecipeIngredient_throwsException_whenNotInCatalogue()
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
-        when(ingredientCatalogueRepository.existsById(request.ingId())).thenReturn(false);
+        when(ingredientCatalogueRepository.findById(request.ingId())).thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.createRecipeIngredient(request, 1, 1));
 
@@ -144,13 +170,14 @@ public class RecipeIngredientServiceTest {
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
         when(recipeIngredientRepository.findById(1)).thenReturn(Optional.of(recipeIngredient));
-        when(ingredientCatalogueRepository.existsById(request.ingId())).thenReturn(true);
+        when(ingredientCatalogueRepository.findById(request.ingId())).thenReturn(Optional.of(newIngredientCatalogue));
         when(recipeIngredientRepository.save(any(RecipeIngredient.class))).thenReturn(recipeIngredient);
 
         RecipeIngredientResponse result = recipeIngredientService.updateRecipeIngredient(1, request, 1, 1);
 
         assertNotNull(result);
         assertEquals(2, result.ingId());
+        assertEquals("Sugar", result.ingName());
         verify(recipeIngredientRepository, times(1)).save(any(RecipeIngredient.class));
     }
 
@@ -206,7 +233,7 @@ public class RecipeIngredientServiceTest {
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
         when(recipeIngredientRepository.findById(1)).thenReturn(Optional.of(recipeIngredient));
-        when(ingredientCatalogueRepository.existsById(request.ingId())).thenReturn(false);
+        when(ingredientCatalogueRepository.findById(request.ingId())).thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.updateRecipeIngredient(1, request, 1, 1));
 

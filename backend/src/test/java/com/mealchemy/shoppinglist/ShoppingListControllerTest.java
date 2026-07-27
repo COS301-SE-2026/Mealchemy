@@ -729,4 +729,72 @@ public class ShoppingListControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Shopping list not found"));
     }
+
+
+    // ========== Generating Shopping List Items (Compares recipe to current pantry ingredients and inserts the rest into shopping list) Testing ==========
+
+    @Test
+    void generateShoppingListFromRecipe_validRequest_return200() throws Exception {
+        // Arrange - mock response
+        PantryRecipeComparisonRequest mockRequest = new PantryRecipeComparisonRequest(
+            "Generate Shopping List With All Items",
+            false
+        );
+
+        ShoppingListResponse mockResponse = new ShoppingListResponse(
+            1,
+            1,
+            "Generate Shopping List With All Items",
+            ShoppingListStatus.ACTIVE,
+            OffsetDateTime.parse("2026-07-23T23:00:00Z")
+        );
+
+        when(shoppingListService.generateShoppingListFromRecipe(anyInt(), eq(1), any(PantryRecipeComparisonRequest.class))).thenReturn(mockResponse);
+
+        // Act and assert
+        mockMvc.perform(post("/api/shopping-lists/from-recipe/{recipeId}", 1).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(mockRequest)))
+                .andExpect(status().isOk())
+                // fields in response object
+                .andExpect(jsonPath("$.shopping_list_id").value(1))
+                .andExpect(jsonPath("$.user_id").value(1))
+                .andExpect(jsonPath("$.name").value("Generate Shopping List With All Items"))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
+    }
+
+    @Test
+    void generateShoppingListFromRecipe_bad_request_returns400() throws Exception {
+        // Bad request
+       String badRequest = """
+                            {
+                                "name": "name",
+                                "include_available_pantry_items": "wrong"
+                            }
+                         """;
+
+        // Act and Assert
+        mockMvc.perform(post("/api/shopping-lists/from-recipe/{recipeId}", 1).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(badRequest))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test 
+    void generateShoppingListFromRecipe_recipeNotFound_returns404() throws Exception{
+        PantryRecipeComparisonRequest mockRequest = new PantryRecipeComparisonRequest(
+            "Generate Shopping List With All Items",
+            false
+        );
+        when(shoppingListService.generateShoppingListFromRecipe(anyInt(), eq(1), any(PantryRecipeComparisonRequest.class))).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
+
+        // Act and assert
+        mockMvc.perform(post("/api/shopping-lists/from-recipe/{recipeId}", 1).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                // fields in response object
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(mockRequest)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Recipe not found"));
+    }
+
 }

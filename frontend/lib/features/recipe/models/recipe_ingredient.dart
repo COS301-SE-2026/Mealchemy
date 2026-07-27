@@ -23,6 +23,7 @@ class RecipeIngredient {
       ingredientId: json['ingredientId'] as int?,
       recipeId: json['recipeId'] as int?,
       ingId: json['ingId'] as int,
+      name: json['ingName'] as String?,
       quantity: (json['quantity'] as num?)?.toDouble(),
       unit: json['unit'] as String?,
       sortOrder: (json['sortOrder'] as int?) ?? 0,

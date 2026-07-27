@@ -56,7 +56,7 @@ public class RecipeIngredientControllerTest {
     @BeforeEach
     void setUp()
     {
-        response = new RecipeIngredientResponse(1, 1, 1, BigDecimal.valueOf(2.75), "grams", 1);
+        response = new RecipeIngredientResponse(1, 1, 1, "Salt", BigDecimal.valueOf(2.75), "grams", 1);
 
         request = new RecipeIngredientRequest(1, BigDecimal.valueOf(2.75), "grams", 1);
     }
@@ -66,7 +66,7 @@ public class RecipeIngredientControllerTest {
     {
         when(recipeIngredientService.getAllIngredientsByRecipeId(1)).thenReturn(List.of(response));
 
-        mockMvc.perform(get("/ingredients/recipe/1")).andExpect(status().isOk()).andExpect(jsonPath("$[0].unit").value("grams"));
+        mockMvc.perform(get("/ingredients/recipe/1")).andExpect(status().isOk()).andExpect(jsonPath("$[0].unit").value("grams")).andExpect(jsonPath("$[0].ingName").value("Salt"));
     }
 
     @Test
@@ -87,7 +87,8 @@ public class RecipeIngredientControllerTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.unit").value("grams"));
+            .andExpect(jsonPath("$.unit").value("grams"))
+            .andExpect(jsonPath("$.ingName").value("Salt"));
     }
 
     @Test
@@ -126,7 +127,8 @@ public class RecipeIngredientControllerTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.unit").value("grams"));
+            .andExpect(jsonPath("$.unit").value("grams"))
+            .andExpect(jsonPath("$.ingName").value("Salt"));
     }
 
     @Test
