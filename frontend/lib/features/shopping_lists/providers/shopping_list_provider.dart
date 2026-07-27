@@ -5,6 +5,9 @@ import '../models/shopping_list.dart';
 import '../repositories/mock_shopping_list_repository.dart';
 import '../repositories/shopping_list_repository.dart';
 import '../models/shopping_list_item.dart';
+import '../../../core/providers/api_service_provider.dart';
+import '../repositories/api_shopping_list_repository.dart';
+import '../models/complete_shop_result.dart';
 
 //select mock/API
 final shoppingListRepositoryProvider = Provider<ShoppingListRepository>((ref) {
@@ -12,8 +15,7 @@ final shoppingListRepositoryProvider = Provider<ShoppingListRepository>((ref) {
     return MockShoppingListRepository();
   }
 
-  //API repo will replace this once the backend endpoint exists
-  return MockShoppingListRepository();
+  return ApiShoppingListRepository(ref.read(dioProvider));
 });
 
 //state management provider
@@ -24,7 +26,7 @@ final shoppingListsProvider =
 
 //current state of shopping list, tracks lists and item checked states
 class ShoppingListsState {
-    const ShoppingListsState({
+  const ShoppingListsState({
     required this.lists,
     this.searchQuery = '',
   });
@@ -80,7 +82,7 @@ class ShoppingListsState {
     return grouped;
   }
 
-    ShoppingListsState copyWith({
+  ShoppingListsState copyWith({
     List<ShoppingList>? lists,
     String? searchQuery,
   }) {
@@ -105,13 +107,95 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     return ShoppingListsState(lists: lists);
   }
 
-  //checks/unchecks an item in a shopping list
-  void toggleItemChecked({
-    required String listId,
-    required String itemId,
-  }) {
+  //creates new shopping list through the active repo
+  Future<void> createShoppingList({
+    required String name,
+    String status = 'ACTIVE',
+  }) async {
     final current = state.valueOrNull;
     if (current == null) return;
+
+    final createdList = await _repository.createShoppingList(
+      name: name,
+      status: status,
+    );
+
+    state = AsyncData(
+      current.copyWith(
+        lists: [...current.lists, createdList],
+      ),
+    );
+  }
+
+  //deletes whole shopping list and removes it from local state
+  Future<void> deleteShoppingList(String listId) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    await _repository.deleteShoppingList(listId);
+
+    final updatedLists =
+        current.lists.where((list) => list.id != listId).toList();
+
+    state = AsyncData(current.copyWith(lists: updatedLists));
+  }
+
+  //renames a shopping list and keeps local state in sync
+  Future<void> updateShoppingListName({
+    required String listId,
+    required String name,
+  }) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final existingList = current.getListById(listId);
+    if (existingList == null) return;
+
+    final updatedList = await _repository.updateShoppingList(
+      listId: listId,
+      name: name,
+      status: existingList.status ?? 'ACTIVE',
+    );
+
+    final updatedLists = current.lists.map((list) {
+      if (list.id != listId) return list;
+
+      return updatedList.copyWith(
+        //keep loaded items because the update endpoint returns list only
+        items: list.items,
+      );
+    }).toList();
+
+    state = AsyncData(current.copyWith(lists: updatedLists));
+  }
+
+  //checks/unchecks
+  Future<void> toggleItemChecked({
+    required String listId,
+    required String itemId,
+  }) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    ShoppingListItem? existingItem;
+    for (final list in current.lists) {
+      if (list.id != listId) continue;
+
+      for (final item in list.items) {
+        if (item.id == itemId) {
+          existingItem = item;
+          break;
+        }
+      }
+    }
+
+    if (existingItem == null) return;
+
+    final updatedItem = await _repository.updateItemPurchased(
+      listId: listId,
+      itemId: itemId,
+      purchased: !existingItem.checked,
+    );
 
     final updatedLists = current.lists.map((list) {
       if (list.id != listId) return list;
@@ -119,7 +203,8 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
       final updatedItems = list.items.map((item) {
         if (item.id != itemId) return item;
 
-        return item.copyWith(checked: !item.checked);
+        //backend response
+        return updatedItem;
       }).toList();
 
       return list.copyWith(items: updatedItems);
@@ -130,40 +215,136 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     );
   }
 
-  //adds new item
-  void addItemToList({
+  //marks every item in list as checked
+  Future<void> selectAllItems(String listId) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final updatedItems = await _repository.selectAllItems(listId);
+
+    final updatedLists = current.lists.map((list) {
+      if (list.id != listId) return list;
+
+      return list.copyWith(items: updatedItems);
+    }).toList();
+
+    state = AsyncData(current.copyWith(lists: updatedLists));
+  }
+
+  //clears all checked items in list
+  Future<void> deselectAllItems(String listId) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final updatedItems = await _repository.deselectAllItems(listId);
+
+    final updatedLists = current.lists.map((list) {
+      if (list.id != listId) return list;
+
+      return list.copyWith(items: updatedItems);
+    }).toList();
+
+    state = AsyncData(current.copyWith(lists: updatedLists));
+  }
+
+  //deletes every checked item from one shopping list
+  Future<void> deleteSelectedItems(String listId) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final list = current.getListById(listId);
+    if (list == null) return;
+
+    final selectedItems = list.items.where((item) => item.checked).toList();
+
+    final selectedItemIds =
+        selectedItems.map((item) => item.itemId).whereType<int>().toList();
+
+    if (selectedItemIds.isEmpty) return;
+
+    await _repository.deleteShoppingListItems(
+      listId: listId,
+      itemIds: selectedItemIds,
+    );
+
+    final selectedItemIdSet = selectedItemIds.toSet();
+
+    final updatedLists = current.lists.map((list) {
+      if (list.id != listId) return list;
+
+      final remainingItems = list.items.where((item) {
+        return item.itemId == null || !selectedItemIdSet.contains(item.itemId);
+      }).toList();
+
+      return list.copyWith(items: remainingItems);
+    }).toList();
+
+    state = AsyncData(current.copyWith(lists: updatedLists));
+  }
+
+  //adds manual item through the active repository
+  Future<void> addItemToList({
     required String listId,
     required String name,
     required String quantity,
     required String category,
-  }) {
+  }) async {
     final current = state.valueOrNull;
     final cleanedName = name.trim();
     final cleanedQuantity = quantity.trim();
-    final cleanedCategory = category.trim().toUpperCase();
+    final cleanedCategory = category.trim();
 
-    if (current == null || cleanedName.isEmpty || cleanedCategory.isEmpty) {
+    if (current == null || cleanedName.isEmpty) {
       return;
     }
 
-    final newItem = ShoppingListItem(
-      id: cleanedName.toLowerCase().replaceAll(' ', '-'),
+    final parsed = _splitQuantityAndUnit(cleanedQuantity);
+
+    final createdItem = await _repository.addItemToShoppingList(
+      listId: listId,
       name: cleanedName,
-      quantity: cleanedQuantity.isEmpty ? '-' : cleanedQuantity,
-      category: cleanedCategory,
+      quantity: parsed.quantity,
+      unit: parsed.unit.isEmpty ? cleanedCategory : parsed.unit,
     );
 
     final updatedLists = current.lists.map((list) {
       if (list.id != listId) return list;
 
+      //backend-created item is source of truth now
       return list.copyWith(
-        items: [...list.items, newItem],
+        items: [...list.items, createdItem],
       );
     }).toList();
 
     state = AsyncData(
       current.copyWith(lists: updatedLists),
     );
+  }
+
+  //moves checked shopping items to pantry through backend
+  Future<CompleteShopResult?> completeShop(String listId) async {
+    final current = state.valueOrNull;
+    if (current == null) return null;
+
+    final result = await _repository.completeShop(listId);
+
+    final updatedLists = current.lists.map((list) {
+      if (list.id != listId) return list;
+
+      final remainingItems = list.items.where((item) => !item.checked).toList();
+
+      return list.copyWith(items: remainingItems);
+    }).toList();
+
+    state = AsyncData(
+      current.copyWith(
+        lists: result.shoppingListDeleted
+            ? updatedLists.where((list) => list.id != listId).toList()
+            : updatedLists,
+      ),
+    );
+
+    return result;
   }
 
   //updates search query
@@ -185,4 +366,22 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
       return ShoppingListsState(lists: lists);
     });
   }
+}
+
+//helper
+({String quantity, String unit}) _splitQuantityAndUnit(String rawQuantity) {
+  final cleaned = rawQuantity.trim();
+  if (cleaned.isEmpty) {
+    return (quantity: '', unit: '');
+  }
+
+  final parts = cleaned.split(RegExp(r'\s+'));
+  if (parts.length == 1) {
+    return (quantity: parts.first, unit: '');
+  }
+
+  return (
+    quantity: parts.first,
+    unit: parts.sublist(1).join(' '),
+  );
 }

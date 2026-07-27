@@ -1,6 +1,7 @@
 import '../models/shopping_list.dart';
 import '../models/shopping_list_item.dart';
 import 'shopping_list_repository.dart';
+import '../models/complete_shop_result.dart';
 
 //temporary mock data for shopping lists
 class MockShoppingListRepository implements ShoppingListRepository {
@@ -36,18 +37,21 @@ class MockShoppingListRepository implements ShoppingListRepository {
       items: [
         ShoppingListItem(
           id: 'heirloom-tomatoes',
+          itemId: 201,
           name: 'Heirloom Tomatoes',
           quantity: '8g',
           category: 'PRODUCE',
         ),
         ShoppingListItem(
           id: 'baby-arugula',
+          itemId: 202,
           name: 'Baby Arugula',
           quantity: '142 g',
           category: 'PRODUCE',
         ),
         ShoppingListItem(
           id: 'shallots',
+          itemId: 203,
           name: 'Shallots',
           quantity: '2 ct',
           category: 'PRODUCE',
@@ -55,24 +59,28 @@ class MockShoppingListRepository implements ShoppingListRepository {
         ),
         ShoppingListItem(
           id: 'cultured-butter',
+          itemId: 204,
           name: 'Cultured Butter',
           quantity: '250g',
           category: 'DAIRY',
         ),
         ShoppingListItem(
           id: 'greek-yogurt',
+          itemId: 205,
           name: 'Greek Yogurt',
           quantity: '907 g',
           category: 'DAIRY',
         ),
         ShoppingListItem(
           id: 'maldon-sea-salt',
+          itemId: 206,
           name: 'Maldon Sea Salt',
           quantity: '1 box',
           category: 'PANTRY',
         ),
         ShoppingListItem(
           id: 'extra-virgin-olive-oil',
+          itemId: 207,
           name: 'Extra Virgin Olive Oil',
           quantity: '500ml',
           category: 'PANTRY',
@@ -142,5 +150,151 @@ class MockShoppingListRepository implements ShoppingListRepository {
     }
 
     return null;
+  }
+
+  @override
+  Future<ShoppingListItem> updateItemPurchased({
+    required String listId,
+    required String itemId,
+    required bool purchased,
+  }) async {
+    //mock version returns the updated item shape without touching a backend
+    for (final list in _lists) {
+      if (list.id != listId) continue;
+
+      for (final item in list.items) {
+        if (item.id == itemId) {
+          return item.copyWith(checked: purchased);
+        }
+      }
+    }
+
+    throw StateError('Shopping list item not found.');
+  }
+
+  @override
+  Future<ShoppingListItem> addItemToShoppingList({
+    required String listId,
+    required String name,
+    required String quantity,
+    required String unit,
+  }) async {
+    final cleanedName = name.trim();
+    final cleanedQuantity = quantity.trim();
+    final cleanedUnit = unit.trim();
+
+    if (cleanedName.isEmpty) {
+      throw ArgumentError('Item name is required.');
+    }
+
+    //mock version returns a backend-shaped manual item
+    return ShoppingListItem(
+      id: cleanedName.toLowerCase().replaceAll(' ', '-'),
+      itemId: 999,
+      shoppingListId: int.tryParse(listId),
+      ingId: null,
+      name: cleanedName,
+      quantity: cleanedQuantity.isEmpty
+          ? '-'
+          : cleanedUnit.isEmpty
+              ? cleanedQuantity
+              : '$cleanedQuantity $cleanedUnit',
+      category: 'MANUAL',
+      unit: cleanedUnit.isEmpty ? null : cleanedUnit,
+    );
+  }
+
+  @override
+  Future<CompleteShopResult> completeShop(String listId) async {
+    //mock result mirrors the backend complete-shop response shape
+    return const CompleteShopResult(
+      addedToPantryCount: 1,
+      skippedManualItems: ['Mock manual item'],
+      shoppingListDeleted: false,
+    );
+  }
+
+  @override
+  Future<ShoppingList> createShoppingList({
+    required String name,
+    String status = 'ACTIVE',
+  }) async {
+    final cleanedName = name.trim();
+
+    if (cleanedName.isEmpty) {
+      throw ArgumentError('Shopping list name is required.');
+    }
+
+    //mock version returns empty list
+    return ShoppingList(
+      id: cleanedName.toLowerCase().replaceAll(' ', '-'),
+      shoppingListId: 999,
+      userId: 1,
+      title: cleanedName,
+      subtitle: '0 items',
+      section: 'OTHER LISTS',
+      iconType: 'list',
+      status: status,
+      items: const [],
+    );
+  }
+
+  @override
+  Future<List<ShoppingListItem>> selectAllItems(String listId) async {
+    final list = await getShoppingListById(listId);
+    if (list == null) return [];
+
+    //mock behaves like backend by returning updated item list
+    return list.items.map((item) => item.copyWith(checked: true)).toList();
+  }
+
+  @override
+  Future<List<ShoppingListItem>> deselectAllItems(String listId) async {
+    final list = await getShoppingListById(listId);
+    if (list == null) return [];
+
+    //everything unchecked again
+    return list.items.map((item) => item.copyWith(checked: false)).toList();
+  }
+
+  @override
+  Future<void> deleteShoppingListItems({
+    required String listId,
+    required List<int> itemIds,
+  }) async {
+    if (itemIds.isEmpty) {
+      throw ArgumentError('At least one item id is required.');
+    }
+
+    //mock does not persist, but it still checks that ids were supplied
+  }
+
+  @override
+  Future<void> deleteShoppingList(String listId) async {
+    //mock accepts delete request and provider removes it from local state
+  }
+
+  @override
+  Future<ShoppingList> updateShoppingList({
+    required String listId,
+    required String name,
+    String status = 'ACTIVE',
+  }) async {
+    final cleanedName = name.trim();
+    if (cleanedName.isEmpty) {
+      throw ArgumentError('Shopping list name is required.');
+    }
+
+    final existingList = await getShoppingListById(listId);
+
+    if (existingList == null) {
+      throw StateError('Shopping list not found.');
+    }
+
+    //mock returns the renamed list, just like the backend would
+    return existingList.copyWith(
+      title: cleanedName,
+      status: status,
+    );
   }
 }
