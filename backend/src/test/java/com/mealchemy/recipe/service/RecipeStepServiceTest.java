@@ -261,12 +261,12 @@ public class RecipeStepServiceTest {
 
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
         when(recipeStepRepository.findByRecipe_RecipeIdOrderByStepNrAsc(1)).thenReturn(List.of(recipeStep, recipeStep2, recipeStep3)).thenReturn(List.of(recipeStep3, recipeStep, recipeStep2));
-        when(recipeStepRepository.save(any(RecipeStep.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(recipeStepRepository.saveAllAndFlush(any())).thenAnswer(invocation -> new ArrayList<>((Collection<RecipeStep>) invocation.getArgument(0)));
 
         List<RecipeStepResponse> result = recipeStepService.reorderSteps(1, reorderRequest, 1);
 
         assertEquals(3, result.size());
-        verify(recipeStepRepository, times(3)).save(any(RecipeStep.class));
+        verify(recipeStepRepository, times(2)).saveAllAndFlush(any());
     }
 
     @Test
