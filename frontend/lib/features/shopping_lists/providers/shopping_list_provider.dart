@@ -215,6 +215,26 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     );
   }
 
+  //loads the full shopping list, including its items
+  Future<void> loadShoppingListDetail(String listId) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final fullList = await _repository.getShoppingListById(listId);
+    if (fullList == null) return;
+
+    final existingListFound = current.lists.any((list) => list.id == listId);
+
+    final updatedLists = existingListFound
+        ? current.lists.map((list) {
+            if (list.id != listId) return list;
+            return fullList;
+          }).toList()
+        : [...current.lists, fullList];
+
+    state = AsyncData(current.copyWith(lists: updatedLists));
+  }
+
   //marks every item in list as checked
   Future<void> selectAllItems(String listId) async {
     final current = state.valueOrNull;
