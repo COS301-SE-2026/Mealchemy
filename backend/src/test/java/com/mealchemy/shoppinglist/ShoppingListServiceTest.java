@@ -1310,7 +1310,7 @@ public class ShoppingListServiceTest {
         // Act 
         ResponseStatusException ex = assertThrows(
             ResponseStatusException.class,
-            () -> shoppingListService.generateShoppingListFromRecipe(1, 1, pantryRecipeComparisonRequest)
+            () -> shoppingListService.generateShoppingListFromRecipe(2, 1, pantryRecipeComparisonRequest)
         );
 
         // Assert

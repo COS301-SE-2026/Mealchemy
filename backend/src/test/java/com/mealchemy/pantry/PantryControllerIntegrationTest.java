@@ -1,5 +1,7 @@
 package com.mealchemy.pantry;
 
+import com.mealchemy.auth.model.User;
+import com.mealchemy.auth.repository.UserRepository;
 import com.mealchemy.ingredient.model.IngredientCatalogue;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.pantry.model.PantryIngredient;
@@ -43,17 +45,31 @@ public class PantryControllerIntegrationTest {
     private IngredientCatalogueRepository ingredientCatalogueRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
-    
+
     //stores seeded ingredient during testing
     private IngredientCatalogue testIngredient;
+    private Integer testUserId; 
 
     @BeforeEach
     void setUp() {
         //clear pantry data
         pantryIngredientRepository.deleteAll();
-        
+        userRepository.deleteAll(); 
+
+        // create the user 
+        User testUser = new User();
+        testUser.setEmail("pantry-test-" + System.nanoTime() + "@example.com"); 
+        testUser.setPasswordHash("dummy-hash");
+        testUser.setRoles(List.of("USER")); 
+        testUser = userRepository.save(testUser);
+        testUserId = testUser.getUserId(); 
+
         //retrieve ingredient
+
         testIngredient = ingredientCatalogueRepository.findAll()
                 .stream()
                 .findFirst()
@@ -61,7 +77,7 @@ public class PantryControllerIntegrationTest {
 
         //pantry entry
         PantryIngredient pantryIngredient = new PantryIngredient();
-        pantryIngredient.setUserId(1);
+        pantryIngredient.setUserId(testUserId);
         pantryIngredient.setIngredientId(testIngredient.getIngId());
         pantryIngredient.setQuantity(new BigDecimal("2.5"));
         pantryIngredient.setUnit("kg");
@@ -74,7 +90,7 @@ public class PantryControllerIntegrationTest {
         //simulate request
         mockMvc.perform(get("/api/pantry")
                         .with(authentication(new UsernamePasswordAuthenticationToken(
-                                "1",
+                                String.valueOf(testUserId),
                                 null,
                                 List.of()
                         ))))
@@ -103,7 +119,7 @@ public class PantryControllerIntegrationTest {
         //bbackend fills in name/category from the ingredient catalogue.
         mockMvc.perform(post("/api/pantry")
                         .with(authentication(new UsernamePasswordAuthenticationToken(
-                                "1",
+                                String.valueOf(testUserId),
                                 null,
                                 List.of()
                         )))
@@ -120,7 +136,7 @@ public class PantryControllerIntegrationTest {
                 .andExpect(jsonPath("$.updated_at", notNullValue()));
 
         //row was saved -> check
-        List<PantryIngredient> savedItems = pantryIngredientRepository.findByUserId(1);
+        List<PantryIngredient> savedItems = pantryIngredientRepository.findByUserId(testUserId);
         org.junit.jupiter.api.Assertions.assertEquals(1, savedItems.size());
         org.junit.jupiter.api.Assertions.assertEquals(testIngredient.getIngId(), savedItems.get(0).getIngredientId());
         //need to compare numbers not stcale
@@ -133,7 +149,7 @@ public class PantryControllerIntegrationTest {
 
     @Test
     void updatePantryIngredientManually_updatesQuantityAndUnit() throws Exception {
-        PantryIngredient existingItem = pantryIngredientRepository.findByUserId(1)
+        PantryIngredient existingItem = pantryIngredientRepository.findByUserId(testUserId)
                 .stream()
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No pantry item created in setup"));
@@ -147,7 +163,7 @@ public class PantryControllerIntegrationTest {
         //updating keeps the same pantry row, changes the amount/unit
         mockMvc.perform(put("/api/pantry/{id}", existingItem.getPIngredientId())
                         .with(authentication(new UsernamePasswordAuthenticationToken(
-                                "1",
+                                String.valueOf(testUserId),
                                 null,
                                 List.of()
                         )))
@@ -176,7 +192,7 @@ public class PantryControllerIntegrationTest {
 
     @Test
     void removePantryIngredientManually_deletesPantryItem() throws Exception {
-        PantryIngredient existingItem = pantryIngredientRepository.findByUserId(1)
+        PantryIngredient existingItem = pantryIngredientRepository.findByUserId(testUserId)
                 .stream()
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No pantry item created in setup"));
@@ -184,7 +200,7 @@ public class PantryControllerIntegrationTest {
         //should remove pantry row
         mockMvc.perform(delete("/api/pantry/{id}", existingItem.getPIngredientId())
                         .with(authentication(new UsernamePasswordAuthenticationToken(
-                                "1",
+                                String.valueOf(testUserId),
                                 null,
                                 List.of()
                         )))
@@ -204,7 +220,7 @@ public class PantryControllerIntegrationTest {
         mockMvc.perform(get("/api/pantry/search")
                         .param("q", searchTerm)
                         .with(authentication(new UsernamePasswordAuthenticationToken(
-                                "1",
+                                String.valueOf(testUserId),
                                 null,
                                 List.of()
                         ))))

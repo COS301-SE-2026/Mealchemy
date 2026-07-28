@@ -64,7 +64,6 @@ public class VaultFolderControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // clear in FK-safe order: folders/members first, then vaults, then users
         vaultFolderRepository.deleteAll();
         vaultMemberRepository.deleteAll();
         vaultRepository.deleteAll();
@@ -126,7 +125,6 @@ public class VaultFolderControllerIntegrationTest {
 
     @Test
     void getPrivateVaultFolders_returns404_whenPrivateVaultNotFound() throws Exception {
-        // outsider has no private vault created for them
         mockMvc.perform(get("/folders/vault/private")
                         .with(authentication(authAs(outsider.getUserId()))))
                 .andExpect(status().isNotFound())

@@ -128,7 +128,7 @@ public class RecipeIngredientServiceTest {
         List<RecipeIngredientResponse> result = recipeIngredientService.getAllIngredientsByRecipeId(1);
 
         assertEquals(1, result.size());
-        assertEquals("Unknown ingredient", result.get(0).ingName());
+        assertEquals("Unknown Ingredient", result.get(0).ingName());
     }
 
     @Test

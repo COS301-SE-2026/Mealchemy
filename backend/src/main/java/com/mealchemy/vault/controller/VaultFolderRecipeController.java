@@ -55,7 +55,7 @@ public class VaultFolderRecipeController
 
     // Put
     @PutMapping("/{id}")
-    public VaultFolderRecipeResponse updateVaultFolderRecipe(@PathVariable int id, @RequestBody VaultFolderRecipeMoveRequest request, @AuthenticationPrincipal String userId)
+    public VaultFolderRecipeResponse updateVaultFolderRecipe(@PathVariable int id, @Valid @RequestBody VaultFolderRecipeMoveRequest request, @AuthenticationPrincipal String userId)
     {
         return vaultFolderRecipeService.updateVaultFolderRecipe(id, request, Integer.parseInt(userId));
     }
