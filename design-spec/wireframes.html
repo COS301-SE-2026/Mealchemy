@@ -6,10 +6,11 @@
     <title>Wireframes | Mealchemy</title>
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/wireframes.css">
+    <link rel="stylesheet" href="css/change-log.css">
   </head>
 
   <body>
-    <header class="site-header"><nav class="nav-shell" aria-label="Design specification navigation"><a class="brand-mark" href="index.html"><img class="nav-logo" src="assets/logos/logo-mark.png" alt="" aria-hidden="true"><span>Mealchemy</span></a><div class="nav-links"><a href="colours.html">Colours</a><a href="typography.html">Type</a><a href="logo.html">Logo</a><a href="principles.html">Design Principles</a><a href="components.html">Components</a><a href="spacing.html">Spacing</a><a href="accessibility.html">Accessibility</a><a href="wireframes.html">Wireframes</a></div></nav></header>
+    <header class="site-header"><nav class="nav-shell" aria-label="Design specification navigation"><a class="brand-mark" href="index.html"><img class="nav-logo" src="assets/logos/logo-mark.png" alt="" aria-hidden="true"><span>Mealchemy</span></a><div class="nav-links"><a href="colours.html">Colours</a><a href="typography.html">Type</a><a href="logo.html">Logo</a><a href="principles.html">Design Principles</a><a href="components.html">Components</a><a href="spacing.html">Spacing</a><a href="accessibility.html">Accessibility</a><a href="wireframes.html" aria-current="page">Wireframes</a><a href="change-log.html">Changelog</a></div></nav></header>
     <main class="page">
       <section class="section reveal">
         <div class="section-heading">
@@ -24,56 +25,236 @@
           <span><i class="key-action"></i>Button function</span>
           <span><i class="key-form"></i>Formatted input page</span>
         </div>
-      </section>
-
-      <section class="section reveal">
-        <h2>Navigation Flow</h2>
-        <p class="section-lede">The annotated flow shows how users move from onboarding into sign in, dashboard, recipe creation, discovery, pantry, vault, and the scrollable discovery page. Red arrows represent page changes, green arrows represent in-page button functions, and orange arrows represent formatted input pages.</p>
-        <figure class="flow-board">
-          <img src="assets/screens/navigation-flow-annotated.png" alt="Annotated Mealchemy navigation flow showing page changes, button functions, and formatted input pages">
-          <figcaption>Full navigation map exported from the wireframe board.</figcaption>
-        </figure>
-      </section>
-
-      <section class="section reveal">
-        <h2>Complete Design Export</h2>
-        <p class="section-lede">This board shows the higher-fidelity visual direction across the app screens, using the approved maroon, cream, and gold Mealchemy palette.</p>
-        <figure class="flow-board design-board">
-          <img src="assets/screens/design-board-complete.png" alt="Complete Mealchemy design export board showing all high-fidelity screens">
-          <figcaption>Complete design board: high-fidelity screens and reusable interface patterns.</figcaption>
-        </figure>
-      </section>
-
-      <section class="section reveal">
-        <h2>Core Screen Mockups</h2>
-        <div class="wireframe-grid">
-          <figure class="wireframe-card tall"><img src="assets/screens/sign-in-splash.png" alt="Mealchemy splash screen"><figcaption><span class="screen-label">Core Screen 01: Splash / Welcome</span><span class="screen-note">Entry screen with brand mark, tagline, and primary onboarding actions.</span></figcaption></figure>
-          <figure class="wireframe-card tall"><img src="assets/screens/sign-in-form.png" alt="Mealchemy sign in screen"><figcaption><span class="screen-label">Core Screen 02: Sign In</span><span class="screen-note">Authentication screen with email, password, Google sign in, and helper content.</span></figcaption></figure>
-          <figure class="wireframe-card tall"><img src="assets/screens/Dashboard.png" alt="Dashboard screen"><figcaption><span class="screen-label">Core Screen 03: Dashboard</span><span class="screen-note">Home hub with pantry count, smart suggestion, recommended recipes, and trending list.</span></figcaption></figure>
-          <figure class="wireframe-card tall"><img src="assets/screens/discovery-mockup.png" alt="Discovery screen"><figcaption><span class="screen-label">Core Screen 04: Discover</span><span class="screen-note">Recipe browsing screen with search, filter tags, categories, and image-led content.</span></figcaption></figure>
-          <figure class="wireframe-card tall"><img src="assets/screens/guided-discovery-swipe.png" alt="Guided discovery swipe screen"><figcaption><span class="screen-label">Core Screen 05: Guided Discovery</span><span class="screen-note">Swipe-based recommendation card for quick preference decisions.</span></figcaption></figure>
-          <figure class="wireframe-card tall"><img src="assets/screens/scrollable-discovery-page.png" alt="Scrollable discovery page"><figcaption><span class="screen-label">Core Screen 06: Scrollable Discovery Page</span><span class="screen-note">Video-led discovery screen with save, share, and pantry check actions.</span></figcaption></figure>
-          <figure class="wireframe-card tall"><img src="assets/screens/Pantry.png" alt="Pantry screen"><figcaption><span class="screen-label">Core Screen 07: Pantry</span><span class="screen-note">Inventory screen with freshness states, category tabs, edit actions, and add item action.</span></figcaption></figure>
-          <figure class="wireframe-card tall"><img src="assets/screens/html-body.png" alt="Vault screen"><figcaption><span class="screen-label">Core Screen 08: Vault</span><span class="screen-note">Saved recipe area with optimisation stats, private vault grouping, and recipe rows.</span></figcaption></figure>
-          <figure class="wireframe-card tall"><img src="assets/screens/recipe-creation.png" alt="Recipe creation screen"><figcaption><span class="screen-label">Core Screen 09: Recipe Creation</span><span class="screen-note">Recipe creation flow with ingredient availability, nutrition tabs, and start cooking action.</span></figcaption></figure>
-          <figure class="wireframe-card tall"><img src="assets/screens/preference-profile.png" alt="Preference profile screen"><figcaption><span class="screen-label">Core Screen 10: Preference Profile</span><span class="screen-note">Dietary directives, allergies, dislikes, flavour profiles, and profile update controls.</span></figcaption></figure>
+        <div class="wireframe-actions" aria-label="Wireframe link">
+          <a class="figma-link-button" href="#" aria-label="Open Figma wireframes">Open Figma wireframes</a>
         </div>
       </section>
 
       <section class="section reveal">
-        <h2>Reusable Navigation and Input Patterns</h2>
+        <h2>Navigation Flow</h2>
+        <p class="section-lede">The annotated flow shows movement from onboarding into sign in, dashboard, recipe creation, discovery, pantry, vault, and scrollable discovery.</p>
+        <figure class="flow-board">
+          <img src="assets/mock-screens/Mealchemy navigation.png" alt="Annotated Mealchemy navigation flow showing page changes, button functions, and formatted input pages">
+          <figcaption>Navigation map showing core flows, page changes, and linked app areas.</figcaption>
+        </figure>
+      </section>
+
+      <section class="section reveal">
+        <h2>Mockup vs Live app</h2>
+        <p class="section-lede">Each pair shows the original mockup beside the live app screen.</p>
+
+        <article class="changelog-compare">
+          <header>
+            <h3>Sign-in splash</h3>
+          </header>
+          <div class="compare-grid">
+            <figure class="compare-slot">
+              <span class="compare-label">Mockup</span>
+              <img src="assets/mock-screens/start page.png" alt="Start page mockup">
+            </figure>
+            <figure class="compare-slot">
+              <span class="compare-label">Live app</span>
+              <img src="assets/real-screens/login-real-app.png" alt="Live sign-in screen">
+            </figure>
+          </div>
+        </article>
+
+        <article class="changelog-compare">
+          <header>
+            <h3>Create an account</h3>
+          </header>
+          <div class="compare-grid">
+            <figure class="compare-slot">
+              <span class="compare-label">Mockup</span>
+              <img src="assets/mock-screens/login.png" alt="Login form mockup">
+            </figure>
+            <figure class="compare-slot">
+              <span class="compare-label">Live app</span>
+              <img src="assets/real-screens/Create-an-account-real-app.png" alt="Live create-account screen">
+            </figure>
+          </div>
+        </article>
+
+        <article class="changelog-compare">
+          <header>
+            <h3>Dashboard / Home</h3>
+          </header>
+          <div class="compare-grid">
+            <figure class="compare-slot">
+              <span class="compare-label">Mockup</span>
+              <img src="assets/mock-screens/Dashboard.png" alt="Dashboard mockup">
+            </figure>
+            <figure class="compare-slot">
+              <span class="compare-label">Live app</span>
+              <img src="assets/real-screens/real-app-dashboard.png" alt="Live dashboard screen">
+            </figure>
+          </div>
+        </article>
+
+        <article class="changelog-compare">
+          <header>
+            <h3>Pantry</h3>
+          </header>
+          <div class="compare-grid">
+            <figure class="compare-slot">
+              <span class="compare-label">Mockup</span>
+              <img src="assets/mock-screens/Pantry.png" alt="Pantry mockup">
+            </figure>
+            <figure class="compare-slot">
+              <span class="compare-label">Live app</span>
+              <img src="assets/real-screens/real-app-pantry.png" alt="Live pantry screen">
+            </figure>
+          </div>
+        </article>
+
+        <article class="changelog-compare">
+          <header>
+            <h3>Discovery</h3>
+          </header>
+          <div class="compare-grid">
+            <figure class="compare-slot">
+              <span class="compare-label">Mockup</span>
+              <img src="assets/mock-screens/Discover Page.png" alt="Discovery mockup">
+            </figure>
+            <figure class="compare-slot">
+              <span class="compare-label">Live app</span>
+              <img src="assets/real-screens/Discover-page-real-app.png" alt="Live Discover page">
+            </figure>
+          </div>
+        </article>
+
+        <article class="changelog-compare">
+          <header>
+            <h3>Guided discovery / swipe</h3>
+          </header>
+          <div class="compare-grid">
+            <figure class="compare-slot">
+              <span class="compare-label">Mockup</span>
+              <img src="assets/mock-screens/Guided Discovery swipe interface (Swipe).png" alt="Guided discovery swipe mockup">
+            </figure>
+            <figure class="compare-slot">
+              <span class="compare-label">Live app</span>
+              <img src="assets/real-screens/Swipe-interface-real-app.png" alt="Live swipe / guided discovery screen">
+            </figure>
+          </div>
+        </article>
+
+        <article class="changelog-compare">
+          <header>
+            <h3>Preference profile</h3>
+          </header>
+          <div class="compare-grid">
+            <figure class="compare-slot">
+              <span class="compare-label">Mockup</span>
+              <img src="assets/mock-screens/Preference Profile.png" alt="Preference profile mockup">
+            </figure>
+            <figure class="compare-slot">
+              <span class="compare-label">Live app</span>
+              <img src="assets/real-screens/real-prefernce-profile.png" alt="Live preferences screen">
+            </figure>
+          </div>
+        </article>
+
+        <article class="changelog-compare">
+          <header>
+            <h3>Recipe instructions</h3>
+          </header>
+          <div class="compare-grid">
+            <figure class="compare-slot">
+              <span class="compare-label">Mockup</span>
+              <img src="assets/mock-screens/Recipe Detail.png" alt="Recipe detail mockup">
+            </figure>
+            <figure class="compare-slot">
+              <span class="compare-label">Live app</span>
+              <img src="assets/real-screens/Recipe-Intstructions-page-real-app.png" alt="Live recipe instructions screen">
+            </figure>
+          </div>
+        </article>
+
+        <article class="changelog-compare">
+          <header>
+            <h3>Shopping list</h3>
+          </header>
+          <div class="compare-grid">
+            <figure class="compare-slot">
+              <span class="compare-label">Mockup</span>
+              <img src="assets/mock-screens/shopping list.png" alt="Shopping list mockup">
+            </figure>
+            <figure class="compare-slot">
+              <span class="compare-label">Live app</span>
+              <img src="assets/real-screens/Shopping-List-Real-app.png" alt="Live shopping list screen">
+            </figure>
+          </div>
+        </article>
+
+        <article class="changelog-compare">
+          <header>
+            <h3>Vault</h3>
+          </header>
+          <div class="compare-grid">
+            <figure class="compare-slot">
+              <span class="compare-label">Mockup</span>
+              <img src="assets/mock-screens/vault overview page.png" alt="Vault overview mockup">
+            </figure>
+            <figure class="compare-slot">
+              <span class="compare-label">Live app</span>
+              <img src="assets/real-screens/real-vault.png" alt="Live Vault screen">
+            </figure>
+          </div>
+        </article>
+
+        <article class="changelog-compare">
+          <header>
+            <h3>Add pantry item</h3>
+          </header>
+          <div class="compare-grid">
+            <figure class="compare-slot">
+              <span class="compare-label">Mockup</span>
+              <img src="assets/mock-screens/Input pantry ingredient form.png" alt="Input pantry ingredient form mockup">
+            </figure>
+            <figure class="compare-slot">
+              <span class="compare-label">Live app</span>
+              <img src="assets/real-screens/Pantry-RealApp-Add-Item-Page.png" alt="Live Add Pantry Item screen">
+            </figure>
+          </div>
+        </article>
+      </section>
+
+      <section class="section reveal">
+        <h2>Additional Mockups</h2>
+        <p class="section-lede">These supporting mockups clarify the broader wireframe set.</p>
+        <div class="wireframe-grid">
+          <figure class="new-screen">
+            <img src="assets/mock-screens/private Vault.png" alt="Private vault mockup">
+            <figcaption><strong>Private Vault</strong></figcaption>
+          </figure>
+          <figure class="new-screen">
+            <img src="assets/mock-screens/shared Vault-1.png" alt="Shared vault mockup">
+            <figcaption><strong>Shared Vault</strong></figcaption>
+          </figure>
+          <figure class="new-screen">
+            <img src="assets/mock-screens/general shopping list items.png" alt="General shopping list item mockup">
+            <figcaption><strong>Generated Shopping List</strong></figcaption>
+          </figure>
+          <figure class="new-screen">
+            <img src="assets/mock-screens/scroll interface.png" alt="Scroll interface mockup">
+            <figcaption><strong>Scrollable Discovery</strong></figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="section reveal">
+        <h2>Reusable Interface Patterns</h2>
 
         <div class="support-grid">
-          <figure class="wireframe-card"><img src="assets/screens/header-top-app-bar.png" alt="Top app bar component"><figcaption><span class="screen-label">Reusable Navigation 01: Top App Bar</span><span class="screen-note">Brand title, header spacing, and scanner shortcut.</span></figcaption></figure>
+          <figure class="wireframe-card compact-pattern"><img src="assets/tabs/header-top-app-bar.png" alt="Top app bar component"><figcaption><span class="screen-label">Top App Bar</span></figcaption></figure>
 
-          <figure class="wireframe-card"><img src="assets/screens/bottom-nav-bar.png" alt="Bottom navigation bar component"><figcaption><span class="screen-label">Reusable Navigation 02: Bottom Navigation</span><span class="screen-note">Persistent primary navigation for Discover, Vault, Pantry, and Profile.</span></figcaption></figure>
-          <figure class="wireframe-card"><img src="assets/screens/sticky-filter-tags.png" alt="Sticky filter tags component"><figcaption><span class="screen-label">Reusable Navigation 03: Sticky Filter Tags</span><span class="screen-note">Compact filter tag row for discovery filters and active states.</span></figcaption></figure>
+          <figure class="wireframe-card compact-pattern"><img src="assets/tabs/bottom-nav-bar.png" alt="Bottom navigation bar component"><figcaption><span class="screen-label">Bottom Navigation</span></figcaption></figure>
+          <figure class="wireframe-card compact-pattern"><img src="assets/tabs/sticky-filter-tags.png" alt="Sticky filter tags component"><figcaption><span class="screen-label">Sticky Filter Tags</span></figcaption></figure>
 
-          <figure class="wireframe-card"><img src="assets/screens/Tabs.png" alt="Tabs component"><figcaption><span class="screen-label">Reusable Navigation 04: Discover Tabs</span><span class="screen-note">Discover and scrollable discovery page switcher with clear selected state.</span></figcaption></figure>
-          <figure class="wireframe-card"><img src="assets/screens/you-can-make-this-now-list.png" alt="You can make this now recipe list component"><figcaption><span class="screen-label">Reusable Pattern 05: Recipe List Section</span><span class="screen-note">Vertical list pattern for recipes users can make immediately.</span></figcaption></figure>
+          <figure class="wireframe-card compact-pattern"><img src="assets/tabs/Tabs.png" alt="Tabs component"><figcaption><span class="screen-label">Discover Tabs</span></figcaption></figure>
+          <figure class="wireframe-card"><img src="assets/tabs/you-can-make-this-now-list.png" alt="You can make this now recipe list component"><figcaption><span class="screen-label">Recipe List Section</span></figcaption></figure>
 
-          <figure class="wireframe-card tall form-preview"><a href="standard-input-form.html" aria-label="Open full standard input form"><img src="assets/screens/standard-input-page.png" alt="Standard input form screen"></a><figcaption><span class="screen-label">Reusable Input 06: Standard Input Form</span><span class="screen-note">Recipe entry form covering details, ingredients, cuisine profile, and security controls. Tap to view it larger.</span></figcaption></figure>
-          <figure class="wireframe-card tall form-preview"><a href="standard-input-form-alt.html" aria-label="Open full standard input alternate"><img src="assets/screens/standard-input-page-alt.png" alt="Alternative standard input form screen"></a><figcaption><span class="screen-label">Reusable Input 07: Standard Input Alternate</span><span class="screen-note">Second export of the same form pattern for validating layout consistency. Tap to view it larger.</span></figcaption></figure>
         </div>
       </section>
 

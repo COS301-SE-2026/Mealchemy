@@ -1,0 +1,53 @@
+name: Deploy Landing Page
+
+
+#------------------------------notes---------------------------------------
+# Deploys the static landingpage directory to Firebase Hosting.
+# Split out of cd.yml so landing page updates don't trigger a full backend + engine redeploy. This workflow only touches Firebase Hosting.
+#
+# Triggers:
+#  push to main or deployment when files under landingpage, or workflow change
+#  manual dispatch from the Actions tab when a redeploy is needed without a code change
+#
+# Uses FIREBASE_TOKEN github secret
+#----------------------------------------------------------------
+  
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - deployment
+    paths:
+      - 'landing-page/**'
+      - '.github/workflows/deploy-landing-page.yml'
+
+jobs:
+  deploy-landing-page:
+    name: Deploy landing page
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      #Warn at 500 KB, fail at 2 MB
+      - name: Check landing page size
+        run: |
+          SIZE=$(du -sb landing-page/ | cut -f1)
+          SIZE_KB=$((SIZE / 1024))
+          echo "Landing page size: ${SIZE_KB} KB"
+          if [ "$SIZE_KB" -gt "2048" ]; then
+            echo "::error::Landing page (${SIZE_KB} KB) exceeds 2 MB limit."
+            exit 1
+          elif [ "$SIZE_KB" -gt "500" ]; then
+            echo "::warning::Landing page (${SIZE_KB} KB) exceeds 500 KB warn threshold."
+          fi
+      
+      - name: Install firebase-tools
+        run: npm install --no-audit --no-fund --ignore-scripts -g firebase-tools@15.22.4
+
+      - name: Deploy to Firebase Hosting
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: firebase deploy --only hosting --token "$FIREBASE_TOKEN" --project mealchemy-firebase
