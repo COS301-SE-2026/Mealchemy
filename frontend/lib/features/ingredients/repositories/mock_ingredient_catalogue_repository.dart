@@ -1,7 +1,6 @@
 import '../models/ingredient_catalogue_item.dart';
 import 'ingredient_catalogue_repository.dart';
 
-//not tied to the real V29 seed; a reasonable set for building the editor
 class MockIngredientCatalogueRepository
     implements IngredientCatalogueRepository {
   static const List<IngredientCatalogueItem> _items = [

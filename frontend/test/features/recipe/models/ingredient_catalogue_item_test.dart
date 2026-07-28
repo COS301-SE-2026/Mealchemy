@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mealchemy/features/recipe/models/ingredient_catalogue_item.dart';
+import 'package:mealchemy/features/ingredients/models/ingredient_catalogue_item.dart';
 
 void main() {
   group('IngredientCatalogueItem.fromJson', () {
