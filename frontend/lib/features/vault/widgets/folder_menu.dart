@@ -37,8 +37,7 @@ class FolderMenuButton extends ConsumerWidget {
       offset: const Offset(0, 40),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       enabled: isOwner,
-      onSelected: (action) =>
-          _handle(context, ref, action),
+      onSelected: (action) => _handle(context, ref, action),
       itemBuilder: (context) {
         if (!isOwner) {
           return [
@@ -59,8 +58,8 @@ class FolderMenuButton extends ConsumerWidget {
           ),
           PopupMenuItem<_FolderAction>(
             value: _FolderAction.delete,
-            child: _row(Icons.delete_outline, 'Delete folder',
-                destructive: true),
+            child:
+                _row(Icons.delete_outline, 'Delete folder', destructive: true),
           ),
         ];
       },
@@ -71,9 +70,12 @@ class FolderMenuButton extends ConsumerWidget {
     final color = destructive ? AppColors.error : AppColors.textLight;
     return Row(
       children: [
-        Icon(icon, size: 20, color: destructive ? AppColors.error : AppColors.accent),
+        Icon(icon,
+            size: 20, color: destructive ? AppColors.error : AppColors.accent),
         const SizedBox(width: 10),
-        Text(label, style: AppTextStyles.title.copyWith(color: color)),
+        Flexible(
+            child:
+                Text(label, style: AppTextStyles.title.copyWith(color: color))),
       ],
     );
   }

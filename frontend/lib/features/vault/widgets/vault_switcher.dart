@@ -85,10 +85,11 @@ class VaultSwitcher extends ConsumerWidget {
         children: [
           Icon(icon, size: 20, color: AppColors.accent),
           const SizedBox(width: 10),
-          Text(
+          Flexible(
+              child: Text(
             label,
             style: AppTextStyles.title.copyWith(color: AppColors.textLight),
-          ),
+          )),
           const Spacer(),
           if (checked)
             const Icon(Icons.check, size: 18, color: AppColors.primary),

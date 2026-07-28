@@ -67,7 +67,9 @@ class VaultMenuButton extends ConsumerWidget {
         Icon(icon,
             size: 20, color: destructive ? AppColors.error : AppColors.accent),
         const SizedBox(width: 10),
-        Text(label, style: AppTextStyles.title.copyWith(color: color)),
+        Flexible(
+            child:
+                Text(label, style: AppTextStyles.title.copyWith(color: color))),
       ],
     );
   }
@@ -101,7 +103,7 @@ class VaultMenuButton extends ConsumerWidget {
               : 'Could not add member.';
           messenger.showSnackBar(SnackBar(content: Text(message)));
         }
-        
+
       case _VaultAction.deleteVault:
         final ok = await showAppConfirmDialog(
           context: context,
