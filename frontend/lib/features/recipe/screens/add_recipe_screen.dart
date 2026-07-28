@@ -8,7 +8,7 @@ import '../../../core/shared_widgets/atoms/app_text_field.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../vault/providers/vault_provider.dart';
-import '../models/ingredient_catalogue_item.dart';
+import '../../ingredients/models/ingredient_catalogue_item.dart';
 import '../models/recipe.dart';
 import '../models/recipe_ingredient.dart';
 import '../models/recipe_step.dart';

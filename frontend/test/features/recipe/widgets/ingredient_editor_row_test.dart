@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mealchemy/features/recipe/models/ingredient_catalogue_item.dart';
+import 'package:mealchemy/features/ingredients/models/ingredient_catalogue_item.dart';
 import 'package:mealchemy/features/recipe/models/unit_of_measurement.dart';
 import 'package:mealchemy/features/recipe/widgets/ingredient_editor_row.dart';
 

@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
-import '../models/ingredient_catalogue_item.dart';
+import '../../ingredients/models/ingredient_catalogue_item.dart';
 import '../models/unit_of_measurement.dart';
-import '../providers/ingredient_catalogue_provider.dart';
+import '../../ingredients/providers/ingredient_catalogue_provider.dart';
 
 class IngredientEditorRow extends ConsumerStatefulWidget {
   const IngredientEditorRow({
