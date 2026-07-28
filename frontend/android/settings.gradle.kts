@@ -1,3 +1,5 @@
+rootProject.name = "mealchemy"
+
 pluginManagement {
     val flutterSdkPath =
         run {

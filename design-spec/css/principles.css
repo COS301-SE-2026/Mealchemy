@@ -1,16 +1,204 @@
 /*design principles styling, mainly uses base styling*/
 
 .principle-number {
-    width: 44px;
-    height: 44px;
-    display: grid;
-    place-items: center;
-    margin-bottom: 18px;
-    border-radius: 50%;
-    color: var(--text-dark);
-    background: var(--primary);
-    font-family: var(--font-display);
-    font-size: 1.35rem;
-    font-weight: 900;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 18px;
+  border-radius: 50%;
+  color: var(--text-dark);
+  background: var(--primary);
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.tone-rule-grid,
+.copy-example-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.tone-rule-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 22px;
+}
+
+.copy-example-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tone-rule-grid article,
+.copy-example {
+  display: grid;
+  gap: 16px;
+  border: 1px solid rgba(212, 175, 55, 0.24);
+  border-radius: var(--radius-md);
+  padding: 22px;
+  background: linear-gradient(180deg, rgba(254, 249, 241, 0.98), rgba(248, 243, 235, 0.94));
+  color: var(--text-light);
+  box-shadow: 0 18px 42px rgba(29, 28, 23, 0.14);
+}
+
+.tone-rule-grid span,
+.copy-row span {
+  width: fit-content;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0 10px;
+  background: rgba(92, 0, 24, 0.08);
+  color: var(--primary-dark);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.tone-rule-grid strong {
+  color: var(--primary-dark);
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 1.8vw, 1.8rem);
+  line-height: 1;
+}
+
+.tone-rule-grid p,
+.copy-example p {
+  margin: 0;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.copy-example h3 {
+  color: var(--primary-dark);
+}
+
+.copy-row {
+  display: grid;
+  gap: 8px;
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  background: var(--surface-white);
+  box-shadow: inset 0 0 0 1px rgba(92, 0, 24, 0.08);
+}
+
+.copy-row strong {
+  color: var(--text-light);
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.copy-row label {
+  color: var(--primary-dark);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.copy-row input {
+  width: 100%;
+  min-height: 44px;
+  border: 1.5px solid var(--input-border);
+  border-radius: var(--radius-md);
+  padding: 0 14px;
+  color: var(--text-light);
+  background: var(--surface-white);
+  font-family: var(--font-body);
+  font-weight: 800;
+}
+
+.copy-row.good input {
+  border-color: var(--primary);
+}
+
+.copy-row.avoid input {
+  border-color: var(--error);
+}
+
+.button-copy {
+  min-height: 112px;
+  align-content: center;
+}
+
+.button-copy button,
+.empty-copy button {
+  width: fit-content;
+  min-height: 48px;
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: 0 20px;
+  color: var(--text-dark);
+  background: linear-gradient(90deg, var(--primary), var(--gradient-end));
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+
+.copy-row.avoid button {
+  color: var(--primary-dark);
+  background: var(--surface-muted);
+  box-shadow: inset 0 0 0 1px rgba(92, 0, 24, 0.18);
+}
+
+.form-copy strong,
+.helper-copy strong {
+  color: var(--error);
+  font-size: 0.86rem;
+}
+
+.helper-copy.good strong {
+  color: var(--text-muted);
+}
+
+.empty-copy {
+  justify-items: start;
+  min-height: 190px;
+  align-content: center;
+  text-align: left;
+}
+
+.empty-copy p {
+  margin: -4px 0 4px;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.empty-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--text-dark);
+  background: var(--primary);
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.empty-icon.muted {
+  background: var(--error);
+}
+
+.copy-row.good span {
+  color: var(--text-dark);
+  background: var(--primary);
+}
+
+.copy-row.avoid span {
+  color: var(--text-dark);
+  background: var(--error);
+}
+
+@media (max-width: 1440px) {
+  .tone-rule-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  
+}
+
+@media (max-width: 900px) {
+  .tone-rule-grid,
+  .copy-example-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

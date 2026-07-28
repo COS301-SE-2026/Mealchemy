@@ -1,3 +1,11 @@
+[project]
+name = "mealchemy-engine"
+version = "0.1.0"
+description = "Mealchemy recommendation engine."
+requires-python = ">=3.12"
+
+dependencies = []
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 

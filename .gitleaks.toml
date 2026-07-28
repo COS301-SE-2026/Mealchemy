@@ -1,7 +1,8 @@
 title = "Mealchemy gitleaks config"
 
 [allowlist]
-  description = "BCrypt hashes in database seed files are hashed credentials, not plaintext secrets"
+  description = "BCrypt hashes in DB seed files are hashed credentials, and google-services.json holds Firebase client identifiers that are public by design and embedded in every APK build"
   paths = [
-    '''database/V\d+__seed.*\.sql'''
+    '''database/V\d+__seed.*\.sql''',
+    '''frontend/android/app/google-services\.json''',
   ]
