@@ -17,8 +17,6 @@ const _fixture = Recipe(
   servingSize: 4,
   ingredients: [
     RecipeIngredient(
-      ingredientId: 1,
-      recipeId: 1,
       ingId: 16,
       name: 'Arborio Rice',
       quantity: 320,
@@ -26,8 +24,6 @@ const _fixture = Recipe(
       sortOrder: 2,
     ),
     RecipeIngredient(
-      ingredientId: 2,
-      recipeId: 1,
       ingId: 17,
       name: 'Saffron',
       quantity: 1,
@@ -36,11 +32,11 @@ const _fixture = Recipe(
     ),
   ],
   steps: [
-    RecipeStep(stepId: 1, recipeId: 1, stepNr: 1, content: 'Warm the stock.'),
-    RecipeStep(stepId: 2, recipeId: 1, stepNr: 2, content: 'Toast the rice.'),
+    RecipeStep(stepNr: 1, content: 'Warm the stock.'),
+    RecipeStep(stepNr: 2, content: 'Toast the rice.'),
   ],
 );
-
+ 
 Widget _host(Widget child, List<Override> overrides) {
   return ProviderScope(
     overrides: overrides,
@@ -68,10 +64,10 @@ void main() {
     final completer = Completer<Recipe>();
     await tester.pumpWidget(_host(
       const RecipeDetailScreen(recipeId: 1),
-      [recipeByIdProvider(1).overrideWith((ref) => completer.future)],
+      [recipeDetailProvider(1).overrideWith((ref) => completer.future)],
     ));
 
-    await tester.pump(); 
+    await tester.pump();
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
     completer.complete(_fixture);
@@ -81,7 +77,7 @@ void main() {
   testWidgets('renders title and cook/prep stats once loaded', (tester) async {
     await tester.pumpWidget(_host(
       const RecipeDetailScreen(recipeId: 1),
-      [recipeByIdProvider(1).overrideWith((ref) async => _fixture)],
+      [recipeDetailProvider(1).overrideWith((ref) async => _fixture)],
     ));
     await tester.pumpAndSettle();
 
@@ -91,13 +87,9 @@ void main() {
   });
 
   testWidgets('renders ingredient names from the recipe', (tester) async {
-    tester.view.physicalSize = const Size(1080, 2400);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
-
     await tester.pumpWidget(_host(
       const RecipeDetailScreen(recipeId: 1),
-      [recipeByIdProvider(1).overrideWith((ref) async => _fixture)],
+      [recipeDetailProvider(1).overrideWith((ref) async => _fixture)],
     ));
     await tester.pumpAndSettle();
 
@@ -106,11 +98,6 @@ void main() {
 
   testWidgets('falls back to "Ingredient #<ingId>" when name is null',
       (tester) async {
-    tester.view.physicalSize = const Size(1080, 2400);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
     const noName = Recipe(
       recipeId: 2,
       title: 'Nameless',
@@ -119,8 +106,6 @@ void main() {
       servingSize: 2,
       ingredients: [
         RecipeIngredient(
-          ingredientId: 9,
-          recipeId: 2,
           ingId: 42,
           quantity: 100,
           unit: 'g',
@@ -132,7 +117,7 @@ void main() {
 
     await tester.pumpWidget(_host(
       const RecipeDetailScreen(recipeId: 2),
-      [recipeByIdProvider(2).overrideWith((ref) async => noName)],
+      [recipeDetailProvider(2).overrideWith((ref) async => noName)],
     ));
     await tester.pump(); // let the future resolve
     await tester.pump(const Duration(milliseconds: 300)); // let tabs settle
@@ -145,7 +130,7 @@ void main() {
     await tester.pumpWidget(_host(
       const RecipeDetailScreen(recipeId: 1),
       [
-        recipeByIdProvider(1)
+        recipeDetailProvider(1)
             .overrideWith((ref) async => throw Exception('boom')),
       ],
     ));
@@ -157,7 +142,7 @@ void main() {
   testWidgets('shows the save (bookmark) action in the hero', (tester) async {
     await tester.pumpWidget(_host(
       const RecipeDetailScreen(recipeId: 1),
-      [recipeByIdProvider(1).overrideWith((ref) async => _fixture)],
+      [recipeDetailProvider(1).overrideWith((ref) async => _fixture)],
     ));
     await tester.pumpAndSettle();
 

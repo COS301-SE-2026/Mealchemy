@@ -1,24 +1,45 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mealchemy/core/shared_widgets/atoms/app_chip.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
+import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
+import 'package:mealchemy/features/recipe/models/recipe_step.dart';
+import 'package:mealchemy/features/recipe/models/unit_of_measurement.dart';
 import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
 import 'package:mealchemy/features/recipe/repositories/recipe_repository.dart';
 import 'package:mealchemy/features/recipe/screens/add_recipe_screen.dart';
+import 'package:mealchemy/features/vault/models/vault.dart';
+import 'package:mealchemy/features/vault/models/vault_folder.dart';
+import 'package:mealchemy/features/vault/models/vault_folder_recipe.dart';
+import 'package:mealchemy/features/vault/providers/vault_repository_provider.dart';
+import 'package:mealchemy/features/vault/repositories/vault_repository.dart';
 
-//records every addRecipe call, tests can asset what was sent to repository
+
 class _RecordingRepo implements RecipeRepository {
   final List<Recipe> savedRecipes = [];
+  final List<int> savedFolderIds = [];
 
   @override
-  Future<void> addRecipe(Recipe recipe) async {
+  Future<Recipe> addRecipe(Recipe recipe, int folderId) async {
     savedRecipes.add(recipe);
+    savedFolderIds.add(folderId);
+    return Recipe(
+      recipeId: 501,
+      title: recipe.title,
+      description: recipe.description,
+      cuisineType: recipe.cuisineType,
+      prepTimeMins: recipe.prepTimeMins,
+      cookingTimeMins: recipe.cookingTimeMins,
+      servingSize: recipe.servingSize,
+      isCommunityPublished: recipe.isCommunityPublished,
+    );
   }
+
+  @override
+  Future<Recipe> updateRecipe(int id, Recipe recipe) async => recipe;
 
   @override
   Future<List<Recipe>> getRecipes() async => const [];
@@ -29,39 +50,74 @@ class _RecordingRepo implements RecipeRepository {
   @override
   Future<List<String>> getCuisineTypes() async =>
       const ['italian', 'asian', 'mexican'];
+
+  @override
+  Future<List<UnitOfMeasurement>> getUnits() async => const [
+        UnitOfMeasurement(unitId: 1, name: 'g', system: 'METRIC'),
+        UnitOfMeasurement(unitId: 2, name: 'tbsp', system: null),
+      ];
+
+  @override
+  Future<void> addRecipeIngredient(int recipeId, RecipeIngredient i) async {}
+
+  @override
+  Future<void> addRecipeStep(int recipeId, RecipeStep s) async {}
+
+  @override
+  Future<List<RecipeIngredient>> getRecipeIngredients(int recipeId) async =>
+      const [];
+
+  @override
+  Future<List<RecipeStep>> getRecipeSteps(int recipeId) async => const [];
 }
 
-//getCuisineTypes never completes
-//loading state to asset loading indicator shows
-class _SlowCuisinesRepo implements RecipeRepository {
+class _SlowCuisinesRepo extends _RecordingRepo {
   final _completer = Completer<List<String>>();
-
   @override
   Future<List<String>> getCuisineTypes() => _completer.future;
-
-  @override
-  Future<List<Recipe>> getRecipes() async => const [];
-
-  @override
-  Future<Recipe> getRecipeById(int id) async => throw UnimplementedError();
-
-  @override
-  Future<void> addRecipe(Recipe recipe) async {}
 }
 
-//getCuisineTypes throws, test error
-class _ThrowingCuisinesRepo implements RecipeRepository {
+class _ThrowingCuisinesRepo extends _RecordingRepo {
   @override
   Future<List<String>> getCuisineTypes() async => throw Exception('boom');
+}
+
+
+class _FakeVaultRepo implements VaultRepository {
+  @override
+  Future<List<Vault>> getMyVaults() async => [
+        Vault(
+          vaultId: 1,
+          vaultType: VaultTypes.private,
+          name: 'My Vault',
+          createdAt: DateTime(2026, 1, 1),
+        ),
+      ];
 
   @override
-  Future<List<Recipe>> getRecipes() async => const [];
+  Future<List<VaultFolder>> getFolders(int vaultId) async => [
+        VaultFolder(
+          folderId: 10,
+          vaultId: 1,
+          folderName: 'My Recipes',
+          createdAt: DateTime(2026, 1, 1),
+        ),
+      ];
 
   @override
-  Future<Recipe> getRecipeById(int id) async => throw UnimplementedError();
+  Future<VaultFolderRecipe> addRecipeToFolder(
+      int folderId, int recipeId) async {
+    return VaultFolderRecipe(
+      id: 1,
+      folderId: folderId,
+      recipeId: recipeId,
+      addedAt: DateTime(2026, 1, 1),
+    );
+  }
 
   @override
-  Future<void> addRecipe(Recipe recipe) async {}
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} not stubbed');
 }
 
 void main() {
@@ -69,8 +125,10 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  //screen uses context pop so wrap in a real GoRouter
-  Widget host({required RecipeRepository repo}) {
+  Widget host({
+    required RecipeRepository recipeRepo,
+    VaultRepository? vaultRepo,
+  }) {
     final router = GoRouter(
       initialLocation: '/recipe/add',
       routes: [
@@ -81,17 +139,19 @@ void main() {
       ],
     );
     return ProviderScope(
-      overrides: [recipeRepositoryProvider.overrideWithValue(repo)],
+      overrides: [
+        recipeRepositoryProvider.overrideWithValue(recipeRepo),
+        vaultRepositoryProvider
+            .overrideWithValue(vaultRepo ?? _FakeVaultRepo()),
+      ],
       child: MaterialApp.router(routerConfig: router),
     );
   }
 
-  //the form is taller than the default
-  //real estate or the bottom buttons end up outside the build window
-  //use a phone sized viewpoint
   Future<void> pumpAddRecipe(
     WidgetTester tester, {
-    required RecipeRepository repo,
+    required RecipeRepository recipeRepo,
+    VaultRepository? vaultRepo,
   }) async {
     tester.view.physicalSize = const Size(414, 1600);
     tester.view.devicePixelRatio = 1.0;
@@ -100,184 +160,107 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    await tester.pumpWidget(host(repo: repo));
+    await tester.pumpWidget(host(recipeRepo: recipeRepo, vaultRepo: vaultRepo));
   }
 
-  testWidgets('shows a loading indicator while cuisines are loading', (
-    tester,
-  ) async {
-    await pumpAddRecipe(tester, repo: _SlowCuisinesRepo());
-    //one frame, test loading value
-    await tester.pump();
+  Future<void> tapCreateRecipe(WidgetTester tester) async {
+    await tester.tap(find.text('Create Recipe').last);
+    await tester.pumpAndSettle();
+  }
 
+  testWidgets('shows a loading indicator while cuisines are loading',
+      (tester) async {
+    await pumpAddRecipe(tester, recipeRepo: _SlowCuisinesRepo());
+    await tester.pump();
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 
-  testWidgets('shows the error widget when cuisines fail to load', (
-    tester,
-  ) async {
-    await pumpAddRecipe(tester, repo: _ThrowingCuisinesRepo());
+  testWidgets('shows the error widget when cuisines fail to load',
+      (tester) async {
+    await pumpAddRecipe(tester, recipeRepo: _ThrowingCuisinesRepo());
     await tester.pumpAndSettle();
-
     expect(find.text('Unable to load form data.'), findsOneWidget);
   });
 
-  testWidgets('renders the kicker, heading, section headers and CTAs', (
-    tester,
-  ) async {
-    await pumpAddRecipe(tester, repo: _RecordingRepo());
+  testWidgets('renders the header, section titles and CTAs', (tester) async {
+    await pumpAddRecipe(tester, recipeRepo: _RecordingRepo());
     await tester.pumpAndSettle();
 
-    expect(find.text('NEW RECIPE'), findsOneWidget);
-    expect(find.text('Add a Recipe\nto Your Vault'), findsOneWidget);
+    expect(find.text('Create Recipe'), findsWidgets); 
     expect(find.text('Recipe Details'), findsOneWidget);
     expect(find.text('Time & Servings'), findsOneWidget);
+    expect(find.text('Save To'), findsOneWidget);
     expect(find.text('Ingredients'), findsOneWidget);
     expect(find.text('Preparation Steps'), findsOneWidget);
-    expect(find.text('Save Recipe'), findsOneWidget);
     expect(find.text('Cancel'), findsOneWidget);
   });
 
-  testWidgets('renders the photo upload tile and coming-soon placeholders', (
-    tester,
-  ) async {
-    await pumpAddRecipe(tester, repo: _RecordingRepo());
-    await tester.pumpAndSettle();
-
-    expect(find.text('Hero photo'), findsOneWidget);
-    expect(find.text('Ingredient editor coming soon.'), findsOneWidget);
-    expect(find.text('Step-by-step editor coming soon.'), findsOneWidget);
-  });
-
-  testWidgets('renders cuisine chips formatted from snake_case enum values', (
-    tester,
-  ) async {
-    await pumpAddRecipe(tester, repo: _RecordingRepo());
-    await tester.pumpAndSettle();
-
-    //_formatCuisine turns 'italian' into 'Italian' etc.
-    expect(find.text('Italian'), findsOneWidget);
-    expect(find.text('Asian'), findsOneWidget);
-    expect(find.text('Mexican'), findsOneWidget);
-  });
-
-  testWidgets('tapping a cuisine chip marks it as selected', (tester) async {
-    await pumpAddRecipe(tester, repo: _RecordingRepo());
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Italian'));
-    await tester.pumpAndSettle();
-
-    final chip = tester.widget<AppChip>(
-      find.widgetWithText(AppChip, 'Italian'),
-    );
-    expect(chip.selected, true);
-  });
-
-  testWidgets('tapping a selected cuisine chip deselects it', (tester) async {
-    await pumpAddRecipe(tester, repo: _RecordingRepo());
-    await tester.pumpAndSettle();
-
-    //select then deselect
-    await tester.tap(find.text('Italian'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Italian'));
-    await tester.pumpAndSettle();
-
-    final chip = tester.widget<AppChip>(
-      find.widgetWithText(AppChip, 'Italian'),
-    );
-    expect(chip.selected, false);
-  });
-
-  testWidgets('submit with an empty title shows the Title is required SnackBar', (
-    tester,
-  ) async {
+  testWidgets('submit with missing required fields shows per-field errors',
+      (tester) async {
     final repo = _RecordingRepo();
-    await pumpAddRecipe(tester, repo: repo);
+    await pumpAddRecipe(tester, recipeRepo: repo);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Save Recipe'));
-    await tester.pumpAndSettle();
+    await tapCreateRecipe(tester);
 
-    expect(find.text('Title is required'), findsOneWidget);
-    //notifier short-circuits before calling the repo
-    expect(repo.savedRecipes, isEmpty);
+    expect(find.text('Title is required.'), findsOneWidget);
+    expect(find.text('Cuisine is required.'), findsOneWidget);
+    expect(find.text('Prep, cook, and servings are all required.'),
+        findsOneWidget);
+    expect(repo.savedRecipes, isEmpty); 
   });
 
-  testWidgets('submit with a valid title calls repo.addRecipe with the form data', (
-    tester,
-  ) async {
+  testWidgets('a fully valid form saves the recipe with the entered values',
+      (tester) async {
     final repo = _RecordingRepo();
-    await pumpAddRecipe(tester, repo: repo);
+    await pumpAddRecipe(tester, recipeRepo: repo);
     await tester.pumpAndSettle();
 
-    //title is the first TextField, prep, cook, servings
-    //indexed by posotion
-    final textFields = find.byType(TextField);
-    await tester.enterText(textFields.at(0), 'My New Recipe');
-    await tester.enterText(textFields.at(2), '10');
-    await tester.enterText(textFields.at(3), '25');
-    await tester.enterText(textFields.at(4), '6');
+    
+    final fields = find.byType(TextField);
+    await tester.enterText(fields.at(0), 'My New Recipe');
+    await tester.enterText(fields.at(2), '10');
+    await tester.enterText(fields.at(3), '25');
+    await tester.enterText(fields.at(4), '6');
 
-    await tester.tap(find.text('Save Recipe'));
+    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Italian').last);
+    await tester.pumpAndSettle();
+
+    await tapCreateRecipe(tester);
 
     expect(repo.savedRecipes, hasLength(1));
     final saved = repo.savedRecipes.first;
     expect(saved.title, 'My New Recipe');
+    expect(saved.cuisineType, 'italian');
     expect(saved.prepTimeMins, 10);
     expect(saved.cookingTimeMins, 25);
     expect(saved.servingSize, 6);
-    //placeholder id used for new inserts
-    expect(saved.recipeId, 0);
+    expect(saved.recipeId, 0); 
+    expect(saved.isCommunityPublished, isFalse); 
+    expect(repo.savedFolderIds, [10]);
   });
 
-  testWidgets('submit forwards the selected cuisine on the saved recipe', (
-    tester,
-  ) async {
+  testWidgets('empty description is sent as null, not an empty string',
+      (tester) async {
     final repo = _RecordingRepo();
-    await pumpAddRecipe(tester, repo: repo);
+    await pumpAddRecipe(tester, recipeRepo: repo);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Italian'));
+    final fields = find.byType(TextField);
+    await tester.enterText(fields.at(0), 'Just a title');
+    await tester.enterText(fields.at(2), '5');
+    await tester.enterText(fields.at(3), '5');
+    await tester.enterText(fields.at(4), '2');
+    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.pumpAndSettle();
+    
+    await tester.tap(find.text('Asian').last);
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField).at(0), 'Pasta dish');
-    await tester.tap(find.text('Save Recipe'));
-    await tester.pumpAndSettle();
+    await tapCreateRecipe(tester);
 
-    expect(repo.savedRecipes, hasLength(1));
-    expect(repo.savedRecipes.first.cuisineType, 'italian');
-  });
-
-  testWidgets('shows the success SnackBar after a successful submit', (
-    tester,
-  ) async {
-    await pumpAddRecipe(tester, repo: _RecordingRepo());
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.byType(TextField).at(0), 'Good recipe');
-    await tester.tap(find.text('Save Recipe'));
-    //first for ref listen callback, seconder for snackbar into widget tree
-    await tester.pump();
-    await tester.pump();
-
-    expect(find.text('Recipe saved'), findsOneWidget);
-  });
-
-  testWidgets('empty description is sent to repo as null, not an empty string', (
-    tester,
-  ) async {
-    final repo = _RecordingRepo();
-    await pumpAddRecipe(tester, repo: repo);
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.byType(TextField).at(0), 'Just a title');
-    //leave description
-    await tester.tap(find.text('Save Recipe'));
-    await tester.pumpAndSettle();
-  //empty string converted to null, description is optional
     expect(repo.savedRecipes.first.description, isNull);
   });
 }
