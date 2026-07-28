@@ -172,9 +172,7 @@ class _ShoppingListsContent extends StatelessWidget {
           ShoppingListRow(
             list: list,
             onTap: () {
-              if (list.id == 'general-list') {
-                context.go('/shopping-lists/${list.id}');
-              }
+              context.go('/shopping-lists/${list.id}');
             },
             onEditTap: () => _showEditListNameDialog(
               context: context,

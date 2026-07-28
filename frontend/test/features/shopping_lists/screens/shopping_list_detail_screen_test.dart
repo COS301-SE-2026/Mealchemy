@@ -396,4 +396,21 @@ void main() {
 
     expect(find.text('Shopping Lists'), findsOneWidget);
   });
+
+  testWidgets('ShoppingListDetailScreen loads full list detail with items',
+      (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: ShoppingListDetailScreen(listId: 'weekly-groceries'),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    //detail screen fetches the full list, so its items should be visible
+    expect(find.text('Organic Milk'), findsOneWidget);
+    expect(find.text('Free Range Eggs'), findsOneWidget);
+  });
 }

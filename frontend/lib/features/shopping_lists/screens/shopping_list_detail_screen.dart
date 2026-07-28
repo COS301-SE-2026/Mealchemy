@@ -13,7 +13,7 @@ import '../widgets/shopping_section_header.dart';
 import '../../../core/routes/app_routes.dart';
 
 //detail screen for one shopping list
-class ShoppingListDetailScreen extends ConsumerWidget {
+class ShoppingListDetailScreen extends ConsumerStatefulWidget {
   const ShoppingListDetailScreen({
     super.key,
     required this.listId,
@@ -22,14 +22,45 @@ class ShoppingListDetailScreen extends ConsumerWidget {
   final String listId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ShoppingListDetailScreen> createState() =>
+      _ShoppingListDetailScreenState();
+}
+
+class _ShoppingListDetailScreenState
+    extends ConsumerState<ShoppingListDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(_loadShoppingListDetail);
+  }
+
+  @override
+  void didUpdateWidget(covariant ShoppingListDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.listId != widget.listId) {
+      Future.microtask(_loadShoppingListDetail);
+    }
+  }
+
+  Future<void> _loadShoppingListDetail() async {
+    await ref.read(shoppingListsProvider.future);
+
+    await ref
+        .read(shoppingListsProvider.notifier)
+        .loadShoppingListDetail(widget.listId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final shoppingLists = ref.watch(shoppingListsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.bgLight,
       body: shoppingLists.when(
         data: (state) {
-          final list = state.getListById(listId);
+          final list = state.getListById(widget.listId);
 
           if (list == null) {
             return Center(
