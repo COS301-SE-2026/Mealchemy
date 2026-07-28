@@ -11,7 +11,7 @@ import '../models/complete_shop_result.dart';
 
 //select mock/API
 final shoppingListRepositoryProvider = Provider<ShoppingListRepository>((ref) {
-  if (AppConfig.useMockData) {
+  if (AppConfig.mockShoppinglist) {
     return MockShoppingListRepository();
   }
 

@@ -13,7 +13,7 @@ import '../repositories/ingredient_catalogue_repository.dart';
 
 //selects mock/API repo
 final pantryRepositoryProvider = Provider<PantryRepository>((ref) {
-  if (AppConfig.useMockData) {
+  if (AppConfig.mockPantry) {
     return MockPantryRepository();
   }
 
