@@ -121,9 +121,16 @@ public class RecipeStepService {
         for (int i = 0; i < orderedStepIds.size(); i++)
         {
             RecipeStep step = stepsById.get(orderedStepIds.get(i));
-            step.setStepNr(i + 1);
-            recipeStepRepository.save(step);
+            step.setStepNr(-(i + 1));
         }
+
+        recipeStepRepository.saveAllAndFlush(stepsById.values());
+        for(int i = 0; i < orderedStepIds.size(); i++)
+        {
+            RecipeStep step = stepsById.get(orderedStepIds.get(i));
+            step.setStepNr(i + 1);
+        }
+        recipeStepRepository.saveAllAndFlush(stepsById.values());
 
         return recipeStepRepository.findByRecipe_RecipeIdOrderByStepNrAsc(recipeId).stream().map(RecipeStepResponse::from).collect(Collectors.toList());
     }
