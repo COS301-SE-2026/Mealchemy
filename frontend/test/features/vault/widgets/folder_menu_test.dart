@@ -80,12 +80,13 @@ void main() {
     expect(find.text('Delete folder'), findsOneWidget);
   });
 
-  testWidgets('non-owner sees the disabled owner-only message', (tester) async {
-    await tester.pumpWidget(host(currentUserId: 99)); 
-    await tester.tap(find.byIcon(Icons.more_vert));
-    await tester.pumpAndSettle();
+testWidgets('non-owner cannot open the folder menu', (tester) async {
+     await tester.pumpWidget(host(currentUserId: 99));
+     await tester.tap(find.byIcon(Icons.more_vert));
+     await tester.pumpAndSettle();
 
-    expect(find.text('Only the owner can manage folders.'), findsOneWidget);
-    expect(find.text('Rename folder'), findsNothing);
-  });
+     expect(find.text('Rename folder'), findsNothing);
+     expect(find.text('Delete folder'), findsNothing);
+     expect(find.text('Only the owner can manage folders.'), findsNothing);
+   });
 }
