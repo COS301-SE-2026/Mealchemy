@@ -41,6 +41,6 @@ name: Register and land on preferences
     text: "Create Account"
     below: "Confirm Password"
 
-# Successful register navigates to the preference onboarding screen.
-- assertVisible: "Preference"
+
+- assertVisible: "Bespoke Culinary Profile"
 - assertNotVisible: "Welcome Back"
