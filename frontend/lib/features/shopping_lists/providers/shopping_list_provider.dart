@@ -386,6 +386,27 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
       return ShoppingListsState(lists: lists);
     });
   }
+
+  //generates a shopping list from a recipe's missing pantry items
+  Future<ShoppingList?> generateFromRecipe({
+    required int recipeId,
+    required String recipeName,
+  }) async {
+    final current = state.valueOrNull;
+    if (current == null) return null;
+
+    final createdList = await _repository.generateFromRecipe(
+      recipeId: recipeId,
+      name: recipeName,
+      includeAvailablePantryItems: false, // false = only missing items
+    );
+
+    state = AsyncData(
+      current.copyWith(lists: [...current.lists, createdList]),
+    );
+
+    return createdList;
+  }
 }
 
 //helper

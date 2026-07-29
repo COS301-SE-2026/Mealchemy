@@ -53,4 +53,10 @@ abstract class ShoppingListRepository {
     required String name,
     String status = 'ACTIVE',
   });
+  // genrating shopping list from recipe 
+  Future<ShoppingList> generateFromRecipe({
+  required int recipeId,
+  required String name,
+  required bool includeAvailablePantryItems,
+});
 }
