@@ -1,0 +1,201 @@
+name: Frontend E2E
+
+# End-to-end tests driven by Maestro against a real emulator, real backend, and a real Postgres database.
+#
+# Notes
+#   -Uses a Postgres service container, same pattern as backend integration tests so the DB is fresh for every run and destroyed with the job.
+#  -The backend is started directly with mvnw, not Docker Compose.
+#   - Flutter builds a debug APK with BACKEND_URL as 10.0.2.2:8080, which is how an Android emulator reaches the host machine.
+#   - Maestro records the flow. On failure the recording and logs are uploaded as a workflow artifact for debugging.
+#
+# Speedups in place
+#   -AVD snapshot cached across runs, a cold boot only happens on cache miss
+#   -Gradle and Pub caches keyed on lockfile hashes
+#   -APK built for android-x64 only which matches emulator
+#
+# Triggers
+#   - PRs into dev or main only, E2E is slow, do not block feature-branch pushes
+#   - Manual dispatch for on-demand runs
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - dev
+      - main
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+      - 'database/**'
+      - 'e2e/**'
+      - '.github/workflows/frontend-e2e.yml'
+
+env:
+  AVD_API_LEVEL: '35'
+  AVD_ARCH: 'x86_64'
+  AVD_PROFILE: 'pixel_7'
+  EMULATOR_OPTIONS_BASE: '-no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none'
+
+jobs:
+  e2e:
+    name: Register flow (Maestro)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: mealchemy_e2e
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - name: Set up Java 21
+        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@44ac965b96f18d999802d4b807e3256d5a3f9fa1
+        with:
+          flutter-version: '3.x'
+          channel: stable
+          architecture: x64
+          cache: true
+
+      # Cache Gradle for the Flutter Android build. # sha tag v4.3.0
+      - name: Cache Gradle
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('frontend/android/**/*.gradle*', 'frontend/android/**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      # Cache pub dependencies. Flutter action caches the SDK itself, not project pub-cache. Key on pubspec.lock so any dep change invalidates.
+      #sha tag # v4.3.0
+      - name: Cache pub
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 
+        with:
+          path: |
+            ~/.pub-cache
+          key: pub-${{ runner.os }}-${{ hashFiles('frontend/pubspec.lock') }}
+          restore-keys: |
+            pub-${{ runner.os }}-
+
+      - name: Install Maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Start backend
+        working-directory: backend
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/mealchemy_e2e
+          SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USER }}
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_EXPIRATION_MS: ${{ secrets.JWT_EXPIRATION_MS }}
+          SPRING_FLYWAY_ENABLED: 'true'
+        run: |
+          ./mvnw spring-boot:run --no-transfer-progress > backend.log 2>&1 &
+          echo "BACKEND_PID=$!" >> $GITHUB_ENV
+
+      - name: Wait for backend healthy
+        run: |
+          for i in {1..60}; do
+            if curl -sf http://localhost:8080/actuator/health | grep -q '"UP"'; then
+              echo "Backend is up."
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "Backend did not become healthy in time."
+          tail -n 200 backend/backend.log || true
+          exit 1
+
+      # Build only for the emulator . Default builds all ABIs which wastes minutes on architectures the CI emulator will never run.
+      - name: Build debug APK with local backend URL
+        working-directory: frontend
+        run: |
+          flutter pub get
+          flutter build apk --debug \
+            --target-platform android-x64 \
+            --dart-define=BACKEND_URL=http://10.0.2.2:8080
+
+      # Hardware acceleration for the emulator on Ubuntu runners.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # AVD snapshot cache. Cache hit means the test step boots from snapshot making it faster.  Cache miss triggers a warm-up step that boots the emulator once so its state can be saved into the cache for next time.
+       #sha tag v4.3.0
+      - name: AVD snapshot cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ env.AVD_API_LEVEL }}-${{ env.AVD_ARCH }}-${{ env.AVD_PROFILE }}
+
+      # Only runs on cache miss. Boots the emulator once so the AVD state can be persisted to disk, cached, and reused by the next run.
+      - name: Warm up AVD (cache miss only)
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@1dcd0090116d15e7c562f8db72807de5e036a4ed
+        with:
+          api-level: ${{ env.AVD_API_LEVEL }}
+          arch: ${{ env.AVD_ARCH }}
+          profile: ${{ env.AVD_PROFILE }}
+          force-avd-creation: false
+          emulator-options: ${{ env.EMULATOR_OPTIONS_BASE }}
+          disable-animations: false
+          script: echo "Generated AVD snapshot for caching."
+
+      # The actual test run. `-no-snapshot-save` means the cached snapshot stays immutable across runs. `force-avd-creation: false` reuses the cached AVD state instead of building from scratch.
+      - name: Run Maestro flows on emulator
+        uses: reactivecircus/android-emulator-runner@1dcd0090116d15e7c562f8db72807de5e036a4ed
+        with:
+          api-level: ${{ env.AVD_API_LEVEL }}
+          arch: ${{ env.AVD_ARCH }}
+          profile: ${{ env.AVD_PROFILE }}
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save ${{ env.EMULATOR_OPTIONS_BASE }}
+          disable-animations: true
+          script: |
+            adb install -r frontend/build/app/outputs/flutter-apk/app-debug.apk
+            maestro test e2e/flows/
+
+      - name: Upload Maestro debug output on failure
+        if: failure()
+        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a
+        with:
+          name: maestro-debug-output
+          path: |
+            ~/.maestro/tests
+            backend/backend.log
+          if-no-files-found: warn
+
+      - name: Stop backend
+        if: always()
+        run: |
+          if [ -n "${BACKEND_PID}" ]; then
+            kill "${BACKEND_PID}" || true
+          fi
