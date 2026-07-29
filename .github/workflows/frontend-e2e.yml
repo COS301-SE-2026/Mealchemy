@@ -127,10 +127,11 @@ jobs:
           exit 1
 
       # Build only for the emulator . Default builds all ABIs which wastes minutes on architectures the CI emulator will never run.
+      # --enforce-lockfile pins pub deps to the exact versions in pubspec.lock and fails if the lock is out of sync 
       - name: Build debug APK with local backend URL
         working-directory: frontend
         run: |
-          flutter pub get
+          flutter pub get --enforce-lockfile
           flutter build apk --debug \
             --target-platform android-x64 \
             --dart-define=BACKEND_URL=http://10.0.2.2:8080
