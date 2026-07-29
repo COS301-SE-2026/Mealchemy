@@ -20,7 +20,7 @@ class RecipeIngredientRow extends StatelessWidget {
           const SizedBox(width: 14),
           Expanded(
             child: Text(
-              ingredient.nameRaw,
+              ingredient.name ?? 'Ingredient #${ingredient.ingId}',
               style: AppTextStyles.body.copyWith(color: AppColors.textLight),
             ),
           ),

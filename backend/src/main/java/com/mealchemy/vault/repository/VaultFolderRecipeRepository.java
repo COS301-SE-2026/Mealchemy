@@ -13,6 +13,6 @@ import com.mealchemy.vault.model.VaultFolderRecipe;
 @Repository
 public interface VaultFolderRecipeRepository extends JpaRepository<VaultFolderRecipe, Integer>
 {
-    List<VaultFolderRecipe> findByFolderId(int folderId);
-    List<VaultFolderRecipe> findByRecipeId(int RecipeId);
+    List<VaultFolderRecipe> findByFolder_FolderId(int folderId);
+    List<VaultFolderRecipe> findByRecipe_RecipeId(int recipeId);
 }

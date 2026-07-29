@@ -3,42 +3,44 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mealchemy/features/discovery/models/discovery_category.dart';
-import 'package:mealchemy/features/discovery/models/explore_item.dart';
 import 'package:mealchemy/features/discovery/providers/discovery_provider.dart';
 import 'package:mealchemy/features/discovery/repositories/discovery_repository.dart';
 import 'package:mealchemy/features/discovery/screens/discovery_screen.dart';
+import 'package:mealchemy/features/recipe/models/recipe.dart';
 
+// The screen calls loadDiscovery() in initState, so these fakes drive the real
+// load path: getPublishedRecipes() + getCuisineTypes().
 class _FakeDiscoveryRepo implements DiscoveryRepository {
   @override
-  Future<List<DiscoveryCategory>> getCategories() async => const [
-        DiscoveryCategory(id: 1, name: 'Italian', imageUrl: ''),
-        DiscoveryCategory(id: 2, name: 'Japanese', imageUrl: ''),
+  Future<List<Recipe>> getPublishedRecipes() async => const [
+        Recipe(recipeId: 1, title: 'Beet Salad', cuisineType: 'italian'),
+        Recipe(recipeId: 2, title: 'Ramen', cuisineType: 'japanese'),
       ];
 
   @override
-  Future<List<ExploreItem>> getExploreItems() async => const [
-        ExploreItem(id: 1, title: 'Chef Special', imageUrl: '', isVideo: true),
-        ExploreItem(id: 2, title: 'Beet Salad', imageUrl: '', matchPercent: 85),
-        ExploreItem(id: 3, title: 'Glow Bowl', imageUrl: '', matchPercent: 88),
-        ExploreItem(id: 4, title: 'Scallops', imageUrl: '', matchPercent: 90),
-        ExploreItem(id: 5, title: 'Sirloin', imageUrl: '', matchPercent: 92),
-      ];
+  Future<List<String>> getCuisineTypes() async => const ['italian', 'japanese'];
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} not stubbed');
 }
 
 class _ThrowingDiscoveryRepo implements DiscoveryRepository {
   @override
-  Future<List<DiscoveryCategory>> getCategories() async =>
+  Future<List<Recipe>> getPublishedRecipes() async =>
       throw Exception('network error');
+
   @override
-  Future<List<ExploreItem>> getExploreItems() async =>
+  Future<List<String>> getCuisineTypes() async =>
       throw Exception('network error');
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} not stubbed');
 }
 
 void main() {
-  setUpAll(() {
-    GoogleFonts.config.allowRuntimeFetching = false;
-  });
+  setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
   Widget host(DiscoveryRepository repo) {
     final router = GoRouter(
@@ -56,21 +58,11 @@ void main() {
           path: '/vault',
           builder: (_, __) => const Scaffold(body: Text('Vault')),
         ),
-        GoRoute(
-          path: '/pantry',
-          builder: (_, __) => const Scaffold(body: Text('Pantry')),
-        ),
-        GoRoute(
-          path: '/preference',
-          builder: (_, __) => const Scaffold(body: Text('Profile')),
-        ),
       ],
     );
 
     return ProviderScope(
-      overrides: [
-        discoveryRepositoryProvider.overrideWithValue(repo),
-      ],
+      overrides: [discoveryRepositoryProvider.overrideWithValue(repo)],
       child: MaterialApp.router(routerConfig: router),
     );
   }
@@ -86,37 +78,45 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('renders Discover header', (tester) async {
-    await pump(tester, _FakeDiscoveryRepo());
-    expect(find.text('Discover'), findsOneWidget);
-  });
+  group('DiscoveryScreen', () {
+    testWidgets('renders the Discover header', (tester) async {
+      await pump(tester, _FakeDiscoveryRepo());
+      expect(find.text('Discover'), findsOneWidget);
+    });
 
-  testWidgets('renders filter bar options', (tester) async {
-    await pump(tester, _FakeDiscoveryRepo());
-    expect(find.text('Favourites'), findsOneWidget);
-    expect(find.text('History'), findsOneWidget);
-    expect(find.text('Following'), findsOneWidget);
-    expect(find.text('Trending'), findsOneWidget);
-  });
+    testWidgets('renders the filter bar options', (tester) async {
+      await pump(tester, _FakeDiscoveryRepo());
+      expect(find.text('Favourites'), findsOneWidget);
+      expect(find.text('History'), findsOneWidget);
+      expect(find.text('Following'), findsOneWidget);
+      expect(find.text('Trending'), findsOneWidget);
+    });
 
-  testWidgets('renders Popular Categories section header', (tester) async {
-    await pump(tester, _FakeDiscoveryRepo());
-    expect(find.text('Popular Categories'), findsOneWidget);
-  });
+    testWidgets('renders the Popular Categories section', (tester) async {
+      await pump(tester, _FakeDiscoveryRepo());
+      expect(find.text('Popular Categories'), findsOneWidget);
+    });
 
-  testWidgets('renders category names after data loads', (tester) async {
-    await pump(tester, _FakeDiscoveryRepo());
-    expect(find.text('Italian'), findsOneWidget);
-    expect(find.text('Japanese'), findsOneWidget);
-  });
+    testWidgets('renders formatted cuisine chips after data loads',
+        (tester) async {
+      await pump(tester, _FakeDiscoveryRepo());
+      // getCuisineTypes returns lowercase; the chip formats to title case.
+      expect(find.text('Italian'), findsOneWidget);
+      expect(find.text('Japanese'), findsOneWidget);
+    });
 
-  testWidgets('renders navbar', (tester) async {
-    await pump(tester, _FakeDiscoveryRepo());
-    expect(find.text('DISCOVER'), findsOneWidget);
-  });
+    testWidgets('renders the Explore section with published recipes',
+        (tester) async {
+      await pump(tester, _FakeDiscoveryRepo());
+      expect(find.text('Explore'), findsOneWidget);
+      expect(find.text('Beet Salad'), findsOneWidget);
+    });
 
-  testWidgets('does not crash when repository throws', (tester) async {
-    await pump(tester, _ThrowingDiscoveryRepo());
-    expect(find.byType(Scaffold), findsOneWidget);
+    testWidgets('does not crash when the repository throws', (tester) async {
+      await pump(tester, _ThrowingDiscoveryRepo());
+      // The load error is caught in the notifier; the screen still builds.
+      expect(find.byType(DiscoveryScreen), findsOneWidget);
+      expect(find.text('Discover'), findsOneWidget);
+    });
   });
 }

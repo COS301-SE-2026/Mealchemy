@@ -48,6 +48,12 @@ public class ShoppingListController {
         return ResponseEntity.noContent().build();
     }
 
+    // auto generates shopping list from a given recipe
+    @PostMapping("/from-recipe/{recipeId}")
+    public ResponseEntity<ShoppingListResponse> autoGenerateShoppingListFromRecipe(@AuthenticationPrincipal String userId, @PathVariable Integer recipeId, @RequestBody PantryRecipeComparisonRequest request) {
+        return ResponseEntity.ok(shoppingListService.generateShoppingListFromRecipe(Integer.parseInt(userId), recipeId, request));
+    }
+
 
     // ========== Shopping List Item Level ==========
 

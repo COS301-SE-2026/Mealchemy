@@ -3,106 +3,122 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mealchemy/features/discovery/models/discovery_category.dart';
-import 'package:mealchemy/features/discovery/models/explore_item.dart';
 import 'package:mealchemy/features/discovery/providers/discovery_provider.dart';
 import 'package:mealchemy/features/discovery/repositories/discovery_repository.dart';
 import 'package:mealchemy/features/discovery/widgets/explore_section.dart';
+import 'package:mealchemy/features/recipe/models/recipe.dart';
 
-class _FakeDiscoveryRepo implements DiscoveryRepository {
+class _UnusedDiscoveryRepo implements DiscoveryRepository {
   @override
-  Future<List<DiscoveryCategory>> getCategories() async => const [
-        DiscoveryCategory(id: 1, name: 'Italian', imageUrl: ''),
-      ];
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} not stubbed');
+}
 
-  @override
-  Future<List<ExploreItem>> getExploreItems() async => const [
-        ExploreItem(id: 1, title: 'Chef Special', imageUrl: '', isVideo: true),
-        ExploreItem(id: 2, title: 'Beet Salad', imageUrl: '', matchPercent: 85),
-        ExploreItem(id: 3, title: 'Glow Bowl', imageUrl: '', matchPercent: 88),
-        ExploreItem(id: 4, title: 'Scallops', imageUrl: '', matchPercent: 90),
-        ExploreItem(id: 5, title: 'Sirloin', imageUrl: '', matchPercent: 92),
-      ];
+class _FakeDiscoveryNotifier extends DiscoveryNotifier {
+  _FakeDiscoveryNotifier(DiscoveryState initial)
+      : super(_UnusedDiscoveryRepo()) {
+    state = initial;
+  }
 }
 
 void main() {
-  setUpAll(() {
-    GoogleFonts.config.allowRuntimeFetching = false;
-  });
+  setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
-  Widget host(Widget child) {
+  const recipes = [
+    Recipe(recipeId: 1, title: 'Beet Salad', cuisineType: 'italian'),
+    Recipe(recipeId: 2, title: 'Glow Bowl', cuisineType: 'italian'),
+    Recipe(recipeId: 3, title: 'Scallops', cuisineType: 'italian'),
+    Recipe(recipeId: 4, title: 'Sirloin', cuisineType: 'italian'),
+  ];
+
+  Widget host(DiscoveryState state) {
     final router = GoRouter(
       initialLocation: '/',
       routes: [
         GoRoute(
           path: '/',
-          builder: (_, __) => Scaffold(
-            body: SingleChildScrollView(child: child),
+          builder: (_, __) => const Scaffold(
+            body: SingleChildScrollView(child: ExploreSection()),
           ),
+        ),
+        GoRoute(
+          path: '/recipe/:id',
+          builder: (_, __) => const Scaffold(body: Text('Recipe Detail')),
         ),
       ],
     );
 
     return ProviderScope(
       overrides: [
-        discoveryRepositoryProvider.overrideWithValue(_FakeDiscoveryRepo()),
+        discoveryProvider.overrideWith((ref) => _FakeDiscoveryNotifier(state)),
       ],
       child: MaterialApp.router(routerConfig: router),
     );
   }
 
-  Future<void> pump(WidgetTester tester, Widget child) async {
+  Future<void> pump(WidgetTester tester, DiscoveryState state) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
     });
-    await tester.pumpWidget(host(child));
+    await tester.pumpWidget(host(state));
+    await tester.pumpAndSettle();
   }
 
   group('ExploreSection', () {
-    testWidgets('renders nothing before data loads', (tester) async {
-      await pump(tester, const ExploreSection());
-      await tester.pump();
-      expect(find.text('Explore'), findsNothing);
+    testWidgets('shows the empty state when there are no recipes',
+        (tester) async {
+      await pump(tester, const DiscoveryState(recipes: []));
+
+      expect(find.text('Explore'), findsOneWidget);
+      expect(find.text('No published recipes yet.'), findsOneWidget);
     });
 
-    testWidgets('renders Explore header after data loads', (tester) async {
-      await pump(tester, const ExploreSection());
+    testWidgets('renders the Explore header and recipe titles', (tester) async {
+      await pump(tester, const DiscoveryState(recipes: recipes));
 
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(ExploreSection)),
-      );
-      await container.read(discoveryProvider.notifier).loadDiscovery();
-      await tester.pumpAndSettle();
-
-      expect(
-        find.textContaining(RegExp(r'Recipes|Explore')),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets('renders recipe titles after data loads', (tester) async {
-      await pump(tester, const ExploreSection());
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(ExploreSection)),
-      );
-      await container.read(discoveryProvider.notifier).loadDiscovery();
-      await tester.pumpAndSettle();
-
+      expect(find.text('Explore'), findsOneWidget);
       expect(find.text('Beet Salad'), findsOneWidget);
       expect(find.text('Sirloin'), findsOneWidget);
     });
 
-    testWidgets('renders VIEW ALL trailing label', (tester) async {
-      await pump(tester, const ExploreSection());
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(ExploreSection)),
+    testWidgets('adds the cuisine to the header when one is selected',
+        (tester) async {
+      await pump(
+        tester,
+        const DiscoveryState(recipes: recipes, selectedCuisine: 'italian'),
       );
-      await container.read(discoveryProvider.notifier).loadDiscovery();
+      expect(find.text('Explore Italian'), findsOneWidget);
+      expect(find.text('Beet Salad'), findsOneWidget);
+    });
+
+    testWidgets('filters out recipes that do not match the selected cuisine',
+        (tester) async {
+      await pump(
+        tester,
+        const DiscoveryState(
+          recipes: [
+            Recipe(recipeId: 1, title: 'Beet Salad', cuisineType: 'italian'),
+            Recipe(recipeId: 2, title: 'Ramen', cuisineType: 'japanese'),
+          ],
+          selectedCuisine: 'italian',
+        ),
+      );
+
+      expect(find.text('Beet Salad'), findsOneWidget);
+      expect(find.text('Ramen'), findsNothing); 
+    });
+    
+    testWidgets('tapping a cell navigates to the recipe detail',
+        (tester) async {
+      await pump(tester, const DiscoveryState(recipes: recipes));
+
+      await tester.tap(find.text('Beet Salad'));
       await tester.pumpAndSettle();
-      expect(find.text('VIEW ALL'), findsOneWidget);
+
+      expect(find.text('Recipe Detail'), findsOneWidget);
     });
   });
 }

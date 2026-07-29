@@ -2,7 +2,9 @@ package com.mealchemy.vault.controller;
 
 /* Import libraries */
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import java.util.List;
+import jakarta.validation.Valid;
 
 /* Import classes */
 import com.mealchemy.vault.dto.VaultResponse;
@@ -23,37 +25,45 @@ public class VaultController
     /* Mapping Functions */
 
     // Get
-    @GetMapping("/owner/{ownerId}")
-    public List<VaultResponse> getVaultsByOwnerId(@PathVariable int ownerId)
+    @GetMapping("/owner/vaults")
+    public List<VaultResponse> getVaultsByOwnerId(@AuthenticationPrincipal String ownerId)
     {
-        return vaultService.getVaultsByOwnerId(ownerId);
+        int ownerIdInt = Integer.parseInt(ownerId); 
+        return vaultService.getVaultsByOwnerId(ownerIdInt);
     }
 
     // Get
     @GetMapping("/{id}")
-    public VaultResponse getVault(@PathVariable int id)
+    public VaultResponse getVault(@PathVariable int id, @AuthenticationPrincipal String userId)
     {
-        return vaultService.getVault(id);
+        return vaultService.getVault(id, Integer.parseInt(userId));
+    }
+
+    // Get
+    @GetMapping("/accessible")
+    public List<VaultResponse> getAccessibleVaults(@AuthenticationPrincipal String userId)
+    {
+        return vaultService.getAccessibleVaults(Integer.parseInt(userId));
     }
 
     // Post
     @PostMapping
-    public VaultResponse createVault(@RequestBody VaultRequest request)
+    public VaultResponse createVault(@Valid @RequestBody VaultRequest request, @AuthenticationPrincipal String ownerId)
     {
-        return vaultService.createVault(request);
+        return vaultService.createVault(request, Integer.parseInt(ownerId));
     }
 
     // Put
     @PutMapping("/{id}")
-    public VaultResponse updateVault(@PathVariable int id, @RequestBody VaultRequest request)
+    public VaultResponse updateVault(@PathVariable int id, @Valid @RequestBody VaultRequest request, @AuthenticationPrincipal String ownerId)
     {
-        return vaultService.updateVault(id, request);
+        return vaultService.updateVault(id, request, Integer.parseInt(ownerId));
     }
 
     // Delete
     @DeleteMapping("/{id}")
-    public void deleteVault(@PathVariable int id)
+    public void deleteVault(@PathVariable int id, @AuthenticationPrincipal String ownerId)
     {
-        vaultService.deleteVault(id);
+        vaultService.deleteVault(id, Integer.parseInt(ownerId));
     }
 }

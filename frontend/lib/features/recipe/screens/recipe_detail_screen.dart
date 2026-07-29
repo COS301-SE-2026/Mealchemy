@@ -44,7 +44,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
 
   @override
   Widget build(BuildContext context) {
-    final recipeState = ref.watch(recipeByIdProvider(widget.recipeId));
+    final recipeState = ref.watch(recipeDetailProvider(widget.recipeId));
 
     return recipeState.when(
       loading: () => const Scaffold(

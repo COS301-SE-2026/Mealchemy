@@ -1,10 +1,16 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mealchemy/core/constants/app_config.dart';
+import '../models/user.dart';
 import '../repositories/api_auth_repository.dart';
 import '../repositories/auth_repository.dart';
+import '../repositories/mock_auth_repository.dart';
 import '../../../core/providers/api_service_provider.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
+  if (AppConfig.mockAuth) {
+    return MockAuthRepository();
+  }
   return ApiAuthRepository(ref.read(dioProvider));
 });
 
@@ -13,6 +19,7 @@ class AuthState {
   final bool isLoading;
   final String? errorMessage;
   final String? token;
+  final User? user;
   final bool onboardingRequired;
 
   const AuthState({
@@ -20,6 +27,7 @@ class AuthState {
     this.isLoading = false,
     this.errorMessage,
     this.token,
+    this.user,
     this.onboardingRequired = false,
   });
 
@@ -28,6 +36,7 @@ class AuthState {
     bool? isLoading,
     String? errorMessage,
     String? token,
+    User? user,
     bool? onboardingRequired,
   }) {
     return AuthState(
@@ -35,17 +44,25 @@ class AuthState {
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
       token: token ?? this.token,
+      user: user ?? this.user,
       onboardingRequired: onboardingRequired ?? this.onboardingRequired,
     );
   }
 
   int? get userId {
+    if (user != null) return user!.userId;
     if (token == null) return null;
     final parts = token!.split('.');
-    final payload = parts[1];
-    final decoded = utf8.decode(base64Url.decode(base64Url.normalize(payload)));
-    final map = jsonDecode(decoded);
-    return int.tryParse(map['sub']);
+    if (parts.length != 3) return null;
+
+    try {
+      final decoded =
+          utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
+      final map = jsonDecode(decoded);
+      return int.tryParse('${map['sub']}');
+    } catch (_) {
+      return null;
+    }
   }
 }
 
@@ -67,6 +84,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isLoading: false,
         isLoggedIn: true,
         token: result.token,
+        user: result.user,
         onboardingRequired: result.onboardingRequired,
       );
       return true;
@@ -95,6 +113,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isLoading: false,
         isLoggedIn: true,
         token: result.token,
+        user: result.user,
         onboardingRequired: result.onboardingRequired,
       );
       return true;

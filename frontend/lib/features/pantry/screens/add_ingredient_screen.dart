@@ -39,6 +39,7 @@ class AddIngredientScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: categoriesState.when(
+        skipLoadingOnReload: true, 
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => _AddIngredientError(message: '$error'),
         data: (categories) => _AddIngredientContent(categories: categories),
@@ -60,17 +61,22 @@ class _AddIngredientContent extends ConsumerStatefulWidget {
 class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
   final TextEditingController _nameController = TextEditingController();
 
-  final List<IngredientCatalogueItem> _ingredientOptions = [];
+  List<IngredientCatalogueItem> _ingredientOptions = [];
 
   IngredientCatalogueItem? _selectedIngredient;
   bool _isSearchingIngredients = false;
   String? _ingredientSearchError;
+
+  int _searchRequestId = 0;
 
   //stepper starts at 1 so quantity can never be zero or negative
   int _quantity = 1;
   String? _selectedUnit;
   String? _selectedCategory;
   bool _showValidation = false;
+
+  AppButtonStatus _saveStatus = AppButtonStatus.idle;
+  String? _saveError;
 
   @override
   void initState() {
@@ -143,7 +149,7 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
                   label: 'Ingredient Name',
                   hint: 'Search catalogue, e.g. Chicken Breast',
                   prefixIcon: Icons.search,
-                  onChanged: _searchIngredients,
+                  onChanged: _onSearchChanged,
                 ),
                 if (_showValidation && !hasName)
                   const _ValidationText('Ingredient name is required.'),
@@ -163,7 +169,7 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
                   _IngredientSearchResults(
                     ingredients: _ingredientOptions,
                     selectedIngredient: _selectedIngredient,
-                    onSelected: _selectIngredient,
+                    onSelected: _onIngredientSelected,
                   ),
                 ],
                 const SizedBox(height: 14),
@@ -211,6 +217,10 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
                   onPressed: _saveIngredient,
                   isFullWidth: true,
                   isRounded: true,
+                  status: _saveStatus,
+                  errorMessage: _saveError,
+                  //pop only after the tick has played
+                  onSuccessComplete: () => context.pop(),
                 ),
               ],
             ),
@@ -220,79 +230,92 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
     );
   }
 
-  Future<void> _searchIngredients(String query) async {
+  //searches the catalogue as the user types; typing invalidates any prior
+  //selection so save can't file a stale ing_id
+  Future<void> _onSearchChanged(String value) async {
+    final query = value.trim();
+    final requestId = ++_searchRequestId;
+
     setState(() {
       _selectedIngredient = null;
       _ingredientSearchError = null;
     });
 
-    final cleanedQuery = query.trim();
-    if (cleanedQuery.length < 2) {
+    if (query.isEmpty) {
       setState(() {
-        _ingredientOptions.clear();
+        _ingredientOptions = [];
         _isSearchingIngredients = false;
       });
       return;
     }
 
-    setState(() {
-      _isSearchingIngredients = true;
-    });
+    setState(() => _isSearchingIngredients = true);
 
     try {
       final results = await ref
           .read(ingredientCatalogueRepositoryProvider)
-          .searchIngredients(cleanedQuery);
+          .searchIngredients(query);
 
-      if (!mounted || _nameController.text.trim() != cleanedQuery) return;
+      //ignore responses that arrived after a newer query went out
+      if (!mounted || requestId != _searchRequestId) return;
 
       setState(() {
-        _ingredientOptions
-          ..clear()
-          ..addAll(results);
+        _ingredientOptions = results;
         _isSearchingIngredients = false;
       });
-    } catch (_) {
-      if (!mounted) return;
+    } catch (error) {
+      if (!mounted || requestId != _searchRequestId) return;
 
       setState(() {
-        _ingredientOptions.clear();
+        _ingredientOptions = [];
         _isSearchingIngredients = false;
-        _ingredientSearchError = 'Could not search ingredients right now.';
+        _ingredientSearchError = 'Could not search the catalogue. Try again.';
       });
     }
   }
 
-  void _selectIngredient(IngredientCatalogueItem ingredient) {
+  //locks in a catalogue ingredient so save files its real ing_id
+  void _onIngredientSelected(IngredientCatalogueItem item) {
     setState(() {
-      _selectedIngredient = ingredient;
-      _selectedCategory = ingredient.category;
-      _nameController.text = ingredient.name;
-      _ingredientOptions.clear();
-      _ingredientSearchError = null;
+      _selectedIngredient = item;
+      _nameController.text = item.name;
+      _ingredientOptions = [];
     });
   }
 
   Future<void> _saveIngredient() async {
-    final hasRequiredFields = _nameController.text.trim().isNotEmpty &&
-        _selectedIngredient != null &&
+    final hasRequiredFields = _selectedIngredient != null &&
+        _nameController.text.trim().isNotEmpty &&
         _selectedUnit != null;
 
     if (!hasRequiredFields) {
       setState(() {
         _showValidation = true;
+        _saveStatus = AppButtonStatus.error;
+        _saveError = null;
       });
       return;
     }
 
-    await ref.read(pantryStateProvider.notifier).addIngredient(
-          ingId: _selectedIngredient!.ingId,
-          quantity: '$_quantity',
-          unit: _selectedUnit!,
-        );
+    setState(() {
+      _saveStatus = AppButtonStatus.loading;
+      _saveError = null;
+    });
 
-    if (mounted) {
-      context.pop();
+    try {
+      await ref.read(pantryStateProvider.notifier).addIngredient(
+            ingId: _selectedIngredient!.ingId,
+            quantity: '$_quantity',
+            unit: _selectedUnit!,
+          );
+      if (!mounted) return;
+      setState(() => _saveStatus = AppButtonStatus.success);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _saveStatus = AppButtonStatus.error;
+        _saveError = 'Could not save ingredient. Try again.';
+      });
     }
   }
 }

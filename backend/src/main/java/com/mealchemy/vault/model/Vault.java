@@ -2,9 +2,9 @@
 
     /* Import libraries */
 
-    import jakarta.persistence.*;
+    import jakarta.persistence.*;  
     import java.time.OffsetDateTime;
-    import java.util.Arrays;
+    import java.util.*;
     import org.hibernate.annotations.JdbcTypeCode;
     import org.hibernate.type.SqlTypes;
 
@@ -22,7 +22,7 @@
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         @Column(name = "vault_id")
-        private int vaultId;
+        private Integer vaultId;
         
         @Column(name = "owner_id")
         private Integer ownerId;
@@ -38,9 +38,12 @@
         @Column(name = "created_at", nullable = false)
         private OffsetDateTime createdAt = OffsetDateTime.now();
 
+        @OneToMany(mappedBy = "vault", cascade = CascadeType.ALL, orphanRemoval = true)
+        private List<VaultFolder> folders = new ArrayList<>();
+
         /* Getters */
 
-        public int getVaultId()
+        public Integer getVaultId()
         {
             return vaultId;
         }
@@ -65,6 +68,11 @@
             return createdAt;
         }
 
+        public List<VaultFolder> getFolders()
+        {
+            return folders;
+        }
+
         /* Setters */
 
         public void setOwnerId(Integer ownerIdIn)
@@ -80,5 +88,10 @@
         public void setName(String nameIn)
         {
             name = nameIn;
+        }
+
+        public void setFolders(List<VaultFolder> foldersIn)
+        {
+            folders = foldersIn;
         }
     }

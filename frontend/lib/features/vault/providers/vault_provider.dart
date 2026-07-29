@@ -1,59 +1,106 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mealchemy/core/providers/api_service_provider.dart';
 import 'package:mealchemy/features/auth/providers/auth_provider.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
-import 'package:mealchemy/features/recipe/repositories/mock_recipe_repository.dart';
+import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
+import 'package:mealchemy/core/constants/app_config.dart';
+import 'package:flutter/foundation.dart';
 import '../models/vault.dart';
 import '../models/vault_folder.dart';
 import '../models/vault_folder_recipe.dart';
-import '../repositories/vault_repository.dart';
-import '../repositories/mock_vault_repository.dart';
-import '../repositories/api_vault_repository.dart';
-
-// Toggleflutter run/ default is false now, have to include falg in flutter run command to use mock data
-const bool _useMock = bool.fromEnvironment('USE_MOCK');
-
-final vaultRepositoryProvider = Provider<VaultRepository>((ref) {
-  if (_useMock) {
-    return MockVaultRepository();
-  }
-  return ApiVaultRepository(ref.read(dioProvider));
-});
+import '../providers/vault_repository_provider.dart';
+import '../models/vault_member.dart';
 
 // Vaults provider
-final vaultsProvider = FutureProvider<List<Vault>>((ref) {
-  final userId = ref.watch(authProvider).userId;
-  if (userId == null) return Future.value([]);
-  return ref.watch(vaultRepositoryProvider).getVaultsByOwnerId(userId);
+final vaultsProvider = FutureProvider<List<Vault>>((ref) async {
+  final auth = ref.watch(authProvider);
+  debugPrint('vault: userId=${auth.userId} loggedIn=${auth.isLoggedIn} mock=${AppConfig.useMockData}');
+  if (auth.userId == null) return [];
+  return ref.watch(vaultRepositoryProvider).getMyVaults();
 });
 
+
 // Vault folders provider
-final vaultFoldersProvider =
-    FutureProvider.family<List<VaultFolder>, int>((ref, vaultId) {
-  return ref.watch(vaultRepositoryProvider).getFoldersByVaultId(vaultId);
+final vaultFoldersProvider = FutureProvider.family<List<VaultFolder>, int>((ref, vaultId) {
+  return ref.watch(vaultRepositoryProvider).getFolders(vaultId);
 });
 
 // Raw folder recipes provider
 final folderRecipesProvider =
     FutureProvider.family<List<VaultFolderRecipe>, int>((ref, folderId) {
-  return ref.watch(vaultRepositoryProvider).getRecipesByFolderId(folderId);
+  return ref.watch(vaultRepositoryProvider).getFolderRecipes(folderId);
 });
 
 // Display provider
 final folderRecipeDisplayProvider =
     FutureProvider.family<List<Recipe>, int>((ref, folderId) async {
   final folderRecipes = await ref.watch(folderRecipesProvider(folderId).future);
-  final mockRepo = MockRecipeRepository();
+  final recipeRepository = ref.watch(recipeRepositoryProvider);
 
-  final recipes = <Recipe>[];
-  for (final fr in folderRecipes) {
-    try {
-      final recipe = await mockRepo.getRecipeById(fr.recipeId);
-      recipes.add(recipe);
-    } catch (_) {
-      
+    final results = await Future.wait(
+    folderRecipes.map((fr) async {
+      try {
+        return await recipeRepository.getRecipeById(fr.recipeId);
+      } catch (_) {
+        return null;
+      }
+    }),
+  );
+
+  return results.whereType<Recipe>().toList();
+});
+
+//Selecting a vault 
+
+final selectedVaultIdProvider = StateProvider<int?>((ref) => null);
+final isSharedModeProvider = StateProvider<bool>((ref) => false);
+
+final selectedVaultProvider = Provider<Vault?>((ref) {
+  final vaults = ref.watch(vaultsProvider).valueOrNull;
+  if (vaults == null || vaults.isEmpty) return null;
+
+  if (!ref.watch(isSharedModeProvider)) {
+    for (final v in vaults) {
+      if (v.vaultType == VaultTypes.private) return v;
     }
+    return vaults.first;
   }
 
-  return recipes;
+  final shared =
+      vaults.where((v) => v.vaultType == VaultTypes.shared).toList();
+  if (shared.isEmpty) return null;
+
+  final selectedId = ref.watch(selectedVaultIdProvider);
+  if (selectedId != null) {
+    for (final v in shared) {
+      if (v.vaultId == selectedId) return v;
+    }
+  }
+  return shared.first;
+});
+
+// Shared vaults for the strip
+final sharedVaultsProvider = Provider<List<Vault>>((ref) {
+  final vaults = ref.watch(vaultsProvider).valueOrNull ?? const [];
+  return vaults.where((v) => v.vaultType == VaultTypes.shared).toList();
+});
+
+// The users private vault
+final privateVaultProvider = Provider<Vault?>((ref) {
+  final vaults = ref.watch(vaultsProvider).valueOrNull ?? const [];
+  for (final v in vaults) {
+    if (v.vaultType == VaultTypes.private) return v;
+  }
+  return null;
+});
+
+final vaultMembersProvider =
+    FutureProvider.family<List<VaultMember>, int>((ref, vaultId) {
+  return ref.watch(vaultRepositoryProvider).getMembers(vaultId);
+});
+
+// Private vault folders for the recipe folder picker
+final privateFoldersProvider = FutureProvider<List<VaultFolder>>((ref) async {
+  final private = ref.watch(privateVaultProvider);
+  if (private == null) return [];
+  return ref.watch(vaultRepositoryProvider).getFolders(private.vaultId);
 });

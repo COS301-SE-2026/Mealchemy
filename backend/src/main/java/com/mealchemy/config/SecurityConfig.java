@@ -31,9 +31,6 @@ public class SecurityConfig {
                 .requestMatchers("/auth/register").permitAll()
                 .requestMatchers("/auth/login").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/vaults/**").permitAll()
-                .requestMatchers("/folders/**").permitAll()
-                .requestMatchers("/recipefolders/**").permitAll()
 
                 .anyRequest().authenticated()
             )

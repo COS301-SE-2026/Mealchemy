@@ -1,176 +1,189 @@
 package com.mealchemy.vault.controller;
 
-/* Importing libraries */
+/* Import libraries */
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import com.mealchemy.config.JwtUtil;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.security.test.context.support.WithMockUser;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import com.mealchemy.config.JwtUtil;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import jakarta.servlet.ServletException;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import org.springframework.security.test.context.support.WithMockUser;
 
-/* Importing classes */
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+
+/* Import classes */
 import com.mealchemy.vault.dto.VaultFolderRecipeRequest;
+import com.mealchemy.vault.dto.VaultFolderRecipeMoveRequest;
 import com.mealchemy.vault.dto.VaultFolderRecipeResponse;
 import com.mealchemy.vault.service.VaultFolderRecipeService;
+import com.mealchemy.config.WithMockJwtUser;
 
-@WithMockUser
+@ExtendWith(SpringExtension.class)
 @WebMvcTest(VaultFolderRecipeController.class)
-public class VaultFolderRecipeControllerTest
-{
+@WithMockJwtUser(userId = "1")
+public class VaultFolderRecipeControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
-    private VaultFolderRecipeService vaultFolderRecipeService;
-
-    @MockBean   
+    @MockitoBean 
     private JwtUtil jwtUtil;
+
+    @MockitoBean
+    private VaultFolderRecipeService vaultFolderRecipeService;
 
     @Autowired
     private ObjectMapper objectMapper;
 
     private VaultFolderRecipeResponse response;
     private VaultFolderRecipeRequest request;
+    private VaultFolderRecipeMoveRequest moveRequest;
 
     @BeforeEach
     void setUp()
     {
-        response = new VaultFolderRecipeResponse();
-        response.setId(1);
-        response.setFolderId(1);
-        response.setRecipeId(1);
-        response.setAddedAt(OffsetDateTime.now());
+        response = new VaultFolderRecipeResponse(1, 1, 1, OffsetDateTime.now(), 1);
 
-        request = new VaultFolderRecipeRequest();
-        request.setFolderId(1);
-        request.setRecipeId(1);
+        request = new VaultFolderRecipeRequest(1, 1);
+
+        moveRequest = new VaultFolderRecipeMoveRequest(2);
     }
 
-    // GET /recipefolders/recipes/{folderId}
-    
     @Test
     void getRecipesByFolderId_returns200_withList() throws Exception
     {
-        when(vaultFolderRecipeService.getRecipesByFolderId(1)).thenReturn(List.of(response));
+        when(vaultFolderRecipeService.getRecipesByFolderId(1, 1)).thenReturn(List.of(response));
 
-        mockMvc.perform(get("/recipefolders/recipes/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].folderId").value(1));
+        mockMvc.perform(get("/recipefolders/recipes/1")).andExpect(status().isOk()).andExpect(jsonPath("$[0].recipeId").value(1));
     }
 
     @Test
-    void getRecipesByFolderId_returns200_withEmptyList() throws Exception
+    void getRecipesByFolderId_returns404_whenFolderNotFound() throws Exception
     {
-        when(vaultFolderRecipeService.getRecipesByFolderId(99)).thenReturn(List.of());
+        when(vaultFolderRecipeService.getRecipesByFolderId(99, 1)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
 
-        mockMvc.perform(get("/recipefolders/recipes/99"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isEmpty());
+        mockMvc.perform(get("/recipefolders/recipes/99")).andExpect(status().isNotFound()).andExpect(jsonPath("$.message").value("Folder not found."));
     }
 
-    // GET /recipefolders/folders/{recipeId}
     @Test
     void getFoldersByRecipeId_returns200_withList() throws Exception
     {
-        when(vaultFolderRecipeService.getFoldersByRecipeId(1)).thenReturn(List.of(response));
+        when(vaultFolderRecipeService.getFoldersByRecipeId(1, 1)).thenReturn(List.of(response));
 
-        mockMvc.perform(get("/recipefolders/folders/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].recipeId").value(1));
+        mockMvc.perform(get("/recipefolders/folders/1")).andExpect(status().isOk()).andExpect(jsonPath("$[0].folderId").value(1));
     }
 
     @Test
-    void getFoldersByRecipeId_returns200_withEmptyList() throws Exception
+    void getFoldersByRecipeId_returns403_whenNotRecipeOwner() throws Exception
     {
-        when(vaultFolderRecipeService.getFoldersByRecipeId(99)).thenReturn(List.of());
+        when(vaultFolderRecipeService.getFoldersByRecipeId(1, 1))
+            .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the recipe owner can see where it has been added."));
 
-        mockMvc.perform(get("/recipefolders/folders/99"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isEmpty());
+        mockMvc.perform(get("/recipefolders/folders/1")).andExpect(status().isForbidden()).andExpect(jsonPath("$.message").value("Only the recipe owner can see where it has been added."));
     }
 
-    // GET /recipefolders/{id}
     @Test
     void getFolderRecipeById_returns200_whenFound() throws Exception
     {
-        when(vaultFolderRecipeService.getFolderRecipeById(1)).thenReturn(response);
+        when(vaultFolderRecipeService.getFolderRecipeById(1, 1)).thenReturn(response);
 
-        mockMvc.perform(get("/recipefolders/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.folderId").value(1));
+        mockMvc.perform(get("/recipefolders/1")).andExpect(status().isOk()).andExpect(jsonPath("$.id").value(1));
     }
 
     @Test
-    void getFolderRecipeById_returns500_whenNotFound() throws Exception
+    void getFolderRecipeById_returns404_whenNotFound() throws Exception
     {
-        when(vaultFolderRecipeService.getFolderRecipeById(99)).thenThrow(new RuntimeException("No record found"));
+        when(vaultFolderRecipeService.getFolderRecipeById(99, 1)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "No record found."));
 
-        mockMvc.perform(get("/recipefolders/99"))
-                .andExpect(status().isInternalServerError());
+        mockMvc.perform(get("/recipefolders/99")).andExpect(status().isNotFound()).andExpect(jsonPath("$.message").value("No record found."));
     }
 
-    // POST /recipefolders
     @Test
     void createVaultFolderRecipe_returns200_withCreatedRecord() throws Exception
     {
-        when(vaultFolderRecipeService.createVaultFolderRecipe(any(VaultFolderRecipeRequest.class))).thenReturn(response);
+        when(vaultFolderRecipeService.createVaultFolderRecipe(any(VaultFolderRecipeRequest.class), eq(1), eq(1))).thenReturn(response);
 
-        mockMvc.perform(post("/recipefolders")
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.folderId").value(1));
+        mockMvc.perform(post("/recipefolders/folder/1")
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.recipeId").value(1));
     }
 
-    // PUT /recipefolders/{id}
     @Test
-    void updateVaultFolderRecipe_returns200_whenFound() throws Exception
+    void createVaultFolderRecipe_returns403_whenNotOwnerOrMember() throws Exception
     {
-        when(vaultFolderRecipeService.updateVaultFolderRecipe(eq(1), any(VaultFolderRecipeRequest.class))).thenReturn(response);
+        when(vaultFolderRecipeService.createVaultFolderRecipe(any(VaultFolderRecipeRequest.class), eq(1), eq(1)))
+            .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault member/owner can can interact with folders/recipe relationships."));
+
+        mockMvc.perform(post("/recipefolders/folder/1")
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message").value("Only a vault member/owner can can interact with folders/recipe relationships."));
+    }
+
+    @Test
+    void updateVaultFolderRecipe_returns200_withUpdatedRecord() throws Exception
+    {
+        when(vaultFolderRecipeService.updateVaultFolderRecipe(eq(1), any(VaultFolderRecipeMoveRequest.class), eq(1))).thenReturn(response);
 
         mockMvc.perform(put("/recipefolders/1")
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.folderId").value(1));
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(moveRequest)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.recipeId").value(1));
     }
+
     @Test
-    void updateVaultFolderRecipe_returns500_whenNotFound() throws Exception
+    void updateVaultFolderRecipe_returns403_whenFoldersFromDifferentVaults() throws Exception
     {
-        when(vaultFolderRecipeService.updateVaultFolderRecipe(eq(99), any(VaultFolderRecipeRequest.class))).thenThrow(new RuntimeException("No record found"));
+        when(vaultFolderRecipeService.updateVaultFolderRecipe(eq(1), any(VaultFolderRecipeMoveRequest.class), eq(1)))
+            .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Recipes can only moved between folders in the same vault."));
 
-        mockMvc.perform(put("/recipefolders/99")
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isInternalServerError());
+        mockMvc.perform(put("/recipefolders/1")
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(moveRequest)))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message").value("Recipes can only moved between folders in the same vault."));
     }
 
-    // DELETE /recipefolders/{id}
     @Test
     void deleteVaultFolderRecipe_returns200() throws Exception
     {
-        doNothing().when(vaultFolderRecipeService).deleteVaultFolderRecipe(1);
+        doNothing().when(vaultFolderRecipeService).deleteVaultFolderRecipe(1, 1);
 
         mockMvc.perform(delete("/recipefolders/1").with(csrf()))
-                .andExpect(status().isOk());
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void deleteVaultFolderRecipe_returns403_whenNotOwnerOrMemberWhoAdded() throws Exception
+    {
+        doThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault member who added the recipe/vault owner can delete the folders."))
+            .when(vaultFolderRecipeService).deleteVaultFolderRecipe(1, 1);
+
+        mockMvc.perform(delete("/recipefolders/1").with(csrf()))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message").value("Only a vault member who added the recipe/vault owner can delete the folders."));
     }
 }
