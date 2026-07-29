@@ -14,7 +14,6 @@ class VaultQuickStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    //If not recipes no quick recomandations to show, so hide the strip
     if (recipes.isEmpty) return const SizedBox.shrink();
 
     return SizedBox(

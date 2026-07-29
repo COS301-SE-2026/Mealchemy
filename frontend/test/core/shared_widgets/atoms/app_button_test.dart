@@ -11,6 +11,9 @@ void main() {
     );
   }
 
+  InkWell inkWellOf(WidgetTester tester) =>
+      tester.widget<InkWell>(find.byType(InkWell));
+
   group('AppButton', () {
     //Building a primary button and checking if the label appears on screen
     testWidgets('renders label correctly', (tester) async {
@@ -20,55 +23,49 @@ void main() {
       expect(find.text('Get Started'), findsOneWidget);
     });
 
-    //Building a primary button and checking if it uses ElevatedButton under the hood
-    testWidgets('primary renders ElevatedButton', (tester) async {
-      await tester.pumpWidget(buildButton(
-        AppButton.primary(label: 'Test', onPressed: () {}),
-      ));
-      expect(find.byType(ElevatedButton), findsOneWidget);
+    //Building each variant and checking it renders an InkWell with its label
+    testWidgets('every variant renders an InkWell and its label',
+        (tester) async {
+      for (final button in [
+        AppButton.primary(label: 'P', onPressed: () {}),
+        AppButton.secondary(label: 'S', onPressed: () {}),
+        AppButton.outlined(label: 'O', onPressed: () {}),
+        AppButton.text(label: 'T', onPressed: () {}),
+      ]) {
+        await tester.pumpWidget(buildButton(button));
+        expect(find.byType(InkWell), findsOneWidget);
+        expect(find.text(button.label), findsOneWidget);
+      }
     });
 
-    //Building an outlined button and checking if it uses OutlinedButton under the hood
-    testWidgets('outlined renders OutlinedButton', (tester) async {
+    //Building an enabled button and checking the tap callback fires
+    testWidgets('tapping an enabled button fires onPressed', (tester) async {
+      var tapped = false;
       await tester.pumpWidget(buildButton(
-        AppButton.outlined(label: 'Test', onPressed: () {}),
+        AppButton.primary(label: 'Tap', onPressed: () => tapped = true),
       ));
-      expect(find.byType(OutlinedButton), findsOneWidget);
+      await tester.tap(find.text('Tap'));
+      expect(tapped, isTrue);
     });
 
-    //Building a text button and checking if it uses TextButton under the hood
-    testWidgets('text renders TextButton', (tester) async {
-      await tester.pumpWidget(buildButton(
-        AppButton.text(label: 'Test', onPressed: () {}),
-      ));
-      expect(find.byType(TextButton), findsOneWidget);
-    });
-
-    //Building a primary button with isLoading true and checking if spinner shows and label is hidden
+    //Building a primary button with isLoading true and cheking the spinner shows and label hides
     testWidgets('shows spinner when loading', (tester) async {
       await tester.pumpWidget(buildButton(
-        AppButton.primary(
-          label: 'Loading',
-          onPressed: null,
-          isLoading: true,
-        ),
+        AppButton.primary(label: 'Loading', onPressed: null, isLoading: true),
       ));
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(find.text('Loading'), findsNothing);
     });
 
-    //Building a primary button with null onPressed and checking if the button is disabled
+    //Building a primary button with null onPressed and checking the inkwell tap is null
     testWidgets('is disabled when onPressed is null', (tester) async {
       await tester.pumpWidget(buildButton(
         AppButton.primary(label: 'Disabled', onPressed: null),
       ));
-      final button = tester.widget<ElevatedButton>(
-        find.byType(ElevatedButton),
-      );
-      expect(button.onPressed, isNull);
+      expect(inkWellOf(tester).onTap, isNull);
     });
 
-    //Building a primary button with a left icon and checking if the icon appears on screen
+    //Building a primary button with a left icon and checking the icon appears
     testWidgets('shows left icon when provided', (tester) async {
       await tester.pumpWidget(buildButton(
         AppButton.primary(
@@ -80,30 +77,46 @@ void main() {
       expect(find.byIcon(Icons.camera_alt), findsOneWidget);
     });
 
-    //Building a primary button with isFullWidth true and checking if it stretches to fill the screen
-    testWidgets('stretches when isFullWidth is true', (tester) async {
+    //Building a primary button with a right icon and checking the icon appears
+    testWidgets('shows right icon when provided', (tester) async {
       await tester.pumpWidget(buildButton(
         AppButton.primary(
-          label: 'Full',
+          label: 'Next',
           onPressed: () {},
-          isFullWidth: true,
+          rightIcon: Icons.arrow_forward,
         ),
       ));
-      final sizedBox = tester.widget<SizedBox>(
-        find.byType(SizedBox).first,
-      );
-      expect(sizedBox.width, double.infinity);
+      expect(find.byIcon(Icons.arrow_forward), findsOneWidget);
     });
 
-    //Building a secondary button and checking if it uses ElevatedButton under the hood
-    testWidgets('secondary renders ElevatedButton', (tester) async {
+    //Building an outlined button and cheking it draws a border (only outlined does)
+    testWidgets('outlined renders a border', (tester) async {
       await tester.pumpWidget(buildButton(
-        AppButton.secondary(label: 'Test', onPressed: () {}),
+        AppButton.outlined(label: 'Bordered', onPressed: () {}),
       ));
-      expect(find.byType(ElevatedButton), findsOneWidget);
+      final containers = tester.widgetList<AnimatedContainer>(
+        find.byType(AnimatedContainer),
+      );
+      final hasBorder = containers.any((c) {
+        final d = c.decoration;
+        return d is BoxDecoration && d.border != null;
+      });
+      expect(hasBorder, isTrue);
     });
 
-    //Building an outlined button with custom colour and checking if correct colour is applied
+    //Building a primary button with isFullWidth true and checking it strethes to fill
+    testWidgets('stretches when isFullWidth is true', (tester) async {
+      await tester.pumpWidget(buildButton(
+        AppButton.primary(label: 'Full', onPressed: () {}, isFullWidth: true),
+      ));
+      final widths = tester
+          .widgetList<SizedBox>(find.byType(SizedBox))
+          .map((s) => s.width)
+          .toList();
+      expect(widths, contains(double.infinity));
+    });
+
+    //Building an outlined button with custom colour and checking it builds fine
     testWidgets('outlined uses custom colour when provided', (tester) async {
       await tester.pumpWidget(buildButton(
         AppButton.outlined(
@@ -112,14 +125,11 @@ void main() {
           customColor: Colors.red,
         ),
       ));
-      final button = tester.widget<OutlinedButton>(
-        find.byType(OutlinedButton),
-      );
-      expect(button.onPressed, isNotNull);
       expect(find.text('Custom'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
 
-    //Building a text button with custom colour and checking if correct colour is applied
+    //Building a text button with custom colour and checking it builds fine
     testWidgets('text uses custom colour when provided', (tester) async {
       await tester.pumpWidget(buildButton(
         AppButton.text(
@@ -131,7 +141,7 @@ void main() {
       expect(find.text('Custom'), findsOneWidget);
     });
 
-    //Building a primary button with isRounded true and checking it builds without error
+    //Building a rounded full width button and checking it builds without error
     testWidgets('renders rounded correctly', (tester) async {
       await tester.pumpWidget(buildButton(
         AppButton.primary(

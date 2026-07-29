@@ -9,15 +9,30 @@
   </head>
 
   <body>
-    <header class="site-header"><nav class="nav-shell" aria-label="Design specification navigation"><a class="brand-mark" href="index.html"><img class="nav-logo" src="assets/logos/logo-mark.png" alt="" aria-hidden="true"><span>Mealchemy</span></a><div class="nav-links"><a href="colours.html">Colours</a><a href="typography.html">Type</a><a href="logo.html">Logo</a><a href="principles.html">Design Principles</a><a href="components.html">Components</a><a href="spacing.html">Spacing</a><a href="accessibility.html">Accessibility</a><a href="wireframes.html">Wireframes</a></div></nav></header>
+    <header class="site-header"><nav class="nav-shell" aria-label="Design specification navigation"><a class="brand-mark" href="index.html"><img class="nav-logo" src="assets/logos/logo-mark.png" alt="" aria-hidden="true"><span>Mealchemy</span></a><div class="nav-links"><a href="colours.html">Colours</a><a href="typography.html">Type</a><a href="logo.html">Logo</a><a href="principles.html">Design Principles</a><a href="components.html">Components</a><a href="spacing.html">Spacing</a><a href="accessibility.html">Accessibility</a><a href="wireframes.html">Wireframes</a><a href="change-log.html">Changelog</a></div></nav></header>
     <main class="page">
       <section class="section reveal">
         <div class="section-heading">
           <div>
             <p class="section-kicker">01 Colour Palette</p>
-            <h1>Defined brand colours and contrast examples.</h1>
+            <h1>Core app palette and support tokens.</h1>
           </div>
-          <p class="section-lede">Mealchemy uses deep maroon brand colours, warm cream surfaces, and gold as the main accent colour.</p>
+          <p class="section-lede">The main palette is small: maroon, gold, cream, near-black, muted grey, and semantic status colours. Support colours cover gradients, borders, dark mode, and selected states.</p>
+        </div>
+
+        <div class="usage-audit">
+          <article>
+            <strong>Core UI colours</strong>
+            <p>Primary maroon, gold, cream surfaces, near-black text, muted grey, divider, and status colours are used across normal app screens.</p>
+          </article>
+          <article>
+            <strong>Support tokens</strong>
+            <p>Primary Light, Soft Gold, Muted Rose, Background Cream, Input Border, dark surfaces, overlays, and gradient endpoints support specific components or states.</p>
+          </article>
+          <article>
+            <strong>Included details</strong>
+            <p>The guide includes HEX, RGB, HSL, intended usage, and WCAG contrast pairings used by the UI.</p>
+          </article>
         </div>
 
         <div class="palette-grid simple-palette">
@@ -26,6 +41,7 @@
             <strong>Burgundy</strong>
             <code>HEX #5C0018</code>
             <small>RGB 92, 0, 24</small>
+            <small>HSL 344deg 100% 18%</small>
             <p class="swatch-use">Used for primary actions, brand blocks, and the start of the main gradient.</p>
 
           </article>
@@ -35,15 +51,17 @@
             <strong>Primary Dark</strong>
             <code>HEX #570013</code>
             <small>RGB 87, 0, 19</small>
+            <small>HSL 347deg 100% 17%</small>
             <p class="swatch-use">Used for dark headers, logo backgrounds, and high-contrast text pairings.</p>
 
           </article>
 
-          <article class="swatch" style="background:#70172a">
+          <article class="swatch support-token" style="background:#70172a">
             <span class="swatch-role">Primary Light</span>
             <strong>Primary Light</strong>
             <code>HEX #70172A</code>
             <small>RGB 112, 23, 42</small>
+            <small>HSL 347deg 66% 26%</small>
             <p class="swatch-use">Used for subtle maroon variation, hover states, and secondary brand surfaces.</p>
 
           </article>
@@ -53,6 +71,7 @@
             <strong>Rose Maroon</strong>
             <code>HEX #A8003A</code>
             <small>RGB 168, 0, 58</small>
+            <small>HSL 339deg 100% 33%</small>
             <p class="swatch-use">Used only as the brighter end of the brand gradient for energy and depth.</p>
           </article>
 
@@ -61,24 +80,36 @@
             <strong>Gold</strong>
             <code>HEX #D4AF37</code>
             <small>RGB 212, 175, 55</small>
+            <small>HSL 46deg 65% 52%</small>
             <p class="swatch-use">Used for highlights, selected states, logo details, and premium emphasis.</p>
             
           </article>
 
-          <article class="swatch light-text" style="background:#755b00">
+          <article class="swatch support-token light-text" style="background:#755b00">
             <span class="swatch-role">Accent Muted</span>
             <strong>Deep Gold</strong>
             <code>HEX #755B00</code>
             <small>RGB 117, 91, 0</small>
+            <small>HSL 47deg 100% 23%</small>
             <p class="swatch-use">Used where gold needs to feel quieter, such as subtle labels or muted accents.</p>
 
           </article>
 
-          <article class="swatch light-text" style="background:#7a5c5c">
+          <article class="swatch support-token light-text" style="background:#c9a84c">
+            <span class="swatch-role">Accent Soft</span>
+            <strong>Soft Gold</strong>
+            <code>HEX #C9A84C</code>
+            <small>RGB 201, 168, 76</small>
+            <small>HSL 44deg 54% 54%</small>
+            <p class="swatch-use">Used for softer highlight moments where full gold feels too strong.</p>
+          </article>
+
+          <article class="swatch support-token light-text" style="background:#7a5c5c">
             <span class="swatch-role">Tertiary Muted</span>
             <strong>Muted Rose</strong>
             <code>HEX #7A5C5C</code>
             <small>RGB 122, 92, 92</small>
+            <small>HSL 0deg 14% 42%</small>
             <p class="swatch-use">Used for tertiary supporting details that should not compete with primary actions.</p>
 
           </article>
@@ -88,15 +119,35 @@
             <strong>Background Light</strong>
             <code>HEX #FEF9F1</code>
             <small>RGB 254, 249, 241</small>
-            <p class="swatch-use">Used as the default light-mode page background and large calm canvas.</p>
+            <small>HSL 37deg 87% 97%</small>
+            <p class="swatch-use">Used as the default light-mode page background.</p>
           </article>
           <article class="swatch light-text" style="background:#f8f3eb">
-            <span class="swatch-role">Accent Light / Surface Light</span>
+            <span class="swatch-role">Surface Light / Muted</span>
             <strong>Warm Surface</strong>
             <code>HEX #F8F3EB</code>
             <small>RGB 248, 243, 235</small>
+            <small>HSL 37deg 48% 95%</small>
             <p class="swatch-use">Used for cards, inputs, panels, and light surfaces sitting above the page.</p>
 
+          </article>
+
+          <article class="swatch support-token light-text" style="background:#f2ede5">
+            <span class="swatch-role">Background Cream</span>
+            <strong>Soft Cream</strong>
+            <code>HEX #F2EDE5</code>
+            <small>RGB 242, 237, 229</small>
+            <small>HSL 37deg 33% 92%</small>
+            <p class="swatch-use">Used for secondary warm backgrounds and page bands.</p>
+          </article>
+
+          <article class="swatch support-token light-text" style="background:#e0bfbf">
+            <span class="swatch-role">Input Border</span>
+            <strong>Soft Rose Border</strong>
+            <code>HEX #E0BFBF</code>
+            <small>RGB 224, 191, 191</small>
+            <small>HSL 0deg 35% 81%</small>
+            <p class="swatch-use">Default outline for standard text fields before focus or error.</p>
           </article>
 
           <article class="swatch light-text" style="background:#6b7280">
@@ -104,33 +155,27 @@
             <strong>Muted Grey</strong>
             <code>HEX #6B7280</code>
             <small>RGB 107, 114, 128</small>
+            <small>HSL 220deg 9% 46%</small>
             <p class="swatch-use">Used for helper text, timestamps, captions, and non-critical metadata.</p>
 
           </article>
 
-          <article class="swatch light-text" style="background:#f8f0e3">
-            <span class="swatch-role">Warm Gradient End</span>
-            <strong>Warm Cream</strong>
-            <code>HEX #F8F0E3</code>
-            <small>RGB 248, 240, 227</small>
-            <p class="swatch-use">Used as the second colour in the warm background gradient.</p>
-
-          </article>
-
-          <article class="swatch" style="background:#1d1c17">
+          <article class="swatch support-token" style="background:#1d1c17">
             <span class="swatch-role">Background Dark</span>
             <strong>Dark Background</strong>
             <code>HEX #1D1C17</code>
             <small>RGB 29, 28, 23</small>
+            <small>HSL 50deg 12% 10%</small>
             <p class="swatch-use">Used for dark mode page backgrounds and the footer surface.</p>
 
           </article>
 
-          <article class="swatch" style="background:#1a1a1a">
+          <article class="swatch support-token" style="background:#1a1a1a">
             <span class="swatch-role">Surface Dark</span>
             <strong>Dark Surface</strong>
             <code>HEX #1A1A1A</code>
             <small>RGB 26, 26, 26</small>
+            <small>HSL 0deg 0% 10%</small>
             <p class="swatch-use">Used for dark mode cards, inputs, and grouped content surfaces.</p>
             
           </article>
@@ -140,7 +185,17 @@
             <strong>White</strong>
             <code>HEX #FFFFFF</code>
             <small>RGB 255, 255, 255</small>
+            <small>HSL 0deg 0% 100%</small>
             <p class="swatch-use">Used when pure white is needed for text or clean high-contrast surfaces.</p>
+          </article>
+
+          <article class="swatch" style="background:#0e0d0b">
+            <span class="swatch-role">Text Light</span>
+            <strong>Near Black</strong>
+            <code>HEX #0E0D0B</code>
+            <small>RGB 14, 13, 11</small>
+            <small>HSL 40deg 12% 5%</small>
+            <p class="swatch-use">Primary readable text on light surfaces.</p>
           </article>
 
         </div>
@@ -156,11 +211,13 @@
         </div>
         <table class="token-table">
           <tr><th>Foreground</th><th>Background</th><th>Contrast ratio</th><th>Use</th><th>Status</th></tr>
-          <tr><td>White #FFFFFF</td><td>Primary Dark #570013</td><td>13.2:1</td><td>Text on dark buttons and headers</td><td><span class="badge pass">Pass AA + AAA</span></td></tr>
-          <tr><td>Primary Dark #570013</td><td>Background Light #FEF9F1</td><td>12.8:1</td><td>Headings and body text</td><td><span class="badge pass">Pass AA + AAA</span></td></tr>
-          <tr><td>Text Light #1D1C17</td><td>Background Light #FEF9F1</td><td>19.1:1</td><td>Primary readable text</td><td><span class="badge pass">Pass AA + AAA</span></td></tr>
-          <tr><td>Gold #D4AF37</td><td>Primary #5C0018</td><td>5.8:1</td><td>Logo and highlights on dark</td><td><span class="badge pass">Pass AA</span></td></tr>
+          <tr><td>White #FFFFFF</td><td>Primary Dark #570013</td><td>14.84:1</td><td>Text on dark buttons and headers</td><td><span class="badge pass">Pass AA + AAA</span></td></tr>
+          <tr><td>Primary Dark #570013</td><td>Background Light #FEF9F1</td><td>14.16:1</td><td>Headings and body text</td><td><span class="badge pass">Pass AA + AAA</span></td></tr>
+          <tr><td>Text Light #0E0D0B</td><td>Background Light #FEF9F1</td><td>18.53:1</td><td>Primary readable text</td><td><span class="badge pass">Pass AA + AAA</span></td></tr>
+          <tr><td>Gold #D4AF37</td><td>Primary #5C0018</td><td>6.8:1</td><td>Logo and highlights on dark</td><td><span class="badge pass">Pass AA</span></td></tr>
           <tr><td>Muted Grey #6B7280</td><td>Background Light #FEF9F1</td><td>4.6:1</td><td>Non-critical metadata only</td><td><span class="badge warn">Large text only</span></td></tr>
+          <tr><td>Error #DC2626</td><td>Background Light #FEF9F1</td><td>4.61:1</td><td>Error text and validation messages</td><td><span class="badge pass">Pass AA</span></td></tr>
+          <tr><td>Primary #5C0018</td><td>Input Border #E0BFBF</td><td>8.43:1</td><td>Focused field border and input emphasis</td><td><span class="badge pass">Pass AA + AAA</span></td></tr>
         </table>
 
         <div class="contrast-example-intro">
@@ -171,25 +228,25 @@
         <div class="contrast-example-grid" aria-label="Visual contrast examples matching the contrast table">
           <article class="contrast-example contrast-dark" style="background:#570013;color:#ffffff">
             <span class="contrast-number">1</span>
-            <strong>13.2:1</strong>
+            <strong>14.84:1</strong>
             <p>White on Primary Dark</p>
 
           </article>
           <article class="contrast-example contrast-light" style="background:#fef9f1;color:#570013">
             <span class="contrast-number">2</span>
-            <strong>12.8:1</strong>
+            <strong>14.16:1</strong>
             <p>Primary Dark on Background Light</p>
 
           </article>
-          <article class="contrast-example contrast-light" style="background:#fef9f1;color:#1d1c17">
+          <article class="contrast-example contrast-light" style="background:#fef9f1;color:#0e0d0b">
             <span class="contrast-number muted-number">3</span>
-            <strong>19.1:1</strong>
+            <strong>18.53:1</strong>
             <p>Text Light on Background Light</p>
 
           </article>
           <article class="contrast-example contrast-dark" style="background:#5c0018;color:#d4af37">
             <span class="contrast-number gold-number">4</span>
-            <strong>5.8:1</strong>
+            <strong>6.8:1</strong>
             <p>Gold on Primary</p>
 
           </article>
@@ -210,10 +267,49 @@
           <p class="section-lede">Semantic colours should support messages and icons; they should not be the only way information is communicated.</p>
         </div>
         <div class="palette-grid semantic-palette">
-          <article class="swatch light-text" style="background:#4caf50"><span class="swatch-role">Success</span><strong>Green</strong><code>HEX #4CAF50</code><small>RGB 76, 175, 80</small></article>
-          <article class="swatch" style="background:#dc2626"><span class="swatch-role">Error</span><strong>Red</strong><code>HEX #DC2626</code><small>RGB 220, 38, 38</small></article>
-          <article class="swatch light-text" style="background:#f97316"><span class="swatch-role">Warning</span><strong>Orange</strong><code>HEX #F97316</code><small>RGB 249, 115, 22</small></article>
-          <article class="swatch light-text" style="background:#e5e2e1"><span class="swatch-role">Divider</span><strong>Soft Line</strong><code>HEX #E5E2E1</code><small>RGB 229, 226, 225</small></article>
+          <article class="swatch light-text" style="background:#4caf50"><span class="swatch-role">Success</span><strong>Green</strong><code>HEX #4CAF50</code><small>RGB 76, 175, 80</small><small>HSL 122deg 39% 49%</small></article>
+          <article class="swatch" style="background:#dc2626"><span class="swatch-role">Error</span><strong>Red</strong><code>HEX #DC2626</code><small>RGB 220, 38, 38</small><small>HSL 0deg 72% 51%</small></article>
+          <article class="swatch light-text" style="background:#f97316"><span class="swatch-role">Warning</span><strong>Orange</strong><code>HEX #F97316</code><small>RGB 249, 115, 22</small><small>HSL 25deg 95% 53%</small></article>
+          <article class="swatch light-text" style="background:#e5e2e1"><span class="swatch-role">Divider</span><strong>Soft Line</strong><code>HEX #E5E2E1</code><small>RGB 229, 226, 225</small><small>HSL 15deg 7% 89%</small></article>
+        </div>
+      </section>
+
+      <section class="section reveal">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Gradients</p>
+            <h2>Brand gradients</h2>
+          </div>
+          <p class="section-lede">Gradients are used for brand surfaces, primary buttons, and image overlays.</p>
+        </div>
+        <div class="gradient-grid">
+          <article class="gradient-card">
+            <div class="gradient-preview brand-gradient-preview">
+              <span class="gradient-button-demo">Save recipe</span>
+            </div>
+            <h3>brand</h3>
+            <p><code>#5C0018</code> to <code>#A8003A</code>, left to right.</p>
+            <small>Used for primary buttons, smart suggestion cards, selected filters, and brand panels.</small>
+          </article>
+          <article class="gradient-card">
+            <div class="gradient-preview overlay-gradient-preview">
+              <div class="overlay-demo-copy">
+                <strong>Welcome back</strong>
+                <span>Find something pantry-friendly tonight.</span>
+              </div>
+            </div>
+            <h3>brandOverlay</h3>
+            <p><code>#5C0018</code> at 85% opacity to <code>#A8003A</code> at 85% opacity.</p>
+            <small>Used over photography and splash imagery when text still needs strong contrast.</small>
+          </article>
+          <article class="gradient-card">
+            <div class="gradient-preview warm-gradient-preview">
+              <div class="warm-demo-card"><strong>Recipe detail</strong><span>Ingredients, steps, and notes.</span></div>
+            </div>
+            <h3>warmBg</h3>
+            <p><code>#FEF9F1</code> to <code>#1D1C17</code>, top to bottom.</p>
+            <small>Used as a warm atmospheric background when a screen needs depth.</small>
+          </article>
         </div>
       </section>
     </main>

@@ -1,65 +1,69 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mealchemy/core/theme/app_theme.dart';
+import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/vault/models/vault.dart';
 import 'package:mealchemy/features/vault/models/vault_folder.dart';
-import 'package:mealchemy/features/vault/models/vault_folder_recipe.dart';
-import 'package:mealchemy/features/vault/screens/vault_screen.dart';
 import 'package:mealchemy/features/vault/providers/vault_provider.dart';
-import 'package:mealchemy/features/vault/repositories/mock_vault_repository.dart';
-import 'package:mealchemy/features/vault/widgets/vault_stats_card.dart';
+import 'package:mealchemy/features/vault/screens/vault_screen.dart';
 import 'package:mealchemy/features/vault/widgets/vault_folder_list.dart';
-import 'package:mealchemy/features/vault/widgets/vault_quick_strip.dart';
 
 void main() {
-  Widget buildWidget() {
+  setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
+
+  final vault = Vault(
+    vaultId: 1,
+    ownerId: 1,
+    vaultType: VaultTypes.private,
+    name: 'My Vault',
+    createdAt: DateTime(2026, 1, 1),
+  );
+
+  final folders = [
+    VaultFolder(
+      folderId: 1,
+      vaultId: 1,
+      folderName: 'Breakfast',
+      createdAt: DateTime(2026, 1, 1),
+    ),
+    VaultFolder(
+      folderId: 2,
+      vaultId: 1,
+      folderName: 'Dinner',
+      createdAt: DateTime(2026, 1, 2),
+    ),
+  ];
+
+  Widget buildWidget({
+    Future<List<Vault>>? vaultsFuture,
+    bool sharedMode = false,
+    Vault? selected,
+  }) {
     return ProviderScope(
       overrides: [
-        vaultRepositoryProvider.overrideWithValue(MockVaultRepository()),
-        vaultsProvider.overrideWith((ref) async => [
-          Vault(
-            vaultId: 1,
-            ownerId: 1,
-            vaultType: 'PRIVATE',
-            name: 'My Vault',
-            createdAt: DateTime(2026, 1, 1),
-          ),
-        ]),
-        vaultFoldersProvider.overrideWith((ref, vaultId) async => [
-          VaultFolder(folderId: 1, vaultId: 1, folderName: 'Breakfast', createdAt: DateTime(2026, 1, 1)),
-          VaultFolder(folderId: 2, vaultId: 1, folderName: 'Dinner', createdAt: DateTime(2026, 1, 2)),
-        ]),
-        folderRecipesProvider.overrideWith(
-          (ref, folderId) async => <VaultFolderRecipe>[],
-        ),
+        vaultsProvider
+            .overrideWith((ref) => vaultsFuture ?? Future.value([vault])),
+        selectedVaultProvider.overrideWithValue(selected ?? vault),
+        isSharedModeProvider.overrideWith((ref) => sharedMode),
+       vaultFoldersProvider.overrideWith((ref, vaultId) async => folders),
+folderRecipeDisplayProvider.overrideWith((ref, folderId) async => <Recipe>[]),
       ],
       child: MaterialApp.router(
         theme: AppTheme.light,
         routerConfig: GoRouter(
           initialLocation: '/',
           routes: [
+            GoRoute(path: '/', builder: (_, __) => const VaultScreen()),
             GoRoute(
-              path: '/',
-              builder: (context, state) => const VaultScreen(),
-            ),
-            GoRoute(
-              path: '/login',
-              builder: (context, state) => const Scaffold(body: Text('Login')),
-            ),
-            GoRoute(
-              path: '/pantry',
-              builder: (context, state) => const Scaffold(body: Text('Pantry')),
+              path: '/add-recipe',
+              builder: (_, __) => const Scaffold(body: Text('Add Recipe')),
             ),
             GoRoute(
               path: '/dashboard',
-              builder: (context, state) => const Scaffold(body: Text('Dashboard')),
-            ),
-            GoRoute(
-              path: '/recipe/add',
-              builder: (context, state) => const Scaffold(body: Text('Add Recipe')),
+              builder: (_, __) => const Scaffold(body: Text('Dashboard')),
             ),
           ],
         ),
@@ -68,73 +72,52 @@ void main() {
   }
 
   group('VaultScreen', () {
-    //Building vault screen and checking it renders without crashing
     testWidgets('renders without error', (tester) async {
       await tester.pumpWidget(buildWidget());
       await tester.pumpAndSettle();
       expect(find.byType(VaultScreen), findsOneWidget);
     });
 
-    //Building vault screen and checking MY VAULT label appears
-    testWidgets('renders MY VAULT label', (tester) async {
-      await tester.pumpWidget(buildWidget());
-      await tester.pumpAndSettle();
-      expect(find.text('MY VAULT'), findsOneWidget);
-    });
-
-    //Building vault screen and checking FAB appears
-    testWidgets('renders floating action button', (tester) async {
-      await tester.pumpWidget(buildWidget());
-      await tester.pumpAndSettle();
-      expect(find.byType(FloatingActionButton), findsOneWidget);
-    });
-
-    //Building vault screen and checking Vault title appears
-    testWidgets('renders Vault title', (tester) async {
+    testWidgets('renders the Vault hero title', (tester) async {
       await tester.pumpWidget(buildWidget());
       await tester.pumpAndSettle();
       expect(find.text('Vault'), findsOneWidget);
     });
 
-    //Building vault screen and checking stats card appears
-    testWidgets('renders stats card', (tester) async {
+    testWidgets('renders the folder list with the vault name label',
+        (tester) async {
       await tester.pumpWidget(buildWidget());
       await tester.pumpAndSettle();
-      expect(find.byType(VaultStatsCard), findsOneWidget);
-    });
 
-    //Building vault screen and checking folder list appears
-    testWidgets('renders folder list', (tester) async {
-      await tester.pumpWidget(buildWidget());
-      await tester.pumpAndSettle();
       expect(find.byType(VaultFolderList), findsOneWidget);
+      expect(find.text('MY VAULT'), findsOneWidget); // vault.name.toUpperCase()
+      expect(find.text('Breakfast'), findsOneWidget);
+      expect(find.text('Dinner'), findsOneWidget);
     });
 
-    //Building vault screen and checking quick strip appears
-    testWidgets('renders quick strip', (tester) async {
+    testWidgets('renders the add floating action button', (tester) async {
       await tester.pumpWidget(buildWidget());
       await tester.pumpAndSettle();
-      expect(find.byType(VaultQuickStrip), findsOneWidget);
+      expect(find.byType(FloatingActionButton), findsOneWidget);
+      expect(find.byIcon(Icons.add), findsWidgets);
     });
 
-    //Tapping floating action button navigates to add recipe screen
-    testWidgets('tapping FAB navigates to add recipe', (tester) async {
+    testWidgets('tapping the FAB navigates to add recipe', (tester) async {
       await tester.pumpWidget(buildWidget());
       await tester.pumpAndSettle();
-      GoRouter.of(tester.element(find.byType(VaultScreen))).push('/recipe/add');
+
+      await tester.tap(find.byType(FloatingActionButton));
       await tester.pumpAndSettle();
+
       expect(find.text('Add Recipe'), findsOneWidget);
     });
 
-    // Tapping logout button navigates back to login screen.
-    testWidgets('tapping logout navigates to login', (tester) async {
-      await tester.pumpWidget(buildWidget());
+    testWidgets('shows an error state when no vault is found', (tester) async {
+      await tester.pumpWidget(buildWidget(vaultsFuture: Future.value([])));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byTooltip('Log out'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Login'), findsOneWidget);
+      expect(find.text('Unable to load vault.'), findsOneWidget);
+      expect(find.textContaining('No vault found.'), findsOneWidget);
     });
   });
 }

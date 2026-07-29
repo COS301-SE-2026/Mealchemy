@@ -2,24 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mealchemy/core/theme/app_theme.dart';
-import 'package:mealchemy/features/vault/widgets/vault_folder_card.dart';
+import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/vault/models/vault_folder.dart';
 import 'package:mealchemy/features/vault/providers/vault_provider.dart';
-import 'package:mealchemy/features/vault/repositories/mock_vault_repository.dart';
+import 'package:mealchemy/features/vault/widgets/vault_folder_card.dart';
 
 void main() {
-  final mockFolder = VaultFolder(
+  setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
+
+  final folder = VaultFolder(
     folderId: 1,
     vaultId: 1,
     folderName: 'Breakfast',
     createdAt: DateTime(2026, 1, 1),
   );
 
-  Widget buildWidget() {
+  const recipes = [
+    Recipe(recipeId: 7, title: 'Pancakes', cuisineType: 'american'),
+    Recipe(recipeId: 8, title: 'Omelette'),
+  ];
+
+  Widget host({List<Recipe> folderRecipes = recipes}) {
     return ProviderScope(
       overrides: [
-        vaultRepositoryProvider.overrideWithValue(MockVaultRepository()),
+        folderRecipeDisplayProvider(1).overrideWith((ref) async => folderRecipes),
       ],
       child: MaterialApp.router(
         theme: AppTheme.light,
@@ -28,17 +36,12 @@ void main() {
           routes: [
             GoRoute(
               path: '/',
-              builder: (context, state) => Scaffold(
-                body: VaultFolderCard(folder: mockFolder),
-              ),
-            ),
-            GoRoute(
-              path: '/login',
-              builder: (context, state) => const Scaffold(body: Text('Login')),
+              builder: (_, __) => Scaffold(body: VaultFolderCard(folder: folder)),
             ),
             GoRoute(
               path: '/recipe/:id',
-              builder: (context, state) => const Scaffold(body: Text('Recipe Detail')),
+              builder: (_, __) =>
+                  const Scaffold(body: Text('Recipe Detail')),
             ),
           ],
         ),
@@ -47,41 +50,59 @@ void main() {
   }
 
   group('VaultFolderCard', () {
-    // Testing rendering
-    //folder name rendering
-    testWidgets('renders folder name', (tester) async {
-      await tester.pumpWidget(buildWidget());
-      await tester.pump(const Duration(milliseconds: 500));
-      expect(find.text('Breakfast'), findsOneWidget);
-    });
+    testWidgets('renders the folder name and closed folder icon',
+        (tester) async {
+      await tester.pumpWidget(host());
+      await tester.pumpAndSettle();
 
-    //folder icon rendering
-    testWidgets('renders folder icon', (tester) async {
-      await tester.pumpWidget(buildWidget());
-      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('Breakfast'), findsOneWidget);
       expect(find.byIcon(Icons.folder_rounded), findsOneWidget);
     });
 
-    //Testing folder expansion
-    //tapping to expand
-    testWidgets('expands when tapped', (tester) async {
-      await tester.pumpWidget(buildWidget());
-      await tester.pump(const Duration(milliseconds: 500));
-      await tester.tap(find.byType(InkWell).first);
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(find.byIcon(Icons.folder_open_rounded), findsOneWidget);
+    testWidgets('shows the recipe count in the metadata line', (tester) async {
+      await tester.pumpWidget(host());
+      await tester.pumpAndSettle();
+
+      // "2 recipes  |  Created 1 Jan 2026"
+      expect(find.textContaining('2 recipes'), findsOneWidget);
     });
 
-    //Tapping a recipe row inside an expanded folder navigates to recipe detail
-    testWidgets('tapping a recipe row navigates to recipe detail', (tester) async {
-      await tester.pumpWidget(buildWidget());
+    testWidgets('expands when tapped, swapping to the open folder icon',
+        (tester) async {
+      await tester.pumpWidget(host());
       await tester.pumpAndSettle();
-      // expand the folder first
-      await tester.tap(find.byType(InkWell).first);
+
+      await tester.tap(find.byIcon(Icons.folder_rounded));
       await tester.pumpAndSettle();
-      // tap the first recipe row (index 1, index 0 is the folder header)
-      await tester.tap(find.byType(InkWell).at(1));
+
+      expect(find.byIcon(Icons.folder_open_rounded), findsOneWidget);
+      // Recipe rows are now visible.
+      expect(find.text('Pancakes'), findsOneWidget);
+      expect(find.text('Omelette'), findsOneWidget);
+    });
+
+    testWidgets('shows the empty state when the folder has no recipes',
+        (tester) async {
+      await tester.pumpWidget(host(folderRecipes: const []));
       await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.folder_rounded));
+      await tester.pumpAndSettle();
+
+      expect(find.text('No recipes in this folder yet.'), findsOneWidget);
+    });
+
+    testWidgets('tapping a recipe row navigates to recipe detail',
+        (tester) async {
+      await tester.pumpWidget(host());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.folder_rounded));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Pancakes'));
+      await tester.pumpAndSettle();
+
       expect(find.text('Recipe Detail'), findsOneWidget);
     });
   });

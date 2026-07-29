@@ -45,22 +45,62 @@
 
 ---
 
-## Documentation (SRS)
+## Documentation
 
-| Section | Link |
-|---|---|
-| Introduction | [Introduction](https://github.com/COS301-SE-2026/Mealchemy/wiki/Introduction) |
-| User Stories and User Characteristics | [User Stories](https://github.com/COS301-SE-2026/Mealchemy/wiki/User-Stories-User-Characteristics) |
-| Functional Requirements | [Functional Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Functional-Requirements) |
-| API Service Contract | [API Service Contracts](https://github.com/COS301-SE-2026/Mealchemy/wiki/API-Service-Contract) |
-| Domain Model | [Domain Model](https://github.com/COS301-SE-2026/Mealchemy/wiki/Domain-model) |
-| Quality Requirements | [Quality Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Quality-Requirements) |
-| Architectural Patterns | [Architectural Patterns](https://github.com/COS301-SE-2026/Mealchemy/wiki/Architectural-Patterns) |
-| Design Patterns  | [Design Patterns](https://github.com/COS301-SE-2026/Mealchemy/wiki/Design-Patterns) |
-| Architectural Constraints | [Architectural Constraints](https://github.com/COS301-SE-2026/Mealchemy/wiki/Architectural-Constraints) |
-| Architectural Diagram | [Architectural Diagram](https://github.com/COS301-SE-2026/Mealchemy/wiki/Architectural-Diagram) |
-| Technology Requirements | [Technology Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Technology-Requirements) |
-| Use Cases | [Use Cases](https://github.com/COS301-SE-2026/Mealchemy/wiki/Use-Cases) |
+<details>
+  <summary>Demo 2 - Click to expand</summary>
+
+### Software Requirements Specifications (SRS)
+
+| Page | Description |
+|------|-------------|
+| [Introduction](https://github.com/COS301-SE-2026/Mealchemy/wiki/SRS-Introduction-Demo-2) | Project background, motivation, and scope |
+| [User Stories](https://github.com/COS301-SE-2026/Mealchemy/wiki/User-Stories-and-Characteristics-Demo-2) | Intended users and how they interact with the system |
+| [Use Cases](https://github.com/COS301-SE-2026/Mealchemy/wiki/Use-Cases-Demo-2) | High-level use case diagrams and descriptions |
+| [Functional Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Functional-Requirements-Demo-2) | Feature breakdown by subsystem |
+| [Non-Functional Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Non‐Functional-Requirements-Demo-2) | Feature breakdown by subsystem |
+| [Domain Model](https://github.com/COS301-SE-2026/Mealchemy/wiki/Domain-Model-Demo-2) | UML class diagram |
+
+### Software Architecture Specifications (SAS)
+
+| Page | Description |
+|------|-------------|
+| [Introduction](https://github.com/COS301-SE-2026/Mealchemy/wiki/SAS-Introduction-Demo-2) | Project background, motivation, and scope |
+| [Architectural Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Architectural-Requirements-Demo-2) | Intended users and how they interact with the system |
+| [Technology Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Technology-Requirements-Demo-2) | Technology Requirements |
+| [API Service Contracts](https://github.com/COS301-SE-2026/Mealchemy/wiki/API-Service-Contracts-Demo-2) | API Contracts |
+| [Deployment](https://github.com/COS301-SE-2026/Mealchemy/wiki/Deployment-Demo-2) | Deployment |
+
+### Other Documents
+
+| Page | Description |
+|------|-------------|
+| [Coding Standards Document](https://github.com/COS301-SE-2026/Mealchemy/wiki/Coding-Standards-Document-Demo-2) | Code style conventions and repository structure guidelines |
+| [User Manual](https://github.com/COS301-SE-2026/Mealchemy/wiki/User-Manual-Document-Demo-2) | How to use the app - screenshots and feature walkthroughs |
+| [Testing Policy Document](https://github.com/COS301-SE-2026/Mealchemy/wiki/Testing-Policy-Document-Demo-2) | Testing standards, types, tools, and responsibilities |
+| [Changelog](https://github.com/COS301-SE-2026/Mealchemy/wiki/Changelog-Demo-2) | Version history and what changed each demo |
+
+</details>
+
+<details>
+ <summary>Demo 1 - Click to expand</summary>
+
+| Page | Description |
+|------|-------------|
+| [Introduction](https://github.com/COS301-SE-2026/Mealchemy/wiki/Introduction-Demo-1) | Project background, motivation, and scope |
+| [User Stories](https://github.com/COS301-SE-2026/Mealchemy/wiki/User-Stories-User-Characteristics-Demo-1) | Intended users and how they interact with the system |
+| [Use Cases](https://github.com/COS301-SE-2026/Mealchemy/wiki/Uses-Cases-Demo-1) | High-level use case diagrams and descriptions |
+| [Functional Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Functional-Requirements-Demo-1) | Feature breakdown by subsystem |
+| [API Service Contracts](https://github.com/COS301-SE-2026/Mealchemy/wiki/API-Service-Contracts-Demo-1) | API Contracts |
+| [Domain Model](https://github.com/COS301-SE-2026/Mealchemy/wiki/Domain-model-Demo-1) | UML class diagram |
+| [Quality Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Quality-Requirements-Demo-1) | Performance, security, scalability targets |
+| [Architectural Patterns](https://github.com/COS301-SE-2026/Mealchemy/wiki/Architectural-Patterns-Demo-1) | Design and architectural pattern decisions |
+| [Design Patterns](https://github.com/COS301-SE-2026/Mealchemy/wiki/Design-Patterns-Demo-1) | Design and architectural pattern decisions |
+| [Architectural Constraints](https://github.com/COS301-SE-2026/Mealchemy/wiki/Architectural-Constraints-Demo-1) | Architectural Constraints |
+| [Architectural Diagram](https://github.com/COS301-SE-2026/Mealchemy/wiki/Architectural-Diagram-Demo-1) | System architecture and component overview |
+| [Technology Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Technology-Requirements-Demo-1) | Technology Requirements |
+
+</details>
 
 ---
 

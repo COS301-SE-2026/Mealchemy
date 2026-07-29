@@ -115,14 +115,18 @@ jobs:
 
     
 
+      - name: Install firebase-tools
+        run: npm install --no-audit --no-fund --ignore-scripts -g firebase-tools@15.22.4
+
       - name: Distribute via Firebase App Distribution
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_APP_DISTRIBUTION_TOKEN }}
+          COMMIT_SHA: ${{ github.sha }}
         run: |
           firebase appdistribution:distribute \
             build/app/outputs/flutter-apk/app-release.apk \
             --app 1:480345342713:android:490cec1011395be746d828 \
             --groups testers \
-            --release-notes "Build ${{ github.sha }}" \
+            --release-notes "Build $COMMIT_SHA" \
             --token "$FIREBASE_TOKEN" \
             --project mealchemy-app-distribution

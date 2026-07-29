@@ -3,16 +3,16 @@ import 'package:mealchemy/features/recipe/models/recipe.dart';
 
 void main() {
   group('Recipe.fromJson', () {
-    test('parses a full payload with snake_case keys', () {
+    test('parses a full payload with camelCase keys', () {
       final json = <String, dynamic>{
-        'recipe_id': 1,
+        'recipeId': 1,
         'title': 'Saffron-Infused Risotto',
         'description': 'A rich Italian classic',
-        'cuisine_type': 'italian',
-        'prep_time_mins': 15,
-        'cooking_time_mins': 30,
-        'serving_size': 4,
-        'photo_url': 'https://example.com/risotto.jpg',
+        'cuisineType': 'italian',
+        'prepTimeMins': 15,
+        'cookingTimeMins': 30,
+        'servingSize': 4,
+        'photoUrl': 'https://example.com/risotto.jpg',
       };
 
       final recipe = Recipe.fromJson(json);
@@ -29,7 +29,7 @@ void main() {
 
     test('parses a minimal payload with only required fields', () {
       final json = <String, dynamic>{
-        'recipe_id': 99,
+        'recipeId': 99,
         'title': 'Minimal Recipe',
       };
 
@@ -47,25 +47,51 @@ void main() {
       expect(recipe.steps, isNull);
     });
 
+    test('parses ownerId and isCommunityPublished', () {
+      final json = <String, dynamic>{
+        'recipeId': 1,
+        'title': 'Published Recipe',
+        'ownerId': 42,
+        'isCommunityPublished': true,
+      };
+
+      final recipe = Recipe.fromJson(json);
+
+      expect(recipe.ownerId, 42);
+      expect(recipe.isCommunityPublished, true);
+    });
+
+    test('defaults isCommunityPublished to false when absent', () {
+      final json = <String, dynamic>{
+        'recipeId': 2,
+        'title': 'Unpublished',
+      };
+
+      final recipe = Recipe.fromJson(json);
+
+      expect(recipe.isCommunityPublished, false);
+    });
+
+
     test('parses nested ingredients and steps from a detail response', () {
       final json = <String, dynamic>{
-        'recipe_id': 1,
+        'recipeId': 1,
         'title': 'With Children',
         'ingredients': [
           {
-            'ingredient_id': 10,
-            'recipe_id': 1,
-            'name_raw': 'Arborio rice',
+            'ingredientId': 10,
+            'recipeId': 1,
+            'ingId': 16,
             'quantity': 320,
             'unit': 'g',
-            'sort_order': 1,
+            'sortOrder': 1,
           },
         ],
         'steps': [
           {
-            'step_id': 100,
-            'recipe_id': 1,
-            'step_nr': 1,
+            'stepId': 100,
+            'recipeId': 1,
+            'stepNr': 1,
             'content': 'Warm the stock.',
           },
         ],
@@ -74,18 +100,17 @@ void main() {
       final recipe = Recipe.fromJson(json);
 
       expect(recipe.ingredients, hasLength(1));
-      expect(recipe.ingredients!.first.nameRaw, 'Arborio rice');
+      expect(recipe.ingredients!.first.ingId, 16);
       expect(recipe.steps, hasLength(1));
       expect(recipe.steps!.first.content, 'Warm the stock.');
     });
 
-    test('ignores extra JSON keys not on the lightweight contract', () {
+    test('ignores extra JSON  keys not on the contract', () {
       //backend may send richer payloads; the model should silently drop them
       final json = <String, dynamic>{
-        'recipe_id': 1,
+        'recipeId': 1,
         'title': 'Extras',
-        'owner_id': 42,
-        'chef_name': 'Some chef',
+        'chefName': 'Some chef',
         'rating': 4.8,
       };
 
@@ -104,6 +129,33 @@ void main() {
       expect(recipe.title, 'Tiny');
       expect(recipe.ingredients, isNull);
       expect(recipe.steps, isNull);
+      expect(recipe.isCommunityPublished, false);
+    });
+  });
+
+  group('Recipe.toCreateRequestJson', () {
+    test('emits the RecipeRequest metadata shape', () {
+      const recipe = Recipe(
+        recipeId: 0,
+        title: 'New Dish',
+        description: 'Tasty',
+        cuisineType: 'italian',
+        prepTimeMins: 10,
+        cookingTimeMins: 20,
+        servingSize: 4,
+        isCommunityPublished: true,
+      );
+
+      final json = recipe.toCreateRequestJson();
+
+      expect(json['title'], 'New Dish');
+      expect(json['cuisineType'], 'italian');
+      expect(json['prepTimeMins'], 10);
+      expect(json['cookingTimeMins'], 20);
+      expect(json['servingSize'], 4);
+      expect(json['isCommunityPublished'], true);
+      expect(json.containsKey('ingredients'), isFalse);
+      expect(json.containsKey('steps'), isFalse);
     });
   });
 }

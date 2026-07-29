@@ -3,56 +3,23 @@ package com.mealchemy.vault.dto;
 /* Import libraries */
 import java.time.OffsetDateTime;
 
-public class VaultFolderResponse {
-    
-    /* Variable declarations */
+/* Import classes */
+import com.mealchemy.vault.model.VaultFolder;
 
-    private int folderId;
-    private int vaultId;
-    private String folderName;
-    private OffsetDateTime createdAt;
-
-    /* Getters */
-
-    public int getFolderId()
+public record VaultFolderResponse(
+    Integer folderId,
+    Integer vaultId,
+    String folderName,
+    OffsetDateTime createdAt
+)
+{
+    public static VaultFolderResponse from (VaultFolder vaultFolder) 
     {
-        return folderId;
-    }
-
-    public int getVaultId()
-    {
-        return vaultId;
-    }
-
-    public String getFolderName()
-    {
-        return folderName;
-    }
-
-    public OffsetDateTime getCreatedAt()
-    {
-        return createdAt;
-    }
-
-    /* Setters */
-
-    public void setFolderId(int folderIdIn)
-    {
-        folderId = folderIdIn;
-    }
-
-    public void setVaultId(int vaultIdIn)
-    {
-        vaultId = vaultIdIn;
-    }
-
-    public void setFolderName(String folderNameIn)
-    {
-        folderName = folderNameIn;
-    }
-
-    public void setCreatedAt(OffsetDateTime createdAtIn)
-    {
-        createdAt = createdAtIn;
+        return new VaultFolderResponse(
+            vaultFolder.getFolderId(),
+            vaultFolder.getVault().getVaultId(),
+            vaultFolder.getFolderName(),
+            vaultFolder.getCreatedAt()
+        );
     }
 }

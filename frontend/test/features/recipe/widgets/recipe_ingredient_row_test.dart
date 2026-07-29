@@ -9,9 +9,7 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  Widget host(Widget child) {
-    return MaterialApp(home: Scaffold(body: child));
-  }
+  Widget host(Widget child) => MaterialApp(home: Scaffold(body: child));
 
   testWidgets('RecipeIngredientRow renders name, integer quantity and unit', (
     tester,
@@ -20,9 +18,8 @@ void main() {
       host(
         const RecipeIngredientRow(
           ingredient: RecipeIngredient(
-            ingredientId: 1,
-            recipeId: 1,
-            nameRaw: 'Arborio rice',
+            ingId: 1,
+            name: 'Arborio rice',
             quantity: 320,
             unit: 'g',
             sortOrder: 1,
@@ -43,9 +40,8 @@ void main() {
       host(
         const RecipeIngredientRow(
           ingredient: RecipeIngredient(
-            ingredientId: 2,
-            recipeId: 1,
-            nameRaw: 'Garlic cloves',
+            ingId: 2,
+            name: 'Garlic cloves',
             quantity: 3,
             sortOrder: 2,
           ),
@@ -63,9 +59,8 @@ void main() {
       host(
         const RecipeIngredientRow(
           ingredient: RecipeIngredient(
-            ingredientId: 3,
-            recipeId: 1,
-            nameRaw: 'Salt to taste',
+            ingId: 3,
+            name: 'Salt to taste',
             sortOrder: 3,
           ),
         ),
@@ -84,9 +79,8 @@ void main() {
       host(
         const RecipeIngredientRow(
           ingredient: RecipeIngredient(
-            ingredientId: 4,
-            recipeId: 1,
-            nameRaw: 'Vodka',
+            ingId: 4,
+            name: 'Vodka',
             quantity: 0.5,
             unit: 'cup',
             sortOrder: 4,

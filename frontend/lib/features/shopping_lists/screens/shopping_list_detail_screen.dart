@@ -13,7 +13,7 @@ import '../widgets/shopping_section_header.dart';
 import '../../../core/routes/app_routes.dart';
 
 //detail screen for one shopping list
-class ShoppingListDetailScreen extends ConsumerWidget {
+class ShoppingListDetailScreen extends ConsumerStatefulWidget {
   const ShoppingListDetailScreen({
     super.key,
     required this.listId,
@@ -22,14 +22,45 @@ class ShoppingListDetailScreen extends ConsumerWidget {
   final String listId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ShoppingListDetailScreen> createState() =>
+      _ShoppingListDetailScreenState();
+}
+
+class _ShoppingListDetailScreenState
+    extends ConsumerState<ShoppingListDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(_loadShoppingListDetail);
+  }
+
+  @override
+  void didUpdateWidget(covariant ShoppingListDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.listId != widget.listId) {
+      Future.microtask(_loadShoppingListDetail);
+    }
+  }
+
+  Future<void> _loadShoppingListDetail() async {
+    await ref.read(shoppingListsProvider.future);
+
+    await ref
+        .read(shoppingListsProvider.notifier)
+        .loadShoppingListDetail(widget.listId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final shoppingLists = ref.watch(shoppingListsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.bgLight,
       body: shoppingLists.when(
         data: (state) {
-          final list = state.getListById(listId);
+          final list = state.getListById(widget.listId);
 
           if (list == null) {
             return Center(
@@ -44,23 +75,43 @@ class ShoppingListDetailScreen extends ConsumerWidget {
 
           return _ShoppingListDetailContent(
             list: list,
-            onToggleItem: (itemId) {
-              ref.read(shoppingListsProvider.notifier).toggleItemChecked(
+            onToggleItem: (itemId) async {
+              await ref.read(shoppingListsProvider.notifier).toggleItemChecked(
                     listId: list.id,
                     itemId: itemId,
                   );
+            },
+            onSelectAll: () async {
+              await ref
+                  .read(shoppingListsProvider.notifier)
+                  .selectAllItems(list.id);
+            },
+            onDeselectAll: () async {
+              await ref
+                  .read(shoppingListsProvider.notifier)
+                  .deselectAllItems(list.id);
+            },
+            onDeleteSelected: () async {
+              await ref
+                  .read(shoppingListsProvider.notifier)
+                  .deleteSelectedItems(list.id);
             },
             onAddItem: ({
               required name,
               required quantity,
               required category,
-            }) {
-              ref.read(shoppingListsProvider.notifier).addItemToList(
+            }) async {
+              await ref.read(shoppingListsProvider.notifier).addItemToList(
                     listId: list.id,
                     name: name,
                     quantity: quantity,
                     category: category,
                   );
+            },
+            onCompleteShop: () async {
+              return ref
+                  .read(shoppingListsProvider.notifier)
+                  .completeShop(list.id);
             },
           );
         },
@@ -87,16 +138,25 @@ class _ShoppingListDetailContent extends StatelessWidget {
   const _ShoppingListDetailContent({
     required this.list,
     required this.onToggleItem,
+    required this.onSelectAll,
+    required this.onDeselectAll,
     required this.onAddItem,
+    required this.onCompleteShop,
+    required this.onDeleteSelected,
   });
 
   final ShoppingList list;
-  final ValueChanged<String> onToggleItem;
-  final void Function({
+  final Future<void> Function(String itemId) onToggleItem;
+  final Future<void> Function() onSelectAll;
+  final Future<void> Function() onDeselectAll;
+  final Future<void> Function() onDeleteSelected;
+
+  final Future<void> Function({
     required String name,
     required String quantity,
     required String category,
   }) onAddItem;
+  final Future<Object?> Function() onCompleteShop;
 
   @override
   Widget build(BuildContext context) {
@@ -111,10 +171,37 @@ class _ShoppingListDetailContent extends StatelessWidget {
             children: [
               _DetailTopBar(
                 onBack: () => context.go(AppRoutes.shoppingLists),
+                onDeleteSelected: () async {
+                  final selectedCount =
+                      list.items.where((item) => item.checked).length;
+
+                  if (selectedCount == 0) {
+                    _showSnackBar(
+                      context,
+                      'No selected items to delete.',
+                    );
+                    return;
+                  }
+
+                  await onDeleteSelected();
+
+                  if (!context.mounted) return;
+
+                  final message = selectedCount == 1
+                      ? '1 selected item deleted.'
+                      : '$selectedCount selected items deleted.';
+
+                  _showSnackBar(context, message);
+                },
               ),
               const SizedBox(height: 42),
               ShoppingSectionHeader(title: list.title),
               const SizedBox(height: 30),
+              _BulkSelectionControls(
+                onSelectAll: onSelectAll,
+                onDeselectAll: onDeselectAll,
+              ),
+              const SizedBox(height: 22),
               ..._buildItemSections(groupedItems),
             ],
           ),
@@ -133,22 +220,39 @@ class _ShoppingListDetailContent extends StatelessWidget {
             right: 28,
             bottom: 42,
             child: _UpdatePantryButton(
-              onTap: () {
-                final checkedCount = list.items.where((item) => item.checked).length;
+              onTap: () async {
+                final checkedCount =
+                    list.items.where((item) => item.checked).length;
 
-                final message = checkedCount == 0
-                    ? 'No checked items to update.'
-                    : checkedCount == 1
-                        ? '1 item sent to pantry.'
-                        : '$checkedCount items sent to pantry.';
+                if (checkedCount == 0) {
+                  _showSnackBar(
+                    context,
+                    'No checked items to update.',
+                  );
+                  return;
+                }
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(message),
-                    backgroundColor: AppColors.primary,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
+                final result = await onCompleteShop();
+
+                if (!context.mounted) return;
+
+                final addedCount = result == null
+                    ? checkedCount
+                    : (result as dynamic).addedToPantryCount as int;
+
+                final skippedItems = result == null
+                    ? <String>[]
+                    : (result as dynamic).skippedManualItems as List<String>;
+
+                final skippedText = skippedItems.isEmpty
+                    ? ''
+                    : ' ${skippedItems.length} manual item skipped.';
+
+                final message = addedCount == 1
+                    ? '1 item sent to pantry.$skippedText'
+                    : '$addedCount items sent to pantry.$skippedText';
+
+                _showSnackBar(context, message);
               },
             ),
           ),
@@ -231,7 +335,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
 
     if (result == null) return;
 
-    onAddItem(
+    await onAddItem(
       name: result['name'] ?? '',
       quantity: result['quantity'] ?? '',
       category: result['category'] ?? '',
@@ -277,7 +381,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
         widgets.add(
           ShoppingItemRow(
             item: item,
-            onChanged: (_) => onToggleItem(item.id),
+            onChanged: (_) async => onToggleItem(item.id),
           ),
         );
       }
@@ -293,9 +397,11 @@ class _ShoppingListDetailContent extends StatelessWidget {
 class _DetailTopBar extends StatelessWidget {
   const _DetailTopBar({
     required this.onBack,
+    required this.onDeleteSelected,
   });
 
   final VoidCallback onBack;
+  final Future<void> Function() onDeleteSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -319,14 +425,99 @@ class _DetailTopBar extends StatelessWidget {
             ),
           ),
         ),
-        IconButton(
-          onPressed: () {},
+        PopupMenuButton<String>(
           icon: const Icon(
             Icons.more_vert,
             color: AppColors.tertiaryMuted,
           ),
+          color: AppColors.bgLight,
+          onSelected: (value) async {
+            if (value == 'delete-selected') {
+              await onDeleteSelected();
+            }
+          },
+          itemBuilder: (context) {
+            return [
+              PopupMenuItem(
+                value: 'delete-selected',
+                child: Text(
+                  'Delete selected',
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.error,
+                  ),
+                ),
+              ),
+            ];
+          },
         ),
       ],
+    );
+  }
+}
+
+class _BulkSelectionControls extends StatelessWidget {
+  const _BulkSelectionControls({
+    required this.onSelectAll,
+    required this.onDeselectAll,
+  });
+
+  final Future<void> Function() onSelectAll;
+  final Future<void> Function() onDeselectAll;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _BulkSelectionButton(
+          icon: Icons.done_all,
+          label: 'Select all',
+          onPressed: onSelectAll,
+        ),
+        const SizedBox(width: 10),
+        _BulkSelectionButton(
+          icon: Icons.remove_done,
+          label: 'Deselect',
+          onPressed: onDeselectAll,
+        ),
+      ],
+    );
+  }
+}
+
+class _BulkSelectionButton extends StatelessWidget {
+  const _BulkSelectionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final Future<void> Function() onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: OutlinedButton.icon(
+        onPressed: () async {
+          await onPressed();
+        },
+        icon: Icon(icon, size: 18),
+        label: Text(label),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          side: BorderSide(
+            color: AppColors.primary.withValues(alpha: 0.45),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          textStyle: AppTextStyles.bodySmall.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -413,4 +604,14 @@ class _AddItemField extends StatelessWidget {
       ),
     );
   }
+}
+
+void _showSnackBar(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      backgroundColor: AppColors.primary,
+      behavior: SnackBarBehavior.floating,
+    ),
+  );
 }

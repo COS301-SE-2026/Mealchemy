@@ -7,20 +7,33 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/* Importing classes */
-import com.mealchemy.vault.dto.VaultFolderRecipeRequest;
-import com.mealchemy.vault.dto.VaultFolderRecipeResponse;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+
+/* Import classes */
 import com.mealchemy.vault.model.VaultFolderRecipe;
+import com.mealchemy.vault.model.VaultMember;
+import com.mealchemy.vault.model.Vault;
+import com.mealchemy.vault.model.VaultFolder;
+import com.mealchemy.recipe.model.Recipe;
+import com.mealchemy.auth.model.User;
+import com.mealchemy.vault.dto.VaultFolderRecipeResponse;
+import com.mealchemy.vault.dto.VaultFolderRecipeRequest;
+import com.mealchemy.vault.dto.VaultFolderRecipeMoveRequest;
 import com.mealchemy.vault.repository.VaultFolderRecipeRepository;
+import com.mealchemy.vault.repository.VaultMemberRepository;
+import com.mealchemy.recipe.repository.RecipeRepository;
+import com.mealchemy.vault.repository.VaultFolderRepository;
+import com.mealchemy.auth.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class VaultFolderRecipeServiceTest
@@ -28,138 +41,409 @@ public class VaultFolderRecipeServiceTest
     @Mock
     private VaultFolderRecipeRepository vaultFolderRecipeRepository;
 
+    @Mock
+    private VaultMemberRepository vaultMemberRepository;
+
+    @Mock
+    private VaultFolderRepository vaultFolderRepository;
+
+    @Mock
+    private RecipeRepository recipeRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
     @InjectMocks
     private VaultFolderRecipeService vaultFolderRecipeService;
 
     private VaultFolderRecipe folderRecipe;
+    private Recipe recipe;
+    private User user;
+    private Vault vault;
+    private VaultFolder folder;
     private VaultFolderRecipeRequest request;
+    private VaultFolderRecipeMoveRequest moveRequest;
 
     @BeforeEach
     void setUp()
     {
+        vault = new Vault();
+        vault.setOwnerId(1);
+        ReflectionTestUtils.setField(vault, "vaultId", 1);
+
+        folder = new VaultFolder();
+        folder.setVault(vault);
+        ReflectionTestUtils.setField(folder, "folderId", 1);
+
+        recipe = new Recipe();
+        recipe.setOwnerId(1);
+        ReflectionTestUtils.setField(recipe, "recipeId", 1);
+
+        user = new User();
+        ReflectionTestUtils.setField(user, "userId", 1);
+
         folderRecipe = new VaultFolderRecipe();
-        folderRecipe.setFolderId(1);
-        folderRecipe.setRecipeId(1);
+        folderRecipe.setFolder(folder);
+        folderRecipe.setRecipe(recipe);
+        folderRecipe.setAddedBy(user);
+        ReflectionTestUtils.setField(folderRecipe, "id", 1);
 
-        request = new VaultFolderRecipeRequest();
-        request.setFolderId(1);
-        request.setRecipeId(1);
+        request = new VaultFolderRecipeRequest(1, 1);
+        moveRequest = new VaultFolderRecipeMoveRequest(1);
     }
 
-    // getRecipesByFolderId
-
     @Test
-    void getRecipesByFolderId_returnsListOfRecipes()
+    void getRecipesByFolderId_returnsListOfRecipes_whenFoundAndOwner()
     {
-        when(vaultFolderRecipeRepository.findByFolderId(1)).thenReturn(List.of(folderRecipe));
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
+        when(vaultFolderRecipeRepository.findByFolder_FolderId(1)).thenReturn(List.of(folderRecipe));
 
-        List<VaultFolderRecipeResponse> result = vaultFolderRecipeService.getRecipesByFolderId(1);
+        List<VaultFolderRecipeResponse> result = vaultFolderRecipeService.getRecipesByFolderId(1, 1);
 
-        assertEquals(1, result.size());
-        assertEquals(1, result.get(0).getFolderId());
+        assertNotNull(result);
+        assertEquals(1, result.get(0).recipeId());
     }
 
     @Test
-    void getRecipesByFolderId_returnsEmptyList_whenNoRecipesFound()
+    void getRecipesByFolderId_returnsListOfRecipes_whenFoundAndMember()
     {
-        when(vaultFolderRecipeRepository.findByFolderId(99)).thenReturn(List.of());
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(true);
+        when(vaultFolderRecipeRepository.findByFolder_FolderId(1)).thenReturn(List.of(folderRecipe));
 
-        List<VaultFolderRecipeResponse> result = vaultFolderRecipeService.getRecipesByFolderId(99);
+        List<VaultFolderRecipeResponse> result = vaultFolderRecipeService.getRecipesByFolderId(1, 3);
 
-        assertTrue(result.isEmpty());
+        assertNotNull(result);
+        assertEquals(1, result.get(0).recipeId());
     }
 
-    // getFoldersByRecipeId
-
     @Test
-    void getFoldersByRecipeId_returnsListOfFolders()
+    void getRecipesByFolderId_throwsException_whenFolderNotFound()
     {
-        when(vaultFolderRecipeRepository.findByRecipeId(1)).thenReturn(List.of(folderRecipe));
+        when(vaultFolderRepository.findById(99)).thenReturn(Optional.empty());
 
-        List<VaultFolderRecipeResponse> result = vaultFolderRecipeService.getFoldersByRecipeId(1);
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.getRecipesByFolderId(99, 1));
 
-        assertEquals(1, result.size());
-        assertEquals(1, result.get(0).getRecipeId());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Folder not found.", ex.getReason());
     }
 
     @Test
-    void getFoldersByRecipeId_returnsEmptyList_whenNoFoldersFound()
+    void getRecipesByFolderId_throwsException_whenNotOwnerOrMember()
     {
-        when(vaultFolderRecipeRepository.findByRecipeId(99)).thenReturn(List.of());
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(false);
 
-        List<VaultFolderRecipeResponse> result = vaultFolderRecipeService.getFoldersByRecipeId(99);
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.getRecipesByFolderId(1, 3));
 
-        assertTrue(result.isEmpty());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only a vault member/owner can can interact with folders/recipe relationships.", ex.getReason());
     }
 
-    // getFolderRecipeById
+    @Test
+    void getFoldersByRecipeId_returnsListOfFolders_whenFoundAndOwner()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(vaultFolderRecipeRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(folderRecipe));
+
+        List<VaultFolderRecipeResponse> result = vaultFolderRecipeService.getFoldersByRecipeId(1, 1);
+
+        assertNotNull(result);
+        assertEquals(1, result.get(0).folderId());
+    }
 
     @Test
-    void getFolderRecipeById_returnsRecord_whenFound()
+    void getFoldersByRecipeId_throwsException_whenNotFound()
+    {
+        when(recipeRepository.findById(99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.getFoldersByRecipeId(99, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
+    }
+
+    @Test
+    void getFoldersByRecipeId_throwsException_whenNotOwner()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.getFoldersByRecipeId(1, 3));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only the recipe owner can see where it has been added.", ex.getReason());
+    }
+
+    @Test
+    void getFolderRecipeById_returnsVaultFolderRecipe_whenFoundAndOwner()
     {
         when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
 
-        VaultFolderRecipeResponse result = vaultFolderRecipeService.getFolderRecipeById(1);
+        VaultFolderRecipeResponse result = vaultFolderRecipeService.getFolderRecipeById(1, 1);
 
         assertNotNull(result);
-        assertEquals(1, result.getFolderId());
+        assertEquals(1, result.id());
     }
 
     @Test
-    void getFolderRecipeById_throwsException_whenNotFound()
-    {
-        when(vaultFolderRecipeRepository.findById(99)).thenReturn(Optional.empty());
-
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> vaultFolderRecipeService.getFolderRecipeById(99));
-        assertEquals("No record found", ex.getMessage());
-    }
-
-    // createVaultFolderRecipe
-
-    @Test
-    void createVaultFolderRecipe_returnsCreatedRecord()
-    {
-        when(vaultFolderRecipeRepository.save(any(VaultFolderRecipe.class))).thenReturn(folderRecipe);
-
-        VaultFolderRecipeResponse result = vaultFolderRecipeService.createVaultFolderRecipe(request);
-
-        assertNotNull(result);
-        assertEquals(1, result.getFolderId());
-        verify(vaultFolderRecipeRepository, times(1)).save(any(VaultFolderRecipe.class));
-    }
-
-    // updateVaultFolderRecipe
-
-    @Test
-    void updateVaultFolderRecipe_returnsUpdatedRecord_whenFound()
+    void getFolderRecipeById_returnsVaultFolderRecipe_whenFoundAndMember()
     {
         when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
-        when(vaultFolderRecipeRepository.save(any(VaultFolderRecipe.class))).thenReturn(folderRecipe);
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(true);
 
-        VaultFolderRecipeResponse result = vaultFolderRecipeService.updateVaultFolderRecipe(1, request);
+        VaultFolderRecipeResponse result = vaultFolderRecipeService.getFolderRecipeById(1, 3);
 
         assertNotNull(result);
+        assertEquals(1, result.id());
+    }
+
+    @Test
+    void getFolderRecipeById_throwsException_whenRecordNotFound()
+    {
+        when(vaultFolderRecipeRepository.findById(99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.getFolderRecipeById(99, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("No record found.", ex.getReason());
+    }
+
+    @Test
+    void getFolderRecipeById_throwsException_whenNotOwnerOrMember()
+    {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.getFolderRecipeById(1, 3));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only a vault member/owner can can interact with folders/recipe relationships.", ex.getReason());
+    }
+
+    @Test
+    void createVaultFolderRecipe_returnsNewVaultFolderRecipe_whenFoundAndOwner()
+    {
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
+        when(recipeRepository.findById(request.recipeId())).thenReturn(Optional.of(recipe));
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+        when(vaultFolderRecipeRepository.save(any(VaultFolderRecipe.class))).thenReturn(folderRecipe);
+
+        VaultFolderRecipeResponse result = vaultFolderRecipeService.createVaultFolderRecipe(request, 1, 1);
+
+        assertNotNull(result);
+        assertEquals(1, result.id());
         verify(vaultFolderRecipeRepository, times(1)).save(any(VaultFolderRecipe.class));
     }
 
     @Test
-    void updateVaultFolderRecipe_throwsException_whenNotFound()
+    void createVaultFolderRecipe_returnsNewVaultFolderRecipe_whenFoundAndMember()
+    {
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
+        when(recipeRepository.findById(request.recipeId())).thenReturn(Optional.of(recipe));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(true);
+        when(userRepository.findById(3)).thenReturn(Optional.of(user));
+        when(vaultFolderRecipeRepository.save(any(VaultFolderRecipe.class))).thenReturn(folderRecipe);
+
+        VaultFolderRecipeResponse result = vaultFolderRecipeService.createVaultFolderRecipe(request, 3, 1);
+
+        assertNotNull(result);
+        assertEquals(1, result.id());
+        verify(vaultFolderRecipeRepository, times(1)).save(any(VaultFolderRecipe.class));
+    }
+
+    @Test
+    void createVaultFolderRecipe_throwsException_whenFolderNotFound()
+    {
+        when(vaultFolderRepository.findById(99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.createVaultFolderRecipe(request, 1, 99));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Folder not found.", ex.getReason());
+    }
+
+    @Test
+    void createVaultFolderRecipe_throwsException_whenNotOwnerOrMember()
+    {
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.createVaultFolderRecipe(request, 3, 1));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only a vault member/owner can can interact with folders/recipe relationships.", ex.getReason());
+    }
+
+    @Test
+    void createVaultFolderRecipe_throwsException_whenRecipeNotFound()
+    {
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
+        when(recipeRepository.findById(request.recipeId())).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.createVaultFolderRecipe(request, 1, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
+    }
+
+    @Test
+    void createVaultFolderRecipe_throwsException_whenUserNotFound()
+    {
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
+        when(recipeRepository.findById(request.recipeId())).thenReturn(Optional.of(recipe));
+        when(userRepository.findById(1)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.createVaultFolderRecipe(request, 1, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("User not found.", ex.getReason());
+    }
+
+    @Test
+    void updateVaultFolderRecipe_returnsUpdatedVaultFolderRecipe_whenFoundAndOwner()
+    {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
+        when(vaultFolderRecipeRepository.save(any(VaultFolderRecipe.class))).thenReturn(folderRecipe);
+
+        VaultFolderRecipeResponse result = vaultFolderRecipeService.updateVaultFolderRecipe(1, moveRequest, 1);
+
+        assertNotNull(result);
+        assertEquals(1, result.id());
+        verify(vaultFolderRecipeRepository, times(1)).save(any(VaultFolderRecipe.class));
+    }
+
+    @Test
+    void updateVaultFolderRecipe_throwsException_whenRecordNotFound()
     {
         when(vaultFolderRecipeRepository.findById(99)).thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> vaultFolderRecipeService.updateVaultFolderRecipe(99, request));
-        assertEquals("No record found", ex.getMessage());
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.updateVaultFolderRecipe(99, moveRequest, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("No record found.", ex.getReason());
     }
 
-    // deleteVaultFolderRecipe
+    @Test
+    void updateVaultFolderRecipe_throwsException_whenNotOwner()
+    {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.updateVaultFolderRecipe(1, moveRequest, 3));
+        
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only a vault owner can interact with folders/recipe relationships.", ex.getReason());
+    }
 
     @Test
-    void deleteVaultFolderRecipe_callsDeleteById()
+    void updateVaultFolderRecipe_throwsException_whenNewFolderNotFound()
     {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(vaultFolderRepository.findById(moveRequest.folderId())).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.updateVaultFolderRecipe(1, moveRequest, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("New folder not found.", ex.getReason());
+    }
+
+    @Test
+    void updateVaultFolderRecipe_throwsException_whenNewFolderFromDifferentVault()
+    {
+        Vault differentVault = new Vault();
+        differentVault.setOwnerId(2);
+        ReflectionTestUtils.setField(differentVault, "vaultId", 2);
+
+        VaultFolder newFolder = new VaultFolder();
+        newFolder.setVault(differentVault);
+        ReflectionTestUtils.setField(newFolder, "folderId", 3);
+
+        VaultFolderRecipeMoveRequest moveRequestLocal = new VaultFolderRecipeMoveRequest(3);
+
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(vaultFolderRepository.findById(moveRequestLocal.folderId())).thenReturn(Optional.of(newFolder));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.updateVaultFolderRecipe(1, moveRequestLocal, 1));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Recipes can only moved between folders in the same vault.", ex.getReason());
+    }
+
+    @Test
+    void deleteVaultFolderRecipe_callsDeleteById_whenFoundAndOwner()
+    {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
         doNothing().when(vaultFolderRecipeRepository).deleteById(1);
 
-        vaultFolderRecipeService.deleteVaultFolderRecipe(1);
+        vaultFolderRecipeService.deleteVaultFolderRecipe(1, 1);
 
         verify(vaultFolderRecipeRepository, times(1)).deleteById(1);
+    }
+
+    @Test
+    void deleteVaultFolderRecipe_callsDeleteById_whenFoundAndMemberRecipeWasAddedBy()
+    {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 1)).thenReturn(true);
+        doNothing().when(vaultFolderRecipeRepository).deleteById(1);
+        
+        vault.setOwnerId(3);
+
+        vaultFolderRecipeService.deleteVaultFolderRecipe(1, 1);
+
+        verify(vaultFolderRecipeRepository, times(1)).deleteById(1);
+    }
+
+    @Test
+    void deleteVaultFolderRecipe_throwsException_whenMemberButDidNotAdd()
+    {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 2)).thenReturn(true);
+        
+        vault.setOwnerId(3);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.deleteVaultFolderRecipe(1, 2));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only a vault member who added the recipe/vault owner can delete the folders.", ex.getReason());
+    }
+
+    @Test
+    void deleteVaultFolderRecipe_throwsException_whenNotMemberButAdded()
+    {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 1)).thenReturn(false);
+        
+        vault.setOwnerId(3);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.deleteVaultFolderRecipe(1, 1));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only a vault member who added the recipe/vault owner can delete the folders.", ex.getReason());
+    }
+
+    @Test
+    void deleteVaultFolderRecipe_throwsException_whenVaultFolderRecipeNotFound()
+    {
+        when(vaultFolderRecipeRepository.findById(99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.deleteVaultFolderRecipe(99, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("No record found.", ex.getReason());
+    }
+
+    @Test
+    void deleteVaultFolderRecipe_throwsException_whenNotOwnerOrMemberWhoAdded()
+    {
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(false);
+        
+        vault.setOwnerId(2);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.deleteVaultFolderRecipe(1, 3));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only a vault member who added the recipe/vault owner can delete the folders.", ex.getReason());
     }
 }

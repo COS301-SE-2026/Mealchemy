@@ -1,28 +1,33 @@
 import '../models/vault_folder_recipe.dart';
 import '../models/vault_folder.dart';
+import '../models/vault_member.dart';
 import '../models/vault.dart';
 
 abstract class VaultRepository {
   // Vaults
-  Future<List<Vault>> getVaultsByOwnerId(int ownerId);
-  Future<Vault> getVaultById(int id);
-  Future<Vault> createVault(int ownerId, String vaultType, String name);
-  Future<Vault> updateVault(int id, int ownerId, String vaultType, String name);
-  Future<void> deleteVault(int id);
+  Future<List<Vault>> getMyVaults();
+  Future<Vault> getVaultById(int vaultId);
+  Future<Vault> createVault(String name);
+  Future<void> deleteVault(int vaultId);
+  //Future<Vault> renameVault(int vaultId, String vaultType, String name);
 
   // Folders
-  Future<List<VaultFolder>> getFoldersByVaultId(int vaultId);
-  Future<VaultFolder> getFolderByName(String name);
-  Future<VaultFolder> getFolderById(int id);
+  Future<List<VaultFolder>> getFolders(int vaultId);
   Future<VaultFolder> createFolder(int vaultId, String folderName);
-  Future<VaultFolder> updateFolder(int id, int vaultId, String folderName);
-  Future<void> deleteFolder(int id);
+  Future<VaultFolder> renameFolder(int folderId, int vaultId, String folderName);
+  Future<void> deleteFolder(int folderId, int vaultId);
 
   // Folder-recipes
-  Future<List<VaultFolderRecipe>> getRecipesByFolderId(int folderId);
-  Future<List<VaultFolderRecipe>> getFoldersByRecipeId(int recipeId);
-  Future<VaultFolderRecipe> getFolderRecipeById(int id);
-  Future<VaultFolderRecipe> createFolderRecipe(int folderId, int recipeId);
-  Future<VaultFolderRecipe> updateFolderRecipe(int id, int folderId, int recipeId);
-  Future<void> deleteFolderRecipe(int id);
+  Future<List<VaultFolderRecipe>> getFolderRecipes(int folderId);
+  Future<List<VaultFolderRecipe>> getFoldersForRecipe(int recipeId);
+  Future<VaultFolderRecipe> addRecipeToFolder(int folderId, int recipeId);
+  Future<VaultFolderRecipe> moveRecipe(int folderRecipeId, int targetFolderId);
+  Future<void> removeRecipeFromFolder(int folderRecipId);
+
+  // Members
+  Future<List<VaultMember>> getMembers(int vaultId);
+  Future<VaultMember> addMember(int vaultId, String email);
+  Future<void> removeMember(int vaultId, String email);
+
+    
 }
