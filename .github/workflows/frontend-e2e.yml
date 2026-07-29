@@ -27,6 +27,8 @@ env:
   AVD_PROFILE: 'pixel_7'
   EMULATOR_OPTIONS_BASE: '-no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none'
 
+  E2E_BACKEND_URL: 'http://10.0.2.2:8080'
+
 jobs:
   e2e:
     name: Register flow (Maestro)
