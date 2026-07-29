@@ -8,7 +8,7 @@ import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 
 //  Enums
-enum ButtonVariant { primary, secondary, outlined, text }
+enum ButtonVariant { primary, secondary, outlined, text, dashed }
 // primary - solid background, white text
 // secondary - solid accent background, white text
 // outlined - transparent background, colored border and text
@@ -19,6 +19,51 @@ enum ButtonSize { small, medium, large }
 
 //new states for buttons
 enum AppButtonStatus { idle, loading, success, error }
+
+class _DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double radius;
+  final double dashWidth;
+  final double dashGap;
+  final double strokeWidth;
+
+  _DashedBorderPainter({
+    required this.color,
+    required this.radius,
+    this.dashWidth = 6,
+    this.dashGap = 5,
+    this.strokeWidth = 1.5,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    final rrect = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      Radius.circular(radius),
+    );
+
+    final path = Path()..addRRect(rrect);
+    for (final metric in path.computeMetrics()) {
+      double dist = 0;
+      while (dist < metric.length) {
+        canvas.drawPath(
+          metric.extractPath(dist, dist + dashWidth),
+          paint,
+        );
+        dist += dashWidth + dashGap;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorderPainter old) =>
+      old.color != color || old.radius != radius;
+}
 
 class AppButton extends StatefulWidget {
   final String label;
@@ -123,6 +168,22 @@ class AppButton extends StatefulWidget {
     this.onSuccessComplete,
   })  : variant = ButtonVariant.text,
         customBorderColor = null;
+  const AppButton.dashed({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.size = ButtonSize.medium,
+    this.isLoading = false,
+    this.isFullWidth = false,
+    this.isRounded = false,
+    this.customColor,
+    this.customBorderColor,
+    this.leftIcon,
+    this.rightIcon,
+    this.status = AppButtonStatus.idle,
+    this.errorMessage,
+    this.onSuccessComplete,
+  }) : variant = ButtonVariant.dashed;
 
   @override
   State<AppButton> createState() => _AppButtonState();
@@ -277,6 +338,7 @@ class _AppButtonState extends State<AppButton>
             return AppColors.textLight;
           case ButtonVariant.outlined:
           case ButtonVariant.text:
+          case ButtonVariant.dashed:
             return _accentColor;
         }
     }
