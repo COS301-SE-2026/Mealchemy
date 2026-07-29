@@ -61,11 +61,13 @@ class _AddIngredientContent extends ConsumerStatefulWidget {
 class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
   final TextEditingController _nameController = TextEditingController();
 
-  final List<IngredientCatalogueItem> _ingredientOptions = [];
+  List<IngredientCatalogueItem> _ingredientOptions = [];
 
   IngredientCatalogueItem? _selectedIngredient;
-  final bool _isSearchingIngredients = false;
+  bool _isSearchingIngredients = false;
   String? _ingredientSearchError;
+
+  int _searchRequestId = 0;
 
   //stepper starts at 1 so quantity can never be zero or negative
   int _quantity = 1;
@@ -147,7 +149,7 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
                   label: 'Ingredient Name',
                   hint: 'Search catalogue, e.g. Chicken Breast',
                   prefixIcon: Icons.search,
-                  onChanged: (value) {},
+                  onChanged: _onSearchChanged,
                 ),
                 if (_showValidation && !hasName)
                   const _ValidationText('Ingredient name is required.'),
@@ -167,7 +169,7 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
                   _IngredientSearchResults(
                     ingredients: _ingredientOptions,
                     selectedIngredient: _selectedIngredient,
-                    onSelected: (item) {},
+                    onSelected: _onIngredientSelected,
                   ),
                 ],
                 const SizedBox(height: 14),
@@ -228,9 +230,63 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
     );
   }
 
+  //searches the catalogue as the user types; typing invalidates any prior
+  //selection so save can't file a stale ing_id
+  Future<void> _onSearchChanged(String value) async {
+    final query = value.trim();
+    final requestId = ++_searchRequestId;
+
+    setState(() {
+      _selectedIngredient = null;
+      _ingredientSearchError = null;
+    });
+
+    if (query.isEmpty) {
+      setState(() {
+        _ingredientOptions = [];
+        _isSearchingIngredients = false;
+      });
+      return;
+    }
+
+    setState(() => _isSearchingIngredients = true);
+
+    try {
+      final results = await ref
+          .read(ingredientCatalogueRepositoryProvider)
+          .searchIngredients(query);
+
+      //ignore responses that arrived after a newer query went out
+      if (!mounted || requestId != _searchRequestId) return;
+
+      setState(() {
+        _ingredientOptions = results;
+        _isSearchingIngredients = false;
+      });
+    } catch (error) {
+      if (!mounted || requestId != _searchRequestId) return;
+
+      setState(() {
+        _ingredientOptions = [];
+        _isSearchingIngredients = false;
+        _ingredientSearchError = 'Could not search the catalogue. Try again.';
+      });
+    }
+  }
+
+  //locks in a catalogue ingredient so save files its real ing_id
+  void _onIngredientSelected(IngredientCatalogueItem item) {
+    setState(() {
+      _selectedIngredient = item;
+      _nameController.text = item.name;
+      _ingredientOptions = [];
+    });
+  }
+
   Future<void> _saveIngredient() async {
-    final hasRequiredFields =
-        _nameController.text.trim().isNotEmpty && _selectedUnit != null;
+    final hasRequiredFields = _selectedIngredient != null &&
+        _nameController.text.trim().isNotEmpty &&
+        _selectedUnit != null;
 
     if (!hasRequiredFields) {
       setState(() {
@@ -248,7 +304,7 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
 
     try {
       await ref.read(pantryStateProvider.notifier).addIngredient(
-            ingId: 0,
+            ingId: _selectedIngredient!.ingId,
             quantity: '$_quantity',
             unit: _selectedUnit!,
           );
