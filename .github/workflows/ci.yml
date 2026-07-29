@@ -59,7 +59,7 @@ jobs:
   # BACKEND: Spring Boot / Java 21 / Maven
 
   backend-lint:
-    name: Backend — Checkstyle Lint
+    name: Backend Checkstyle Lint
     runs-on: ubuntu-latest
     needs: secret-scan
     defaults:
@@ -82,7 +82,7 @@ jobs:
         run: ./mvnw checkstyle:check --no-transfer-progress
 
   backend-unit-tests:
-    name: Backend — Unit Tests (JUnit)
+    name: Backend Unit Tests (JUnit)
     runs-on: ubuntu-latest
     needs: backend-lint
     defaults:
@@ -105,7 +105,7 @@ jobs:
         run: ./mvnw test --no-transfer-progress -Dtest="*UnitTest" -DfailIfNoTests=true
 
   backend-integration-tests:
-    name: Backend — Integration Tests (JUnit + PostgreSQL)
+    name: Backend Integration Tests (JUnit + PostgreSQL)
     runs-on: ubuntu-latest
     needs: backend-unit-tests
 
@@ -163,10 +163,10 @@ jobs:
           fail_ci_if_error: true
 
   # ─────────────────────────────────────────────
-  # ENGINE — Python 3.12
+  # ENGINE Python 3.12
 
   engine-lint:
-    name: Engine — Ruff Lint
+    name: Engine Ruff Lint
     runs-on: ubuntu-latest
     needs: secret-scan
     defaults:
@@ -191,7 +191,7 @@ jobs:
         run: ruff check .
 
   engine-typecheck:
-    name: Engine — Mypy Type Check
+    name: Engine Mypy Type Check
     runs-on: ubuntu-latest
     needs: engine-lint
     defaults:
@@ -216,7 +216,7 @@ jobs:
         run: mypy src/ --strict
 
   engine-tests:
-    name: Engine — Pytest
+    name: Engine Pytest
     runs-on: ubuntu-latest
     needs: engine-typecheck
     defaults:
@@ -245,7 +245,7 @@ jobs:
   # FRONTEND - Flutter
 
   frontend-analyze:
-    name: Frontend — flutter analyze
+    name: Frontend flutter analyze
     runs-on: ubuntu-latest
     needs: secret-scan
     defaults:
@@ -272,7 +272,7 @@ jobs:
         run: flutter analyze
 
   frontend-tests:
-    name: Frontend — flutter test
+    name: Frontend flutter test
     runs-on: ubuntu-latest
     needs: frontend-analyze
     defaults:
@@ -300,13 +300,13 @@ jobs:
 
       #Python filter and threshold check; avoids installing lcov on every run.
       # Strips *.g.dart and *.freezed.dart records from lcov.info, then enforces 80%.
+      # Excludes generated files, API repository files, and mock seed-data repository files as those aren't used anymore
       - name: Filter generated files and check coverage threshold
         shell: python
         run: |
           import re, sys
 
-          # Excludes generated files and API repository files
-          pattern = re.compile(r'.*\.(g|freezed)\.dart$|.*/api_.*_repository\.dart$')
+          pattern = re.compile(r'.*\.(g|freezed)\.dart$|.*/api_.*_repository\.dart$|.*/mock_.*_repository\.dart$')
           path = 'coverage/lcov.info'
 
           out_lines = []
@@ -357,10 +357,10 @@ jobs:
           fail_ci_if_error: true
 
   # ─────────────────────────────────────────────
-  # SECURITY — Docker build + Trivy scan
+  # SECURITY Docker build + Trivy scan
 
   docker-security-scan:
-    name: Security — Docker Build + Trivy Scan
+    name: Security Docker Build + Trivy Scan
     runs-on: ubuntu-latest
     needs: secret-scan
     strategy:
