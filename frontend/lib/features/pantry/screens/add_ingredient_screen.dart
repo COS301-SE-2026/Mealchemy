@@ -34,24 +34,15 @@ class AddIngredientScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final categoriesState = ref.watch(ingredientCategoriesProvider);
-
-    return Scaffold(
+    return const Scaffold(
       backgroundColor: Colors.transparent,
-      body: categoriesState.when(
-        skipLoadingOnReload: true, 
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => _AddIngredientError(message: '$error'),
-        data: (categories) => _AddIngredientContent(categories: categories),
-      ),
+      body: _AddIngredientContent(),
     );
   }
 }
 
 class _AddIngredientContent extends ConsumerStatefulWidget {
-  const _AddIngredientContent({required this.categories});
-
-  final List<String> categories;
+  const _AddIngredientContent();
 
   @override
   ConsumerState<_AddIngredientContent> createState() =>
@@ -72,19 +63,10 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
   //stepper starts at 1 so quantity can never be zero or negative
   int _quantity = 1;
   String? _selectedUnit;
-  String? _selectedCategory;
   bool _showValidation = false;
 
   AppButtonStatus _saveStatus = AppButtonStatus.idle;
   String? _saveError;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.categories.isNotEmpty) {
-      _selectedCategory = widget.categories.first;
-    }
-  }
 
   @override
   void dispose() {
@@ -174,9 +156,8 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
                 ],
                 const SizedBox(height: 14),
                 _SelectedCategoryLabel(
-                  category: _selectedIngredient?.category ??
-                      _selectedCategory ??
-                      'Select an ingredient',
+                  category:
+                      _selectedIngredient?.category ?? 'Select an ingredient',
                 ),
                 const SizedBox(height: 28),
 
@@ -674,22 +655,6 @@ class _ValidationText extends StatelessWidget {
       child: Text(
         message,
         style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
-      ),
-    );
-  }
-}
-
-class _AddIngredientError extends StatelessWidget {
-  const _AddIngredientError({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Unable to load ingredient categories.',
-        style: AppTextStyles.body.copyWith(color: AppColors.error),
       ),
     );
   }
