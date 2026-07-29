@@ -5,7 +5,6 @@ import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/vault.dart';
 import '../models/vault_folder.dart';
-import '../providers/vault_provider.dart';
 import 'vault_menu.dart';
 import 'vault_folder_row.dart';
 
@@ -22,7 +21,6 @@ class VaultFolderList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isShared = ref.watch(isSharedModeProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -37,8 +35,7 @@ class VaultFolderList extends ConsumerWidget {
               ),
             ),
             const Spacer(),
-            // vault-level menu sits by the vault's own name, shared only
-            if (isShared) VaultMenuButton(vault: vault),
+             VaultMenuButton(vault: vault),
           ],
         ),
         const SizedBox(height: 8),
