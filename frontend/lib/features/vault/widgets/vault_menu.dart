@@ -87,6 +87,7 @@ class VaultMenuButton extends ConsumerWidget {
           prefixIcon: Icons.email_outlined,
         );
         if (email == null) return;
+        if (!context.mounted) return;
         final messenger = ScaffoldMessenger.of(context);
         try {
           await ref

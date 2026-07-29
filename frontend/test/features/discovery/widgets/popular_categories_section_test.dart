@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mealchemy/features/discovery/models/discovery_category.dart';
-import 'package:mealchemy/features/discovery/models/explore_item.dart';
 import 'package:mealchemy/features/discovery/providers/discovery_provider.dart';
 import 'package:mealchemy/features/discovery/repositories/discovery_repository.dart';
 import 'package:mealchemy/features/discovery/widgets/popular_categories_section.dart';

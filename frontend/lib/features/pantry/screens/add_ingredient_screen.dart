@@ -64,7 +64,7 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
   final List<IngredientCatalogueItem> _ingredientOptions = [];
 
   IngredientCatalogueItem? _selectedIngredient;
-  bool _isSearchingIngredients = false;
+  final bool _isSearchingIngredients = false;
   String? _ingredientSearchError;
 
   //stepper starts at 1 so quantity can never be zero or negative

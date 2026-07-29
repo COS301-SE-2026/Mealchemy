@@ -298,7 +298,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
         const SizedBox(height: 8),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          activeColor: AppColors.primary,
+          activeThumbColor: AppColors.primary,
           title: Text('Publish to Global Vault',
               style: AppTextStyles.body.copyWith(
                   color: AppColors.textLight, fontWeight: FontWeight.w600)),

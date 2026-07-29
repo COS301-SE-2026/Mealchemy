@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mealchemy/core/providers/api_service_provider.dart';
 import 'package:mealchemy/features/auth/providers/auth_provider.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
@@ -8,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import '../models/vault.dart';
 import '../models/vault_folder.dart';
 import '../models/vault_folder_recipe.dart';
-import '../repositories/vault_repository.dart';
 import '../providers/vault_repository_provider.dart';
 import '../models/vault_member.dart';
 
