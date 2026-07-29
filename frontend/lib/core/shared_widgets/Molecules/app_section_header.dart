@@ -3,42 +3,91 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colours.dart';
 import '../../theme/app_typography.dart';
 
+enum SectionHeaderSize { small, medium, large }
+
+enum SectionHeaderWeight { normal, semiBold, bold }
+
 class AppSectionHeader extends StatelessWidget {
   const AppSectionHeader({
     super.key,
     required this.title,
     this.trailing,
+    this.onTrailingTap,
     this.showAccentLine = true,
+    this.size = SectionHeaderSize.medium,
+    this.weight = SectionHeaderWeight.semiBold,
+    this.titleStyle,
   });
 
   final String title;
   final String? trailing;
+  final VoidCallback? onTrailingTap;
   final bool showAccentLine;
+  final SectionHeaderSize size;
+  final SectionHeaderWeight weight;
+  final TextStyle? titleStyle;
+
+  double get _fontSize {
+    switch (size) {
+      case SectionHeaderSize.small:
+        return 13;
+      case SectionHeaderSize.medium:
+        return 16;
+      case SectionHeaderSize.large:
+        return 20;
+    }
+  }
+
+  FontWeight get _fontWeight {
+    switch (weight) {
+      case SectionHeaderWeight.normal:
+        return FontWeight.w400;
+      case SectionHeaderWeight.semiBold:
+        return FontWeight.w600;
+      case SectionHeaderWeight.bold:
+        return FontWeight.w800;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        if (showAccentLine) ...[
-          Container(width: 2, height: 18, color: AppColors.primary),
-          const SizedBox(width: 12),
-        ],
+        //Title
         Text(
           title,
-          style: AppTextStyles.body.copyWith(
-            color: AppColors.primary,
-            fontWeight: FontWeight.w600,
+          style: titleStyle ?? AppTextStyles.body.copyWith(
+            fontSize: _fontSize,
+            fontWeight: _fontWeight,
+            color: AppColors.primaryLight,
           ),
         ),
-        if (trailing != null) ...[
-          const Spacer(),
-          Text(
-            trailing!,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textMuted,
-              letterSpacing: 0.5,
+        //Horizontal accent line
+        if (showAccentLine) ...[
+          const SizedBox(width: 10),
+          Container(
+            width: 32,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.accent,
+              borderRadius: BorderRadius.circular(99),
             ),
           ),
+        ],
+        if (trailing != null) ...[
+          const Spacer(),
+          GestureDetector(
+            onTap: onTrailingTap,
+            child: Text(
+              trailing!,
+              style: AppTextStyles.label.copyWith(
+                color: AppColors.textMuted,
+                letterSpacing: 0.5,
+                fontSize: _fontSize - 4,
+              ),
+            ),
+          )
         ],
       ],
     );

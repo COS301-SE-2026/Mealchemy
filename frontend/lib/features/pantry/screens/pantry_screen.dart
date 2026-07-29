@@ -45,7 +45,7 @@ class PantryScreen extends ConsumerWidget {
         onRouteSelected: (route) => context.go(route),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.go(AppRoutes.addIngredient),
+        onPressed: () => context.push(AppRoutes.addIngredient),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textDark,
         child: const Icon(Icons.add),
@@ -137,9 +137,11 @@ class _PantryContent extends ConsumerWidget {
                     onEdit: () => pantryNotifier.markOutOfStock(
                       ingredient.name,
                     ),
-                    onDelete: () => pantryNotifier.removeIngredient(
-                      ingredient.name,
-                    ),
+                    onDelete: ingredient.pIngredientId == null
+                        ? null
+                        : () => pantryNotifier.removeIngredient(
+                              ingredient.pIngredientId!,
+                            ),
                   ),
                 ),
               ),

@@ -54,19 +54,17 @@ name: CD
   # aggregate backend,engine,cutover results into one pass/fail
   #depends on deploy backend, deploy engine and cutover jobs. If all three succeed this succeeds.
 
-# 8 deploy-landing-page
-  # deploys static landing page to Firebase Hosting. independent of backend and engine.
-  # - checkout code. fetch-depth:0 for full history
-  # - check if landing page changed. compares before and after. initial deploy won't have a before therefore 0 placeholders for comparison.
-  # - check landing page size. warns at 500, fails at 2MB. only runs if changed
-  # - deploy. only runs if changed. uses FIREBASE_TOKEN github repo secret
-
-# 9 check-registry-storage
+# 8 check-registry-storage
   # reports cumulative Artifact Registry storage usage against free tier quota.
   # runs in parallel. Both build jobs depend on it.
   # - queries actual total repo size via gcloud artifacts repositories describe 
   # - warns at 80 percent of 512MB and fails at 95MB.
   #this means storage has run out on free tier and backup storage plan will have to be implemented.
+
+#added 25/July
+# Only redeploy backend/engine when files that actually affect them change.
+# Changes to frontend, wiki, landing page docs, other workflow files, or the CI workflow won't triger a redeploy.
+#landing page now own job so that can manually trigger workflows without redeploying backend or engine
 
 
 
@@ -74,10 +72,19 @@ name: CD
 
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - deployment
       - main
+    
+    paths:
+      - 'backend/**'
+      - 'engine/**'
+      - 'database/**'
+      - 'infrastructure/Dockerfile.backend'
+      - 'infrastructure/Dockerfile.engine'
+      - '.github/workflows/cd.yml'
 
 #identifiers
 env:
@@ -569,53 +576,6 @@ jobs:
           [[ "${ENGINE}"   != "success" ]] && echo "::error::deploy-engine did not succeed (result: ${ENGINE})"
           [[ "${CUTOVER}"  != "success" ]] && echo "::error::cutover did not succeed (result: ${CUTOVER}) , traffic was not shifted; old revisions are still serving"
           exit 1
-
-  #-------------------------------Firebase hosting---------------------------
-
-  # Deploys the static landing-page/ directory to Firebase Hosting.
-  # Only runs when files under landing-page/ changed in this push.
-
-  deploy-landing-page:
-    name: Deploy landing page
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
-        with:
-          fetch-depth: 0
-
-      - name: Check if landing page changed
-        id: changes
-        run: |
-          BEFORE="${{ github.event.before }}"
-          AFTER="${{ github.sha }}"
-       
-          if [ "${BEFORE}" = "0000000000000000000000000000000000000000" ]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          elif git diff --name-only "${BEFORE}" "${AFTER}" | grep -q '^landing-page/'; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          fi
-      #before holds comit the branch pointed to rght before push happenend. 0's are placeholders as no before comit for first comit.
-      # Warn at 500 KB, fail at 2 MB
-      - name: Check landing page size
-        if: steps.changes.outputs.changed == 'true'
-        run: |
-          SIZE=$(du -sb landing-page/ | cut -f1)
-          SIZE_KB=$((SIZE / 1024))
-          echo "Landing page size: ${SIZE_KB} KB"
-          if [ "$SIZE_KB" -gt "2048" ]; then
-            echo "::error::Landing page (${SIZE_KB} KB) exceeds 2 MB limit."
-            exit 1
-          elif [ "$SIZE_KB" -gt "500" ]; then
-            echo "::warning::Landing page (${SIZE_KB} KB) exceeds 500 KB warn threshold."
-          fi
-
-      - name: Deploy to Firebase Hosting
-        if: steps.changes.outputs.changed == 'true'
-        run: npx firebase-tools deploy --only hosting --token "${{ secrets.FIREBASE_TOKEN }}" --project mealchemy-firebase
 
   #-------------------------------Artifact Registry storage check---------------------------
 

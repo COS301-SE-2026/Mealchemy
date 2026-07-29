@@ -1,141 +1,62 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
+import '../models/vault.dart';
 import '../models/vault_folder.dart';
-import 'vault_folder_card.dart';
+import '../providers/vault_provider.dart';
+import 'vault_menu.dart';
+import 'vault_folder_row.dart';
 
-class VaultFolderList extends StatelessWidget {
+//folder section vault name label plus one row per folder
+class VaultFolderList extends ConsumerWidget {
   const VaultFolderList({
     super.key,
+    required this.vault,
     required this.folders,
   });
 
+  final Vault vault;
   final List<VaultFolder> folders;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isShared = ref.watch(isSharedModeProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _PrivateVaultHeader(folderCount: folders.length),
-        const SizedBox(height: 16),
-        if (folders.isEmpty)
-          const _EmptyVaultState()
-        else
-          ...folders.map((folder) => VaultFolderCard(folder: folder)),
-      ],
-    );
-  }
-}
-
-class _PrivateVaultHeader extends StatelessWidget {
-  const _PrivateVaultHeader({required this.folderCount});
-
-  final int folderCount;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        // Gold accent bar
-        Container(
-          width: 4,
-          height: 18,
-          decoration: BoxDecoration(
-            color: AppColors.accent,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 10),
-        const Icon(
-          Icons.lock_outline_rounded,
-          color: AppColors.primary,
-          size: 18,
-        ),
-        const SizedBox(width: 6),
-        Text(
-          'Private Vault',
-          style: AppTextStyles.title.copyWith(
-            color: AppColors.primary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(width: 6),
-        const Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: AppColors.primary,
-          size: 20,
-        ),
-        const Spacer(),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.2),
-            ),
-          ),
-          child: Text(
-            '$folderCount FOLDERS',
-            style: AppTextStyles.label.copyWith(
-              color: AppColors.primary,
-              letterSpacing: 1,
-              fontSize: 10,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _EmptyVaultState extends StatelessWidget {
-  const _EmptyVaultState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        Row(
           children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.primary.withValues(alpha: 0.06),
-                border: Border.all(
-                  color: AppColors.accent.withValues(alpha: 0.4),
-                  width: 1.5,
-                ),
-              ),
-              child: const Icon(
-                Icons.folder_open_outlined,
-                size: 34,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 16),
             Text(
-              'No folders yet',
-              style: AppTextStyles.title.copyWith(
+              vault.name.toUpperCase(),
+              style: AppTextStyles.label.copyWith(
                 color: AppColors.primary,
-                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                letterSpacing: 2,
               ),
             ),
-            const SizedBox(height: 6),
-            Text(
-              'Tap + to create your first folder',
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.textMuted,
-              ),
-            ),
+            const Spacer(),
+            // vault-level menu sits by the vault's own name, shared only
+            if (isShared) VaultMenuButton(vault: vault),
           ],
         ),
-      ),
+        const SizedBox(height: 8),
+        if (folders.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Text(
+              'No folders in this vault yet.',
+              style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+            ),
+          )
+        else
+          for (final folder in folders)
+            VaultFolderRow(
+              vault: vault,
+              folder: folder,
+            ),
+      ],
     );
   }
 }

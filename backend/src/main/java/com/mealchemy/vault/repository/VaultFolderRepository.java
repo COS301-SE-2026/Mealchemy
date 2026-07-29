@@ -11,6 +11,6 @@ import com.mealchemy.vault.model.VaultFolder;
 
 @Repository
 public interface VaultFolderRepository extends JpaRepository<VaultFolder, Integer> {
-    List<VaultFolder> findByVaultId(int vaultId);
+    List<VaultFolder> findByVault_VaultId(int vaultId);
     Optional<VaultFolder> findByFolderName(String folderName);
 }

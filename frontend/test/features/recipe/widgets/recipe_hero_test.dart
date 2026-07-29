@@ -40,13 +40,13 @@ void main() {
     expect(find.byIcon(Icons.restaurant_menu), findsOneWidget);
   });
 
-  testWidgets('RecipeHero renders back, favorite and share buttons', (
+  testWidgets('RecipeHero renders back, favorite and save buttons', (
     tester,
   ) async {
     await tester.pumpWidget(host(baseRecipe));
 
     expect(find.byIcon(Icons.arrow_back), findsOneWidget);
     expect(find.byIcon(Icons.favorite_border), findsOneWidget);
-    expect(find.byIcon(Icons.share_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.bookmark_add_outlined), findsOneWidget);
   });
 }

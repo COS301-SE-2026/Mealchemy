@@ -18,10 +18,8 @@ void main() {
   ) async {
     await tester.pumpWidget(
       host(
-        const RecipeStepRow(
+         const RecipeStepRow(
           step: RecipeStep(
-            stepId: 1,
-            recipeId: 1,
             stepNr: 1,
             content: 'Warm the stock and steep the saffron.',
           ),
@@ -37,11 +35,9 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      host(
+       host(
         const RecipeStepRow(
           step: RecipeStep(
-            stepId: 12,
-            recipeId: 1,
             stepNr: 12,
             content: 'Final step content.',
           ),

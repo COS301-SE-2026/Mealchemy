@@ -1,5 +1,8 @@
+title = "Mealchemy gitleaks config"
+
 [allowlist]
-  description = "Firebase client config, the API key is a public identifier embedded in the APK, and is not a secret"
+  description = "BCrypt hashes in DB seed files are hashed credentials, and google-services.json holds Firebase client identifiers that are public by design and embedded in every APK build"
   paths = [
-    '''frontend/android/app/google-services\.json'''
+    '''database/V\d+__seed.*\.sql''',
+    '''frontend/android/app/google-services\.json''',
   ]

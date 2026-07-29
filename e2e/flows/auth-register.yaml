@@ -1,0 +1,46 @@
+appId: com.mealchemy.mealchemy
+name: Register and land on preferences
+---
+
+- launchApp:
+    clearState: true
+
+# Login screen is the app's initial location.
+- assertVisible: "Welcome Back"
+
+# Bottom of login has a "Create Account" text button that goes to signup.
+- tapOn: "Create Account"
+
+# We are on signup once the "Display Name" label is visible.
+- assertVisible: "Display Name"
+
+- tapOn:
+    below: "Display Name"
+- inputText: "E2E Test User"
+- hideKeyboard
+
+# Generate a unique email each run so reruns do not hit the unique constraint.
+- evalScript: ${output.email = 'e2e-' + Date.now() + '@test.mealchemy.local'}
+
+- tapOn:
+    below: "Email Address"
+- inputText: ${output.email}
+- hideKeyboard
+
+- tapOn:
+    below: "Password"
+- inputText: "E2eTestPass!123"
+- hideKeyboard
+
+- tapOn:
+    below: "Confirm Password"
+- inputText: "E2eTestPass!123"
+- hideKeyboard
+
+- tapOn:
+    text: "Create Account"
+    below: "Confirm Password"
+
+
+- assertVisible: "Bespoke Culinary Profile"
+- assertNotVisible: "Welcome Back"

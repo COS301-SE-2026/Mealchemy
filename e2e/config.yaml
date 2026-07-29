@@ -1,0 +1,5 @@
+# Shared Maestro workspace config for Mealchemy E2E flows.
+# Applies to every flow under e2e/flows/ unless a flow overrides.
+flows:
+  includeTags: []
+  excludeTags: []

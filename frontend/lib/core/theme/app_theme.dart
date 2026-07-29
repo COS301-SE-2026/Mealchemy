@@ -1,5 +1,6 @@
 //ThemeData object gets passed into MaterialApp in main.dart. This is how flutter makes it apply globally
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colours.dart';
 import 'app_typography.dart';
@@ -33,6 +34,11 @@ class AppTheme {
         foregroundColor: isDark ? AppColors.textDark : AppColors.textLight,
         titleTextStyle: AppTextStyles.title.copyWith(
           color: isDark ? AppColors.textDark : AppColors.textLight,
+        ),
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+          statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
         ),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(

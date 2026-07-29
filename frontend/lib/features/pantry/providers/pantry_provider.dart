@@ -8,14 +8,22 @@ import '../repositories/api_pantry_repository.dart';
 import '../repositories/mock_pantry_repository.dart';
 import '../repositories/pantry_repository.dart';
 import '../widgets/pantry_item_card.dart';
+import '../../../core/providers/api_service_provider.dart';
+import '../repositories/ingredient_catalogue_repository.dart';
 
 //selects mock/API repo
 final pantryRepositoryProvider = Provider<PantryRepository>((ref) {
-  if (AppConfig.useMockData) {
+  if (AppConfig.mockPantry) {
     return MockPantryRepository();
   }
 
-  return ApiPantryRepository();
+  return ApiPantryRepository(ref.read(dioProvider));
+});
+
+//gives screens access to ingredient catalogue search
+final ingredientCatalogueRepositoryProvider =
+    Provider<IngredientCatalogueRepository>((ref) {
+  return IngredientCatalogueRepository(ref.read(dioProvider));
 });
 
 //editable pantry screen
@@ -77,49 +85,72 @@ class PantryNotifier extends AsyncNotifier<PantryState> {
     state = AsyncData(current.copyWith(ingredients: updatedIngredients));
   }
 
-  //adds ingredient to pantry
-  void addIngredient({
-    required String name,
+  //adds ingredient to pantry through active repo
+  Future<void> addIngredient({
+    required int ingId,
     required String quantity,
     required String unit,
-    required String category,
-    required bool isOutOfStock,
-  }) {
+  }) async {
     final current = state.valueOrNull;
-    final cleanedName = name.trim();
     final cleanedQuantity = quantity.trim();
     final cleanedUnit = unit.trim();
 
-    if (current == null ||
-        cleanedName.isEmpty ||
-        cleanedQuantity.isEmpty ||
-        cleanedUnit.isEmpty) {
+    if (current == null || cleanedQuantity.isEmpty || cleanedUnit.isEmpty) {
       return;
     }
 
-    final displayCategory = _displayCategory(category);
-    final newIngredient = PantryIngredient(
-      name: cleanedName,
-      details: '$cleanedQuantity$cleanedUnit • Manual entry',
-      category: displayCategory,
-      status: isOutOfStock ? PantryItemStatus.expired : PantryItemStatus.fresh,
+    final createdIngredient = await _repository.addPantryIngredient(
+      ingId: ingId,
+      quantity: cleanedQuantity,
+      unit: cleanedUnit,
     );
 
+    //add backend created item to current screen
     state = AsyncData(
       current.copyWith(
-        ingredients: [...current.ingredients, newIngredient],
+        ingredients: [...current.ingredients, createdIngredient],
       ),
     );
   }
 
-  //removes ingredient from pantry list
-  void removeIngredient(String ingredientName) {
+  //removes ingredient from backend first, then from the local screen list
+  Future<void> removeIngredient(int pIngredientId) async {
     final current = state.valueOrNull;
     if (current == null) return;
 
+    await _repository.deletePantryIngredient(pIngredientId);
+
     final updatedIngredients = current.ingredients
-        .where((ingredient) => ingredient.name != ingredientName)
+        .where((ingredient) => ingredient.pIngredientId != pIngredientId)
         .toList();
+
+    state = AsyncData(current.copyWith(ingredients: updatedIngredients));
+  }
+
+  //updates an existing pantry row without needing a new screen yet
+  Future<void> updateIngredient({
+    required int pIngredientId,
+    required int ingId,
+    required String quantity,
+    required String unit,
+  }) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final updatedIngredient = await _repository.updatePantryIngredient(
+      pIngredientId: pIngredientId,
+      ingId: ingId,
+      quantity: quantity,
+      unit: unit,
+    );
+
+    final updatedIngredients = current.ingredients.map((ingredient) {
+      if (ingredient.pIngredientId != pIngredientId) {
+        return ingredient;
+      }
+
+      return updatedIngredient;
+    }).toList();
 
     state = AsyncData(current.copyWith(ingredients: updatedIngredients));
   }
@@ -145,13 +176,3 @@ final ingredientCategoriesProvider = FutureProvider<List<String>>((ref) async {
   final pantryState = await ref.watch(pantryStateProvider.future);
   return pantryState.categories;
 });
-
-//changes enum values
-String _displayCategory(String category) {
-  return switch (category) {
-    'meat' || 'poultry' || 'seafood' => 'Proteins',
-    'produce' => 'Vegetables',
-    'dairy' => 'Dairy',
-    _ => 'Other',
-  };
-}

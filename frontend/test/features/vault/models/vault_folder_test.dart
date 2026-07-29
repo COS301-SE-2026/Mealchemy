@@ -6,10 +6,10 @@ void main() {
     //Testing  fromJson create correct model
     test('creates VaultFolder from json', () {
       final folder = VaultFolder.fromJson({
-        'folder_id': 1,
-        'vault_id': 1,
-        'name': 'Breakfast',
-        'created_at': '2026-01-01T00:00:00.000',
+        'folderId': 1,
+        'vaultId': 1,
+        'folderName': 'Breakfast',
+        'createdAt': '2026-01-01T00:00:00.000',
       });
       expect(folder.folderId, 1);
       expect(folder.vaultId, 1);
@@ -19,10 +19,10 @@ void main() {
     //Testing fromJson parses date
     test('parses createdAt date correctly', () {
       final folder = VaultFolder.fromJson({
-        'folder_id': 2,
-        'vault_id': 1,
-        'name': 'Dinner',
-        'created_at': '2026-06-15T00:00:00.000',
+        'folderId': 2,
+        'vaultId': 1,
+        'folderName': 'Dinner',
+        'createdAt': '2026-06-15T00:00:00.000',
       });
       expect(folder.createdAt.year, 2026);
       expect(folder.createdAt.month, 6);

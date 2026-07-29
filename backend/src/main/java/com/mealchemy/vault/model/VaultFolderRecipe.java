@@ -7,6 +7,9 @@ import java.time.OffsetDateTime;
 
 /* Import classes */
 
+import com.mealchemy.recipe.model.Recipe;
+import com.mealchemy.auth.model.User;
+
 @Entity
 @Table(name = "vault_folder_recipes")
 public class VaultFolderRecipe {
@@ -17,14 +20,20 @@ public class VaultFolderRecipe {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(name = "folder_id", nullable = false)
-    private int folderId;
+    @ManyToOne
+    @JoinColumn(name = "folder_id", nullable = false)
+    private VaultFolder folder;
 
-    @Column(name = "recipe_id", nullable = false)
-    private int recipeId;
+    @ManyToOne
+    @JoinColumn(name = "recipe_id", nullable = false)
+    private Recipe recipe;
 
     @Column(name = "added_at", nullable = false)
     private OffsetDateTime addedAt = OffsetDateTime.now();
+
+    @ManyToOne
+    @JoinColumn(name = "added_by")
+    private User addedBy;
 
     /* Getters */
 
@@ -33,14 +42,14 @@ public class VaultFolderRecipe {
         return id;
     }
 
-    public int getFolderId()
+    public VaultFolder getFolder()
     {
-        return folderId;
+        return folder;
     }
 
-    public int getRecipeId()
+    public Recipe getRecipe()
     {
-        return recipeId;
+        return recipe;
     }
 
     public OffsetDateTime getAddedAt()
@@ -48,15 +57,25 @@ public class VaultFolderRecipe {
         return addedAt;
     }
 
-    /* Setters */
-
-    public void setFolderId(int folderIdIn)
+    public User getAddedBy()
     {
-        folderId = folderIdIn;
+        return addedBy;
     }
 
-    public void setRecipeId(int recipeIdIn)
+    /* Setters */
+
+    public void setFolder(VaultFolder folderIn)
     {
-        recipeId = recipeIdIn;
+        folder = folderIn;
+    }
+
+    public void setRecipe(Recipe recipeIn)
+    {
+        recipe = recipeIn;
+    }
+
+    public void setAddedBy(User addedByIn)
+    {
+        addedBy = addedByIn;
     }
 }

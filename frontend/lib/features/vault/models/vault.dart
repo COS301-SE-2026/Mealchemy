@@ -1,3 +1,9 @@
+class VaultTypes {
+  static const String private = 'PRIVATE';
+  static const String shared = 'SHARED';
+  static const String global = 'GLOBAL';
+}
+
 class Vault {
   final int vaultId;
   final int? ownerId;
