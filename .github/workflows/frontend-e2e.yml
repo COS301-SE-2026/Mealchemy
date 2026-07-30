@@ -154,7 +154,7 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-${{ env.AVD_API_LEVEL }}-${{ env.AVD_ARCH }}-${{ env.AVD_PROFILE }}-hwkb
+          key: avd-${{ env.AVD_API_LEVEL }}-${{ env.AVD_ARCH }}-${{ env.AVD_PROFILE }}-hwkb-dpi320
 
       # Only runs on cache miss. Boots the emulator once so the AVD state can be persisted to disk, cached, and reused by the next run.
       - name: Warm up AVD (cache miss only)
@@ -170,20 +170,29 @@ jobs:
           script: echo "Generated AVD snapshot for caching."
 
     
-      - name: Match local emulator by enabling hardware keyboard
+      - name: Match local emulator hardware keyboard, bigger viewport
         run: |
+          set -euo pipefail
           shopt -s nullglob
+
+          set_key() {
+            local cfg="$1" key="$2" value="$3"
+            if grep -q "^${key}=" "$cfg"; then
+              sed -i "s|^${key}=.*|${key}=${value}|" "$cfg"
+            else
+              printf '%s=%s\n' "$key" "$value" >> "$cfg"
+            fi
+          }
+
           found=0
           for cfg in "$HOME"/.android/avd/*.avd/config.ini; do
             found=1
-            if grep -q '^hw\.keyboard=' "$cfg"; then
-              sed -i 's/^hw\.keyboard=.*/hw.keyboard=yes/' "$cfg"
-            else
-              echo 'hw.keyboard=yes' >> "$cfg"
-            fi
-            echo "patched: ${cfg}"
-            grep '^hw\.keyboard=' "$cfg"
+            set_key "$cfg" 'hw.keyboard' 'yes'
+            set_key "$cfg" 'hw.lcd.density' '320'
+            echo "patched ${cfg}:"
+            grep -E '^(hw\.keyboard|hw\.lcd\.density|hw\.lcd\.width|hw\.lcd\.height)=' "$cfg" | sed 's/^/  /'
           done
+
           if [ "$found" = "0" ]; then
             echo "::error::No AVD config.ini found. The emulator step order may have changed."
             exit 1
@@ -198,13 +207,20 @@ jobs:
           arch: ${{ env.AVD_ARCH }}
           profile: ${{ env.AVD_PROFILE }}
           force-avd-creation: false
-          emulator-options: -no-snapshot-save ${{ env.EMULATOR_OPTIONS_BASE }}
+         
+          emulator-options: -no-snapshot-save -no-snapshot-load ${{ env.EMULATOR_OPTIONS_BASE }}
           disable-animations: true
           script: |
             mkdir -p e2e-report
 
             adb shell settings put secure show_ime_with_hard_keyboard 0
-            echo "show_ime_with_hard_keyboard = $(adb shell settings get secure show_ime_with_hard_keyboard)"
+
+      
+            echo "--- emulator geometry ---"
+            echo "size    : $(adb shell wm size)"
+            echo "density : $(adb shell wm density)"
+            echo "ime     : show_ime_with_hard_keyboard = $(adb shell settings get secure show_ime_with_hard_keyboard)"
+            echo "-------------------------"
 
             adb install -r frontend/build/app/outputs/flutter-apk/app-debug.apk
             maestro test e2e/flows/ --format=JUNIT --output=e2e-report/report.xml
