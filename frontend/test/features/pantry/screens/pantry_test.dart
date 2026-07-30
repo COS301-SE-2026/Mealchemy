@@ -2,9 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mealchemy/features/pantry/screens/pantry_screen.dart';
+import 'package:mealchemy/features/pantry/models/pantry_ingredient.dart';
 import 'package:mealchemy/features/pantry/providers/pantry_provider.dart';
 import 'package:mealchemy/features/pantry/repositories/mock_pantry_repository.dart';
+import 'package:mealchemy/features/pantry/screens/pantry_screen.dart';
+import 'package:mealchemy/features/pantry/widgets/pantry_item_card.dart';
+
+class _EditingPantryRepository extends MockPantryRepository {
+  @override
+  Future<PantryIngredient> updatePantryIngredient({
+    required int pIngredientId,
+    required int ingId,
+    required String quantity,
+    required String unit,
+  }) async {
+    return PantryIngredient(
+      pIngredientId: pIngredientId,
+      ingId: ingId,
+      name: 'Chicken Breast',
+      details: '$quantity$unit • Pantry',
+      category: 'Proteins',
+      status: PantryItemStatus.fresh,
+      quantity: quantity,
+      unit: unit,
+    );
+  }
+}
 
 void main() {
   setUpAll(() {
@@ -12,11 +35,16 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  Future<void> pumpPantryScreen(WidgetTester tester) async {
+  Future<void> pumpPantryScreen(
+    WidgetTester tester, {
+    MockPantryRepository? pantryRepository,
+  }) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          pantryRepositoryProvider.overrideWithValue(MockPantryRepository()),
+          pantryRepositoryProvider.overrideWithValue(
+            pantryRepository ?? MockPantryRepository(),
+          ),
         ],
         child: const MaterialApp(
           home: PantryScreen(),
@@ -31,20 +59,15 @@ void main() {
   testWidgets('PantryScreen renders pantry overview', (tester) async {
     await pumpPantryScreen(tester);
 
-    await tester.pumpAndSettle();
-
     expect(find.text('Pantry'), findsWidgets);
     expect(find.text('Meal Optimization'), findsOneWidget);
     expect(find.text('Proteins'), findsOneWidget);
     expect(find.text('Chicken Breast'), findsOneWidget);
   });
 
-  testWidgets('PantryScreen filters pantry items by search query', (
-    tester,
-  ) async {
+  testWidgets('PantryScreen filters pantry items by search query',
+      (tester) async {
     await pumpPantryScreen(tester);
-
-    await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), 'milk');
     await tester.pumpAndSettle();
@@ -56,8 +79,6 @@ void main() {
   testWidgets('PantryScreen filters pantry items by category', (tester) async {
     await pumpPantryScreen(tester);
 
-    await tester.pumpAndSettle();
-
     final dairyFilter = find.textContaining('Dairy').first;
     await tester.ensureVisible(dairyFilter);
     await tester.tap(dairyFilter);
@@ -65,5 +86,51 @@ void main() {
 
     expect(find.text('Full Cream Milk'), findsOneWidget);
     expect(find.text('Chicken Breast'), findsNothing);
+  });
+
+  testWidgets('PantryScreen edits pantry ingredient quantity and unit',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await pumpPantryScreen(
+      tester,
+      pantryRepository: _EditingPantryRepository(),
+    );
+
+    final chickenCard = find.ancestor(
+      of: find.text('Chicken Breast'),
+      matching: find.byType(PantryItemCard),
+    );
+
+    final editIcon = find.descendant(
+      of: chickenCard,
+      matching: find.byIcon(Icons.edit_outlined),
+    );
+
+    await tester.ensureVisible(chickenCard);
+    await tester.pumpAndSettle();
+
+    await tester.tap(editIcon, warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit Ingredient'), findsOneWidget);
+
+    final quantityField = find.byType(TextField).last;
+    await tester.enterText(quantityField, '2');
+    await tester.pumpAndSettle();
+
+    final unitDropdown = find.byType(DropdownButtonFormField<String>);
+    await tester.tap(unitDropdown);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('kg').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Chicken Breast'), findsOneWidget);
+    expect(find.text('2kg • Pantry'), findsOneWidget);
   });
 }
