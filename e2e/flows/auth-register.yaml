@@ -13,11 +13,13 @@ name: Register and land on preferences
 
 # We are on signup once the "Display Name" label is visible.
 - assertVisible: "Display Name"
+- waitForAnimationToEnd
 
 - tapOn:
     below: "Display Name"
 - inputText: "E2E Test User"
 - hideKeyboard
+- waitForAnimationToEnd
 
 # Generate a unique email each run so reruns do not hit the unique constraint.
 - evalScript: ${output.email = 'e2e-' + Date.now() + '@test.mealchemy.local'}
@@ -26,21 +28,35 @@ name: Register and land on preferences
     below: "Email Address"
 - inputText: ${output.email}
 - hideKeyboard
+- waitForAnimationToEnd
 
 - tapOn:
     below: "Password"
 - inputText: "E2eTestPass!123"
 - hideKeyboard
+- waitForAnimationToEnd
 
 - tapOn:
     below: "Confirm Password"
 - inputText: "E2eTestPass!123"
 - hideKeyboard
+- waitForAnimationToEnd
+
+#for ci 
+- scrollUntilVisible:
+    element:
+      text: "Create Account"
+      below: "Confirm Password"
+    direction: DOWN
+    timeout: 10000
 
 - tapOn:
     text: "Create Account"
     below: "Confirm Password"
 
+#increase time for ci
+- extendedWaitUntil:
+    visible: "Bespoke Culinary Profile"
+    timeout: 20000
 
-- assertVisible: "Bespoke Culinary Profile"
 - assertNotVisible: "Welcome Back"

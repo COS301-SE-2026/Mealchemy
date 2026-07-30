@@ -193,7 +193,7 @@ jobs:
           name: maestro-report
           path: |
             e2e-report/
-            ~/.maestro/tests
+            /home/runner/.maestro/tests
             backend/backend.log
           if-no-files-found: warn
 
