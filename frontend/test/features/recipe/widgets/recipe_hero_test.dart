@@ -5,20 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/widgets/recipe_hero.dart';
-import 'package:mealchemy/features/shopping_lists/models/shopping_list.dart';
 import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
 import 'package:mealchemy/features/shopping_lists/repositories/mock_shopping_list_repository.dart';
 
-
-class _ThrowingShoppingListRepo extends MockShoppingListRepository {
-  @override
-  Future<ShoppingList> generateFromRecipe({
-    required int recipeId,
-    required String name,
-    required bool includeAvailablePantryItems,
-  }) async =>
-      throw Exception('generate failed');
-}
 
 void main() {
   setUpAll(() {
