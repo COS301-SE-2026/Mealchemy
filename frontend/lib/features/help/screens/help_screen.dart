@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+
 import '../../../core/shared_widgets/Molecules/app_section_header.dart';
 import '../../../core/theme/app_colours.dart';
 import '../widgets/help_content_blocks.dart';
@@ -235,20 +235,19 @@ class HelpScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              GestureDetector(
-                onTap: () async {
-                  final uri = Uri.parse(
-                    'https://youtube.com/playlist?list=PLJq8dk7VVE6E&si=0Tt0jjLuPn9txrXQ',
-                  );
-
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  }
-                },
-                child: const HelpIconRow(
-                  icon: Icons.link_rounded,
-                  value: 'YouTube Video Tutorials',
-                ),
+              const HelpRow(
+                icon: Icons.play_circle_outline_rounded,
+                title: 'Video tutorials',
+                body: [
+                  HelpBodyText(
+                    'Prefer to watch? Our short video walkthroughs cover the main features.',
+                  ),
+                  SizedBox(height: 10),
+                  HelpIconRow(
+                    icon: Icons.link_rounded,
+                    value: 'mealchemy.com/tutorials',
+                  ),
+                ],
               ),
 
               const SizedBox(height: 28),
