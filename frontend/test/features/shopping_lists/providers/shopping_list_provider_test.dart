@@ -121,6 +121,15 @@ class _ApiShapedShoppingListRepository implements ShoppingListRepository {
   Future<CompleteShopResult> completeShop(String listId) async {
     throw UnimplementedError();
   }
+
+  @override
+  Future<ShoppingList> generateFromRecipe({
+    required int recipeId,
+    required String name,
+    required bool includeAvailablePantryItems,
+  }) async {
+    throw UnimplementedError();
+  }
 }
 
 void main() {

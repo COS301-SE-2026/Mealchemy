@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../../routes/app_routes.dart';
 import '../../theme/app_colours.dart';
 import '../../theme/app_typography.dart';
@@ -37,9 +36,9 @@ class AppNavbar extends StatelessWidget {
       route: AppRoutes.dashboard,
     ),
      AppNavItem(
-      label: 'Swipes', //name can be changed to something better 
-      icon: Icons.style_outlined,
-      route: AppRoutes.guidedDiscovery,
+      label: 'Vault',
+      icon: Icons.bookmark_border,
+      route: AppRoutes.vault,
     ),
     AppNavItem(
       label: 'Discover',
@@ -47,14 +46,14 @@ class AppNavbar extends StatelessWidget {
       route: AppRoutes.discovery,
     ),
     AppNavItem(
-      label: 'Vault',
-      icon: Icons.bookmark_border,
-      route: AppRoutes.vault,
-    ),
-    AppNavItem(
       label: 'Pantry',
       icon: Icons.kitchen_outlined,
       route: AppRoutes.pantry,
+    ),
+    AppNavItem(
+      label: 'Profile',
+        icon: Icons.person_outline,
+      route: AppRoutes.preference,
     ),
   ];
 

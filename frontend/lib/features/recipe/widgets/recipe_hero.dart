@@ -8,6 +8,7 @@ import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/recipe.dart';
 import 'save_to_vault_sheet.dart';
+import '../../shopping_lists/providers/shopping_list_provider.dart';
 
 //image with overlay, back/share buttons, recipe title
 class RecipeHero extends ConsumerWidget {
@@ -47,8 +48,8 @@ class RecipeHero extends ConsumerWidget {
                     ),
                     const Spacer(),
                     _HeroCircleButton(
-                      icon: Icons.favorite_border,
-                      onTap: () {},
+                      icon: Icons.add_shopping_cart,
+                      onTap: () => _generateShoppingList(context, ref),
                       background: AppColors.textLight.withValues(alpha: 0.45),
                       iconColor: AppColors.textDark,
                       frosted: true,
@@ -86,6 +87,29 @@ class RecipeHero extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  //generates a shopping list from this recipe's missing pantry items
+  Future<void> _generateShoppingList(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(shoppingListsProvider.notifier).generateFromRecipe(
+            recipeId: recipe.recipeId,
+            recipeName: recipe.title,
+          );
+      ref.invalidate(shoppingListsProvider);
+      if (!context.mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text('Shopping list created for ${recipe.title}')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Could not create shopping list. Try again.'),
+        ),
+      );
+    }
   }
 }
 

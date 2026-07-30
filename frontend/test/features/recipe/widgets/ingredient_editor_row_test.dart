@@ -46,18 +46,19 @@ void main() {
     );
   }
 
-
-  testWidgets('shows the search placeholdr when no ingredient is selected',
+  testWidgets('shows the search placeholder when no ingredient is selected',
       (tester) async {
     await pumpRow(tester);
     expect(find.text('Search ingredient'), findsOneWidget);
   });
+
   testWidgets('shows the selected ingredient name, bound to the model',
       (tester) async {
     await pumpRow(tester, selectedItem: chicken);
     expect(find.text('Chicken'), findsOneWidget);
     expect(find.text('Search ingredient'), findsNothing);
   });
+
   testWidgets('unit dropdown lists the provided units and reports selection',
       (tester) async {
     String? changedTo;
@@ -74,12 +75,26 @@ void main() {
     expect(changedTo, 'tbsp');
   });
 
+  testWidgets('preselected unit is reflected in the dropdown', (tester) async {
+    await pumpRow(tester, selectedUnit: 'g');
+    expect(find.text('g'), findsWidgets);
+  });
+
   testWidgets('typing routes through the quantity controller', (tester) async {
     final qty = TextEditingController();
     await pumpRow(tester, quantityController: qty);
 
     await tester.enterText(find.widgetWithText(TextField, 'Qty'), '250');
     expect(qty.text, '250');
+  });
+
+  testWidgets('quantity controller initial value is shown in the field',
+      (tester) async {
+    final qty = TextEditingController(text: '125');
+    
+    await pumpRow(tester, quantityController: qty);
+
+    expect(find.widgetWithText(TextField, '125'), findsOneWidget);
   });
 
   testWidgets('tapping remove fires onRemove', (tester) async {
@@ -99,5 +114,11 @@ void main() {
 
     await pumpRow(tester, showError: true);
     expect(find.text(message), findsOneWidget);
+  });
+
+  testWidgets('renders the search field icon and remove button', (tester) async {
+    await pumpRow(tester);
+    expect(find.byIcon(Icons.search), findsOneWidget);
+    expect(find.byIcon(Icons.close), findsOneWidget);
   });
 }
