@@ -26,6 +26,7 @@ class VaultScreen extends ConsumerWidget {
         onRouteSelected: (route) => context.go(route),
       ),
       floatingActionButton: FloatingActionButton(
+        tooltip: 'Add Recipe',
         onPressed: () => context.push(AppRoutes.addRecipe),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textDark,
@@ -105,6 +106,7 @@ class _VaultFoldersLoader extends ConsumerWidget {
     );
   }
 }
+
 class _VaultError extends StatelessWidget {
   const _VaultError({required this.message});
 
