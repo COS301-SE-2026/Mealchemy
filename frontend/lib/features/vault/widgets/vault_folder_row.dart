@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
@@ -7,6 +8,7 @@ import '../providers/vault_provider.dart';
 import 'folder_recipe_row.dart';
 import 'folder_menu.dart';
 import '../models/vault.dart';
+
 
 //folder row that expands in place to reveal its recipes
 class VaultFolderRow extends ConsumerStatefulWidget {
@@ -18,7 +20,6 @@ class VaultFolderRow extends ConsumerStatefulWidget {
 
   final Vault vault;
   final VaultFolder folder;
-
 
   @override
   ConsumerState<VaultFolderRow> createState() => _VaultFolderRowState();
@@ -130,7 +131,7 @@ class _VaultFolderRowState extends ConsumerState<VaultFolderRow> {
                 child: Text(
                   'Unable to load recipes.',
                   style: AppTextStyles.caption
-                      .copyWith(color: AppColors.error),
+                  .copyWith(color: AppColors.error),
                 ),
               ),
               data: (recipes) => recipes.isEmpty
@@ -145,7 +146,34 @@ class _VaultFolderRowState extends ConsumerState<VaultFolderRow> {
                   : Column(
                       children: [
                         for (final recipe in recipes)
-                          FolderRecipeRow(recipe: recipe),
+                          FolderRecipeRow(
+                            recipe: recipe,
+                            onEditTap: () =>
+                                context.push('/recipe/${recipe.recipeId}/edit'),
+                            onDeleteConfirmed: () async {
+                              try {
+                                await ref.read(
+                                  deleteFolderRecipeProvider(
+                                      widget.folder.folderId),
+                                )(recipe.recipeId);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text('Recipe deleted.')),
+                                  );
+                                }
+                              } catch (_) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                          'Could not delete recipe. Try again.'),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                          ),
                       ],
                     ),
             ),

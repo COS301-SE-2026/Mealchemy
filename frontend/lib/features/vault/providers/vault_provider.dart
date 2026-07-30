@@ -104,3 +104,13 @@ final privateFoldersProvider = FutureProvider<List<VaultFolder>>((ref) async {
   if (private == null) return [];
   return ref.watch(vaultRepositoryProvider).getFolders(private.vaultId);
 });
+
+final deleteFolderRecipeProvider =
+    Provider.family<Future<void> Function(int recipeId), int>((ref, folderId) {
+  return (int recipeId) async {
+    final repository = ref.read(recipeRepositoryProvider);
+    await repository.deleteRecipe(recipeId);
+    ref.invalidate(recipesProvider);
+    ref.invalidate(folderRecipesProvider(folderId));
+  };
+});
