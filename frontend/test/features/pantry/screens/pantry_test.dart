@@ -376,4 +376,80 @@ void main() {
 
     expect(find.text('No ingredients match "dragonfruit".'), findsOneWidget);
   });
+
+  testWidgets('PantryScreen clears ingredient search when edit name is empty',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await pumpPantryScreen(tester);
+
+    final chickenCard = find.ancestor(
+      of: find.text('Chicken Breast'),
+      matching: find.byType(PantryItemCard),
+    );
+
+    final editIcon = find.descendant(
+      of: chickenCard,
+      matching: find.byIcon(Icons.edit_outlined),
+    );
+
+    await tester.ensureVisible(chickenCard);
+    await tester.pumpAndSettle();
+
+    await tester.tap(editIcon, warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit Ingredient'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).first, '');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit Ingredient'), findsOneWidget);
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(find.text('Could not search ingredients.'), findsNothing);
+  });
+
+  testWidgets('PantryScreen shows ingredient search error in edit dialog',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          pantryRepositoryProvider.overrideWithValue(MockPantryRepository()),
+          ingredientCatalogueRepositoryProvider.overrideWith(
+            (ref) => throw Exception('Search failed'),
+          ),
+        ],
+        child: const MaterialApp(
+          home: PantryScreen(),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    final chickenCard = find.ancestor(
+      of: find.text('Chicken Breast'),
+      matching: find.byType(PantryItemCard),
+    );
+
+    final editIcon = find.descendant(
+      of: chickenCard,
+      matching: find.byIcon(Icons.edit_outlined),
+    );
+
+    await tester.ensureVisible(chickenCard);
+    await tester.pumpAndSettle();
+
+    await tester.tap(editIcon, warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'yogurt');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Could not search ingredients.'), findsOneWidget);
+  });
 }
