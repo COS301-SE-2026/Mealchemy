@@ -50,7 +50,7 @@
 | Backend (staging) | [Deployed Backend Staging](https://mealchemy-backend-staging-otygypdv7a-ey.a.run.app) |
 | Landing page | [Static-Landing-Page](https://mealchemy-firebase.web.app/)
 | Android app | [Android App download](https://appdistribution.firebase.dev/i/9aea731b3a1ce2f6)|
-| Brand style guide | [Brand Guide](ttps://cos301-se-2026.github.io/Mealchemy/) 
+| Brand style guide | [Brand Guide](https://cos301-se-2026.github.io/Mealchemy/)|
 
 ---
 
