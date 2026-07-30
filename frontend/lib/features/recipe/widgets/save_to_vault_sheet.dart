@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:mealchemy/core/shared_widgets/Molecules/app_input_dialog.dart';
 import '../../../core/shared_widgets/atoms/app_button.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
@@ -131,26 +131,54 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
       error: (_, __) => Text('Could not load folders.',
           style: AppTextStyles.bodySmall.copyWith(color: AppColors.error)),
       data: (folders) {
-        if (folders.isEmpty) {
-          return _disabledField('No folders in this vault');
-        }
-        return DropdownButtonFormField<int>(
-          initialValue: _folderId,
-          isExpanded: true,
-          decoration: _decoration(),
-          hint: Text('Select a folder',
-              style: AppTextStyles.body.copyWith(color: AppColors.textMuted)),
-          items: [
-            for (final VaultFolder f in folders)
-              DropdownMenuItem<int>(
-                value: f.folderId,
-                child: Text(f.folderName),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (folders.isEmpty)
+              _disabledField('No folders in this vault yet')
+            else
+              DropdownButtonFormField<int>(
+                initialValue: _folderId,
+                isExpanded: true,
+                decoration: _decoration(),
+                hint: Text('Select a folder',
+                    style: AppTextStyles.body
+                        .copyWith(color: AppColors.textMuted)),
+                items: [
+                  for (final VaultFolder f in folders)
+                    DropdownMenuItem<int>(
+                      value: f.folderId,
+                      child: Text(f.folderName),
+                    ),
+                ],
+                onChanged: (id) => setState(() => _folderId = id),
               ),
+            const SizedBox(height: 12),
+            AppButton.dashed(
+              label: 'CREATE A FOLDER',
+              onPressed: _createFolder,
+              leftIcon: Icons.create_new_folder_outlined,
+              isFullWidth: true,
+            ),
           ],
-          onChanged: (id) => setState(() => _folderId = id),
         );
       },
     );
+  }
+
+  Future<void> _createFolder() async {
+    if (_vaultId == null) return;
+    final name = await showAppInputDialog(
+      context: context,
+      title: 'Create Folder',
+      label: 'Folder Name',
+      hint: 'e.g. Weeknight Dinners',
+      confirmLabel: 'Create',
+      prefixIcon: Icons.folder_outlined,
+    );
+    if (name == null) return;
+    await ref.read(vaultRepositoryProvider).createFolder(_vaultId!, name);
+    ref.invalidate(vaultFoldersProvider(_vaultId!));
   }
 
   Future<void> _save() async {
@@ -162,7 +190,6 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
       ref.invalidate(vaultFoldersProvider(_vaultId!));
       ref.invalidate(folderRecipesProvider(_folderId!));
       ref.invalidate(folderRecipeDisplayProvider(_folderId!));
-      ref.invalidate(vaultFoldersProvider(_vaultId!));
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(

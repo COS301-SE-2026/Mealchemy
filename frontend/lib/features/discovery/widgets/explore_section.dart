@@ -79,6 +79,8 @@ class _RecipeCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final photoUrl = recipe.photoUrl;
+
     return GestureDetector(
       onTap: () => context.push('/recipe/${recipe.recipeId}'),
       child: SizedBox(
@@ -89,6 +91,15 @@ class _RecipeCell extends StatelessWidget {
             const DecoratedBox(
               decoration: BoxDecoration(gradient: AppColors.brand),
             ),
+            if (photoUrl != null && photoUrl.isNotEmpty)
+              Image.network(
+                photoUrl,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, progress) =>
+                    progress == null ? child : const SizedBox.shrink(),
+                errorBuilder: (context, error, stack) =>
+                    const SizedBox.shrink(),
+              ),
             const Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(

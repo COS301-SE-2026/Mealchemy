@@ -121,6 +121,15 @@ class _DeleteMenuShoppingListRepository implements ShoppingListRepository {
   Future<CompleteShopResult> completeShop(String listId) {
     throw UnimplementedError();
   }
+
+  @override
+  Future<ShoppingList> generateFromRecipe({
+    required int recipeId,
+    required String name,
+    required bool includeAvailablePantryItems,
+  }) async {
+    throw UnimplementedError();
+  }
 }
 
 void main() {

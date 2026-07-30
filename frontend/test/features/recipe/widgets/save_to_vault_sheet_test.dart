@@ -153,7 +153,7 @@ void main() {
     await tester.tap(find.text('My Vault').last);
     await tester.pumpAndSettle();
 
-    expect(find.text('No folders in this vault'), findsOneWidget);
+    expect(find.text('No folders in this vault yet'), findsOneWidget);
   });
 
   testWidgets('selecting a folder and saving files the recipe', (tester) async {

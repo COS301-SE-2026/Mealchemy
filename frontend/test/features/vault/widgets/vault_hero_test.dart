@@ -11,7 +11,6 @@ void main() {
 
   Widget host({
     VoidCallback? onSearch,
-    VoidCallback? onAdd,
     VoidCallback? onShoppingList,
     List<Override> extraOverrides = const [],
   }) {
@@ -25,7 +24,6 @@ void main() {
         home: Scaffold(
           body: VaultHero(
             onSearch: onSearch ?? () {},
-            onAdd: onAdd ?? () {},
             onShoppingList: onShoppingList ?? () {},
           ),
         ),
@@ -45,8 +43,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byIcon(Icons.search), findsOneWidget);
-    expect(find.byIcon(Icons.add), findsOneWidget);
-    expect(find.byIcon(Icons.receipt_long_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.shopping_cart_outlined), findsOneWidget);
   });
 
   testWidgets('tapping search fires onSearch', (tester) async {
@@ -58,22 +55,13 @@ void main() {
     expect(tapped, isTrue);
   });
 
-  testWidgets('tapping add fires onAdd', (tester) async {
-    var tapped = false;
-    await tester.pumpWidget(host(onAdd: () => tapped = true));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byIcon(Icons.add));
-    expect(tapped, isTrue);
-  });
-
   testWidgets('tapping the shopping-list icon fires onShoppingList',
       (tester) async {
     var tapped = false;
     await tester.pumpWidget(host(onShoppingList: () => tapped = true));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.receipt_long_outlined));
+    await tester.tap(find.byIcon(Icons.shopping_cart_outlined));
     expect(tapped, isTrue);
   });
 }

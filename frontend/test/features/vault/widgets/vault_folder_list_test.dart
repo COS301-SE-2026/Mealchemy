@@ -116,7 +116,7 @@ void main() {
         (tester) async {
       await tester.pumpWidget(host(folderList: folders, sharedMode: false));
       await tester.pumpAndSettle();
-      expect(find.byIcon(Icons.more_vert), findsNWidgets(2));
+      expect(find.byIcon(Icons.more_vert), findsNWidgets(3));
     });
   });
 }

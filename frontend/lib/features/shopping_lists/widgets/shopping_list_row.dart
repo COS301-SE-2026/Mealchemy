@@ -181,17 +181,18 @@ class _ListText extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          //dynamic subtitles
-          list.displaySubtitle,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.tertiaryMuted,
-            fontSize: 13,
-          ),
-        ),
+        //Not currently working can be added later after the demo
+        // const SizedBox(height: 4),
+        // Text(
+        //   //dynamic subtitles
+        //   list.displaySubtitle,
+        //   maxLines: 1,
+        //   overflow: TextOverflow.ellipsis,
+        //   style: AppTextStyles.bodySmall.copyWith(
+        //     color: AppColors.tertiaryMuted,
+        //     fontSize: 13,
+        //   ),
+        // ),
       ],
     );
   }

@@ -10,12 +10,10 @@ class VaultHero extends StatelessWidget {
   const VaultHero({
     super.key,
     required this.onSearch,
-    required this.onAdd,
     required this.onShoppingList,
   });
 
   final VoidCallback onSearch;
-  final VoidCallback onAdd;
   final VoidCallback onShoppingList;
 
   @override
@@ -53,12 +51,7 @@ class VaultHero extends StatelessWidget {
           Column(
             children: [
               AppIconButton.ghost(
-                icon: Icons.add,
-                onPressed: onAdd,
-                customColor: AppColors.textLight,
-              ),
-              AppIconButton.ghost(
-                icon: Icons.receipt_long_outlined,
+                icon: Icons.shopping_cart_outlined,
                 onPressed: onShoppingList,
                 customColor: AppColors.textLight,
               ),
