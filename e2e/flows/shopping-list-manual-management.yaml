@@ -1,0 +1,42 @@
+appId: com.mealchemy.mealchemy
+name: Log in and show off shopping list management
+---
+
+# Log in
+- runFlow: auth-login.yaml
+
+# Navigate to shopping list page
+- tapOn:
+    id: "shoppingListButton"
+
+# Create shopping list
+- tapOn:
+    point: 83%,80%
+- tapOn: "List name\ne.g. Weekend Braai"
+- inputText: "Test Shopping List"
+- tapOn: "Create"
+
+# View shopping list
+- tapOn: "Test Shopping List"
+- tapOn:
+    point: 41%,79%
+
+# Adding item
+- tapOn: "Item name"
+- inputText: "Test item"
+- tapOn: "Quantity"
+- inputText: "5"
+- tapOn: "Add"
+
+# Delete item
+- tapOn: "Test item\n5 Produce"
+- tapOn: "Show menu"
+- tapOn: "Delete selected"
+
+# Delete list
+- tapOn:
+    point: 7%,7%
+- tapOn:
+    text: "Show menu"
+    index: 1
+- tapOn: "Delete list"
