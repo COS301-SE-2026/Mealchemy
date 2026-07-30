@@ -1,0 +1,26 @@
+appId: com.mealchemy.mealchemy
+name: Log in and land on vaults
+---
+
+- launchApp:
+    clearState: true
+
+# Login screen is the app's initial location.
+- assertVisible: "Welcome Back"
+
+# Enter email of existing user
+- tapOn:
+    below: "Email Address"
+- inputText: "e2eUser@mealchemy.com"
+
+# Enter password of existing user
+- tapOn:
+    below: "Password"
+- inputText: "test1234"
+
+- tapOn:
+    text: "Log In"
+    below: "Password"
+
+- assertVisible: "My Vault"
+- assertNotVisible: "Welcome Back"

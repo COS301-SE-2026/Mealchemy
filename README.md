@@ -11,7 +11,7 @@
 ## Badges
 
 ### Build and Coverage
-![Build](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/ci.yml/badge.svg)
+
 [![Coverage Overall](https://codecov.io/gh/COS301-SE-2026/Mealchemy/branch/main/graph/badge.svg?token=GRHIRNQ260)](https://codecov.io/gh/COS301-SE-2026/Mealchemy)
 [![Coverage Backend](https://codecov.io/gh/COS301-SE-2026/Mealchemy/branch/main/graph/badge.svg?token=GRHIRNQ260&flag=backend)](https://codecov.io/gh/COS301-SE-2026/Mealchemy)
 [![Coverage Frontend](https://codecov.io/gh/COS301-SE-2026/Mealchemy/branch/main/graph/badge.svg?token=GRHIRNQ260&flag=frontend)](https://codecov.io/gh/COS301-SE-2026/Mealchemy)
@@ -60,6 +60,8 @@
 ---
 
 ## Documentation
+
+Note: All documentation is contained within the Wiki
 
 <details>
   <summary>Demo 2 - Click to expand</summary>

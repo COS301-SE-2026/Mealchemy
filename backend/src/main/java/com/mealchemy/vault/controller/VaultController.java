@@ -48,9 +48,9 @@ public class VaultController
 
     // Post
     @PostMapping
-    public VaultResponse createVault(@Valid @RequestBody VaultRequest request, @AuthenticationPrincipal String ownerId)
+    public VaultResponse createVault(@Valid @RequestBody VaultRequest request, @AuthenticationPrincipal String userId)
     {
-        return vaultService.createVault(request, Integer.parseInt(ownerId));
+        return vaultService.createVault(request, Integer.parseInt(userId));
     }
 
     // Put
