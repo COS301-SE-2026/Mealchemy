@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mealchemy/features/pantry/screens/pantry_screen.dart';
+import 'package:mealchemy/features/pantry/providers/pantry_provider.dart';
+import 'package:mealchemy/features/pantry/repositories/mock_pantry_repository.dart';
 
 void main() {
   setUpAll(() {
@@ -10,15 +12,24 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  //make sure renders everything
-  testWidgets('PantryScreen renders pantry overview', (tester) async {
+  Future<void> pumpPantryScreen(WidgetTester tester) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
+      ProviderScope(
+        overrides: [
+          pantryRepositoryProvider.overrideWithValue(MockPantryRepository()),
+        ],
+        child: const MaterialApp(
           home: PantryScreen(),
         ),
       ),
     );
+
+    await tester.pumpAndSettle();
+  }
+
+  //make sure renders everything
+  testWidgets('PantryScreen renders pantry overview', (tester) async {
+    await pumpPantryScreen(tester);
 
     await tester.pumpAndSettle();
 
@@ -31,13 +42,7 @@ void main() {
   testWidgets('PantryScreen filters pantry items by search query', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: PantryScreen(),
-        ),
-      ),
-    );
+    await pumpPantryScreen(tester);
 
     await tester.pumpAndSettle();
 
@@ -49,13 +54,7 @@ void main() {
   });
 
   testWidgets('PantryScreen filters pantry items by category', (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: PantryScreen(),
-        ),
-      ),
-    );
+    await pumpPantryScreen(tester);
 
     await tester.pumpAndSettle();
 
