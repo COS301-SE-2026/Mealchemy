@@ -29,6 +29,18 @@ class _EditingPantryRepository extends MockPantryRepository {
   }
 }
 
+class _FailingEditPantryRepository extends MockPantryRepository {
+  @override
+  Future<PantryIngredient> updatePantryIngredient({
+    required int pIngredientId,
+    required int ingId,
+    required String quantity,
+    required String unit,
+  }) {
+    throw Exception('Update failed');
+  }
+}
+
 void main() {
   setUpAll(() {
     //disable fonts during tests
@@ -132,5 +144,76 @@ void main() {
 
     expect(find.text('Chicken Breast'), findsOneWidget);
     expect(find.text('2kg • Pantry'), findsOneWidget);
+  });
+
+  testWidgets('PantryScreen validates edit pantry ingredient form',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await pumpPantryScreen(tester);
+
+    final chickenCard = find.ancestor(
+      of: find.text('Chicken Breast'),
+      matching: find.byType(PantryItemCard),
+    );
+
+    final editIcon = find.descendant(
+      of: chickenCard,
+      matching: find.byIcon(Icons.edit_outlined),
+    );
+
+    await tester.ensureVisible(chickenCard);
+    await tester.pumpAndSettle();
+
+    await tester.tap(editIcon, warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit Ingredient'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).last, '');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Quantity and unit are required.'), findsOneWidget);
+  });
+
+  testWidgets('PantryScreen shows error when editing pantry ingredient fails',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await pumpPantryScreen(
+      tester,
+      pantryRepository: _FailingEditPantryRepository(),
+    );
+
+    final chickenCard = find.ancestor(
+      of: find.text('Chicken Breast'),
+      matching: find.byType(PantryItemCard),
+    );
+
+    final editIcon = find.descendant(
+      of: chickenCard,
+      matching: find.byIcon(Icons.edit_outlined),
+    );
+
+    await tester.ensureVisible(chickenCard);
+    await tester.pumpAndSettle();
+
+    await tester.tap(editIcon, warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit Ingredient'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).last, '2');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Could not update ingredient.'), findsOneWidget);
   });
 }
