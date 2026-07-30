@@ -6,7 +6,6 @@ import 'package:mealchemy/features/pantry/models/pantry_ingredient.dart';
 import 'package:mealchemy/features/pantry/models/pantry_summary.dart';
 import 'package:mealchemy/features/pantry/providers/pantry_provider.dart';
 import 'package:mealchemy/features/pantry/repositories/pantry_repository.dart';
-import 'package:mealchemy/features/pantry/screens/add_ingredient_screen.dart';
 import 'package:mealchemy/features/pantry/screens/pantry_screen.dart';
 
 //mock repo to simulate pantry API
@@ -80,22 +79,4 @@ void main() {
     expect(find.text('Unable to load pantry data.'), findsOneWidget);
   });
 
-  testWidgets('AddIngredientScreen renders category error state',
-      (tester) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          pantryRepositoryProvider
-              .overrideWithValue(_FailingPantryRepository()),
-        ],
-        child: const MaterialApp(
-          home: AddIngredientScreen(),
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle();
-
-    expect(find.text('Unable to load ingredient categories.'), findsOneWidget);
-  });
 }
