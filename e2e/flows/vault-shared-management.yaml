@@ -1,0 +1,47 @@
+appId: com.mealchemy.mealchemy
+name: Log in and show off shared vault management
+---
+
+# Log in
+- runFlow: auth-login.yaml
+
+# Navigating to Shared Vaults
+- tapOn: "Private Vault"
+- tapOn: "Shared Vaults"
+
+# Adding Vault
+- tapOn: "Add Vault"
+- tapOn: "e.g. Family Recipes"
+- inputText: "E2ESharedVaultTest"
+- tapOn: "Create"
+
+# Adding Folder
+- tapOn: "ADD MORE FOLDERS"
+- tapOn: "e.g. Weeknight Dinners"
+- inputText: "E2EFolderCreateTest"
+- tapOn: "Create"
+
+# Adding Member
+- tapOn: "Show menu"
+- tapOn: "Add member"
+- tapOn: "chef@mealchemy.com"
+- inputText: "e2eOtherUser@mealchemy.com"
+- tapOn: "Add"
+
+# Show dropdown has no recipes
+- tapOn: "E2EFolderCreateTest\n0 recipes · Created 30 Jul 2026"
+
+# Delete Folder
+- tapOn:
+    text: "Show menu"
+    index: 1
+- tapOn: "Delete folder"
+- tapOn: "Delete"
+
+# Delete Vault
+- tapOn: "Show menu"
+- tapOn: "Delete vault"
+- tapOn: "Delete"
+
+
+

@@ -1,0 +1,44 @@
+appId: com.mealchemy.mealchemy
+name: Log in and show off shared vault management
+---
+
+# Log in
+- runFlow: auth-login.yaml
+
+# Check if its already in global vault
+- tapOn: "DISCOVER"
+
+# Adding recipe
+- tapOn: "VAULT"
+- tapOn: "Add Recipe"
+- tapOn: "e.g. Saffron-Infused Risotto"
+- inputText: "Test Recipe"
+- tapOn: "A short summary of the dish"
+- inputText: "Test Recipe Description"
+- tapOn: "Cuisine\nSelect a cuisine"
+- tapOn: "ITALIAN"
+- tapOn: "15"
+- inputText: "20"
+- tapOn: "30"
+- inputText: "30"
+- tapOn: "4"
+- inputText: "2"
+- scrollUntilVisible:
+    element: "Add Step"
+- tapOn: "Publish to Global Vault\nEveryone will be able to see this recipe."
+- tapOn: "Search ingredient"
+- tapOn: "Tomatoes, grape, raw\nVegetables and Vegetable Products"
+- tapOn: "Qty"
+- inputText: "4"
+- tapOn: "Unit"
+- tapOn: "piece"
+- tapOn: "1\nDescribe this step"
+- inputText: "Test Recipe Step"
+- tapOn: "Create Recipe"
+- tapOn: "Publish"
+
+# Show it was added
+- tapOn: "My Recipes.*"
+
+# Show its in global
+- tapOn: "DISCOVER"
