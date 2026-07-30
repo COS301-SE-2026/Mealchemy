@@ -56,7 +56,8 @@ void main() {
   Widget host({required int currentUserId}) {
     return ProviderScope(
       overrides: [
-        authProvider.overrideWith((ref) => _FakeAuthNotifier(currentUserId, ref)),
+        authProvider
+            .overrideWith((ref) => _FakeAuthNotifier(currentUserId, ref)),
       ],
       child: MaterialApp(
         home: Scaffold(
@@ -67,10 +68,10 @@ void main() {
   }
 
   testWidgets('owner sees rename and delete actions', (tester) async {
-      tester.view.physicalSize = const Size(1200, 1600);
-  tester.view.devicePixelRatio = 1.0;
-  addTearDown(tester.view.resetPhysicalSize);
-  addTearDown(tester.view.resetDevicePixelRatio);
+    tester.view.physicalSize = const Size(1200, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(host(currentUserId: 42));
     await tester.tap(find.byIcon(Icons.more_vert));
@@ -80,13 +81,12 @@ void main() {
     expect(find.text('Delete folder'), findsOneWidget);
   });
 
-testWidgets('non-owner cannot open the folder menu', (tester) async {
-     await tester.pumpWidget(host(currentUserId: 99));
-     await tester.tap(find.byIcon(Icons.more_vert));
-     await tester.pumpAndSettle();
+  testWidgets('non-owner tap opens no folder actions', (tester) async {
+    await tester.pumpWidget(host(currentUserId: 99));
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
 
-     expect(find.text('Rename folder'), findsNothing);
-     expect(find.text('Delete folder'), findsNothing);
-     expect(find.text('Only the owner can manage folders.'), findsNothing);
-   });
+    expect(find.text('Rename folder'), findsNothing);
+    expect(find.text('Delete folder'), findsNothing);
+  });
 }

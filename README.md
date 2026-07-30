@@ -15,12 +15,17 @@
 [![Coverage Overall](https://codecov.io/gh/COS301-SE-2026/Mealchemy/branch/main/graph/badge.svg?token=GRHIRNQ260)](https://codecov.io/gh/COS301-SE-2026/Mealchemy)
 [![Coverage Backend](https://codecov.io/gh/COS301-SE-2026/Mealchemy/branch/main/graph/badge.svg?token=GRHIRNQ260&flag=backend)](https://codecov.io/gh/COS301-SE-2026/Mealchemy)
 [![Coverage Frontend](https://codecov.io/gh/COS301-SE-2026/Mealchemy/branch/main/graph/badge.svg?token=GRHIRNQ260&flag=frontend)](https://codecov.io/gh/COS301-SE-2026/Mealchemy)
+[![Deploy Landing Page](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/deploy-landing-page.yml/badge.svg?branch=main)](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/deploy-landing-page.yml)
+[![CI](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/ci.yml/badge.svg)](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/ci.yml)
+[![CD](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/cd.yml/badge.svg)](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/cd.yml)
+[![Frontend Delivery](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/frontend-delivery.yml/badge.svg)](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/frontend-delivery.yml)
+[![Deploy Design Spec](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/deploy-design-spec.yml/badge.svg)](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/deploy-design-spec.yml)
 
 
 
 ### Repository
 [![Issues](https://img.shields.io/github/issues/COS301-SE-2026/Mealchemy)](https://github.com/COS301-SE-2026/Mealchemy/issues)
-[![Uptime Robot status](https://img.shields.io/website?url=https%3A%2F%2Fmealchemy-backend.onrender.com%2Factuator%2Fhealth&label=API%20uptime)](https://stats.uptimerobot.com/wnmHUXyJfN)
+[![Uptime Robot status](https://img.shields.io/website?url=https%3A%2F%2Fmealchemy-backend-prod-otygypdv7a-ey.a.run.app%2Factuator%2Fhealth&label=API%20uptime)](https://stats.uptimerobot.com/wnmHUXyJfN)
 
 ### Tech Stack
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=flat&logo=flutter&logoColor=white)
@@ -39,9 +44,18 @@
 | Resource | Link |
 |---|---|
 | GitHub Project Board | [Project Board](https://github.com/orgs/COS301-SE-2026/projects/67) |
-| Design Specifications | [Design Spec](https://cos301-se-2026.github.io/Mealchemy/) |
 | Wiki | [Wiki Home](https://github.com/COS301-SE-2026/Mealchemy/wiki) |
 | Team Email | [pulsefive@gmail.com](mailto:pulsefive@gmail.com) |
+
+## Deployed Links
+
+| Service | Link |
+|---|---|
+| Backend (production) | [Deployed Backend Production](https://mealchemy-backend-prod-otygypdv7a-ey.a.run.app)
+| Backend (staging) | [Deployed Backend Staging](https://mealchemy-backend-staging-otygypdv7a-ey.a.run.app) |
+| Landing page | [Static-Landing-Page](https://mealchemy-firebase.web.app/)
+| Android app | [Android App download](https://appdistribution.firebase.dev/i/9aea731b3a1ce2f6)|
+| Brand style guide | [Brand Guide](https://cos301-se-2026.github.io/Mealchemy/)|
 
 ---
 

@@ -72,9 +72,9 @@ class _PreferenceContentState extends ConsumerState<_PreferenceContent> {
       appBar: AppBar(
         actions: [
           IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Settings',
+            onPressed: () => context.push(AppRoutes.help),
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'Help',
           ),
         ],
       ),

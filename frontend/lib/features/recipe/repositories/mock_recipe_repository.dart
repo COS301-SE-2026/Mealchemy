@@ -160,7 +160,6 @@ class MockRecipeRepository implements RecipeRepository {
                 'Serve immediately, topped with chopped fresh parsley or basil and a generous grating of Parmesan cheese.'),
       ],
     ),
-
     Recipe(
       recipeId: 2,
       title: 'Lemon Herb Salmon with Roasted Vegetables',
@@ -311,7 +310,6 @@ class MockRecipeRepository implements RecipeRepository {
                 'Remove from the oven, garnish with fresh parsley, and serve immediately directly from the pan.'),
       ],
     ),
-
     Recipe(
       recipeId: 3,
       title: 'Black Bean and Corn Burrito Bowls',
@@ -589,5 +587,9 @@ class MockRecipeRepository implements RecipeRepository {
       UnitOfMeasurement(unitId: 4, name: 'tbsp', system: 'IMPERIAL'),
       UnitOfMeasurement(unitId: 5, name: 'tsp', system: 'IMPERIAL'),
     ];
+  }
+
+  @override
+  Future<void> deleteRecipe(int recipeId) async {
   }
 }

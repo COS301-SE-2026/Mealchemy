@@ -14,6 +14,19 @@ import '../models/pantry_summary.dart';
 import '../providers/pantry_provider.dart';
 import '../widgets/pantry_item_card.dart';
 import '../widgets/pantry_summary_card.dart';
+import '../models/ingredient_catalogue_item.dart';
+
+const List<String> _unitOptions = [
+  'g',
+  'kg',
+  'ml',
+  'L',
+  'cups',
+  'tbsp',
+  'tsp',
+  'oz',
+  'pcs',
+];
 
 //change from stateless widget to consumer widget
 class PantryScreen extends ConsumerWidget {
@@ -45,6 +58,7 @@ class PantryScreen extends ConsumerWidget {
         onRouteSelected: (route) => context.go(route),
       ),
       floatingActionButton: FloatingActionButton(
+        tooltip: 'Add Pantry Ingredient',
         onPressed: () => context.push(AppRoutes.addIngredient),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textDark,
@@ -134,9 +148,14 @@ class _PantryContent extends ConsumerWidget {
                     name: ingredient.name,
                     details: ingredient.details,
                     status: ingredient.status,
-                    onEdit: () => pantryNotifier.markOutOfStock(
-                      ingredient.name,
-                    ),
+                    onEdit: ingredient.pIngredientId == null ||
+                            ingredient.ingId == null
+                        ? null
+                        : () => _showEditPantryIngredientDialog(
+                              context: context,
+                              ref: ref,
+                              ingredient: ingredient,
+                            ),
                     onDelete: ingredient.pIngredientId == null
                         ? null
                         : () => pantryNotifier.removeIngredient(
@@ -225,4 +244,241 @@ class _PantryError extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _showEditPantryIngredientDialog({
+  required BuildContext context,
+  required WidgetRef ref,
+  required PantryIngredient ingredient,
+}) async {
+  final nameController = TextEditingController(text: ingredient.name);
+  final quantityController = TextEditingController(
+    text: ingredient.quantity ?? '',
+  );
+
+  IngredientCatalogueItem selectedIngredient = IngredientCatalogueItem(
+    ingId: ingredient.ingId!,
+    name: ingredient.name,
+    category: ingredient.category,
+  );
+
+  var selectedUnit = ingredient.unit;
+  var ingredientOptions = <IngredientCatalogueItem>[];
+  var isSearching = false;
+  var showValidation = false;
+  var isSaving = false;
+  String? searchError;
+  String? saveError;
+  var searchRequestId = 0;
+
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (context, setDialogState) {
+          Future<void> searchIngredients(String value) async {
+            final query = value.trim();
+            final requestId = ++searchRequestId;
+
+            setDialogState(() {
+              selectedIngredient = IngredientCatalogueItem(
+                ingId: ingredient.ingId!,
+                name: ingredient.name,
+                category: ingredient.category,
+              );
+              searchError = null;
+            });
+
+            if (query.isEmpty) {
+              setDialogState(() {
+                ingredientOptions = [];
+                isSearching = false;
+              });
+              return;
+            }
+
+            setDialogState(() => isSearching = true);
+
+            try {
+              final results = await ref
+                  .read(ingredientCatalogueRepositoryProvider)
+                  .searchIngredients(query);
+
+              if (requestId != searchRequestId) return;
+
+              setDialogState(() {
+                ingredientOptions = results;
+                isSearching = false;
+              });
+            } catch (_) {
+              if (requestId != searchRequestId) return;
+
+              setDialogState(() {
+                ingredientOptions = [];
+                isSearching = false;
+                searchError = 'Could not search ingredients.';
+              });
+            }
+          }
+
+          Future<void> saveChanges() async {
+            final quantity = quantityController.text.trim();
+            final unit = selectedUnit?.trim() ?? '';
+
+            if (quantity.isEmpty || unit.isEmpty) {
+              setDialogState(() {
+                showValidation = true;
+                saveError = null;
+              });
+              return;
+            }
+
+            setDialogState(() {
+              isSaving = true;
+              saveError = null;
+            });
+
+            try {
+              await ref.read(pantryStateProvider.notifier).updateIngredient(
+                    pIngredientId: ingredient.pIngredientId!,
+                    ingId: selectedIngredient.ingId,
+                    quantity: quantity,
+                    unit: unit,
+                  );
+
+              if (dialogContext.mounted) {
+                Navigator.of(dialogContext).pop();
+              }
+            } catch (_) {
+              setDialogState(() {
+                isSaving = false;
+                saveError = 'Could not update ingredient.';
+              });
+            }
+          }
+
+          return AlertDialog(
+            backgroundColor: AppColors.bgCream,
+            title: Text(
+              'Edit Ingredient',
+              style: AppTextStyles.title.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Ingredient name',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: searchIngredients,
+                  ),
+                  if (searchError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        searchError!,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ),
+                  if (isSearching)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 10),
+                      child: LinearProgressIndicator(),
+                    ),
+                  if (ingredientOptions.isNotEmpty)
+                    ...ingredientOptions.map(
+                      (option) => ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(option.name),
+                        subtitle: Text(option.category),
+                        onTap: () {
+                          setDialogState(() {
+                            selectedIngredient = option;
+                            nameController.text = option.name;
+                            ingredientOptions = [];
+                          });
+                        },
+                      ),
+                    ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: quantityController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Quantity',
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedUnit,
+                    decoration: const InputDecoration(
+                      labelText: 'Unit',
+                    ),
+                    items: _unitOptions
+                        .map(
+                          (unit) => DropdownMenuItem<String>(
+                            value: unit,
+                            child: Text(unit),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      setDialogState(() => selectedUnit = value);
+                    },
+                  ),
+                  if (showValidation)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        'Quantity and unit are required.',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ),
+                  if (saveError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        saveError!,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed:
+                    isSaving ? null : () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: isSaving ? null : saveChanges,
+                child: isSaving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Save'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
 }
