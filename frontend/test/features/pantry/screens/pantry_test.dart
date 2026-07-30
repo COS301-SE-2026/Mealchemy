@@ -7,6 +7,7 @@ import 'package:mealchemy/features/pantry/providers/pantry_provider.dart';
 import 'package:mealchemy/features/pantry/repositories/mock_pantry_repository.dart';
 import 'package:mealchemy/features/pantry/screens/pantry_screen.dart';
 import 'package:mealchemy/features/pantry/widgets/pantry_item_card.dart';
+import 'package:mealchemy/features/pantry/models/pantry_summary.dart';
 
 class _EditingPantryRepository extends MockPantryRepository {
   @override
@@ -38,6 +39,39 @@ class _FailingEditPantryRepository extends MockPantryRepository {
     required String unit,
   }) {
     throw Exception('Update failed');
+  }
+}
+
+class _EmptyPantryRepository extends MockPantryRepository {
+  @override
+  Future<List<PantryIngredient>> getPantryIngredients() async {
+    return const [];
+  }
+}
+
+class _DeletePantryRepository extends MockPantryRepository {
+  @override
+  Future<List<PantryIngredient>> getPantryIngredients() async {
+    return const [
+      PantryIngredient(
+        pIngredientId: 50,
+        ingId: 150,
+        name: 'Expired Test Item',
+        details: '1g • Expired',
+        category: 'Test',
+        status: PantryItemStatus.expired,
+        quantity: '1',
+        unit: 'g',
+      ),
+    ];
+  }
+
+  @override
+  Future<List<PantryFilter>> getPantryFilters() async {
+    return const [
+      PantryFilter(label: 'All', count: 1),
+      PantryFilter(label: 'Test', count: 1),
+    ];
   }
 }
 
@@ -215,5 +249,131 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Could not update ingredient.'), findsOneWidget);
+  });
+  testWidgets('PantryScreen closes edit dialog when cancel is tapped',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await pumpPantryScreen(tester);
+
+    final chickenCard = find.ancestor(
+      of: find.text('Chicken Breast'),
+      matching: find.byType(PantryItemCard),
+    );
+
+    final editIcon = find.descendant(
+      of: chickenCard,
+      matching: find.byIcon(Icons.edit_outlined),
+    );
+
+    await tester.ensureVisible(chickenCard);
+    await tester.pumpAndSettle();
+
+    await tester.tap(editIcon, warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit Ingredient'), findsOneWidget);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit Ingredient'), findsNothing);
+  });
+
+  testWidgets('PantryScreen shows empty pantry message', (tester) async {
+    await pumpPantryScreen(
+      tester,
+      pantryRepository: _EmptyPantryRepository(),
+    );
+
+    expect(find.text('No pantry ingredients found.'), findsOneWidget);
+  });
+
+  testWidgets('PantryScreen shows empty search results message',
+      (tester) async {
+    await pumpPantryScreen(tester);
+
+    await tester.enterText(find.byType(TextField), 'dragonfruit');
+    await tester.pumpAndSettle();
+
+    expect(find.text('No ingredients match "dragonfruit".'), findsOneWidget);
+  });
+
+  testWidgets('PantryScreen closes edit dialog when cancel is tapped',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await pumpPantryScreen(tester);
+
+    final chickenCard = find.ancestor(
+      of: find.text('Chicken Breast'),
+      matching: find.byType(PantryItemCard),
+    );
+
+    final editIcon = find.descendant(
+      of: chickenCard,
+      matching: find.byIcon(Icons.edit_outlined),
+    );
+
+    await tester.ensureVisible(chickenCard);
+    await tester.pumpAndSettle();
+
+    await tester.tap(editIcon, warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit Ingredient'), findsOneWidget);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit Ingredient'), findsNothing);
+  });
+
+  testWidgets('PantryScreen removes expired pantry ingredient', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await pumpPantryScreen(
+      tester,
+      pantryRepository: _DeletePantryRepository(),
+    );
+
+    expect(find.text('Expired Test Item'), findsOneWidget);
+
+    final expiredCard = find.ancestor(
+      of: find.text('Expired Test Item'),
+      matching: find.byType(PantryItemCard),
+    );
+
+    final deleteIcon = find.descendant(
+      of: expiredCard,
+      matching: find.byIcon(Icons.delete_outline),
+    );
+
+    await tester.tap(deleteIcon, warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Expired Test Item'), findsNothing);
+  });
+
+  testWidgets('PantryScreen shows empty pantry message', (tester) async {
+    await pumpPantryScreen(
+      tester,
+      pantryRepository: _EmptyPantryRepository(),
+    );
+
+    expect(find.text('No pantry ingredients found.'), findsOneWidget);
+  });
+
+  testWidgets('PantryScreen shows empty search results message',
+      (tester) async {
+    await pumpPantryScreen(tester);
+
+    await tester.enterText(find.byType(TextField), 'dragonfruit');
+    await tester.pumpAndSettle();
+
+    expect(find.text('No ingredients match "dragonfruit".'), findsOneWidget);
   });
 }
