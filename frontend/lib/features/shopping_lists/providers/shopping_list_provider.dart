@@ -95,13 +95,13 @@ class ShoppingListsState {
 
 //handles shopping list interactions, updates state
 class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
-  late final ShoppingListRepository _repository;
+  //read the active repo fresh each time so build re-running is harmless
+  ShoppingListRepository get _repository =>
+      ref.read(shoppingListRepositoryProvider);
 
   //loads initial set of shopping lists
   @override
   Future<ShoppingListsState> build() async {
-    _repository = ref.watch(shoppingListRepositoryProvider);
-
     final lists = await _repository.getShoppingLists();
 
     return ShoppingListsState(lists: lists);
