@@ -21,4 +21,7 @@ abstract class RecipeRepository {
   Future<List<RecipeIngredient>> getRecipeIngredients(int recipeId);
   Future<List<RecipeStep>> getRecipeSteps(int recipeId);
   Future<List<UnitOfMeasurement>> getUnits();
+
+  //Delete 
+  Future<void> deleteRecipe(int recipeId);
 }

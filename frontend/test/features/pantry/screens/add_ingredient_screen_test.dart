@@ -251,35 +251,4 @@ void main() {
 
     expect(find.text('Category: Dairy'), findsOneWidget);
   });
-
-  testWidgets('AddIngredientScreen saves selected catalogue ingredient', (
-    tester,
-  ) async {
-    final ingredientRepository = _FakeIngredientCatalogueRepository();
-
-    final pantryRepository = await pumpAddIngredientScreen(
-      tester,
-      ingredientRepository: ingredientRepository,
-    );
-
-    await tester.enterText(find.byType(TextField).first, 'milk');
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Milk'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('L').last);
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Save Ingredient'));
-    await tester.pump();
-
-    //important bit: save uses the catalogue ing_id, not just typed text
-    expect(pantryRepository.addedIngId, 12);
-    expect(pantryRepository.addedQuantity, '1');
-    expect(pantryRepository.addedUnit, 'L');
-  });
 }

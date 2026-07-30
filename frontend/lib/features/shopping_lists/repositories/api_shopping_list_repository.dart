@@ -16,10 +16,8 @@ class ApiShoppingListRepository implements ShoppingListRepository {
   Future<List<ShoppingList>> getShoppingLists() async {
     final response = await _dio.get<List<dynamic>>('/api/shopping-lists');
     final data = response.data ?? [];
-
-    //overview endpoint returns lists without items, which is okay
     return data
-        .map((item) => ShoppingList.fromJson(item as Map<String, dynamic>))
+        .map((item) => ShoppingList.fromOverviewJson(item as Map<String, dynamic>))
         .toList();
   }
 
@@ -187,6 +185,22 @@ class ApiShoppingListRepository implements ShoppingListRepository {
       },
     );
 
+    return ShoppingList.fromJson(response.data ?? {});
+  }
+
+  @override
+  Future<ShoppingList> generateFromRecipe({
+    required int recipeId,
+    required String name,
+    required bool includeAvailablePantryItems,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/api/shopping-lists/from-recipe/$recipeId',
+      data: {
+        'name': name.trim(),
+        'include_available_pantry_items': includeAvailablePantryItems,
+      },
+    );
     return ShoppingList.fromJson(response.data ?? {});
   }
 }

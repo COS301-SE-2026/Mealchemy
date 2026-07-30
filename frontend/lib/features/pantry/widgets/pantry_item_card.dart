@@ -93,18 +93,32 @@ class PantryItemCard extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               _StatusLabel(label: statusLabel, color: statusColor),
-              const SizedBox(height: 22),
+              const SizedBox(height: 8),
               IconButton(
-                onPressed: _isExpired ? onDelete : onEdit,
+                onPressed: onEdit,
                 icon: Icon(
-                  _isExpired ? Icons.delete_outline : Icons.edit_outlined,
+                  Icons.edit_outlined,
                   size: 18,
-                  color: _isExpired ? AppColors.error : AppColors.primary,
+                  color:
+                      onEdit == null ? AppColors.textMuted : AppColors.primary,
                 ),
-                tooltip: _isExpired ? 'Delete ingredient' : 'Edit ingredient',
+                tooltip: 'Edit ingredient',
+                visualDensity: VisualDensity.compact,
+              ),
+              IconButton(
+                onPressed: onDelete,
+                icon: Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color:
+                      onDelete == null ? AppColors.textMuted : AppColors.error,
+                ),
+                tooltip: 'Delete ingredient',
+                visualDensity: VisualDensity.compact,
               ),
             ],
           ),

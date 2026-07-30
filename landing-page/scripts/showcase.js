@@ -1,7 +1,7 @@
 (() => {
     const screens = {
       dashboard: {
-        image: "assets/screens/app-dashboard.png",
+        image: "assets/screens/app-dashboard.jpg",
         alt: "Real Mealchemy dashboard screen",
         kicker: "Dashboard · Live app",
         title: "A calm command centre for cooking decisions.",
@@ -10,7 +10,7 @@
         aspectRatio: "392 / 850"
       },
       swipe: {
-        image: "assets/screens/app-guided-discovery.png",
+        image: "assets/screens/app-guided-discovery.jpg",
         alt: "Real Mealchemy guided discovery swipe screen",
         kicker: "Guided Discovery · Live app",
         title: "A fast, playful answer to choice overload.",
@@ -19,7 +19,7 @@
         aspectRatio: "392 / 850"
       },
       pantry: {
-        image: "assets/screens/app-pantry.png",
+        image: "assets/screens/app-pantry.jpg",
         alt: "Real Mealchemy pantry inventory screen",
         kicker: "Pantry · Live app",
         title: "Ingredient awareness before recipe commitment.",
@@ -28,7 +28,7 @@
         aspectRatio: "392 / 850"
       },
       recipe: {
-        image: "assets/screens/Recipe-Intstructions-page-real-app.png",
+        image: "assets/screens/Recipe-Intstructions-page-real-app.jpg",
         alt: "Real Mealchemy recipe instructions screen",
         kicker: "Recipe · Live app",
         title: "Step-by-step cooking with full ingredient detail.",
@@ -37,7 +37,7 @@
         aspectRatio: "392 / 850"
       },
       shopping: {
-        image: "assets/screens/Shopping-List-Real-app.png",
+        image: "assets/screens/Shopping-List-Real-app.jpg",
         alt: "Real Mealchemy shopping list screen",
         kicker: "Shopping Lists · Live app",
         title: "Recipe decisions become practical grocery lists.",

@@ -17,7 +17,6 @@ name: Register and land on preferences
 - tapOn:
     below: "Display Name"
 - inputText: "E2E Test User"
-- hideKeyboard
 
 # Generate a unique email each run so reruns do not hit the unique constraint.
 - evalScript: ${output.email = 'e2e-' + Date.now() + '@test.mealchemy.local'}
@@ -25,7 +24,6 @@ name: Register and land on preferences
 - tapOn:
     below: "Email Address"
 - inputText: ${output.email}
-- hideKeyboard
 
 - tapOn:
     below: "Password"
@@ -35,7 +33,7 @@ name: Register and land on preferences
 - tapOn:
     below: "Confirm Password"
 - inputText: "E2eTestPass!123"
-- hideKeyboard
+
 
 - tapOn:
     text: "Create Account"

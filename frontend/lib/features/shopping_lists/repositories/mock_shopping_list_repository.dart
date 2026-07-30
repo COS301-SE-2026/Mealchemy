@@ -297,4 +297,21 @@ class MockShoppingListRepository implements ShoppingListRepository {
       status: status,
     );
   }
+
+  @override
+  Future<ShoppingList> generateFromRecipe({
+    required int recipeId,
+    required String name,
+    required bool includeAvailablePantryItems,
+  }) async {
+    return ShoppingList(
+      id: '999',
+      shoppingListId: 999,
+      title: name,
+      subtitle: '0 items',
+      section: 'FROM YOUR RECIPES',
+      iconType: 'list',
+      items: const [],
+    );
+  }
 }

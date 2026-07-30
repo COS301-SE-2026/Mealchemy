@@ -69,6 +69,9 @@ class _RecordingRepo implements RecipeRepository {
 
   @override
   Future<List<RecipeStep>> getRecipeSteps(int recipeId) async => const [];
+
+  @override
+  Future<void> deleteRecipe(int recipeId) async {}
 }
 
 class _SlowCuisinesRepo extends _RecordingRepo {

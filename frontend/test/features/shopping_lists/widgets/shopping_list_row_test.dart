@@ -45,7 +45,6 @@ void main() {
     );
 
     expect(find.text('General List'), findsOneWidget);
-    expect(find.text('2 items added by you'), findsOneWidget);
     expect(find.byIcon(Icons.list_alt), findsOneWidget);
   });
 

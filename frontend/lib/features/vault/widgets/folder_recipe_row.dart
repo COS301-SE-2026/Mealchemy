@@ -3,17 +3,19 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
-
+import '../../../core/shared_widgets/Molecules/app_confirm_dialog.dart';
 //single recipe row inside a vault folder
 class FolderRecipeRow extends StatelessWidget {
   const FolderRecipeRow({
     super.key,
     required this.recipe,
     this.onEditTap,
+    this.onDeleteConfirmed,
   });
 
   final Recipe recipe;
   final VoidCallback? onEditTap;
+  final VoidCallback? onDeleteConfirmed;
 
   String get _subtitle {
     final total = (recipe.prepTimeMins ?? 0) + (recipe.cookingTimeMins ?? 0);
@@ -23,6 +25,21 @@ class FolderRecipeRow extends StatelessWidget {
         recipe.cuisineType![0].toUpperCase() + recipe.cuisineType!.substring(1),
     ];
     return parts.join(' · ');
+  }
+
+    Future<void> _handleDeleteTap(BuildContext context) async {
+    final confirmed = await showAppConfirmDialog(
+      context: context,
+      title: 'Delete recipe',
+      message: 'Are you sure you want to delete this recipe?',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      isDestructive: true,
+    );
+
+    if (confirmed == true) {
+      onDeleteConfirmed?.call();
+    }
   }
 
   @override
@@ -69,14 +86,31 @@ class FolderRecipeRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                IconButton(
-                  //Will add a edit recipe screen point
-                  onPressed: onEditTap,
-                  icon: const Icon(
-                    Icons.edit_outlined,
-                    size: 18,
-                    color: AppColors.primary,
-                  ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      onPressed:  () => _handleDeleteTap(context),
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
+                      constraints: const BoxConstraints(),
+                      padding: const EdgeInsets.all(6),
+                    ),
+                    IconButton(
+                      //Will add a edit recipe screen point
+                      onPressed: onEditTap,
+                      icon: const Icon(
+                        Icons.edit_outlined,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
+                      constraints: const BoxConstraints(),
+                      padding: const EdgeInsets.all(6),
+                    ),
+                  ],
                 ),
               ],
             ),

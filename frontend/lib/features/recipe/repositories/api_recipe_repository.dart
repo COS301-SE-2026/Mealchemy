@@ -96,4 +96,9 @@ class ApiRecipeRepository implements RecipeRepository {
         .map((e) => UnitOfMeasurement.fromJson(e as Map<String, dynamic>))
         .toList();
   }
+
+  @override
+  Future<void> deleteRecipe(int recipeId) async {
+    await _dio.delete('/recipes/delete/$recipeId');
+  }
 }

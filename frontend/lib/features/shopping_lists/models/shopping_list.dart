@@ -43,26 +43,39 @@ class ShoppingList {
 
     return '$itemCount items added by you';
   }
-
-  factory ShoppingList.fromJson(Map<String, dynamic> json) {
+  
+  factory ShoppingList.fromOverviewJson(Map<String, dynamic> json) {
     final shoppingListId = _readInt(json['shopping_list_id']);
-    final itemsJson = json['items'] as List<dynamic>? ?? [];
-    final items = itemsJson
-        .map((item) => ShoppingListItem.fromJson(item as Map<String, dynamic>))
-        .toList();
 
     return ShoppingList(
       id: shoppingListId?.toString() ?? json['name']?.toString() ?? '',
       shoppingListId: shoppingListId,
       userId: _readInt(json['user_id']),
       title: json['name']?.toString() ?? 'Untitled list',
-      subtitle: '${items.length} items',
+      subtitle: '0 items added by you',
       section: 'OTHER LISTS',
       iconType: 'list',
       status: json['status']?.toString(),
       createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
+      items: const [],
+    );
+  }
+
+  factory ShoppingList.fromDetailJson(Map<String, dynamic> json) {
+    final itemsJson = json['items'] as List<dynamic>? ?? [];
+    final items = itemsJson
+        .map((item) => ShoppingListItem.fromJson(item as Map<String, dynamic>))
+        .toList();
+
+    return ShoppingList.fromOverviewJson(json).copyWith(
+      subtitle: '${items.length} items',
       items: items,
     );
+  }
+
+
+  factory ShoppingList.fromJson(Map<String, dynamic> json) {
+    return ShoppingList.fromDetailJson(json);
   }
 
   ShoppingList copyWith({

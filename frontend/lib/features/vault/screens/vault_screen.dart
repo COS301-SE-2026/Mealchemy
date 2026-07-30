@@ -60,7 +60,6 @@ class _VaultBody extends ConsumerWidget {
           children: [
             VaultHero(
               onSearch: () {},
-              onAdd: () {},
               onShoppingList: () => context.push(AppRoutes.shoppingLists),
             ),
             if (selected == null && isShared)

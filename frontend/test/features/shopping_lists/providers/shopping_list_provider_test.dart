@@ -5,6 +5,7 @@ import 'package:mealchemy/features/shopping_lists/models/shopping_list.dart';
 import 'package:mealchemy/features/shopping_lists/models/shopping_list_item.dart';
 import 'package:mealchemy/features/shopping_lists/models/complete_shop_result.dart';
 import 'package:mealchemy/features/shopping_lists/repositories/shopping_list_repository.dart';
+import 'package:mealchemy/features/shopping_lists/repositories/mock_shopping_list_repository.dart';
 
 class _ApiShapedShoppingListRepository implements ShoppingListRepository {
   @override
@@ -121,14 +122,35 @@ class _ApiShapedShoppingListRepository implements ShoppingListRepository {
   Future<CompleteShopResult> completeShop(String listId) async {
     throw UnimplementedError();
   }
+
+  @override
+  Future<ShoppingList> generateFromRecipe({
+    required int recipeId,
+    required String name,
+    required bool includeAvailablePantryItems,
+  }) async {
+    throw UnimplementedError();
+  }
 }
 
 void main() {
+  ProviderContainer createContainer() {
+    final container = ProviderContainer(
+      overrides: [
+        shoppingListRepositoryProvider.overrideWithValue(
+          MockShoppingListRepository(),
+        ),
+      ],
+    );
+
+    addTearDown(container.dispose);
+    return container;
+  }
+
   //loads mock shopping lists into provider state
   test('shoppingListsProvider loads shopping lists', () async {
     //container used to read Riverpod providers in tests
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = createContainer();
 
     final state = await container.read(shoppingListsProvider.future);
 
@@ -139,8 +161,7 @@ void main() {
   //checks/unchecks item in provider state
   test('shoppingListsProvider toggles item checked state', () async {
     //container used to read Riverpod providers in tests
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = createContainer();
 
     await container.read(shoppingListsProvider.future);
 
@@ -161,8 +182,7 @@ void main() {
   //selects every item in one shopping list
   test('shoppingListsProvider selects all items in a list', () async {
     //container used to read Riverpod providers in tests
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = createContainer();
 
     await container.read(shoppingListsProvider.future);
 
@@ -180,8 +200,7 @@ void main() {
   //clears every selected item in one shopping list
   test('shoppingListsProvider deselects all items in a list', () async {
     //container used to read Riverpod providers in tests
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = createContainer();
 
     await container.read(shoppingListsProvider.future);
 
@@ -225,8 +244,7 @@ void main() {
   //adds new item to provider state
   test('shoppingListsProvider adds item to list', () async {
     //container used to read Riverpod providers in tests
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = createContainer();
 
     await container.read(shoppingListsProvider.future);
 
@@ -252,8 +270,7 @@ void main() {
   test('shoppingListsProvider filters shopping lists by search query',
       () async {
     //container used to read Riverpod providers in tests
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = createContainer();
 
     await container.read(shoppingListsProvider.future);
 
@@ -271,8 +288,7 @@ void main() {
   //resets shopping lists to mock data
   test('shoppingListsProvider resets shopping lists', () async {
     //container used to read Riverpod providers in tests
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = createContainer();
 
     await container.read(shoppingListsProvider.future);
 
@@ -295,8 +311,7 @@ void main() {
   test('shoppingListsProvider completes shop and removes checked items',
       () async {
     //container used to read Riverpod providers in tests
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = createContainer();
 
     await container.read(shoppingListsProvider.future);
 
@@ -322,8 +337,7 @@ void main() {
   });
   test('shoppingListsProvider creates shopping list', () async {
     //container used to read Riverpod providers in tests
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = createContainer();
 
     await container.read(shoppingListsProvider.future);
 
@@ -344,8 +358,7 @@ void main() {
   //deletes a whole shopping list from provider state
   test('shoppingListsProvider deletes shopping list', () async {
     //container used to read Riverpod providers in tests
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = createContainer();
 
     await container.read(shoppingListsProvider.future);
 
