@@ -16,9 +16,7 @@ name: Log in and show off shared vault management
 - tapOn: "Create"
 
 # Adding Folder
-- tapOn:
-    point: 89%,42%
-- tapOn: "Create folder"
+- tapOn: "ADD MORE FOLDERS"
 - tapOn: "e.g. Weeknight Dinners"
 - inputText: "E2EFolderCreateTest"
 - tapOn: "Create"
@@ -31,11 +29,12 @@ name: Log in and show off shared vault management
 - tapOn: "Add"
 
 # Show dropdown has no recipes
-- tapOn: "E2EFolderCreateTest\n0 recipes · Created 29 Jul 2026"
+- tapOn: "E2EFolderCreateTest\n0 recipes · Created 30 Jul 2026"
 
 # Delete Folder
 - tapOn:
-    point: 90%,49%
+    text: "Show menu"
+    index: 1
 - tapOn: "Delete folder"
 - tapOn: "Delete"
 
