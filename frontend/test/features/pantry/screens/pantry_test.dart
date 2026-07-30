@@ -452,4 +452,30 @@ void main() {
 
     expect(find.text('Could not search ingredients.'), findsOneWidget);
   });
+
+  testWidgets('PantryScreen deletes pantry ingredient from card',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await pumpPantryScreen(tester);
+
+    final chickenCard = find.ancestor(
+      of: find.text('Chicken Breast'),
+      matching: find.byType(PantryItemCard),
+    );
+
+    final deleteIcon = find.descendant(
+      of: chickenCard,
+      matching: find.byIcon(Icons.delete_outline),
+    );
+
+    await tester.ensureVisible(chickenCard);
+    await tester.pumpAndSettle();
+
+    await tester.tap(deleteIcon, warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Chicken Breast'), findsNothing);
+  });
 }
