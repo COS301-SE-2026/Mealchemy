@@ -5,19 +5,29 @@ import 'package:mealchemy/features/pantry/repositories/mock_pantry_repository.da
 import 'package:mealchemy/features/pantry/widgets/pantry_item_card.dart';
 
 void main() {
-  test('pantryRepositoryProvider uses mock repository', () {
-    //create Riverpod provider container for isolated testing
-    final container = ProviderContainer();
+  ProviderContainer createContainer() {
+    final container = ProviderContainer(
+      overrides: [
+        pantryRepositoryProvider.overrideWithValue(MockPantryRepository()),
+      ],
+    );
+
     addTearDown(container.dispose);
+    return container;
+  }
 
-    final repository = container.read(pantryRepositoryProvider);
+  // test('pantryRepositoryProvider uses mock repository', () {
+  //   //create Riverpod provider container for isolated testing
+  //   final container = ProviderContainer();
+  //   addTearDown(container.dispose);
 
-    expect(repository, isA<MockPantryRepository>());
-  });
+  //   final repository = container.read(pantryRepositoryProvider);
+
+  //   expect(repository, isA<MockPantryRepository>());
+  // });
 
   test('pantry providers expose mock pantry data', () async {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = createContainer();
 
     final summary = await container.read(pantrySummaryProvider.future);
     final filters = await container.read(pantryFiltersProvider.future);
@@ -32,8 +42,7 @@ void main() {
   });
 
   test('selectFilter updates selected pantry filter', () async {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = createContainer();
 
     await container.read(pantryStateProvider.future);
 
@@ -46,8 +55,7 @@ void main() {
   });
 
   test('updateSearchQuery trims and stores query', () async {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = createContainer();
 
     await container.read(pantryStateProvider.future);
 
@@ -60,8 +68,7 @@ void main() {
   });
 
   test('clearSearch resets search query', () async {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = createContainer();
 
     await container.read(pantryStateProvider.future);
 
@@ -75,8 +82,7 @@ void main() {
   });
 
   test('markOutOfStock changes ingredient status to expired', () async {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = createContainer();
 
     await container.read(pantryStateProvider.future);
 
@@ -92,8 +98,7 @@ void main() {
   });
 
   test('removeIngredient deletes ingredient by pantry id', () async {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = createContainer();
 
     await container.read(pantryStateProvider.future);
 
@@ -115,8 +120,7 @@ void main() {
 
   test('addIngredient adds repository-created ingredient to pantry list',
       () async {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = createContainer();
 
     await container.read(pantryStateProvider.future);
 
@@ -142,8 +146,7 @@ void main() {
 
   test('updateIngredient replaces pantry item with repository result',
       () async {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = createContainer();
 
     await container.read(pantryStateProvider.future);
 

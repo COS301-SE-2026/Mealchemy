@@ -11,6 +11,7 @@ import 'package:mealchemy/features/shopping_lists/models/shopping_list.dart';
 import 'package:mealchemy/features/shopping_lists/models/shopping_list_item.dart';
 import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
 import 'package:mealchemy/features/shopping_lists/repositories/shopping_list_repository.dart';
+import 'package:mealchemy/features/shopping_lists/repositories/mock_shopping_list_repository.dart';
 
 class _DeleteMenuShoppingListRepository implements ShoppingListRepository {
   @override
@@ -138,21 +139,32 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  testWidgets('ShoppingListDetailScreen renders General List items', (
-    tester,
-  ) async {
+  Future<void> pumpShoppingListDetailScreen(
+    WidgetTester tester, {
+    String listId = 'general-list',
+  }) async {
     await tester.pumpWidget(
-      const ProviderScope(
+      ProviderScope(
+        overrides: [
+          shoppingListRepositoryProvider.overrideWithValue(
+            MockShoppingListRepository(),
+          ),
+        ],
         child: MaterialApp(
           home: ShoppingListDetailScreen(
-            listId: 'general-list',
+            listId: listId,
           ),
         ),
       ),
     );
 
-    //waits for mock data to finish loading
     await tester.pumpAndSettle();
+  }
+
+  testWidgets('ShoppingListDetailScreen renders General List items', (
+    tester,
+  ) async {
+    await pumpShoppingListDetailScreen(tester);
 
     expect(find.text('All Items'), findsOneWidget);
     expect(find.text('GENERAL LIST'), findsOneWidget);
@@ -162,18 +174,7 @@ void main() {
   });
 
   testWidgets('ShoppingListDetailScreen toggles item checkbox', (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: ShoppingListDetailScreen(
-            listId: 'general-list',
-          ),
-        ),
-      ),
-    );
-
-    //waits for mock data to finish loading
-    await tester.pumpAndSettle();
+    await pumpShoppingListDetailScreen(tester);
 
     final firstCheckbox = find.byType(Checkbox).first;
     var checkbox = tester.widget<Checkbox>(firstCheckbox);
@@ -189,15 +190,7 @@ void main() {
   });
 
   testWidgets('ShoppingListDetailScreen selects all items', (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: ShoppingListDetailScreen(listId: 'general-list'),
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle();
+    await pumpShoppingListDetailScreen(tester);
 
     await tester.tap(find.text('Select all'));
     await tester.pumpAndSettle();
@@ -209,15 +202,7 @@ void main() {
   });
 
   testWidgets('ShoppingListDetailScreen deselects all items', (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: ShoppingListDetailScreen(listId: 'general-list'),
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle();
+    await pumpShoppingListDetailScreen(tester);
 
     await tester.tap(find.text('Select all'));
     await tester.pumpAndSettle();
@@ -287,18 +272,7 @@ void main() {
   });
 
   testWidgets('ShoppingListDetailScreen adds item from dialog', (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: ShoppingListDetailScreen(
-            listId: 'general-list',
-          ),
-        ),
-      ),
-    );
-
-    //waits for mock data to finish loading
-    await tester.pumpAndSettle();
+    await pumpShoppingListDetailScreen(tester);
 
     await tester.tap(find.byIcon(Icons.add).last);
     await tester.pumpAndSettle();
@@ -327,18 +301,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(900, 1200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: ShoppingListDetailScreen(
-            listId: 'general-list',
-          ),
-        ),
-      ),
-    );
-
-    //waits for mock data to finish loading
-    await tester.pumpAndSettle();
+    await pumpShoppingListDetailScreen(tester);
 
     await tester.tap(find.byType(Checkbox).first);
     await tester.pumpAndSettle();
@@ -353,18 +316,7 @@ void main() {
   testWidgets('ShoppingListDetailScreen renders not found state', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: ShoppingListDetailScreen(
-            listId: 'unknown-list',
-          ),
-        ),
-      ),
-    );
-
-    //waits for mock data to finish loading
-    await tester.pumpAndSettle();
+    await pumpShoppingListDetailScreen(tester, listId: 'unknown-list');
 
     expect(find.text('Shopping list not found.'), findsOneWidget);
   });
@@ -391,6 +343,11 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
+        overrides: [
+          shoppingListRepositoryProvider.overrideWithValue(
+            MockShoppingListRepository(),
+          ),
+        ],
         child: MaterialApp.router(
           routerConfig: router,
         ),
@@ -408,15 +365,7 @@ void main() {
 
   testWidgets('ShoppingListDetailScreen loads full list detail with items',
       (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: ShoppingListDetailScreen(listId: 'weekly-groceries'),
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle();
+    await pumpShoppingListDetailScreen(tester, listId: 'weekly-groceries');
 
     //detail screen fetches the full list, so its items should be visible
     expect(find.text('Organic Milk'), findsOneWidget);
