@@ -6,6 +6,6 @@ class AppConfig {
   static const bool mockVault = false;
   static const bool mockRecipe = false;
   static const bool mockPantry = false;
-  static const bool mockDiscovery = false;
+  static const bool mockDiscovery = false; 
   static const bool mockShoppinglist = false;
 }
