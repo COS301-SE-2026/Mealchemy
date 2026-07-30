@@ -251,6 +251,4 @@ void main() {
 
     expect(find.text('Category: Dairy'), findsOneWidget);
   });
-
-  
 }

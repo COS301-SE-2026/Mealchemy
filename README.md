@@ -15,6 +15,11 @@
 [![Coverage Overall](https://codecov.io/gh/COS301-SE-2026/Mealchemy/branch/main/graph/badge.svg?token=GRHIRNQ260)](https://codecov.io/gh/COS301-SE-2026/Mealchemy)
 [![Coverage Backend](https://codecov.io/gh/COS301-SE-2026/Mealchemy/branch/main/graph/badge.svg?token=GRHIRNQ260&flag=backend)](https://codecov.io/gh/COS301-SE-2026/Mealchemy)
 [![Coverage Frontend](https://codecov.io/gh/COS301-SE-2026/Mealchemy/branch/main/graph/badge.svg?token=GRHIRNQ260&flag=frontend)](https://codecov.io/gh/COS301-SE-2026/Mealchemy)
+[![Deploy Landing Page](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/deploy-landing-page.yml/badge.svg?branch=main)](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/deploy-landing-page.yml)
+[![CI](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/ci.yml/badge.svg)](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/ci.yml)
+[![CD](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/cd.yml/badge.svg)](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/cd.yml)
+[![Frontend Delivery](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/frontend-delivery.yml/badge.svg)](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/frontend-delivery.yml)
+[![Deploy Design Spec](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/deploy-design-spec.yml/badge.svg)](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/deploy-design-spec.yml)
 
 
 
