@@ -7,6 +7,8 @@ import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/features/shopping_lists/screens/shopping_list_detail_screen.dart';
 import 'package:mealchemy/features/shopping_lists/screens/shopping_lists_screen.dart';
 import 'package:mealchemy/features/shopping_lists/widgets/shopping_list_row.dart';
+import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
+import 'package:mealchemy/features/shopping_lists/repositories/mock_shopping_list_repository.dart';
 
 void main() {
   setUpAll(() {
@@ -14,19 +16,27 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  testWidgets('ShoppingListsScreen renders shopping lists overview', (
-    tester,
-  ) async {
+  Future<void> pumpShoppingListsScreen(WidgetTester tester) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
+      ProviderScope(
+        overrides: [
+          shoppingListRepositoryProvider.overrideWithValue(
+            MockShoppingListRepository(),
+          ),
+        ],
+        child: const MaterialApp(
           home: ShoppingListsScreen(),
         ),
       ),
     );
 
-    //waits for mock data to finish loading
     await tester.pumpAndSettle();
+  }
+
+  testWidgets('ShoppingListsScreen renders shopping lists overview', (
+    tester,
+  ) async {
+    await pumpShoppingListsScreen(tester);
 
     expect(find.text('Shopping Lists'), findsOneWidget);
     expect(find.text('General List'), findsOneWidget);
@@ -35,16 +45,7 @@ void main() {
   });
 
   testWidgets('ShoppingListsScreen filters lists using search', (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: ShoppingListsScreen(),
-        ),
-      ),
-    );
-
-    //waits for mock data to finish loading
-    await tester.pumpAndSettle();
+    await pumpShoppingListsScreen(tester);
 
     await tester.tap(find.byIcon(Icons.search));
     await tester.pumpAndSettle();
@@ -57,16 +58,7 @@ void main() {
   });
 
   testWidgets('ShoppingListsScreen clears search query', (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: ShoppingListsScreen(),
-        ),
-      ),
-    );
-
-    //waits for mock data to finish loading
-    await tester.pumpAndSettle();
+    await pumpShoppingListsScreen(tester);
 
     await tester.tap(find.byIcon(Icons.search));
     await tester.pumpAndSettle();
@@ -103,13 +95,17 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
+        overrides: [
+          shoppingListRepositoryProvider.overrideWithValue(
+            MockShoppingListRepository(),
+          ),
+        ],
         child: MaterialApp.router(
           routerConfig: router,
         ),
       ),
     );
 
-    //waits for mock data to finish loading
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('General List'));
@@ -121,15 +117,7 @@ void main() {
   testWidgets(
       'ShoppingListsScreen creates new list from floating action button',
       (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: ShoppingListsScreen(),
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle();
+    await pumpShoppingListsScreen(tester);
 
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
@@ -155,15 +143,7 @@ void main() {
   });
 
   testWidgets('ShoppingListsScreen deletes list from row menu', (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: ShoppingListsScreen(),
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle();
+    await pumpShoppingListsScreen(tester);
 
     expect(find.text('General List'), findsOneWidget);
 
@@ -190,15 +170,7 @@ void main() {
 
   testWidgets('ShoppingListsScreen edits list name from row menu',
       (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: ShoppingListsScreen(),
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle();
+    await pumpShoppingListsScreen(tester);
 
     expect(find.text('General List'), findsOneWidget);
 
