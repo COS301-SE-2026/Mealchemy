@@ -23,16 +23,13 @@ enum AppButtonStatus { idle, loading, success, error }
 class _DashedBorderPainter extends CustomPainter {
   final Color color;
   final double radius;
-  final double dashWidth;
-  final double dashGap;
-  final double strokeWidth;
+  static const double _dashWidth = 6;
+  static const double _dashGap = 5;
+  static const double _strokeWidth = 1.5;
 
   _DashedBorderPainter({
     required this.color,
     required this.radius,
-    this.dashWidth = 6,
-    this.dashGap = 5,
-    this.strokeWidth = 1.5,
   });
 
   @override
@@ -40,7 +37,7 @@ class _DashedBorderPainter extends CustomPainter {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth;
+      ..strokeWidth = _strokeWidth;
 
     final rrect = RRect.fromRectAndRadius(
       Offset.zero & size,
@@ -52,10 +49,10 @@ class _DashedBorderPainter extends CustomPainter {
       double dist = 0;
       while (dist < metric.length) {
         canvas.drawPath(
-          metric.extractPath(dist, dist + dashWidth),
+          metric.extractPath(dist, dist + _dashWidth),
           paint,
         );
-        dist += dashWidth + dashGap;
+        dist += _dashWidth + _dashGap;
       }
     }
   }
@@ -313,6 +310,8 @@ class _AppButtonState extends State<AppButton>
   BorderRadius get _borderRadius =>
       widget.isRounded ? BorderRadius.circular(100) : BorderRadius.circular(12);
 
+  double get _paintRadius => widget.isRounded ? 100 : 12;
+
   bool get _isFilled =>
       widget.variant == ButtonVariant.primary ||
       widget.variant == ButtonVariant.secondary;
@@ -344,18 +343,20 @@ class _AppButtonState extends State<AppButton>
     }
   }
 
+  Color _borderColor() {
+    return switch (_displayStatus) {
+      AppButtonStatus.error => AppColors.error,
+      AppButtonStatus.success => AppColors.success,
+      _ => widget.customBorderColor ?? _accentColor,
+    };
+  }
+
   BoxDecoration _fillDecoration() {
     if (!_isFilled) {
-      //outlined and text variants
-      final borderColor = switch (_displayStatus) {
-        AppButtonStatus.error => AppColors.error,
-        AppButtonStatus.success => AppColors.success,
-        _ => widget.customBorderColor ?? _accentColor,
-      };
       return BoxDecoration(
         borderRadius: _borderRadius,
         border: widget.variant == ButtonVariant.outlined
-            ? Border.all(color: borderColor, width: 1.5)
+            ? Border.all(color: _borderColor(), width: 1.5)
             : null,
       );
     }
@@ -444,46 +445,53 @@ class _AppButtonState extends State<AppButton>
     Widget button = SizedBox(
       width: widget.isFullWidth ? double.infinity : _lockedWidth,
       height: _height,
-      child: AnimatedContainer(
-        duration: _fillDuration,
-        curve: Curves.easeOut,
-        decoration: _fillDecoration(),
-        child: Material(
-          type: MaterialType.transparency,
-          child: InkWell(
-            onTap: effectiveOnPressed,
-            borderRadius: _borderRadius,
-            //hover and pressed feedback depends on the foreground colour
-            //dark ink on light fills, light ink on the gradient and status fills
-            overlayColor: WidgetStateProperty.resolveWith((states) {
-              final ink = _isFilled && _displayStatus != AppButtonStatus.loading
-                  ? AppColors.textDark
-                  : _accentColor;
-              if (states.contains(WidgetState.pressed)) {
-                return ink.withValues(alpha: 0.16);
-              }
-              if (states.contains(WidgetState.hovered)) {
-                return ink.withValues(alpha: 0.08);
-              }
-              if (states.contains(WidgetState.focused)) {
-                return ink.withValues(alpha: 0.10);
-              }
-              return null;
-            }),
-            onHighlightChanged: (pressed) =>
-                setState(() => _isPressed = pressed),
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: widget.variant == ButtonVariant.text ? 12 : 20,
-              ),
-              child: Center(
-                child: AnimatedSwitcher(
-                  duration: _swapDuration,
-                  transitionBuilder: (child, animation) => FadeTransition(
-                    opacity: animation,
-                    child: ScaleTransition(scale: animation, child: child),
+      child: CustomPaint(
+        painter: widget.variant == ButtonVariant.dashed
+            ? _DashedBorderPainter(
+                color: _borderColor(),
+                radius: _paintRadius,
+              )
+            : null,
+        child: AnimatedContainer(
+          duration: _fillDuration,
+          curve: Curves.easeOut,
+          decoration: _fillDecoration(),
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              onTap: effectiveOnPressed,
+              borderRadius: _borderRadius,
+              overlayColor: WidgetStateProperty.resolveWith((states) {
+                final ink =
+                    _isFilled && _displayStatus != AppButtonStatus.loading
+                        ? AppColors.textDark
+                        : _accentColor;
+                if (states.contains(WidgetState.pressed)) {
+                  return ink.withValues(alpha: 0.16);
+                }
+                if (states.contains(WidgetState.hovered)) {
+                  return ink.withValues(alpha: 0.08);
+                }
+                if (states.contains(WidgetState.focused)) {
+                  return ink.withValues(alpha: 0.10);
+                }
+                return null;
+              }),
+              onHighlightChanged: (pressed) =>
+                  setState(() => _isPressed = pressed),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: widget.variant == ButtonVariant.text ? 12 : 20,
+                ),
+                child: Center(
+                  child: AnimatedSwitcher(
+                    duration: _swapDuration,
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: ScaleTransition(scale: animation, child: child),
+                    ),
+                    child: _buildChild(foreground),
                   ),
-                  child: _buildChild(foreground),
                 ),
               ),
             ),
