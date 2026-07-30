@@ -1,5 +1,5 @@
 appId: com.mealchemy.mealchemy
-name: Add pantry ingredient
+name: Edit pantry ingredient
 
 ---
 
@@ -32,30 +32,30 @@ name: Add pantry ingredient
 - assertVisible: "Pantry"
 - waitForAnimationToEnd
 
-# Open the add item pop up
-- tapOn: "Add Pantry Ingredient"
-- assertVisible: "Pantry Entry"
+# Edit - tap pencil icon
+- tapOn: 
+    text: "Edit Ingredient"
+    below: ".*Cheese, parmesan, grated.*"
+- assertVisible: "Edit Ingredient"
 - waitForAnimationToEnd
 
-# search catalogue and select suggestion
-- tapOn: 
-    below: "Ingredient Name"
-- inputText: "parmesan"
-- waitForAnimationToEnd
-- tapOn: ".*Cheese, parmesan, grated.*"
+# Update quantity
+- tapOn: ".*Quantity.*"
+- eraseText: 10
+- inputText: "3"
 - hideKeyboard
 - waitForAnimationToEnd
 
-# Unit required - select from dropdown
-- tapOn: ".*e.g. oz.*"
+# Change unit from dropdown
+- tapOn: ".*Unit.*"
 - waitForAnimationToEnd
-- tapOn: "pcs"
+- tapOn: "g"
 - waitForAnimationToEnd
 
-# Save and confirm it is in list
-- tapOn: "Save Ingredient"
-- extendedWaitUntil:
-    visible: ".*Cheese, parmesan, grated.*"
-    timeout: 10000
+# Save
+- tapOn: "Save"
+- waitForAnimationToEnd
 
+# Check values changed
+- assertVisible: ".*3g.*"
 
