@@ -9,7 +9,6 @@ import '../models/recipe.dart';
 import '../models/recipe_ingredient.dart';
 import '../models/recipe_step.dart';
 import '../providers/recipe_provider.dart';
-import '../widgets/alchemist_tip_card.dart';
 import '../widgets/recipe_hero.dart';
 import '../widgets/recipe_ingredient_row.dart';
 import '../widgets/recipe_stat_card.dart';
@@ -150,11 +149,6 @@ class _OverviewTab extends StatelessWidget {
         const SizedBox(height: 12),
         ...steps.map((step) => RecipeStepRow(step: step)),
         const SizedBox(height: 22),
-    //tip card hardcoded for now, no matching field yet in db
-        const AlchemistTipCard(
-          tip:
-              'Toast the saffron in warm stock for a few minutes before adding the rice - this draws out the full colour and aroma.',
-        ),
       ],
     );
   }

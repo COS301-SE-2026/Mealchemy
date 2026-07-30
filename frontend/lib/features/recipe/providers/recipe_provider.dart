@@ -171,3 +171,11 @@ final unitsProvider = FutureProvider<List<UnitOfMeasurement>>((ref) {
   final repository = ref.watch(recipeRepositoryProvider);
   return repository.getUnits();
 });
+
+final deleteRecipeProvider = Provider((ref) {
+  return (int recipeId) async {
+    final repository = ref.read(recipeRepositoryProvider);
+    await repository.deleteRecipe(recipeId);
+    ref.invalidate(recipesProvider);
+  };
+});

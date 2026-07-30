@@ -8,15 +8,14 @@ import 'package:mealchemy/features/vault/widgets/folder_recipe_row.dart';
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
- 
-  Widget host(Recipe recipe, {VoidCallback? onEditTap}) {
+  Widget host(Recipe recipe,{VoidCallback? onEditTap, VoidCallback? onDeleteConfirmed}) {
     final router = GoRouter(
       initialLocation: '/',
       routes: [
         GoRoute(
           path: '/',
           builder: (_, __) => Scaffold(
-            body: FolderRecipeRow(recipe: recipe, onEditTap: onEditTap),
+            body: FolderRecipeRow( recipe: recipe,onEditTap: onEditTap, onDeleteConfirmed: onDeleteConfirmed, ),
           ),
         ),
         GoRoute(
@@ -47,7 +46,7 @@ void main() {
         cuisineType: 'italian',
       ),
     ));
-    
+
     expect(find.text('45 mins · Italian'), findsOneWidget);
   });
 
@@ -55,7 +54,7 @@ void main() {
     await tester.pumpWidget(host(
       const Recipe(recipeId: 1, title: 'Snack', cuisineType: 'asian'),
     ));
-    
+
     expect(find.text('Asian'), findsOneWidget);
   });
 
@@ -88,5 +87,36 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.edit_outlined));
     expect(edited, isTrue);
+  });
+
+  testWidgets('shows confirm dialog when delete is tapped', (tester) async {
+    await tester.pumpWidget(host(
+      const Recipe(recipeId: 1, title: 'Delete Me'),
+    ));
+
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Delete recipe'), findsOneWidget);
+    expect(
+      find.text('Are you sure you want to delete this recipe?'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('confirming the dialog fires onDeleteConfirmed', (tester) async {
+    var deleted = false;
+    await tester.pumpWidget(host(
+      const Recipe(recipeId: 1, title: 'Delete Me'),
+      onDeleteConfirmed: () => deleted = true,
+    ));
+
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+
+    expect(deleted, isTrue);
   });
 }
