@@ -61,6 +61,8 @@
 
 ## Documentation
 
+Note: All documentation is contained within the Wiki
+
 <details>
   <summary>Demo 2 - Click to expand</summary>
 
