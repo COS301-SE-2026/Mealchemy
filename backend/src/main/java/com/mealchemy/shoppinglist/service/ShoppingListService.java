@@ -96,6 +96,7 @@ public class ShoppingListService {
                                 shoppingList.getShoppingListId(),
                                 shoppingList.getUserId(),
                                 shoppingList.getName(),
+                                shoppingListItemRepository.countByShoppingListId(shoppingList.getShoppingListId()),
                                 shoppingList.getStatus(),
                                 shoppingList.getCreatedAt()
                             ))
@@ -121,6 +122,7 @@ public class ShoppingListService {
         return new ShoppingListResponse(saved.getShoppingListId(),
                                         saved.getUserId(),
                                         saved.getName(),
+                                        0,
                                         saved.getStatus(),
                                         saved.getCreatedAt()
         );
@@ -147,6 +149,7 @@ public class ShoppingListService {
         return new ShoppingListResponse(saved.getShoppingListId(),
                                         saved.getUserId(),
                                         saved.getName(),
+                                        shoppingListItemRepository.countByShoppingListId(saved.getShoppingListId()),
                                         saved.getStatus(),
                                         saved.getCreatedAt()
         );
@@ -189,6 +192,7 @@ public class ShoppingListService {
             list.getName(),
             list.getStatus(),
             list.getCreatedAt(),
+            items.size(),
             items
         );
     }
@@ -502,6 +506,7 @@ public class ShoppingListService {
         return new ShoppingListResponse(saved.getShoppingListId(),
                                         saved.getUserId(),
                                         saved.getName(),
+                                        shoppingListItemRepository.countByShoppingListId(saved.getShoppingListId()),
                                         saved.getStatus(),
                                         saved.getCreatedAt()
         );
@@ -556,6 +561,7 @@ public class ShoppingListService {
             selectedList.getName(),
             selectedList.getStatus(),
             selectedList.getCreatedAt(),
+            itemsToSave.size(),
             itemsToSave
         );
     }
@@ -586,6 +592,7 @@ public class ShoppingListService {
             selectedList.getName(),
             selectedList.getStatus(),
             selectedList.getCreatedAt(),
+            itemsToSave.size(),
             itemsToSave
         );
     }
