@@ -637,17 +637,16 @@ public class ShoppingListService {
         }
 
         List<ShoppingListItem> remainingItems = shoppingListItemRepository.findByShoppingListId(shoppingListId);
-        Boolean shoppingListDeleted = false;
+        Boolean canDeleteShoppingList = false;
 
         if (remainingItems.isEmpty()) {
-            shoppingListDeleted = true;
-            shoppingListRepository.delete(selectedList);
+            canDeleteShoppingList = true;
         }
 
         return new CompleteShopResponse(
             addedToPantryCount,
             skippedManualItemNames,
-            shoppingListDeleted
+            canDeleteShoppingList
         );
     }
 }

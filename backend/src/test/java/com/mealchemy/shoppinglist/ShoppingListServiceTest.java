@@ -1196,7 +1196,7 @@ public class ShoppingListServiceTest {
         assertEquals(1, response.addedToPantryCount());
         assertTrue(response.skippedManualItemNames().isEmpty());
         verify(pantryIngredientRepository).save(any(PantryIngredient.class));
-        assertFalse(response.shoppingListDeleted());
+        assertFalse(response.canDeleteShoppingList());
         verify(shoppingListItemRepository).delete(itemInCatalogue);
         verify(shoppingListItemRepository, never()).delete(unpurchased);
     }
@@ -1221,8 +1221,8 @@ public class ShoppingListServiceTest {
         CompleteShopResponse response = shoppingListService.autoAddToPantryRemoveFromList(1, 1);
 
         // Assert
-        assertTrue(response.shoppingListDeleted());
-        verify(shoppingListRepository).delete(existingShoppingList);  
+        assertTrue(response.canDeleteShoppingList());
+        verify(shoppingListRepository, never()).delete(any(ShoppingList.class));  
     }
     
     @Test
@@ -1252,7 +1252,7 @@ public class ShoppingListServiceTest {
         // Act
         CompleteShopResponse response = shoppingListService.autoAddToPantryRemoveFromList(1, 1);
 
-        assertFalse(response.shoppingListDeleted());
+        assertFalse(response.canDeleteShoppingList());
         verify(shoppingListRepository, never()).delete(any(ShoppingList.class));
     }
 

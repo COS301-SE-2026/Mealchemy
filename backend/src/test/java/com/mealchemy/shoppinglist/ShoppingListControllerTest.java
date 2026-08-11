@@ -98,6 +98,7 @@ public class ShoppingListControllerTest {
             1,
             1,
             "Weekly Groceries",
+            3,
             ShoppingListStatus.ACTIVE,
             OffsetDateTime.parse("2026-07-23T23:00:00Z")
         );
@@ -111,6 +112,7 @@ public class ShoppingListControllerTest {
                 .andExpect(jsonPath("$[0].shopping_list_id").value(1))
                 .andExpect(jsonPath("$[0].user_id").value(1))
                 .andExpect(jsonPath("$[0].name").value("Weekly Groceries"))
+                .andExpect(jsonPath("$[0].num_items").value(3))
                 .andExpect(jsonPath("$[0].status").value("ACTIVE"));
     }
 
@@ -141,6 +143,7 @@ public class ShoppingListControllerTest {
             1,
             1,
             "New List",
+            0,
             ShoppingListStatus.ACTIVE,
             OffsetDateTime.parse("2026-07-23T23:00:00Z")
         );
@@ -156,6 +159,7 @@ public class ShoppingListControllerTest {
                 .andExpect(jsonPath("$.shopping_list_id").value(1))
                 .andExpect(jsonPath("$.user_id").value(1))
                 .andExpect(jsonPath("$.name").value("New List"))
+                .andExpect(jsonPath("$.num_items").value(0))
                 .andExpect(jsonPath("$.status").value("ACTIVE"));
     }
 
@@ -189,6 +193,7 @@ public class ShoppingListControllerTest {
             1,
             1,
             "Updated List",
+            3,
             ShoppingListStatus.COMPLETED,
             OffsetDateTime.parse("2026-07-23T23:00:00Z")
         );
@@ -204,6 +209,7 @@ public class ShoppingListControllerTest {
                 .andExpect(jsonPath("$.shopping_list_id").value(1))
                 .andExpect(jsonPath("$.user_id").value(1))
                 .andExpect(jsonPath("$.name").value("Updated List"))
+                .andExpect(jsonPath("$.num_items").value(3))
                 .andExpect(jsonPath("$.status").value("COMPLETED"));
     }
 
@@ -312,6 +318,7 @@ public class ShoppingListControllerTest {
             "Weekly Groceries",
             ShoppingListStatus.ACTIVE,
             OffsetDateTime.parse("2026-07-23T23:00:00Z"),
+            1,
             List.of(itemResponse)
         );
 
@@ -324,6 +331,7 @@ public class ShoppingListControllerTest {
                 .andExpect(jsonPath("$.shopping_list_id").value(1))
                 .andExpect(jsonPath("$.user_id").value(1))
                 .andExpect(jsonPath("$.name").value("Weekly Groceries"))
+                .andExpect(jsonPath("$.num_items").value(1))
                 .andExpect(jsonPath("$.status").value("ACTIVE"))
                 .andExpect(jsonPath("$.items[0].item_id").value(1))
                 .andExpect(jsonPath("$.items[0].shopping_list_id").value(1))
@@ -639,6 +647,7 @@ public class ShoppingListControllerTest {
             "Weekly Groceries", 
             ShoppingListStatus.ACTIVE,
             OffsetDateTime.parse("2026-07-23T23:00:00Z"),
+            1,
             List.of(itemResponse)
         );
 
@@ -647,6 +656,7 @@ public class ShoppingListControllerTest {
         mockMvc.perform(put("/api/shopping-lists/{id}/items/select-all", 1).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.shopping_list_id").value(1))
+                .andExpect(jsonPath("$.num_items").value(1)) 
                 .andExpect(jsonPath("$.items[0].purchased").value(true));
     }
 
@@ -681,6 +691,7 @@ public class ShoppingListControllerTest {
             "Weekly Groceries", 
             ShoppingListStatus.ACTIVE,
             OffsetDateTime.parse("2026-07-23T23:00:00Z"),
+            1,
             List.of(itemResponse)
         );
 
@@ -689,6 +700,7 @@ public class ShoppingListControllerTest {
         mockMvc.perform(put("/api/shopping-lists/{id}/items/deselect-all", 1).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.shopping_list_id").value(1))
+                .andExpect(jsonPath("$.num_items").value(1)) 
                 .andExpect(jsonPath("$.items[0].purchased").value(false));
     }
 
@@ -718,7 +730,7 @@ public class ShoppingListControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.added_to_pantry_count").value(2))
                 .andExpect(jsonPath("$.skipped_manual_items[0]").value("Fresh basil bunch"))
-                .andExpect(jsonPath("$.shopping_list_deleted").value(false));
+                .andExpect(jsonPath("$.can_delete_shopping_list").value(false));
     }
 
     @Test
@@ -745,6 +757,7 @@ public class ShoppingListControllerTest {
             1,
             1,
             "Generate Shopping List With All Items",
+            2,
             ShoppingListStatus.ACTIVE,
             OffsetDateTime.parse("2026-07-23T23:00:00Z")
         );
@@ -760,6 +773,7 @@ public class ShoppingListControllerTest {
                 .andExpect(jsonPath("$.shopping_list_id").value(1))
                 .andExpect(jsonPath("$.user_id").value(1))
                 .andExpect(jsonPath("$.name").value("Generate Shopping List With All Items"))
+                .andExpect(jsonPath("$.num_items").value(2)) 
                 .andExpect(jsonPath("$.status").value("ACTIVE"));
     }
 
