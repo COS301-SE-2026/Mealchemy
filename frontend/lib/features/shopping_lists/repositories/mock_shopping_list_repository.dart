@@ -173,6 +173,70 @@ class MockShoppingListRepository implements ShoppingListRepository {
   }
 
   @override
+  Future<ShoppingListItem> updateShoppingListItem({
+    required String listId,
+    required String itemId,
+    int? ingId,
+    String? name,
+    required String quantity,
+    required String unit,
+    required bool purchased,
+  }) async {
+    final cleanedName = name?.trim();
+    final cleanedQuantity = quantity.trim();
+    final cleanedUnit = unit.trim();
+
+    final hasIngredientId = ingId != null;
+    final hasCustomName = cleanedName != null && cleanedName.isNotEmpty;
+
+    if (hasIngredientId == hasCustomName) {
+      throw ArgumentError(
+        'Provide either an ingredient id or a custom item name, but not both.',
+      );
+    }
+
+    final parsedQuantity = num.tryParse(cleanedQuantity);
+
+    if (parsedQuantity == null || parsedQuantity <= 0) {
+      throw ArgumentError('Quantity must be greater than zero.');
+    }
+
+    if (cleanedUnit.isEmpty) {
+      throw ArgumentError('Unit is required.');
+    }
+
+    ShoppingListItem? existingItem;
+
+    for (final list in _lists) {
+      if (list.id != listId) continue;
+
+      for (final item in list.items) {
+        if (item.id == itemId) {
+          existingItem = item;
+          break;
+        }
+      }
+    }
+
+    if (existingItem == null) {
+      throw StateError('Shopping list item not found.');
+    }
+
+    final displayQuantity = parsedQuantity % 1 == 0
+        ? parsedQuantity.toInt().toString()
+        : parsedQuantity.toString();
+
+    //return updated item
+    return existingItem.copyWith(
+      ingId: ingId,
+      name: hasCustomName ? cleanedName : existingItem.name,
+      quantity: '$displayQuantity $cleanedUnit',
+      unit: cleanedUnit,
+      checked: purchased,
+    );
+  }
+
+  @override
   Future<ShoppingListItem> addItemToShoppingList({
     required String listId,
     int? ingId,

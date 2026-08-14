@@ -74,6 +74,53 @@ class ApiShoppingListRepository implements ShoppingListRepository {
   }
 
   @override
+  Future<ShoppingListItem> updateShoppingListItem({
+    required String listId,
+    required String itemId,
+    int? ingId,
+    String? name,
+    required String quantity,
+    required String unit,
+    required bool purchased,
+  }) async {
+    final cleanedName = name?.trim();
+    final cleanedQuantity = quantity.trim();
+    final cleanedUnit = unit.trim();
+
+    final hasIngredientId = ingId != null;
+    final hasCustomName = cleanedName != null && cleanedName.isNotEmpty;
+
+    if (hasIngredientId == hasCustomName) {
+      throw ArgumentError(
+        'Provide either an ingredient id or a custom item name, but not both.',
+      );
+    }
+
+    final parsedQuantity = num.tryParse(cleanedQuantity);
+
+    if (parsedQuantity == null || parsedQuantity <= 0) {
+      throw ArgumentError('Quantity must be greater than zero.');
+    }
+
+    if (cleanedUnit.isEmpty) {
+      throw ArgumentError('Unit is required.');
+    }
+
+    final response = await _dio.put<Map<String, dynamic>>(
+      '/api/shopping-lists/$listId/items/$itemId',
+      data: {
+        'ing_id': ingId,
+        'name': hasCustomName ? cleanedName : null,
+        'quantity': parsedQuantity,
+        'unit': cleanedUnit,
+        'purchased': purchased,
+      },
+    );
+
+    return ShoppingListItem.fromJson(response.data ?? {});
+  }
+
+  @override
   Future<ShoppingListItem> addItemToShoppingList({
     required String listId,
     int? ingId,

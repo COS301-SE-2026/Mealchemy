@@ -23,6 +23,17 @@ abstract class ShoppingListRepository {
     required bool purchased,
   });
 
+  //updates existing shopping list item
+  Future<ShoppingListItem> updateShoppingListItem({
+    required String listId,
+    required String itemId,
+    int? ingId,
+    String? name,
+    required String quantity,
+    required String unit,
+    required bool purchased,
+  });
+
   //adds either a catalogue ingredient or a custom item to one shopping list
   //exactly one of ingId or name
   Future<ShoppingListItem> addItemToShoppingList({
