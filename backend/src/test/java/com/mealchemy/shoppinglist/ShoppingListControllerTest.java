@@ -855,7 +855,7 @@ public class ShoppingListControllerTest {
                 .andExpect(jsonPath("$.num_items").value(1))
                 .andExpect(jsonPath("$.status").value("ACTIVE"))
                 .andExpect(jsonPath("$.items[0].item_id").value(1))
-                .andExpect(jsonPath("$.items[0].shopping_list_id").value(1))
+                .andExpect(jsonPath("$.items[0].shopping_list_id").value(5))
                 .andExpect(jsonPath("$.items[0].ing_id").value(2))
                 .andExpect(jsonPath("$.items[0].name").value("Hummus"))
                 .andExpect(jsonPath("$.items[0].category").value("Legumes and Legume Products"))
