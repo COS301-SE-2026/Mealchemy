@@ -849,7 +849,7 @@ public class ShoppingListControllerTest {
                 .content(objectMapper.writeValueAsString(mockRequest)))        
                 .andExpect(status().isOk())
                 // fields in response object
-                .andExpect(jsonPath("$.shopping_list_id").value(1))
+                .andExpect(jsonPath("$.shopping_list_id").value(5))
                 .andExpect(jsonPath("$.user_id").value(1))
                 .andExpect(jsonPath("$.name").value("Weekly Groceries"))
                 .andExpect(jsonPath("$.num_items").value(1))

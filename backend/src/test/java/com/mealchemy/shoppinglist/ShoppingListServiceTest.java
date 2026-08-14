@@ -1542,6 +1542,8 @@ public class ShoppingListServiceTest {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
         when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(ingredient1, ingredient2));
 
+        when(shoppingListItemRepository.save(any(ShoppingListItem.class))).thenAnswer(inv -> inv.getArgument(0));
+
         shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, addRecipeToShoppingListRequest);
 
         // Assert

@@ -537,7 +537,7 @@ public class ShoppingListService {
         List<RecipeIngredient> recipeIngredients = recipeIngredientRepository.findByRecipe_RecipeId(recipeId);
 
         // to hold items that are already in the shopping list - don't need to be added to shopping list
-        List<ShoppingListItem> existingListItems = shoppingListItemRepository.findByShoppingListId(shoppingListId);
+        List<ShoppingListItem> existingListItems = new ArrayList<>(shoppingListItemRepository.findByShoppingListId(shoppingListId));
 
         // tells us whether to add all of recipes ingredients or only add ones not already in pantry
         Boolean comparePantry = Boolean.TRUE.equals(request.includeAvailablePantryItems());

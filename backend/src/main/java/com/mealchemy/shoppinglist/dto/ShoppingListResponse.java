@@ -10,7 +10,7 @@ public record ShoppingListResponse( //records are immutable and auto generate co
     @JsonProperty("shopping_list_id") Integer shoppingListId,
     @JsonProperty("user_id") Integer userId,
     String name,
-    Integer numItems,
+    @JsonProperty("num_items") Integer numItems,
     ShoppingListStatus status,
     @JsonProperty("created_at") OffsetDateTime createdAt
 ) {}

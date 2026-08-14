@@ -14,6 +14,6 @@ public record ShoppingListWithItemsResponse( //records are immutable and auto ge
     String name,
     ShoppingListStatus status,
     @JsonProperty("created_at") OffsetDateTime createdAt,
-    Integer numItems,
+    @JsonProperty("num_items") Integer numItems,
     List<ShoppingListItemResponse> items
 ) {}
