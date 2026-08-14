@@ -302,26 +302,25 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     state = AsyncData(current.copyWith(lists: updatedLists));
   }
 
-  //adds manual item through the active repository
+  //adds catalogue ingredient or custom item through the active repo
   Future<void> addItemToList({
     required String listId,
-    required String name,
+    int? ingId,
+    String? name,
     required String quantity,
     required String category,
   }) async {
     final current = state.valueOrNull;
-    final cleanedName = name.trim();
+    if (current == null) return;
+
+    final cleanedName = name?.trim();
     final cleanedQuantity = quantity.trim();
     final cleanedCategory = category.trim();
-
-    if (current == null || cleanedName.isEmpty) {
-      return;
-    }
-
     final parsed = _splitQuantityAndUnit(cleanedQuantity);
 
     final createdItem = await _repository.addItemToShoppingList(
       listId: listId,
+      ingId: ingId,
       name: cleanedName,
       quantity: parsed.quantity,
       unit: parsed.unit.isEmpty ? cleanedCategory : parsed.unit,
@@ -330,7 +329,7 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     final updatedLists = current.lists.map((list) {
       if (list.id != listId) return list;
 
-      //backend-created item is source of truth now
+      //backend-created item
       return list.copyWith(
         items: [...list.items, createdItem],
       );

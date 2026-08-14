@@ -17,7 +17,8 @@ class ApiShoppingListRepository implements ShoppingListRepository {
     final response = await _dio.get<List<dynamic>>('/api/shopping-lists');
     final data = response.data ?? [];
     return data
-        .map((item) => ShoppingList.fromOverviewJson(item as Map<String, dynamic>))
+        .map((item) =>
+            ShoppingList.fromOverviewJson(item as Map<String, dynamic>))
         .toList();
   }
 
@@ -75,20 +76,27 @@ class ApiShoppingListRepository implements ShoppingListRepository {
   @override
   Future<ShoppingListItem> addItemToShoppingList({
     required String listId,
-    required String name,
+    int? ingId,
+    String? name,
     required String quantity,
     required String unit,
   }) async {
-    final cleanedName = name.trim();
+    final cleanedName = name?.trim();
     final cleanedQuantity = quantity.trim();
     final cleanedUnit = unit.trim();
 
+    final hasIngredientId = ingId != null;
+    final hasCustomName = cleanedName != null && cleanedName.isNotEmpty;
+
+    //backend accepts 1 identity: catalogue id or custom name
+    if (hasIngredientId == hasCustomName) {
+      throw ArgumentError(
+        'Provide either an ingredient id or a custom item name, but not both.',
+      );
+    }
+
     final parsedQuantity =
         cleanedQuantity.isEmpty ? null : num.tryParse(cleanedQuantity);
-
-    if (cleanedName.isEmpty) {
-      throw ArgumentError('Item name is required.');
-    }
 
     if (cleanedQuantity.isNotEmpty && parsedQuantity == null) {
       throw ArgumentError('Quantity must be a valid number.');
@@ -97,8 +105,8 @@ class ApiShoppingListRepository implements ShoppingListRepository {
     final response = await _dio.post<Map<String, dynamic>>(
       '/api/shopping-lists/$listId/items',
       data: {
-        'ing_id': null,
-        'name': cleanedName,
+        'ing_id': ingId,
+        'name': hasCustomName ? cleanedName : null,
         'quantity': parsedQuantity,
         'unit': cleanedUnit.isEmpty ? null : cleanedUnit,
       },

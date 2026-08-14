@@ -175,31 +175,49 @@ class MockShoppingListRepository implements ShoppingListRepository {
   @override
   Future<ShoppingListItem> addItemToShoppingList({
     required String listId,
-    required String name,
+    int? ingId,
+    String? name,
     required String quantity,
     required String unit,
   }) async {
-    final cleanedName = name.trim();
+    final cleanedName = name?.trim();
     final cleanedQuantity = quantity.trim();
     final cleanedUnit = unit.trim();
 
-    if (cleanedName.isEmpty) {
-      throw ArgumentError('Item name is required.');
+    final hasIngredientId = ingId != null;
+    final hasCustomName = cleanedName != null && cleanedName.isNotEmpty;
+
+    if (hasIngredientId == hasCustomName) {
+      throw ArgumentError(
+        'Provide either an ingredient id or a custom item name, but not both.',
+      );
     }
 
-    //mock version returns a backend-shaped manual item
+    final parsedQuantity =
+        cleanedQuantity.isEmpty ? null : num.tryParse(cleanedQuantity);
+
+    if (cleanedQuantity.isNotEmpty && parsedQuantity == null) {
+      throw ArgumentError('Quantity must be a valid number.');
+    }
+
+    final displayName =
+        hasIngredientId ? 'Mock catalogue ingredient' : cleanedName!;
+
+    //item shape returned by backend
     return ShoppingListItem(
-      id: cleanedName.toLowerCase().replaceAll(' ', '-'),
+      id: hasIngredientId
+          ? 'ingredient-$ingId'
+          : displayName.toLowerCase().replaceAll(' ', '-'),
       itemId: 999,
       shoppingListId: int.tryParse(listId),
-      ingId: null,
-      name: cleanedName,
-      quantity: cleanedQuantity.isEmpty
+      ingId: ingId,
+      name: displayName,
+      quantity: parsedQuantity == null
           ? '-'
           : cleanedUnit.isEmpty
-              ? cleanedQuantity
-              : '$cleanedQuantity $cleanedUnit',
-      category: 'MANUAL',
+              ? '$parsedQuantity'
+              : '$parsedQuantity $cleanedUnit',
+      category: hasIngredientId ? 'CATALOGUE' : 'MANUAL',
       unit: cleanedUnit.isEmpty ? null : cleanedUnit,
     );
   }
