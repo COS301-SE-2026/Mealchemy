@@ -14,13 +14,20 @@ import 'package:mealchemy/features/shopping_lists/repositories/mock_shopping_lis
 import 'package:mealchemy/features/shopping_lists/screens/add_shopping_list_item_screen.dart';
 
 class _FakeIngredientCatalogueRepository extends IngredientCatalogueRepository {
-  _FakeIngredientCatalogueRepository() : super(Dio());
+  _FakeIngredientCatalogueRepository({
+    this.shouldFail = false,
+  }) : super(Dio());
 
+  final bool shouldFail;
   String? lastSearchQuery;
 
   @override
   Future<List<IngredientCatalogueItem>> searchIngredients(String query) async {
     lastSearchQuery = query;
+
+    if (shouldFail) {
+      throw Exception('Catalogue unavailable.');
+    }
 
     return const [
       IngredientCatalogueItem(
@@ -33,6 +40,12 @@ class _FakeIngredientCatalogueRepository extends IngredientCatalogueRepository {
 }
 
 class _RecordingShoppingListRepository extends MockShoppingListRepository {
+  _RecordingShoppingListRepository({
+    this.shouldFail = false,
+  });
+
+  final bool shouldFail;
+
   String? addedListId;
   int? addedIngId;
   String? addedName;
@@ -47,6 +60,10 @@ class _RecordingShoppingListRepository extends MockShoppingListRepository {
     required String quantity,
     required String unit,
   }) async {
+    if (shouldFail) {
+      throw Exception('Unable to create item.');
+    }
+
     addedListId = listId;
     addedIngId = ingId;
     addedName = name;
@@ -81,7 +98,11 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  Future<_ScreenHarness> pumpEntryScreen(WidgetTester tester) async {
+  Future<_ScreenHarness> pumpEntryScreen(
+    WidgetTester tester, {
+    bool catalogueShouldFail = false,
+    bool shoppingShouldFail = false,
+  }) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 1;
 
@@ -90,8 +111,12 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    final shoppingRepository = _RecordingShoppingListRepository();
-    final catalogueRepository = _FakeIngredientCatalogueRepository();
+    final shoppingRepository = _RecordingShoppingListRepository(
+      shouldFail: shoppingShouldFail,
+    );
+    final catalogueRepository = _FakeIngredientCatalogueRepository(
+      shouldFail: catalogueShouldFail,
+    );
 
     final router = GoRouter(
       initialLocation: '/',
@@ -140,6 +165,61 @@ void main() {
       catalogueRepository: catalogueRepository,
     );
   }
+
+  testWidgets('shows an error when catalogue search fails', (tester) async {
+    await pumpEntryScreen(
+      tester,
+      catalogueShouldFail: true,
+    );
+
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Search catalogue, e.g. Chicken Breast',
+      ),
+      'milk',
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Could not search the catalogue. Try again.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('shows an error when adding a custom item fails', (
+    tester,
+  ) async {
+    await pumpEntryScreen(
+      tester,
+      shoppingShouldFail: true,
+    );
+
+    await tester.tap(find.text('Custom Item'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'e.g. Cupcakes'),
+      'Cupcakes',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'e.g. 1.5'),
+      '6',
+    );
+
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('pcs').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Add Item'));
+    await tester.pump();
+
+    expect(
+      find.text('Could not add the item. Try again.'),
+      findsOneWidget,
+    );
+  });
 
   testWidgets('renders catalogue entry form by default', (tester) async {
     await pumpEntryScreen(tester);
