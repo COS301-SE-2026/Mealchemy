@@ -12,6 +12,8 @@ import 'package:mealchemy/features/shopping_lists/models/shopping_list_item.dart
 import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
 import 'package:mealchemy/features/shopping_lists/repositories/shopping_list_repository.dart';
 import 'package:mealchemy/features/shopping_lists/repositories/mock_shopping_list_repository.dart';
+import 'package:mealchemy/features/pantry/providers/pantry_provider.dart';
+import 'package:mealchemy/features/pantry/repositories/mock_pantry_repository.dart';
 
 class _DeleteMenuShoppingListRepository implements ShoppingListRepository {
   @override
@@ -312,6 +314,59 @@ void main() {
 
     expect(find.textContaining('item sent to pantry'), findsOneWidget);
   });
+
+  testWidgets(
+    'ShoppingListDetailScreen refreshes pantry data after update pantry',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(900, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      var pantryRepositoryBuildCount = 0;
+
+      final container = ProviderContainer(
+        overrides: [
+          shoppingListRepositoryProvider.overrideWithValue(
+            MockShoppingListRepository(),
+          ),
+          pantryRepositoryProvider.overrideWith((ref) {
+            pantryRepositoryBuildCount++;
+            return MockPantryRepository();
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      // Load the pantry once to represent pantry data already cached in memory.
+      await container.read(pantryStateProvider.future);
+
+      expect(pantryRepositoryBuildCount, 1);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: ShoppingListDetailScreen(
+              listId: 'general-list',
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(Checkbox).first);
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Update Pantry'));
+      await tester.tap(find.text('Update Pantry'));
+      await tester.pumpAndSettle();
+
+      //reading the invalidated pantry state must create a fresh repo, so API repo cant return its old ingredient cache
+      await container.read(pantryStateProvider.future);
+
+      expect(pantryRepositoryBuildCount, 2);
+    },
+  );
 
   testWidgets('ShoppingListDetailScreen renders not found state', (
     tester,

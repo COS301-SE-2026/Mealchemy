@@ -11,6 +11,7 @@ import '../widgets/shopping_bottom_action_bar.dart';
 import '../widgets/shopping_item_row.dart';
 import '../widgets/shopping_section_header.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../pantry/providers/pantry_provider.dart';
 
 //detail screen for one shopping list
 class ShoppingListDetailScreen extends ConsumerStatefulWidget {
@@ -109,9 +110,16 @@ class _ShoppingListDetailScreenState
                   );
             },
             onCompleteShop: () async {
-              return ref
+              final result = await ref
                   .read(shoppingListsProvider.notifier)
                   .completeShop(list.id);
+
+              //complete-shop endpoint changed pantry data outside the pantry feature
+              //recreate the repository to clear internal ingredient cache, then reloadthe pantry state from the backend
+              ref.invalidate(pantryRepositoryProvider);
+              ref.invalidate(pantryStateProvider);
+
+              return result;
             },
           );
         },
