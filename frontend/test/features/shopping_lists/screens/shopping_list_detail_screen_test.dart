@@ -317,10 +317,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Shopping List Entry'), findsOneWidget);
-    expect(
-      find.text('Add an item to shopping list general-list'),
-      findsOneWidget,
-    );
+    expect(find.text('Add Shopping List Item'), findsOneWidget);
+    expect(find.text('Catalogue'), findsOneWidget);
+    expect(find.text('Custom Item'), findsOneWidget);
   });
 
   testWidgets('ShoppingListDetailScreen shows update pantry snackbar', (
