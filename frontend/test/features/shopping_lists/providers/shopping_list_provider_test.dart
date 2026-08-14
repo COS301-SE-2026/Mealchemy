@@ -204,6 +204,44 @@ void main() {
     expect(item.checked, isTrue);
   });
 
+  test('shoppingListsProvider updates item quantity and unit', () async {
+    final container = ProviderContainer(
+      overrides: [
+        shoppingListRepositoryProvider.overrideWithValue(
+          _ApiShapedShoppingListRepository(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(shoppingListsProvider.future);
+
+    final notifier = container.read(shoppingListsProvider.notifier);
+
+    await notifier.updateShoppingListItem(
+      listId: '1',
+      itemId: '10',
+      quantity: '2.5',
+      unit: 'kg',
+    );
+
+    final updatedState = container.read(shoppingListsProvider).value!;
+    final list = updatedState.getListById('1')!;
+    final updatedItem = list.items.firstWhere(
+      (item) => item.id == '10',
+    );
+
+    expect(updatedItem.name, 'Greek Yogurt');
+    expect(updatedItem.ingId, isNull);
+    expect(updatedItem.quantity, '2.5 kg');
+    expect(updatedItem.unit, 'kg');
+    expect(updatedItem.checked, isFalse);
+
+    //provider should replace only edited item
+    expect(list.items, hasLength(2));
+    expect(list.items.last.name, 'Fresh Basil');
+  });
+
   //selects every item in one shopping list
   test('shoppingListsProvider selects all items in a list', () async {
     //container used to read Riverpod providers in tests

@@ -215,6 +215,57 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     );
   }
 
+//updates item's quantity and unit
+  Future<void> updateShoppingListItem({
+    required String listId,
+    required String itemId,
+    required String quantity,
+    required String unit,
+  }) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final list = current.getListById(listId);
+    if (list == null) return;
+
+    ShoppingListItem? existingItem;
+
+    for (final item in list.items) {
+      if (item.id == itemId) {
+        existingItem = item;
+        break;
+      }
+    }
+
+    if (existingItem == null) return;
+
+    final updatedItem = await _repository.updateShoppingListItem(
+      listId: listId,
+      itemId: itemId,
+      ingId: existingItem.ingId,
+      // Catalogue items are identified only by ing_id. Custom items use name.
+      name: existingItem.ingId == null ? existingItem.name : null,
+      quantity: quantity,
+      unit: unit,
+      purchased: existingItem.checked,
+    );
+
+    final updatedLists = current.lists.map((list) {
+      if (list.id != listId) return list;
+
+      final updatedItems = list.items.map((item) {
+        if (item.id != itemId) return item;
+        return updatedItem;
+      }).toList();
+
+      return list.copyWith(items: updatedItems);
+    }).toList();
+
+    state = AsyncData(
+      current.copyWith(lists: updatedLists),
+    );
+  }
+
   //loads the full shopping list, including its items
   Future<void> loadShoppingListDetail(String listId) async {
     final current = state.valueOrNull;
