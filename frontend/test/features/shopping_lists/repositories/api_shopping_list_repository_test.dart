@@ -39,6 +39,8 @@ void main() {
 
           if (options.method == 'POST' &&
               options.path == '/api/shopping-lists/1/items') {
+            final ingId = options.data['ing_id'];
+
             handler.resolve(
               Response(
                 requestOptions: options,
@@ -46,9 +48,10 @@ void main() {
                 data: {
                   'item_id': 11,
                   'shopping_list_id': 1,
-                  'ing_id': null,
-                  'name': options.data['name'],
-                  'category': null,
+                  'ing_id': ingId,
+                  'name':
+                      ingId == null ? options.data['name'] : 'Chicken Breast',
+                  'category': ingId == null ? null : 'meat',
                   'quantity': options.data['quantity'],
                   'unit': options.data['unit'],
                   'purchased': false,
@@ -328,13 +331,50 @@ void main() {
     expect(item.checked, isFalse);
   });
 
-  test('addItemToShoppingList rejects blank name before API call', () {
+  test('addItemToShoppingList posts catalogue item and maps response',
+      () async {
+    final item = await repository.addItemToShoppingList(
+      listId: '1',
+      ingId: 101,
+      quantity: '1.5',
+      unit: 'kg',
+    );
+
+    expect(lastRequest?.method, 'POST');
+    expect(lastRequest?.path, '/api/shopping-lists/1/items');
+    expect(lastRequest?.data['ing_id'], 101);
+    expect(lastRequest?.data['name'], isNull);
+    expect(lastRequest?.data['quantity'], 1.5);
+    expect(lastRequest?.data['unit'], 'kg');
+
+    expect(item.itemId, 11);
+    expect(item.shoppingListId, 1);
+    expect(item.ingId, 101);
+    expect(item.name, 'Chicken Breast');
+    expect(item.category, 'MEAT');
+    expect(item.quantity, '1.5 kg');
+    expect(item.checked, isFalse);
+  });
+
+  test('addItemToShoppingList rejects missing item identity', () {
     expect(
       () => repository.addItemToShoppingList(
         listId: '1',
-        name: '   ',
         quantity: '2',
         unit: 'bunches',
+      ),
+      throwsArgumentError,
+    );
+  });
+
+  test('addItemToShoppingList rejects both item identities', () {
+    expect(
+      () => repository.addItemToShoppingList(
+        listId: '1',
+        ingId: 101,
+        name: 'Chicken Breast',
+        quantity: '2',
+        unit: 'kg',
       ),
       throwsArgumentError,
     );

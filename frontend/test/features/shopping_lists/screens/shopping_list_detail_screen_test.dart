@@ -104,7 +104,8 @@ class _DeleteMenuShoppingListRepository implements ShoppingListRepository {
   @override
   Future<ShoppingListItem> addItemToShoppingList({
     required String listId,
-    required String name,
+    int? ingId,
+    String? name,
     required String quantity,
     required String unit,
   }) {
