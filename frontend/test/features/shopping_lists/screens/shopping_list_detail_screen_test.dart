@@ -150,6 +150,21 @@ class _DeleteMenuShoppingListRepository implements ShoppingListRepository {
   }
 }
 
+class _FailingUpdateShoppingListRepository extends MockShoppingListRepository {
+  @override
+  Future<ShoppingListItem> updateShoppingListItem({
+    required String listId,
+    required String itemId,
+    int? ingId,
+    String? name,
+    required String quantity,
+    required String unit,
+    required bool purchased,
+  }) async {
+    throw Exception('Unable to update item.');
+  }
+}
+
 void main() {
   setUpAll(() {
     //disable google font fetching
@@ -236,6 +251,69 @@ void main() {
 
     expect(find.text('Heirloom Tomatoes updated.'), findsOneWidget);
     expect(find.text('12.5 kg'), findsOneWidget);
+  });
+
+  testWidgets('ShoppingListDetailScreen shows item update failure', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          shoppingListRepositoryProvider.overrideWithValue(
+            _FailingUpdateShoppingListRepository(),
+          ),
+        ],
+        child: const MaterialApp(
+          home: ShoppingListDetailScreen(
+            listId: 'general-list',
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.edit_outlined).first);
+    await tester.pumpAndSettle();
+
+    final quantityField = find.widgetWithText(
+      TextField,
+      'Quantity',
+    );
+
+    await tester.enterText(quantityField, '12');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Could not update the item. Try again.'),
+      findsOneWidget,
+    );
+    expect(find.text('Edit Shopping List Item'), findsOneWidget);
+  });
+
+  testWidgets('ShoppingListDetailScreen rejects non-positive edit quantity', (
+    tester,
+  ) async {
+    await pumpShoppingListDetailScreen(tester);
+
+    await tester.tap(find.byIcon(Icons.edit_outlined).first);
+    await tester.pumpAndSettle();
+
+    final quantityField = find.widgetWithText(
+      TextField,
+      'Quantity',
+    );
+
+    await tester.enterText(quantityField, '0');
+    await tester.tap(find.text('Save'));
+    await tester.pump();
+
+    expect(
+      find.text('Enter a quantity greater than zero.'),
+      findsOneWidget,
+    );
+    expect(find.text('Edit Shopping List Item'), findsOneWidget);
   });
 
   testWidgets('ShoppingListDetailScreen selects all items', (tester) async {
