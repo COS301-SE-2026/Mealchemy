@@ -566,7 +566,7 @@ public class ShoppingListService {
             }
 
             // find ingredient in selected shopping list with the SAME UNIT to merge to - still in for loop
-            Optional<ShoppingListItem> matchingItem = existingListItems.stream().filter(item -> ingredient.getIngId().equals(item.getIngId()))
+            Optional<ShoppingListItem> matchingItem = existingListItems.stream().filter(item -> item.getIngId() != null && item.getIngId().equals(ingredient.getIngId()))
                                                                                 .filter(item -> ingredient.getUnit().equals(item.getUnit()))
                                                                                 .findFirst();
             // found a matching item in the selected shopping list
