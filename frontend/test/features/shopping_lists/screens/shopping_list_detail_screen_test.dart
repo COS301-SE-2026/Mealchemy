@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/features/shopping_lists/screens/shopping_list_detail_screen.dart';
+import 'package:mealchemy/features/shopping_lists/screens/add_shopping_list_item_screen.dart';
 import 'package:mealchemy/features/shopping_lists/screens/shopping_lists_screen.dart';
 import 'package:mealchemy/features/shopping_lists/models/complete_shop_result.dart';
 import 'package:mealchemy/features/shopping_lists/models/shopping_list.dart';
@@ -274,28 +275,52 @@ void main() {
     expect(find.byType(Checkbox), findsNothing);
   });
 
-  testWidgets('ShoppingListDetailScreen adds item from dialog', (tester) async {
-    await pumpShoppingListDetailScreen(tester);
+  testWidgets('ShoppingListDetailScreen opens add item entry screen', (
+    tester,
+  ) async {
+    final router = GoRouter(
+      initialLocation: '/shopping-lists/general-list',
+      routes: [
+        GoRoute(
+          path: AppRoutes.shoppingListDetail,
+          builder: (context, state) {
+            final id = state.pathParameters['id']!;
+            return ShoppingListDetailScreen(listId: id);
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.shoppingListAddItem,
+          builder: (context, state) {
+            final id = state.pathParameters['id']!;
+            return AddShoppingListItemScreen(listId: id);
+          },
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          shoppingListRepositoryProvider.overrideWithValue(
+            MockShoppingListRepository(),
+          ),
+        ],
+        child: MaterialApp.router(
+          routerConfig: router,
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.add).last);
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-        find.widgetWithText(TextField, 'Item name'), 'Fresh Basil');
-    await tester.enterText(
-        find.widgetWithText(TextField, 'Quantity'), '1 bunch');
-    await tester.enterText(
-        find.widgetWithText(TextField, 'Category'), 'Produce');
-
-    await tester.tap(find.text('Add'));
-    await tester.pumpAndSettle();
-
-    //new item is appended lower in list, so scroll until visible
-    await tester.drag(find.byType(ListView), const Offset(0, -700));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Fresh Basil'), findsOneWidget);
-    expect(find.text('1 bunch'), findsOneWidget);
+    expect(find.text('Shopping List Entry'), findsOneWidget);
+    expect(
+      find.text('Add an item to shopping list general-list'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('ShoppingListDetailScreen shows update pantry snackbar', (

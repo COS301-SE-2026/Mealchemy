@@ -97,18 +97,6 @@ class _ShoppingListDetailScreenState
                   .read(shoppingListsProvider.notifier)
                   .deleteSelectedItems(list.id);
             },
-            onAddItem: ({
-              required name,
-              required quantity,
-              required category,
-            }) async {
-              await ref.read(shoppingListsProvider.notifier).addItemToList(
-                    listId: list.id,
-                    name: name,
-                    quantity: quantity,
-                    category: category,
-                  );
-            },
             onCompleteShop: () async {
               final result = await ref
                   .read(shoppingListsProvider.notifier)
@@ -148,7 +136,6 @@ class _ShoppingListDetailContent extends StatelessWidget {
     required this.onToggleItem,
     required this.onSelectAll,
     required this.onDeselectAll,
-    required this.onAddItem,
     required this.onCompleteShop,
     required this.onDeleteSelected,
   });
@@ -159,11 +146,6 @@ class _ShoppingListDetailContent extends StatelessWidget {
   final Future<void> Function() onDeselectAll;
   final Future<void> Function() onDeleteSelected;
 
-  final Future<void> Function({
-    required String name,
-    required String quantity,
-    required String category,
-  }) onAddItem;
   final Future<Object?> Function() onCompleteShop;
 
   @override
@@ -219,7 +201,9 @@ class _ShoppingListDetailContent extends StatelessWidget {
             bottom: 118,
             child: ShoppingBottomActionBar(
               onMicTap: () {},
-              onAddTap: () => _showAddItemDialog(context),
+              onAddTap: () {
+                context.push('/shopping-lists/${list.id}/add-item');
+              },
               onFilterTap: () {},
             ),
           ),
@@ -266,87 +250,6 @@ class _ShoppingListDetailContent extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  //opens dialog to add temp mock shopping item
-  Future<void> _showAddItemDialog(BuildContext context) async {
-    final nameController = TextEditingController();
-    final quantityController = TextEditingController();
-    final categoryController = TextEditingController(text: 'Produce');
-
-    final result = await showDialog<Map<String, String>>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppColors.bgLight,
-          title: Text(
-            'Add Item',
-            style: AppTextStyles.heading2.copyWith(
-              color: AppColors.primary,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _AddItemField(
-                controller: nameController,
-                label: 'Item name',
-              ),
-              const SizedBox(height: 12),
-              _AddItemField(
-                controller: quantityController,
-                label: 'Quantity',
-              ),
-              const SizedBox(height: 12),
-              _AddItemField(
-                controller: categoryController,
-                label: 'Category',
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Cancel',
-                style: AppTextStyles.button.copyWith(
-                  color: AppColors.textMuted,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop({
-                  'name': nameController.text,
-                  'quantity': quantityController.text,
-                  'category': categoryController.text,
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.textDark,
-              ),
-              child: const Text('Add'),
-            ),
-          ],
-        );
-      },
-    );
-
-    //dispose controllers after dialogue finished closing
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      nameController.dispose();
-      quantityController.dispose();
-      categoryController.dispose();
-    });
-
-    if (result == null) return;
-
-    await onAddItem(
-      name: result['name'] ?? '',
-      quantity: result['quantity'] ?? '',
-      category: result['category'] ?? '',
     );
   }
 
@@ -569,45 +472,6 @@ class _UpdatePantryButton extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-//text field used inside add item dialog
-class _AddItemField extends StatelessWidget {
-  const _AddItemField({
-    required this.controller,
-    required this.label,
-  });
-
-  final TextEditingController controller;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      style: AppTextStyles.body.copyWith(
-        color: AppColors.textLight,
-      ),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: AppTextStyles.bodySmall.copyWith(
-          color: AppColors.tertiaryMuted,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(
-            color: AppColors.inputBorder,
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(
-            color: AppColors.primary,
-          ),
-          borderRadius: BorderRadius.circular(8),
         ),
       ),
     );
