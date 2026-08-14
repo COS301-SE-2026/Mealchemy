@@ -14,6 +14,7 @@ import com.mealchemy.shoppinglist.dto.UpdateShoppingListItemRequest;
 import com.mealchemy.shoppinglist.dto.UpdateShoppingListRequest;
 import com.mealchemy.shoppinglist.dto.DeleteBatchItemsRequest;
 import com.mealchemy.shoppinglist.dto.CompleteShopResponse;
+import com.mealchemy.shoppinglist.dto.AddRecipeToShoppingListRequest;
 
 // controller
 import com.mealchemy.shoppinglist.controller.ShoppingListController;
@@ -804,6 +805,92 @@ public class ShoppingListControllerTest {
 
         // Act and assert
         mockMvc.perform(post("/api/shopping-lists/from-recipe/{recipeId}", 1).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                // fields in response object
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(mockRequest)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Recipe not found"));
+    }
+
+    // Compares recipe to current pantry ingredients and inserts the rest into shopping list specified by the user
+    @Test
+    void addRecipeIngredientsToShoppingList_validRequest_return200() throws Exception {
+        // Arrange - mock response
+        AddRecipeToShoppingListRequest mockRequest = new AddRecipeToShoppingListRequest(
+            false
+        );
+
+        ShoppingListItemResponse itemResponse = new ShoppingListItemResponse(
+            1,
+            5,
+            2,
+            "Hummus",
+            "Legumes and Legume Products",
+            new BigDecimal("100"),
+            "g",
+            false
+        );
+
+        ShoppingListWithItemsResponse mockResponse = new ShoppingListWithItemsResponse(
+            5,
+            1,
+            "Weekly Groceries",
+            ShoppingListStatus.ACTIVE,
+            OffsetDateTime.parse("2026-07-23T23:00:00Z"),
+            1,
+            List.of(itemResponse)
+        );
+
+       when(shoppingListService.addRecipeIngredientsToShoppingList(anyInt(), eq(5), eq(9), any(AddRecipeToShoppingListRequest.class))).thenReturn(mockResponse);
+
+        // Act and assert
+        mockMvc.perform(post("/api/shopping-lists/add-from-recipe/{shoppingListId}/{recipeId}", 5, 9).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(mockRequest)))        
+                .andExpect(status().isOk())
+                // fields in response object
+                .andExpect(jsonPath("$.shopping_list_id").value(1))
+                .andExpect(jsonPath("$.user_id").value(1))
+                .andExpect(jsonPath("$.name").value("Weekly Groceries"))
+                .andExpect(jsonPath("$.num_items").value(1))
+                .andExpect(jsonPath("$.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.items[0].item_id").value(1))
+                .andExpect(jsonPath("$.items[0].shopping_list_id").value(1))
+                .andExpect(jsonPath("$.items[0].ing_id").value(2))
+                .andExpect(jsonPath("$.items[0].name").value("Hummus"))
+                .andExpect(jsonPath("$.items[0].category").value("Legumes and Legume Products"))
+                .andExpect(jsonPath("$.items[0].quantity").value(100))
+                .andExpect(jsonPath("$.items[0].unit").value("g"))
+                .andExpect(jsonPath("$.items[0].purchased").value(false));
+    }
+
+    @Test
+    void addRecipeIngredientsToShoppingList_bad_request_returns400() throws Exception {
+        // Bad request
+       String badRequest = """
+                            {
+                                "include_available_pantry_items": "wrong"
+                            }
+                         """;
+
+        // Act and Assert
+        mockMvc.perform(post("/api/shopping-lists/add-from-recipe/{shoppingListId}/{recipeId}", 2, 1).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(badRequest))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test 
+    void addRecipeIngredientsToShoppingList_recipeNotFound_returns404() throws Exception{
+
+        AddRecipeToShoppingListRequest mockRequest = new AddRecipeToShoppingListRequest(
+            false
+        );
+
+        when(shoppingListService.addRecipeIngredientsToShoppingList(anyInt(), eq(2), eq(1), any(AddRecipeToShoppingListRequest.class))).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
+
+        // Act and assert
+        mockMvc.perform(post("/api/shopping-lists/add-from-recipe/{shoppingListId}/{recipeId}", 2, 1).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
                 // fields in response object
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(mockRequest)))
