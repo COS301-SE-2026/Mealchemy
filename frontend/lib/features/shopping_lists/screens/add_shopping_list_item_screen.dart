@@ -503,25 +503,63 @@ class _UnitDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonFormField<String>(
-      initialValue: value,
-      decoration: InputDecoration(
-        labelText: 'Unit',
-        errorText: errorText,
-        filled: true,
-        fillColor: AppColors.surfaceMuted,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.inputBorder),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Unit',
+          style: AppTextStyles.bodySmall.copyWith(
+            fontWeight: FontWeight.w500,
+            color: AppColors.textLight,
+          ),
         ),
-      ),
-      items: _unitOptions.map((unit) {
-        return DropdownMenuItem<String>(
-          value: unit,
-          child: Text(unit),
-        );
-      }).toList(),
-      onChanged: onChanged,
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          initialValue: value,
+          isExpanded: true,
+          hint: Text(
+            'Select unit',
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.textMuted,
+            ),
+          ),
+          decoration: InputDecoration(
+            errorText: errorText,
+            filled: true,
+            fillColor: AppColors.surfaceMuted,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.inputBorder,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.inputBorder,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.primary,
+                width: 1.5,
+              ),
+            ),
+          ),
+          items: _unitOptions.map((unit) {
+            return DropdownMenuItem<String>(
+              value: unit,
+              child: Text(unit),
+            );
+          }).toList(),
+          onChanged: onChanged,
+        ),
+      ],
     );
   }
 }
