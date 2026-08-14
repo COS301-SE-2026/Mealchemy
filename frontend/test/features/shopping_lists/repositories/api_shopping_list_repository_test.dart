@@ -37,6 +37,30 @@ void main() {
             return;
           }
 
+          if (options.method == 'PUT' &&
+              options.path == '/api/shopping-lists/1/items/10') {
+            final ingId = options.data['ing_id'];
+
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: {
+                  'item_id': 10,
+                  'shopping_list_id': 1,
+                  'ing_id': ingId,
+                  'name':
+                      ingId == null ? options.data['name'] : 'Chicken Breast',
+                  'category': ingId == null ? null : 'meat',
+                  'quantity': options.data['quantity'],
+                  'unit': options.data['unit'],
+                  'purchased': options.data['purchased'],
+                },
+              ),
+            );
+            return;
+          }
+
           if (options.method == 'POST' &&
               options.path == '/api/shopping-lists/1/items') {
             final ingId = options.data['ing_id'];
@@ -306,6 +330,85 @@ void main() {
     expect(item.shoppingListId, 1);
     expect(item.name, 'Greek Yogurt');
     expect(item.checked, isTrue);
+  });
+
+  test('updateShoppingListItem puts updated manual item and maps response',
+      () async {
+    final item = await repository.updateShoppingListItem(
+      listId: '1',
+      itemId: '10',
+      name: 'Greek Yogurt',
+      quantity: '2.5',
+      unit: 'kg',
+      purchased: true,
+    );
+
+    expect(lastRequest?.method, 'PUT');
+    expect(lastRequest?.path, '/api/shopping-lists/1/items/10');
+    expect(lastRequest?.data['ing_id'], isNull);
+    expect(lastRequest?.data['name'], 'Greek Yogurt');
+    expect(lastRequest?.data['quantity'], 2.5);
+    expect(lastRequest?.data['unit'], 'kg');
+    expect(lastRequest?.data['purchased'], isTrue);
+
+    expect(item.itemId, 10);
+    expect(item.ingId, isNull);
+    expect(item.name, 'Greek Yogurt');
+    expect(item.quantity, '2.5 kg');
+    expect(item.unit, 'kg');
+    expect(item.checked, isTrue);
+  });
+
+  test('updateShoppingListItem rejects both item identities', () {
+    expect(
+      () => repository.updateShoppingListItem(
+        listId: '1',
+        itemId: '10',
+        ingId: 101,
+        name: 'Chicken Breast',
+        quantity: '2',
+        unit: 'kg',
+        purchased: false,
+      ),
+      throwsArgumentError,
+    );
+  });
+
+  test('updateShoppingListItem rejects non-positive quantity', () {
+    expect(
+      () => repository.updateShoppingListItem(
+        listId: '1',
+        itemId: '10',
+        name: 'Greek Yogurt',
+        quantity: '0',
+        unit: 'kg',
+        purchased: false,
+      ),
+      throwsArgumentError,
+    );
+  });
+
+  test('updateShoppingListItem preserves catalogue ingredient identity',
+      () async {
+    final item = await repository.updateShoppingListItem(
+      listId: '1',
+      itemId: '10',
+      ingId: 101,
+      quantity: '3',
+      unit: 'kg',
+      purchased: false,
+    );
+
+    expect(lastRequest?.data['ing_id'], 101);
+    expect(lastRequest?.data['name'], isNull);
+    expect(lastRequest?.data['quantity'], 3);
+    expect(lastRequest?.data['unit'], 'kg');
+    expect(lastRequest?.data['purchased'], isFalse);
+
+    expect(item.ingId, 101);
+    expect(item.name, 'Chicken Breast');
+    expect(item.category, 'MEAT');
+    expect(item.quantity, '3 kg');
   });
 
   test('addItemToShoppingList posts manual item and maps response', () async {

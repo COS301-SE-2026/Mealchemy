@@ -96,6 +96,30 @@ class _ApiShapedShoppingListRepository implements ShoppingListRepository {
   }
 
   @override
+  Future<ShoppingListItem> updateShoppingListItem({
+    required String listId,
+    required String itemId,
+    int? ingId,
+    String? name,
+    required String quantity,
+    required String unit,
+    required bool purchased,
+  }) async {
+    final list = await getShoppingListById(listId);
+    final item = list!.items.firstWhere(
+      (item) => item.id == itemId,
+    );
+
+    return item.copyWith(
+      ingId: ingId,
+      name: name ?? item.name,
+      quantity: '$quantity $unit',
+      unit: unit,
+      checked: purchased,
+    );
+  }
+
+  @override
   Future<List<ShoppingListItem>> selectAllItems(String listId) async {
     final list = await getShoppingListById(listId);
     return list!.items.map((item) => item.copyWith(checked: true)).toList();
