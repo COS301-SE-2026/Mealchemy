@@ -13,6 +13,18 @@ import '../widgets/shopping_section_header.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../pantry/providers/pantry_provider.dart';
 
+const List<String> _shoppingItemUnitOptions = [
+  'g',
+  'kg',
+  'ml',
+  'L',
+  'cups',
+  'tbsp',
+  'tsp',
+  'oz',
+  'pcs',
+];
+
 //detail screen for one shopping list
 class ShoppingListDetailScreen extends ConsumerStatefulWidget {
   const ShoppingListDetailScreen({
@@ -82,6 +94,20 @@ class _ShoppingListDetailScreenState
                     itemId: itemId,
                   );
             },
+            onUpdateItem: ({
+              required itemId,
+              required quantity,
+              required unit,
+            }) async {
+              await ref
+                  .read(shoppingListsProvider.notifier)
+                  .updateShoppingListItem(
+                    listId: list.id,
+                    itemId: itemId,
+                    quantity: quantity,
+                    unit: unit,
+                  );
+            },
             onSelectAll: () async {
               await ref
                   .read(shoppingListsProvider.notifier)
@@ -134,6 +160,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
   const _ShoppingListDetailContent({
     required this.list,
     required this.onToggleItem,
+    required this.onUpdateItem,
     required this.onSelectAll,
     required this.onDeselectAll,
     required this.onCompleteShop,
@@ -142,6 +169,11 @@ class _ShoppingListDetailContent extends StatelessWidget {
 
   final ShoppingList list;
   final Future<void> Function(String itemId) onToggleItem;
+  final Future<void> Function({
+    required String itemId,
+    required String quantity,
+    required String unit,
+  }) onUpdateItem;
   final Future<void> Function() onSelectAll;
   final Future<void> Function() onDeselectAll;
   final Future<void> Function() onDeleteSelected;
@@ -192,7 +224,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
                 onDeselectAll: onDeselectAll,
               ),
               const SizedBox(height: 22),
-              ..._buildItemSections(groupedItems),
+              ..._buildItemSections(context, groupedItems),
             ],
           ),
           Positioned(
@@ -269,6 +301,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
 
   //builds category headers and item rows
   List<Widget> _buildItemSections(
+    BuildContext context,
     Map<String, List<ShoppingListItem>> groupedItems,
   ) {
     final widgets = <Widget>[];
@@ -293,6 +326,20 @@ class _ShoppingListDetailContent extends StatelessWidget {
           ShoppingItemRow(
             item: item,
             onChanged: (_) async => onToggleItem(item.id),
+            onEdit: () => _showEditShoppingListItemDialog(
+              context: context,
+              item: item,
+              onSave: ({
+                required quantity,
+                required unit,
+              }) {
+                return onUpdateItem(
+                  itemId: item.id,
+                  quantity: quantity,
+                  unit: unit,
+                );
+              },
+            ),
           ),
         );
       }
@@ -476,6 +523,223 @@ class _UpdatePantryButton extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _showEditShoppingListItemDialog({
+  required BuildContext context,
+  required ShoppingListItem item,
+  required Future<void> Function({
+    required String quantity,
+    required String unit,
+  }) onSave,
+}) async {
+  final editableValues = _editableQuantityAndUnit(item);
+  final quantityController = TextEditingController(
+    text: editableValues.quantity,
+  );
+
+  var selectedUnit = editableValues.unit;
+  var quantityError = false;
+  var unitError = false;
+  var isSaving = false;
+  String? saveError;
+
+  final availableUnits = <String>{
+    ..._shoppingItemUnitOptions,
+    if (selectedUnit != null && selectedUnit.isNotEmpty) selectedUnit,
+  }.toList();
+
+  final saved = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (context, setDialogState) {
+          Future<void> saveChanges() async {
+            final quantity = quantityController.text.trim();
+            final parsedQuantity = num.tryParse(quantity);
+            final unit = selectedUnit?.trim() ?? '';
+
+            final hasValidQuantity =
+                parsedQuantity != null && parsedQuantity > 0;
+            final hasUnit = unit.isNotEmpty;
+
+            if (!hasValidQuantity || !hasUnit) {
+              setDialogState(() {
+                quantityError = !hasValidQuantity;
+                unitError = !hasUnit;
+                saveError = null;
+              });
+              return;
+            }
+
+            setDialogState(() {
+              isSaving = true;
+              saveError = null;
+            });
+
+            try {
+              await onSave(
+                quantity: quantity,
+                unit: unit,
+              );
+
+              if (dialogContext.mounted) {
+                Navigator.of(dialogContext).pop(true);
+              }
+            } catch (_) {
+              if (!dialogContext.mounted) return;
+
+              setDialogState(() {
+                isSaving = false;
+                saveError = 'Could not update the item. Try again.';
+              });
+            }
+          }
+
+          return AlertDialog(
+            backgroundColor: AppColors.bgCream,
+            title: Text(
+              'Edit Shopping List Item',
+              style: AppTextStyles.heading2.copyWith(
+                color: AppColors.primary,
+              ),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.name,
+                  style: AppTextStyles.title.copyWith(
+                    color: AppColors.textLight,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                TextField(
+                  controller: quantityController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: 'Quantity',
+                    errorText: quantityError
+                        ? 'Enter a quantity greater than zero.'
+                        : null,
+                  ),
+                  onChanged: (_) {
+                    if (!quantityError) return;
+                    setDialogState(() => quantityError = false);
+                  },
+                ),
+                const SizedBox(height: 14),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedUnit,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: 'Unit',
+                    errorText: unitError ? 'Unit is required.' : null,
+                  ),
+                  items: availableUnits.map((unit) {
+                    return DropdownMenuItem<String>(
+                      value: unit,
+                      child: Text(unit),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setDialogState(() {
+                      selectedUnit = value;
+                      unitError = false;
+                    });
+                  },
+                ),
+                if (saveError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Text(
+                      saveError!,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.error,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSaving
+                    ? null
+                    : () => Navigator.of(dialogContext).pop(false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: isSaving ? null : saveChanges,
+                child: isSaving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text('Save'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    quantityController.dispose();
+  });
+
+  if (saved != true || !context.mounted) return;
+
+  _showSnackBar(
+    context,
+    '${item.name} updated.',
+  );
+}
+
+({String quantity, String? unit}) _editableQuantityAndUnit(
+  ShoppingListItem item,
+) {
+  final rawQuantity = item.quantity.trim();
+  final storedUnit = item.unit?.trim();
+
+  if (storedUnit != null && storedUnit.isNotEmpty) {
+    final quantityWithoutUnit = rawQuantity.endsWith(storedUnit)
+        ? rawQuantity
+            .substring(0, rawQuantity.length - storedUnit.length)
+            .trim()
+        : rawQuantity;
+
+    return (
+      quantity: quantityWithoutUnit,
+      unit: storedUnit,
+    );
+  }
+
+  //older mock fixtures store quantity and unit together
+  final match = RegExp(
+    r'^([0-9]+(?:\.[0-9]+)?)\s*(.*)$',
+  ).firstMatch(rawQuantity);
+
+  if (match == null) {
+    return (
+      quantity: rawQuantity == '-' ? '' : rawQuantity,
+      unit: null,
+    );
+  }
+
+  final parsedUnit = match.group(2)?.trim() ?? '';
+
+  return (
+    quantity: match.group(1) ?? '',
+    unit: parsedUnit.isEmpty ? null : parsedUnit,
+  );
 }
 
 void _showSnackBar(BuildContext context, String message) {

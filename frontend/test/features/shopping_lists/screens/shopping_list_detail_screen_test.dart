@@ -206,6 +206,38 @@ void main() {
     expect(checkbox.value, isTrue);
   });
 
+  testWidgets('ShoppingListDetailScreen edits item quantity and unit', (
+    tester,
+  ) async {
+    await pumpShoppingListDetailScreen(tester);
+
+    await tester.tap(find.byIcon(Icons.edit_outlined).first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit Shopping List Item'), findsOneWidget);
+    expect(find.text('Heirloom Tomatoes'), findsWidgets);
+
+    final quantityField = find.widgetWithText(
+      TextField,
+      'Quantity',
+    );
+
+    expect(quantityField, findsOneWidget);
+
+    await tester.enterText(quantityField, '12.5');
+
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('kg').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Heirloom Tomatoes updated.'), findsOneWidget);
+    expect(find.text('12.5 kg'), findsOneWidget);
+  });
+
   testWidgets('ShoppingListDetailScreen selects all items', (tester) async {
     await pumpShoppingListDetailScreen(tester);
 
