@@ -12,6 +12,7 @@ import '../widgets/shopping_item_row.dart';
 import '../widgets/shopping_section_header.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../pantry/providers/pantry_provider.dart';
+import '../models/complete_shop_result.dart';
 
 const List<String> _shoppingItemUnitOptions = [
   'g',
@@ -123,6 +124,11 @@ class _ShoppingListDetailScreenState
                   .read(shoppingListsProvider.notifier)
                   .deleteSelectedItems(list.id);
             },
+            onDeleteList: () async {
+              await ref
+                  .read(shoppingListsProvider.notifier)
+                  .deleteShoppingList(list.id);
+            },
             onCompleteShop: () async {
               final result = await ref
                   .read(shoppingListsProvider.notifier)
@@ -165,6 +171,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
     required this.onDeselectAll,
     required this.onCompleteShop,
     required this.onDeleteSelected,
+    required this.onDeleteList,
   });
 
   final ShoppingList list;
@@ -177,8 +184,9 @@ class _ShoppingListDetailContent extends StatelessWidget {
   final Future<void> Function() onSelectAll;
   final Future<void> Function() onDeselectAll;
   final Future<void> Function() onDeleteSelected;
+  final Future<void> Function() onDeleteList;
 
-  final Future<Object?> Function() onCompleteShop;
+  final Future<CompleteShopResult?> Function() onCompleteShop;
 
   @override
   Widget build(BuildContext context) {
@@ -260,13 +268,9 @@ class _ShoppingListDetailContent extends StatelessWidget {
 
                 if (!context.mounted) return;
 
-                final addedCount = result == null
-                    ? checkedCount
-                    : (result as dynamic).addedToPantryCount as int;
+                final addedCount = result?.addedToPantryCount ?? checkedCount;
 
-                final skippedItems = result == null
-                    ? <String>[]
-                    : (result as dynamic).skippedManualItems as List<String>;
+                final skippedItems = result?.skippedManualItems ?? <String>[];
 
                 final skippedText = skippedItems.isEmpty
                     ? ''
@@ -277,6 +281,29 @@ class _ShoppingListDetailContent extends StatelessWidget {
                     : '$addedCount items sent to pantry.$skippedText';
 
                 _showSnackBar(context, message);
+
+                if (result?.canDeleteShoppingList != true) return;
+
+                final shouldDelete = await _showDeleteEmptyShoppingListDialog(
+                  context: context,
+                  listName: list.title,
+                );
+
+                if (!context.mounted || !shouldDelete) return;
+
+                try {
+                  await onDeleteList();
+
+                  if (!context.mounted) return;
+                  context.go(AppRoutes.shoppingLists);
+                } catch (_) {
+                  if (!context.mounted) return;
+
+                  _showSnackBar(
+                    context,
+                    'Could not delete the shopping list. Try again.',
+                  );
+                }
               },
             ),
           ),
@@ -740,6 +767,48 @@ Future<void> _showEditShoppingListItemDialog({
     quantity: match.group(1) ?? '',
     unit: parsedUnit.isEmpty ? null : parsedUnit,
   );
+}
+
+Future<bool> _showDeleteEmptyShoppingListDialog({
+  required BuildContext context,
+  required String listName,
+}) async {
+  final shouldDelete = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        backgroundColor: AppColors.bgCream,
+        title: Text(
+          'Shopping List Empty',
+          style: AppTextStyles.heading2.copyWith(
+            color: AppColors.primary,
+          ),
+        ),
+        content: Text(
+          'All purchased items have been processed. '
+          'Would you like to delete "$listName"?',
+          style: AppTextStyles.body.copyWith(
+            color: AppColors.textLight,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Keep List'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.error,
+            ),
+            child: const Text('Delete List'),
+          ),
+        ],
+      );
+    },
+  );
+
+  return shouldDelete ?? false;
 }
 
 void _showSnackBar(BuildContext context, String message) {

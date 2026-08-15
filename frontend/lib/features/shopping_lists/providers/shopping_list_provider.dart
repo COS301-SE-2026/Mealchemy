@@ -408,9 +408,8 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
 
     state = AsyncData(
       current.copyWith(
-        lists: result.shoppingListDeleted
-            ? updatedLists.where((list) => list.id != listId).toList()
-            : updatedLists,
+        //backend leaves an empty list in place
+        lists: updatedLists,
       ),
     );
 
