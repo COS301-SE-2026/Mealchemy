@@ -14,6 +14,7 @@ import com.mealchemy.shoppinglist.dto.UpdateShoppingListItemRequest;
 import com.mealchemy.shoppinglist.dto.UpdateShoppingListRequest;
 import com.mealchemy.shoppinglist.dto.DeleteBatchItemsRequest;
 import com.mealchemy.shoppinglist.dto.CompleteShopResponse;
+import com.mealchemy.shoppinglist.dto.AddRecipeToShoppingListRequest;
 
 //models
 import com.mealchemy.shoppinglist.model.ShoppingList;
@@ -92,6 +93,7 @@ public class ShoppingListServiceTest {
     private UpdateShoppingListItemRequest updateShoppingListItemRequest;
     private PurchasedUpdateRequest purchasedUpdateRequest;
     private PantryRecipeComparisonRequest pantryRecipeComparisonRequest;
+    private AddRecipeToShoppingListRequest addRecipeToShoppingListRequest;
     
 
     @BeforeEach
@@ -172,6 +174,14 @@ public class ShoppingListServiceTest {
         pantryRecipeComparisonRequest = new PantryRecipeComparisonRequest(
             "Generate with all ingredients",
             false
+        );
+
+        // what flutter sends to dedicated purchased toggle 
+        purchasedUpdateRequest = new PurchasedUpdateRequest(true);
+
+        // generate shopping list request
+        addRecipeToShoppingListRequest = new AddRecipeToShoppingListRequest(
+            false // add all items, don't compare pantry
         );
 
     }
@@ -1196,7 +1206,7 @@ public class ShoppingListServiceTest {
         assertEquals(1, response.addedToPantryCount());
         assertTrue(response.skippedManualItemNames().isEmpty());
         verify(pantryIngredientRepository).save(any(PantryIngredient.class));
-        assertFalse(response.shoppingListDeleted());
+        assertFalse(response.canDeleteShoppingList());
         verify(shoppingListItemRepository).delete(itemInCatalogue);
         verify(shoppingListItemRepository, never()).delete(unpurchased);
     }
@@ -1221,8 +1231,8 @@ public class ShoppingListServiceTest {
         CompleteShopResponse response = shoppingListService.autoAddToPantryRemoveFromList(1, 1);
 
         // Assert
-        assertTrue(response.shoppingListDeleted());
-        verify(shoppingListRepository).delete(existingShoppingList);  
+        assertTrue(response.canDeleteShoppingList());
+        verify(shoppingListRepository, never()).delete(any(ShoppingList.class));  
     }
     
     @Test
@@ -1252,7 +1262,7 @@ public class ShoppingListServiceTest {
         // Act
         CompleteShopResponse response = shoppingListService.autoAddToPantryRemoveFromList(1, 1);
 
-        assertFalse(response.shoppingListDeleted());
+        assertFalse(response.canDeleteShoppingList());
         verify(shoppingListRepository, never()).delete(any(ShoppingList.class));
     }
 
@@ -1434,6 +1444,234 @@ public class ShoppingListServiceTest {
         shoppingListService.generateShoppingListFromRecipe(1, 1, pantryRecipeComparisonRequest);
 
         // Assert
+        verify(shoppingListItemRepository, times(1)).save(any(ShoppingListItem.class));
+    }
+
+
+    //  ========== Generating Shopping List Items Add to existing list (Compares recipe to current pantry ingredients and inserts the rest into shopping list) Testing ==========
+
+    @Test 
+    public void addRecipeIngredientsToShoppingList_whenListNotFound_throwsNotFound() {
+        // Arrange
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.empty());
+        
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, addRecipeToShoppingListRequest)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }  
+
+
+    @Test
+    public void addRecipeIngredientsToShoppingList_whenNotOwned_throwsUnauthorized() {    
+        // Arrange
+        existingShoppingList.setUserId(2);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 2, addRecipeToShoppingListRequest)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+    }
+
+    @Test
+    public void addRecipeIngredientsToShoppingList_whenRecipeNotFound_throwsNotFound() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(recipeRepository.findById(1)).thenReturn(Optional.empty());
+        
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, addRecipeToShoppingListRequest)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    public void addRecipeIngredientsToShoppingList_whenUserCannotAccessRecipe_throwsNotFound() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        existingRecipe.setOwnerId(2);
+        existingRecipe.setIsCommunityPublished(false);
+        ReflectionTestUtils.setField(existingRecipe, "recipeId", 1);
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
+        when(vaultFolderRecipeRepository.findByRecipe_RecipeId(1)).thenReturn(List.of());
+
+        // Act 
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, addRecipeToShoppingListRequest)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    // actual behaviour
+    @Test
+    public void addRecipeIngredientsToShoppingList_noPantryComparison_addsAllIngredientsAsNewItems() {
+        // Arrange
+        
+        // selected shopping list
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        RecipeIngredient ingredient1 = new RecipeIngredient();
+        ingredient1.setIngId(2);
+        ingredient1.setQuantity(new BigDecimal("100"));
+        ingredient1.setUnit("g");
+
+        RecipeIngredient ingredient2 = new RecipeIngredient();
+        ingredient2.setIngId(3);
+        ingredient2.setQuantity(new BigDecimal("50"));
+        ingredient2.setUnit("ml");
+
+        existingRecipe.setOwnerId(1);
+        ReflectionTestUtils.setField(existingRecipe, "recipeId", 1);
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
+        when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(ingredient1, ingredient2));
+
+        when(shoppingListItemRepository.save(any(ShoppingListItem.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, addRecipeToShoppingListRequest);
+
+        // Assert
+        verify(shoppingListItemRepository, times(2)).save(any(ShoppingListItem.class));
+        verify(pantryIngredientRepository, never()).findByUserIdAndIngId(any(), any());
+    }
+
+    // compare to current pantry ingredients- partially enough of ingredient, add shortfall
+    @Test
+    public void addRecipeIngredientsToShoppingList_pantryComparison_onlyAddShortfall() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        ReflectionTestUtils.setField(existingRecipe, "recipeId", 1);
+        existingRecipe.setOwnerId(1);
+
+        // selected shopping list
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
+
+        RecipeIngredient ingredient1 = new RecipeIngredient();
+        ingredient1.setIngId(2);
+        ingredient1.setQuantity(new BigDecimal("100"));
+        ingredient1.setUnit("g");
+        when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(ingredient1));
+
+        // no existing item - no merge
+        when(shoppingListItemRepository.findByShoppingListId(1)).thenReturn(List.of());
+
+        PantryIngredient existingPantryIngredient = new PantryIngredient();
+        existingPantryIngredient.setUserId(1);
+        existingPantryIngredient.setIngredientId(2);
+        existingPantryIngredient.setQuantity(new BigDecimal("40"));
+        existingPantryIngredient.setUnit("g");
+
+        when(pantryIngredientRepository.findByUserIdAndIngId(1, 2)).thenReturn(List.of(existingPantryIngredient));
+
+        when(shoppingListItemRepository.getSpecificShoppingListItems(1)).thenReturn(List.of());
+
+        // save passed in to access value to assert equals
+        ArgumentCaptor<ShoppingListItem> captor = ArgumentCaptor.forClass(ShoppingListItem.class);
+        when(shoppingListItemRepository.save(captor.capture())).thenAnswer(inv -> inv.getArgument(0)); // else will throw a null ptr exception
+
+        AddRecipeToShoppingListRequest requestWithPantryComparison = new AddRecipeToShoppingListRequest(true);
+
+        // Act
+        shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, requestWithPantryComparison);
+
+        // Assert
+        assertEquals(new BigDecimal("60"), captor.getValue().getQuantity());
+        assertEquals(2, captor.getValue().getIngId());
+        verify(shoppingListItemRepository, times(1)).save(any(ShoppingListItem.class));
+    }
+
+    // compare to current pantry ingredients- add full ingredient quantity
+    @Test
+    void addRecipeIngredientsToShoppingList_pantryComparison_addFullIngredient() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        ReflectionTestUtils.setField(existingRecipe, "recipeId", 1);
+        existingRecipe.setOwnerId(1);
+
+        // selected shopping list
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
+
+        RecipeIngredient ingredient1 = new RecipeIngredient();
+        ingredient1.setIngId(2);
+        ingredient1.setQuantity(new BigDecimal("100"));
+        ingredient1.setUnit("g");
+        when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(ingredient1));
+
+        // no existing item - no merge
+        when(shoppingListItemRepository.findByShoppingListId(1)).thenReturn(List.of());
+
+        when(shoppingListItemRepository.getSpecificShoppingListItems(1)).thenReturn(List.of());
+
+        // save passed in to access value to assert equals
+        ArgumentCaptor<ShoppingListItem> captor = ArgumentCaptor.forClass(ShoppingListItem.class);
+        when(shoppingListItemRepository.save(captor.capture())).thenAnswer(inv -> inv.getArgument(0)); // else will throw a null ptr exception
+
+        AddRecipeToShoppingListRequest requestWithPantryComparison = new AddRecipeToShoppingListRequest(true);
+
+        // Act
+        shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, requestWithPantryComparison);
+
+        // Assert
+        assertEquals(new BigDecimal("100"), captor.getValue().getQuantity());
+        verify(shoppingListItemRepository, times(1)).save(any(ShoppingListItem.class));
+    }
+
+    // matching ingredient already exists in shopping list - merge
+    @Test
+    void addRecipeIngredientsToShoppingList_pantryComparison_mergeQuantity() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        ReflectionTestUtils.setField(existingRecipe, "recipeId", 1);
+        existingRecipe.setOwnerId(1);
+
+        // selected shopping list
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
+
+        RecipeIngredient ingredient1 = new RecipeIngredient();
+        ingredient1.setIngId(2);
+        ingredient1.setQuantity(new BigDecimal("50"));
+        ingredient1.setUnit("g");
+        when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(ingredient1));
+
+        // existing item in shopping list
+        ShoppingListItem existingMatch = new ShoppingListItem();
+        existingMatch.setShoppingListId(1);
+        existingMatch.setIngId(2);
+        existingMatch.setUnit("g");
+        existingMatch.setQuantity(new BigDecimal("100"));
+        ReflectionTestUtils.setField(existingMatch, "itemId", 4);
+
+        when(shoppingListItemRepository.findByShoppingListId(1)).thenReturn(List.of(existingMatch));
+        when(shoppingListItemRepository.getSpecificShoppingListItems(1)).thenReturn(List.of());
+        when(shoppingListItemRepository.save(any(ShoppingListItem.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AddRecipeToShoppingListRequest requestWithPantryComparison = new AddRecipeToShoppingListRequest(true);
+
+        // Act
+        shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, requestWithPantryComparison);
+
+        // Assert
+        assertEquals(new BigDecimal("150"), existingMatch.getQuantity());
+        verify(shoppingListItemRepository, times(1)).save(existingMatch);
         verify(shoppingListItemRepository, times(1)).save(any(ShoppingListItem.class));
     }
 }

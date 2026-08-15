@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional; //need to annot
 import com.mealchemy.shoppinglist.dto.CreateShoppingListItemRequest;
 import com.mealchemy.shoppinglist.dto.CreateShoppingListRequest;
 import com.mealchemy.shoppinglist.dto.PantryRecipeComparisonRequest;
+import com.mealchemy.shoppinglist.dto.AddRecipeToShoppingListRequest;
 import com.mealchemy.shoppinglist.dto.PurchasedUpdateRequest;
 import com.mealchemy.shoppinglist.dto.ShoppingListResponse;
 import com.mealchemy.shoppinglist.dto.ShoppingListItemResponse;
@@ -96,6 +97,7 @@ public class ShoppingListService {
                                 shoppingList.getShoppingListId(),
                                 shoppingList.getUserId(),
                                 shoppingList.getName(),
+                                shoppingListItemRepository.countByShoppingListId(shoppingList.getShoppingListId()),
                                 shoppingList.getStatus(),
                                 shoppingList.getCreatedAt()
                             ))
@@ -121,6 +123,7 @@ public class ShoppingListService {
         return new ShoppingListResponse(saved.getShoppingListId(),
                                         saved.getUserId(),
                                         saved.getName(),
+                                        0,
                                         saved.getStatus(),
                                         saved.getCreatedAt()
         );
@@ -147,6 +150,7 @@ public class ShoppingListService {
         return new ShoppingListResponse(saved.getShoppingListId(),
                                         saved.getUserId(),
                                         saved.getName(),
+                                        shoppingListItemRepository.countByShoppingListId(saved.getShoppingListId()),
                                         saved.getStatus(),
                                         saved.getCreatedAt()
         );
@@ -189,6 +193,7 @@ public class ShoppingListService {
             list.getName(),
             list.getStatus(),
             list.getCreatedAt(),
+            items.size(),
             items
         );
     }
@@ -502,8 +507,97 @@ public class ShoppingListService {
         return new ShoppingListResponse(saved.getShoppingListId(),
                                         saved.getUserId(),
                                         saved.getName(),
+                                        shoppingListItemRepository.countByShoppingListId(saved.getShoppingListId()),
                                         saved.getStatus(),
                                         saved.getCreatedAt()
+        );
+    }
+
+    // POST request - adds a recipe's ingredients to an already existing shopping list the user chooses
+    @Transactional
+    public ShoppingListWithItemsResponse addRecipeIngredientsToShoppingList(Integer userId, Integer shoppingListId, Integer recipeId, AddRecipeToShoppingListRequest request) { 
+        // check shopping list ownership
+        ShoppingList selectedList = shoppingListRepository.findById(shoppingListId)
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
+
+        if (!selectedList.getUserId().equals(userId)){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
+        }
+        
+        // check recipe exists
+        Recipe selectedRecipe = recipeRepository.findById(recipeId)
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
+
+        // could be owned by user in private vault, be a recipe in a shared vault or be in the global 
+        if (!canUserAccessRecipe(userId, selectedRecipe)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found");
+        }
+
+        // get all recipe ingredients
+        List<RecipeIngredient> recipeIngredients = recipeIngredientRepository.findByRecipe_RecipeId(recipeId);
+
+        // to hold items that are already in the shopping list - don't need to be added to shopping list
+        List<ShoppingListItem> existingListItems = new ArrayList<>(shoppingListItemRepository.findByShoppingListId(shoppingListId));
+
+        // tells us whether to add all of recipes ingredients or only add ones not already in pantry
+        Boolean comparePantry = Boolean.TRUE.equals(request.includeAvailablePantryItems());
+
+        for (RecipeIngredient ingredient : recipeIngredients) {
+            BigDecimal quantityToAdd = ingredient.getQuantity();
+
+            // only add mssing ingredients
+            if (comparePantry) {
+                // could have multiple of the same ingredient in the pantry
+                List<PantryIngredient> currentPantryIngredient = pantryIngredientRepository.findByUserIdAndIngId(userId, ingredient.getIngId());
+
+                // find total quantity of the specififc ingredient
+                BigDecimal totalPantryIngredientQuantity = BigDecimal.ZERO;
+                for (PantryIngredient ing : currentPantryIngredient) {
+                    totalPantryIngredientQuantity = totalPantryIngredientQuantity.add(ing.getQuantity());
+                }
+
+                // pantry already has enough of the ingredient 
+                if (totalPantryIngredientQuantity.compareTo(ingredient.getQuantity()) >= 0) {
+                    continue;
+                }
+
+                // pantry does not have enough, only add missing amount
+                quantityToAdd = ingredient.getQuantity().subtract(totalPantryIngredientQuantity);
+            }
+
+            // find ingredient in selected shopping list with the SAME UNIT to merge to - still in for loop
+            Optional<ShoppingListItem> matchingItem = existingListItems.stream().filter(item -> item.getIngId() != null && item.getIngId().equals(ingredient.getIngId()))
+                                                                                .filter(item -> ingredient.getUnit().equals(item.getUnit()))
+                                                                                .findFirst();
+            // found a matching item in the selected shopping list
+            if (matchingItem.isPresent()) {
+                ShoppingListItem foundItem = matchingItem.get();
+                foundItem.setQuantity(foundItem.getQuantity().add(quantityToAdd));
+                shoppingListItemRepository.save(foundItem);
+            }
+            else { // there is no matching item in list - cretae new shopping list  item
+                ShoppingListItem newItem = new ShoppingListItem();
+                newItem.setShoppingListId(shoppingListId);
+                newItem.setIngId(ingredient.getIngId());
+                newItem.setName(null); // because ingId from recipe will never be null
+                newItem.setQuantity(quantityToAdd);
+                newItem.setUnit(ingredient.getUnit());
+                newItem.setPurchased(false);
+                ShoppingListItem saved = shoppingListItemRepository.save(newItem);
+                existingListItems.add(saved);
+            }    
+        }        
+        List<ShoppingListItemResponse> items = shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId);
+
+        // return Shopping List Response
+        return new ShoppingListWithItemsResponse(
+                                    selectedList.getShoppingListId(),
+                                    selectedList.getUserId(),
+                                    selectedList.getName(),
+                                    selectedList.getStatus(),
+                                    selectedList.getCreatedAt(),
+                                    items.size(),
+                                    items
         );
     }
 
@@ -556,6 +650,7 @@ public class ShoppingListService {
             selectedList.getName(),
             selectedList.getStatus(),
             selectedList.getCreatedAt(),
+            itemsToSave.size(),
             itemsToSave
         );
     }
@@ -586,6 +681,7 @@ public class ShoppingListService {
             selectedList.getName(),
             selectedList.getStatus(),
             selectedList.getCreatedAt(),
+            itemsToSave.size(),
             itemsToSave
         );
     }
@@ -630,17 +726,16 @@ public class ShoppingListService {
         }
 
         List<ShoppingListItem> remainingItems = shoppingListItemRepository.findByShoppingListId(shoppingListId);
-        Boolean shoppingListDeleted = false;
+        Boolean canDeleteShoppingList = false;
 
         if (remainingItems.isEmpty()) {
-            shoppingListDeleted = true;
-            shoppingListRepository.delete(selectedList);
+            canDeleteShoppingList = true;
         }
 
         return new CompleteShopResponse(
             addedToPantryCount,
             skippedManualItemNames,
-            shoppingListDeleted
+            canDeleteShoppingList
         );
     }
 }
