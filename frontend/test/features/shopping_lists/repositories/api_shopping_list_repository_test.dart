@@ -94,7 +94,7 @@ void main() {
                 data: {
                   'added_to_pantry_count': 2,
                   'skipped_manual_items': ['Fresh basil bunch'],
-                  'shopping_list_deleted': false,
+                  'can_delete_shopping_list': false,
                 },
               ),
             );
@@ -503,7 +503,7 @@ void main() {
 
     expect(result.addedToPantryCount, 2);
     expect(result.skippedManualItems, ['Fresh basil bunch']);
-    expect(result.shoppingListDeleted, isFalse);
+    expect(result.canDeleteShoppingList, isFalse);
   });
 
   test('createShoppingList posts list metadata and maps response', () async {

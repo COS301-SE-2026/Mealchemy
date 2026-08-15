@@ -292,7 +292,7 @@ class MockShoppingListRepository implements ShoppingListRepository {
     return const CompleteShopResult(
       addedToPantryCount: 1,
       skippedManualItems: ['Mock manual item'],
-      shoppingListDeleted: false,
+      canDeleteShoppingList: false,
     );
   }
 

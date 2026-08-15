@@ -165,6 +165,29 @@ class _FailingUpdateShoppingListRepository extends MockShoppingListRepository {
   }
 }
 
+class _CompleteShopDeletionRepository extends MockShoppingListRepository {
+  _CompleteShopDeletionRepository({
+    required this.canDeleteShoppingList,
+  });
+
+  final bool canDeleteShoppingList;
+  int deleteListCalls = 0;
+
+  @override
+  Future<CompleteShopResult> completeShop(String listId) async {
+    return CompleteShopResult(
+      addedToPantryCount: 1,
+      skippedManualItems: const [],
+      canDeleteShoppingList: canDeleteShoppingList,
+    );
+  }
+
+  @override
+  Future<void> deleteShoppingList(String listId) async {
+    deleteListCalls++;
+  }
+}
+
 void main() {
   setUpAll(() {
     //disable google font fetching
@@ -461,6 +484,104 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('item sent to pantry'), findsOneWidget);
+
+    //mock response says the list cant be deleted
+    expect(find.text('Shopping List Empty'), findsNothing);
+  });
+
+  testWidgets('keeps empty list when user declines deletion', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final repository = _CompleteShopDeletionRepository(
+      canDeleteShoppingList: true,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          shoppingListRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const MaterialApp(
+          home: ShoppingListDetailScreen(
+            listId: 'general-list',
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    //mock General List already contains one purchased item
+    await tester.ensureVisible(find.text('Update Pantry'));
+    await tester.tap(find.text('Update Pantry'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Shopping List Empty'), findsOneWidget);
+    expect(find.text('Keep List'), findsOneWidget);
+    expect(find.text('Delete List'), findsOneWidget);
+
+    await tester.tap(find.text('Keep List'));
+    await tester.pumpAndSettle();
+
+    expect(repository.deleteListCalls, 0);
+    expect(find.text('GENERAL LIST'), findsOneWidget);
+  });
+
+  testWidgets('deletes empty list when user confirms deletion', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final repository = _CompleteShopDeletionRepository(
+      canDeleteShoppingList: true,
+    );
+
+    final router = GoRouter(
+      initialLocation: '/shopping-lists/general-list',
+      routes: [
+        GoRoute(
+          path: AppRoutes.shoppingLists,
+          builder: (context, state) => const ShoppingListsScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.shoppingListDetail,
+          builder: (context, state) {
+            return ShoppingListDetailScreen(
+              listId: state.pathParameters['id']!,
+            );
+          },
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          shoppingListRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: MaterialApp.router(
+          routerConfig: router,
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Update Pantry'));
+    await tester.tap(find.text('Update Pantry'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Shopping List Empty'), findsOneWidget);
+
+    await tester.tap(find.text('Delete List'));
+    await tester.pumpAndSettle();
+
+    expect(repository.deleteListCalls, 1);
+    expect(find.text('Shopping Lists'), findsOneWidget);
   });
 
   testWidgets(
