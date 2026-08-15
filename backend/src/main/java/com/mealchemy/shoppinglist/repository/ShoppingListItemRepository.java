@@ -34,4 +34,7 @@ public interface ShoppingListItemRepository extends JpaRepository<ShoppingListIt
         """)
         List<ShoppingListItemResponse> getSpecificShoppingListItems(@Param("shoppingListId")Integer shoppingListId);
     
+    // get number of item in particular list
+    Integer countByShoppingListId(Integer shoppingListId);
+
 }
