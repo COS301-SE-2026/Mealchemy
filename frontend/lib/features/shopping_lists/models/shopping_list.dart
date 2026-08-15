@@ -5,6 +5,7 @@ class ShoppingList {
     required this.id,
     this.shoppingListId,
     this.userId,
+    this.numItems,
     required this.title,
     required this.subtitle,
     required this.section,
@@ -22,6 +23,10 @@ class ShoppingList {
   //backend ids etc used for API calls
   final int? shoppingListId;
   final int? userId;
+
+  //overview responses contain the count without loading every item
+  final int? numItems;
+
   final String? status;
   final DateTime? createdAt;
 
@@ -33,7 +38,7 @@ class ShoppingList {
   final bool favourite;
   final List<ShoppingListItem> items;
 
-  int get itemCount => items.length;
+  int get itemCount => numItems ?? items.length;
 
   //returns subtitle text from latest item count
   String get displaySubtitle {
@@ -43,7 +48,7 @@ class ShoppingList {
 
     return '$itemCount items added by you';
   }
-  
+
   factory ShoppingList.fromOverviewJson(Map<String, dynamic> json) {
     final shoppingListId = _readInt(json['shopping_list_id']);
 
@@ -51,6 +56,7 @@ class ShoppingList {
       id: shoppingListId?.toString() ?? json['name']?.toString() ?? '',
       shoppingListId: shoppingListId,
       userId: _readInt(json['user_id']),
+      numItems: _readInt(json['num_items']),
       title: json['name']?.toString() ?? 'Untitled list',
       subtitle: '0 items added by you',
       section: 'OTHER LISTS',
@@ -73,7 +79,6 @@ class ShoppingList {
     );
   }
 
-
   factory ShoppingList.fromJson(Map<String, dynamic> json) {
     return ShoppingList.fromDetailJson(json);
   }
@@ -82,6 +87,7 @@ class ShoppingList {
     String? id,
     int? shoppingListId,
     int? userId,
+    int? numItems,
     String? title,
     String? subtitle,
     String? section,
@@ -96,6 +102,8 @@ class ShoppingList {
       id: id ?? this.id,
       shoppingListId: shoppingListId ?? this.shoppingListId,
       userId: userId ?? this.userId,
+      //when detail items change, keep stored count in sync
+      numItems: items != null ? items.length : (numItems ?? this.numItems),
       title: title ?? this.title,
       subtitle: subtitle ?? this.subtitle,
       section: section ?? this.section,
