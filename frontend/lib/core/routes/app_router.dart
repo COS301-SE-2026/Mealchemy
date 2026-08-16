@@ -17,6 +17,7 @@ import '../../features/discovery/screens/discovery_screen.dart';
 
 import '../../features/shopping_lists/screens/shopping_lists_screen.dart';
 import '../../features/shopping_lists/screens/shopping_list_detail_screen.dart';
+import '../../features/shopping_lists/screens/add_shopping_list_item_screen.dart';
 import '../../features/guided_discovery/screens/guided_discovery_screen.dart';
 import '../../features/help/screens/help_screen.dart';
 
@@ -95,6 +96,13 @@ final appRouter = GoRouter(
       builder: (context, state) {
         final id = state.pathParameters['id']!;
         return ShoppingListDetailScreen(listId: id);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.shoppingListAddItem,
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return AddShoppingListItemScreen(listId: id);
       },
     ),
     GoRoute(

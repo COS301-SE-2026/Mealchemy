@@ -76,7 +76,8 @@ class _ApiShapedShoppingListRepository implements ShoppingListRepository {
   @override
   Future<ShoppingListItem> addItemToShoppingList({
     required String listId,
-    required String name,
+    int? ingId,
+    String? name,
     required String quantity,
     required String unit,
   }) async {
@@ -92,6 +93,30 @@ class _ApiShapedShoppingListRepository implements ShoppingListRepository {
     final list = await getShoppingListById(listId);
     final item = list!.items.firstWhere((item) => item.id == itemId);
     return item.copyWith(checked: purchased);
+  }
+
+  @override
+  Future<ShoppingListItem> updateShoppingListItem({
+    required String listId,
+    required String itemId,
+    int? ingId,
+    String? name,
+    required String quantity,
+    required String unit,
+    required bool purchased,
+  }) async {
+    final list = await getShoppingListById(listId);
+    final item = list!.items.firstWhere(
+      (item) => item.id == itemId,
+    );
+
+    return item.copyWith(
+      ingId: ingId,
+      name: name ?? item.name,
+      quantity: '$quantity $unit',
+      unit: unit,
+      checked: purchased,
+    );
   }
 
   @override
@@ -177,6 +202,44 @@ void main() {
     final item = list.items.firstWhere((item) => item.id == 'baby-arugula');
 
     expect(item.checked, isTrue);
+  });
+
+  test('shoppingListsProvider updates item quantity and unit', () async {
+    final container = ProviderContainer(
+      overrides: [
+        shoppingListRepositoryProvider.overrideWithValue(
+          _ApiShapedShoppingListRepository(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(shoppingListsProvider.future);
+
+    final notifier = container.read(shoppingListsProvider.notifier);
+
+    await notifier.updateShoppingListItem(
+      listId: '1',
+      itemId: '10',
+      quantity: '2.5',
+      unit: 'kg',
+    );
+
+    final updatedState = container.read(shoppingListsProvider).value!;
+    final list = updatedState.getListById('1')!;
+    final updatedItem = list.items.firstWhere(
+      (item) => item.id == '10',
+    );
+
+    expect(updatedItem.name, 'Greek Yogurt');
+    expect(updatedItem.ingId, isNull);
+    expect(updatedItem.quantity, '2.5 kg');
+    expect(updatedItem.unit, 'kg');
+    expect(updatedItem.checked, isFalse);
+
+    //provider should replace only edited item
+    expect(list.items, hasLength(2));
+    expect(list.items.last.name, 'Fresh Basil');
   });
 
   //selects every item in one shopping list

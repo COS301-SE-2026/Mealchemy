@@ -4,9 +4,8 @@ import com.mealchemy.shared.enums.ShoppingListStatus;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-// for creating completely new shopping list from a recipe
-public record PantryRecipeComparisonRequest( //records are immutable and auto generate constructors
-   //exactly what client sees not necessarily same as what model has
-    String name,
+// for adding ingredients to an existing shopping list from a recipe
+public record AddRecipeToShoppingListRequest( //records are immutable and auto generate constructors
+    
     @JsonProperty("include_available_pantry_items") Boolean includeAvailablePantryItems 
 ) {}

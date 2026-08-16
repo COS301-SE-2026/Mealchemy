@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/features/shopping_lists/screens/shopping_list_detail_screen.dart';
+import 'package:mealchemy/features/shopping_lists/screens/add_shopping_list_item_screen.dart';
 import 'package:mealchemy/features/shopping_lists/screens/shopping_lists_screen.dart';
 import 'package:mealchemy/features/shopping_lists/models/complete_shop_result.dart';
 import 'package:mealchemy/features/shopping_lists/models/shopping_list.dart';
@@ -12,6 +13,8 @@ import 'package:mealchemy/features/shopping_lists/models/shopping_list_item.dart
 import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
 import 'package:mealchemy/features/shopping_lists/repositories/shopping_list_repository.dart';
 import 'package:mealchemy/features/shopping_lists/repositories/mock_shopping_list_repository.dart';
+import 'package:mealchemy/features/pantry/providers/pantry_provider.dart';
+import 'package:mealchemy/features/pantry/repositories/mock_pantry_repository.dart';
 
 class _DeleteMenuShoppingListRepository implements ShoppingListRepository {
   @override
@@ -102,7 +105,8 @@ class _DeleteMenuShoppingListRepository implements ShoppingListRepository {
   @override
   Future<ShoppingListItem> addItemToShoppingList({
     required String listId,
-    required String name,
+    int? ingId,
+    String? name,
     required String quantity,
     required String unit,
   }) {
@@ -113,6 +117,19 @@ class _DeleteMenuShoppingListRepository implements ShoppingListRepository {
   Future<ShoppingListItem> updateItemPurchased({
     required String listId,
     required String itemId,
+    required bool purchased,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ShoppingListItem> updateShoppingListItem({
+    required String listId,
+    required String itemId,
+    int? ingId,
+    String? name,
+    required String quantity,
+    required String unit,
     required bool purchased,
   }) {
     throw UnimplementedError();
@@ -130,6 +147,44 @@ class _DeleteMenuShoppingListRepository implements ShoppingListRepository {
     required bool includeAvailablePantryItems,
   }) async {
     throw UnimplementedError();
+  }
+}
+
+class _FailingUpdateShoppingListRepository extends MockShoppingListRepository {
+  @override
+  Future<ShoppingListItem> updateShoppingListItem({
+    required String listId,
+    required String itemId,
+    int? ingId,
+    String? name,
+    required String quantity,
+    required String unit,
+    required bool purchased,
+  }) async {
+    throw Exception('Unable to update item.');
+  }
+}
+
+class _CompleteShopDeletionRepository extends MockShoppingListRepository {
+  _CompleteShopDeletionRepository({
+    required this.canDeleteShoppingList,
+  });
+
+  final bool canDeleteShoppingList;
+  int deleteListCalls = 0;
+
+  @override
+  Future<CompleteShopResult> completeShop(String listId) async {
+    return CompleteShopResult(
+      addedToPantryCount: 1,
+      skippedManualItems: const [],
+      canDeleteShoppingList: canDeleteShoppingList,
+    );
+  }
+
+  @override
+  Future<void> deleteShoppingList(String listId) async {
+    deleteListCalls++;
   }
 }
 
@@ -187,6 +242,101 @@ void main() {
     checkbox = tester.widget<Checkbox>(firstCheckbox);
 
     expect(checkbox.value, isTrue);
+  });
+
+  testWidgets('ShoppingListDetailScreen edits item quantity and unit', (
+    tester,
+  ) async {
+    await pumpShoppingListDetailScreen(tester);
+
+    await tester.tap(find.byIcon(Icons.edit_outlined).first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit Shopping List Item'), findsOneWidget);
+    expect(find.text('Heirloom Tomatoes'), findsWidgets);
+
+    final quantityField = find.widgetWithText(
+      TextField,
+      'Quantity',
+    );
+
+    expect(quantityField, findsOneWidget);
+
+    await tester.enterText(quantityField, '12.5');
+
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('kg').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Heirloom Tomatoes updated.'), findsOneWidget);
+    expect(find.text('12.5 kg'), findsOneWidget);
+  });
+
+  testWidgets('ShoppingListDetailScreen shows item update failure', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          shoppingListRepositoryProvider.overrideWithValue(
+            _FailingUpdateShoppingListRepository(),
+          ),
+        ],
+        child: const MaterialApp(
+          home: ShoppingListDetailScreen(
+            listId: 'general-list',
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.edit_outlined).first);
+    await tester.pumpAndSettle();
+
+    final quantityField = find.widgetWithText(
+      TextField,
+      'Quantity',
+    );
+
+    await tester.enterText(quantityField, '12');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Could not update the item. Try again.'),
+      findsOneWidget,
+    );
+    expect(find.text('Edit Shopping List Item'), findsOneWidget);
+  });
+
+  testWidgets('ShoppingListDetailScreen rejects non-positive edit quantity', (
+    tester,
+  ) async {
+    await pumpShoppingListDetailScreen(tester);
+
+    await tester.tap(find.byIcon(Icons.edit_outlined).first);
+    await tester.pumpAndSettle();
+
+    final quantityField = find.widgetWithText(
+      TextField,
+      'Quantity',
+    );
+
+    await tester.enterText(quantityField, '0');
+    await tester.tap(find.text('Save'));
+    await tester.pump();
+
+    expect(
+      find.text('Enter a quantity greater than zero.'),
+      findsOneWidget,
+    );
+    expect(find.text('Edit Shopping List Item'), findsOneWidget);
   });
 
   testWidgets('ShoppingListDetailScreen selects all items', (tester) async {
@@ -271,28 +421,51 @@ void main() {
     expect(find.byType(Checkbox), findsNothing);
   });
 
-  testWidgets('ShoppingListDetailScreen adds item from dialog', (tester) async {
-    await pumpShoppingListDetailScreen(tester);
+  testWidgets('ShoppingListDetailScreen opens add item entry screen', (
+    tester,
+  ) async {
+    final router = GoRouter(
+      initialLocation: '/shopping-lists/general-list',
+      routes: [
+        GoRoute(
+          path: AppRoutes.shoppingListDetail,
+          builder: (context, state) {
+            final id = state.pathParameters['id']!;
+            return ShoppingListDetailScreen(listId: id);
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.shoppingListAddItem,
+          builder: (context, state) {
+            final id = state.pathParameters['id']!;
+            return AddShoppingListItemScreen(listId: id);
+          },
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          shoppingListRepositoryProvider.overrideWithValue(
+            MockShoppingListRepository(),
+          ),
+        ],
+        child: MaterialApp.router(
+          routerConfig: router,
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.add).last);
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-        find.widgetWithText(TextField, 'Item name'), 'Fresh Basil');
-    await tester.enterText(
-        find.widgetWithText(TextField, 'Quantity'), '1 bunch');
-    await tester.enterText(
-        find.widgetWithText(TextField, 'Category'), 'Produce');
-
-    await tester.tap(find.text('Add'));
-    await tester.pumpAndSettle();
-
-    //new item is appended lower in list, so scroll until visible
-    await tester.drag(find.byType(ListView), const Offset(0, -700));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Fresh Basil'), findsOneWidget);
-    expect(find.text('1 bunch'), findsOneWidget);
+    expect(find.text('Shopping List Entry'), findsOneWidget);
+    expect(find.text('Add Shopping List Item'), findsOneWidget);
+    expect(find.text('Catalogue'), findsOneWidget);
+    expect(find.text('Custom Item'), findsOneWidget);
   });
 
   testWidgets('ShoppingListDetailScreen shows update pantry snackbar', (
@@ -311,7 +484,158 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('item sent to pantry'), findsOneWidget);
+
+    //mock response says the list cant be deleted
+    expect(find.text('Shopping List Empty'), findsNothing);
   });
+
+  testWidgets('keeps empty list when user declines deletion', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final repository = _CompleteShopDeletionRepository(
+      canDeleteShoppingList: true,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          shoppingListRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const MaterialApp(
+          home: ShoppingListDetailScreen(
+            listId: 'general-list',
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    //mock General List already contains one purchased item
+    await tester.ensureVisible(find.text('Update Pantry'));
+    await tester.tap(find.text('Update Pantry'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Shopping List Empty'), findsOneWidget);
+    expect(find.text('Keep List'), findsOneWidget);
+    expect(find.text('Delete List'), findsOneWidget);
+
+    await tester.tap(find.text('Keep List'));
+    await tester.pumpAndSettle();
+
+    expect(repository.deleteListCalls, 0);
+    expect(find.text('GENERAL LIST'), findsOneWidget);
+  });
+
+  testWidgets('deletes empty list when user confirms deletion', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final repository = _CompleteShopDeletionRepository(
+      canDeleteShoppingList: true,
+    );
+
+    final router = GoRouter(
+      initialLocation: '/shopping-lists/general-list',
+      routes: [
+        GoRoute(
+          path: AppRoutes.shoppingLists,
+          builder: (context, state) => const ShoppingListsScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.shoppingListDetail,
+          builder: (context, state) {
+            return ShoppingListDetailScreen(
+              listId: state.pathParameters['id']!,
+            );
+          },
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          shoppingListRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: MaterialApp.router(
+          routerConfig: router,
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Update Pantry'));
+    await tester.tap(find.text('Update Pantry'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Shopping List Empty'), findsOneWidget);
+
+    await tester.tap(find.text('Delete List'));
+    await tester.pumpAndSettle();
+
+    expect(repository.deleteListCalls, 1);
+    expect(find.text('Shopping Lists'), findsOneWidget);
+  });
+
+  testWidgets(
+    'ShoppingListDetailScreen refreshes pantry data after update pantry',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(900, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      var pantryRepositoryBuildCount = 0;
+
+      final container = ProviderContainer(
+        overrides: [
+          shoppingListRepositoryProvider.overrideWithValue(
+            MockShoppingListRepository(),
+          ),
+          pantryRepositoryProvider.overrideWith((ref) {
+            pantryRepositoryBuildCount++;
+            return MockPantryRepository();
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      // Load the pantry once to represent pantry data already cached in memory.
+      await container.read(pantryStateProvider.future);
+
+      expect(pantryRepositoryBuildCount, 1);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: ShoppingListDetailScreen(
+              listId: 'general-list',
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(Checkbox).first);
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Update Pantry'));
+      await tester.tap(find.text('Update Pantry'));
+      await tester.pumpAndSettle();
+
+      //reading the invalidated pantry state must create a fresh repo, so API repo cant return its old ingredient cache
+      await container.read(pantryStateProvider.future);
+
+      expect(pantryRepositoryBuildCount, 2);
+    },
+  );
 
   testWidgets('ShoppingListDetailScreen renders not found state', (
     tester,

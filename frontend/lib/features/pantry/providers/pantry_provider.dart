@@ -32,16 +32,16 @@ final pantryStateProvider = AsyncNotifierProvider<PantryNotifier, PantryState>(
 );
 
 class PantryNotifier extends AsyncNotifier<PantryState> {
-  late final PantryRepository _repository;
+  PantryRepository get _repository => ref.read(pantryRepositoryProvider);
 
   @override
   Future<PantryState> build() async {
-    _repository = ref.watch(pantryRepositoryProvider);
+    final repository = ref.watch(pantryRepositoryProvider);
 
-    final summary = await _repository.getPantrySummary();
-    final filters = await _repository.getPantryFilters();
-    final ingredients = await _repository.getPantryIngredients();
-    final categories = await _repository.getIngredientCategories();
+    final summary = await repository.getPantrySummary();
+    final filters = await repository.getPantryFilters();
+    final ingredients = await repository.getPantryIngredients();
+    final categories = await repository.getIngredientCategories();
 
     return PantryState(
       summary: summary,
