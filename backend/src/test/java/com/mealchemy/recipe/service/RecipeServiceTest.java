@@ -8,6 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -33,6 +34,7 @@ import com.mealchemy.recipe.dto.RecipeFullRequest;
 import com.mealchemy.recipe.dto.RecipeResponse;
 import com.mealchemy.recipe.dto.RecipeIngredientRequest;
 import com.mealchemy.recipe.dto.RecipeStepRequest;
+import com.mealchemy.recipe.event.RecipePhotoCleanupEvent;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.cuisinetype.repository.FlavourProfileOptionsRepository;
@@ -56,6 +58,9 @@ public class RecipeServiceTest {
 
     @Mock 
     private VaultFolderRecipeService vaultFolderRecipeService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private RecipeService recipeService;
@@ -346,6 +351,67 @@ public class RecipeServiceTest {
     }
 
     @Test
+    void updateRecipe_publishesCleanup_whenPhotoIsReplaced()
+    {
+        String oldPhotoUrl = "https://storage.googleapis.com/bucket/recipes/1/old.jpg";
+        String newPhotoUrl = "https://storage.googleapis.com/bucket/recipes/1/new.jpg";
+        recipe.setPhotoUrl(oldPhotoUrl);
+        RecipeRequest photoRequest = new RecipeRequest(
+            "Req Title", "Description", "Chinese", 10, 15, 2,
+            newPhotoUrl, null, null, false, 1
+        );
+
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(flavourProfileOptionsRepository.existsByValue(photoRequest.cuisineType()))
+            .thenReturn(true);
+        when(recipeRepository.save(any(Recipe.class))).thenReturn(recipe);
+
+        recipeService.updateRecipe(1, photoRequest, 1);
+
+        verify(eventPublisher).publishEvent(
+            new RecipePhotoCleanupEvent(1, oldPhotoUrl)
+        );
+    }
+
+    @Test
+    void updateRecipe_publishesCleanup_whenPhotoIsRemoved()
+    {
+        String oldPhotoUrl = "https://storage.googleapis.com/bucket/recipes/1/old.jpg";
+        recipe.setPhotoUrl(oldPhotoUrl);
+
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(flavourProfileOptionsRepository.existsByValue(request.cuisineType()))
+            .thenReturn(true);
+        when(recipeRepository.save(any(Recipe.class))).thenReturn(recipe);
+
+        recipeService.updateRecipe(1, request, 1);
+
+        verify(eventPublisher).publishEvent(
+            new RecipePhotoCleanupEvent(1, oldPhotoUrl)
+        );
+    }
+
+    @Test
+    void updateRecipe_doesNotPublishCleanup_whenPhotoIsUnchanged()
+    {
+        String photoUrl = "https://storage.googleapis.com/bucket/recipes/1/photo.jpg";
+        recipe.setPhotoUrl(photoUrl);
+        RecipeRequest photoRequest = new RecipeRequest(
+            "Req Title", "Description", "Chinese", 10, 15, 2,
+            photoUrl, null, null, false, 1
+        );
+
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(flavourProfileOptionsRepository.existsByValue(photoRequest.cuisineType()))
+            .thenReturn(true);
+        when(recipeRepository.save(any(Recipe.class))).thenReturn(recipe);
+
+        recipeService.updateRecipe(1, photoRequest, 1);
+
+        verifyNoInteractions(eventPublisher);
+    }
+
+    @Test
     void updateRecipe_throwsException_whenRecipeNotFound()
     {
         when(recipeRepository.findById(99)).thenReturn(Optional.empty());
@@ -388,6 +454,19 @@ public class RecipeServiceTest {
         recipeService.deleteRecipe(1, 1);
 
         verify(recipeRepository, times(1)).deleteById(1);
+    }
+
+    @Test
+    void deleteRecipe_publishesCleanup_whenRecipeHasPhoto()
+    {
+        String photoUrl = "https://storage.googleapis.com/bucket/recipes/1/photo.jpg";
+        recipe.setPhotoUrl(photoUrl);
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+
+        recipeService.deleteRecipe(1, 1);
+
+        verify(recipeRepository).deleteById(1);
+        verify(eventPublisher).publishEvent(new RecipePhotoCleanupEvent(1, photoUrl));
     }
 
     @Test

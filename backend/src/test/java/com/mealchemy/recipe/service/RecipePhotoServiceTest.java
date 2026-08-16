@@ -1,17 +1,21 @@
 package com.mealchemy.recipe.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.Storage;
 import com.mealchemy.recipe.dto.RecipePhotoUploadRequest;
 import com.mealchemy.recipe.dto.RecipePhotoUploadResponse;
+import com.mealchemy.recipe.event.RecipePhotoCleanupEvent;
 import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import java.net.URL;
@@ -220,5 +224,72 @@ public class RecipePhotoServiceTest
             "Recipe photo upload is temporarily unavailable.",
             exception.getReason()
         );
+    }
+
+    @Test
+    void deletePhotoAfterCommit_deletesManagedRecipePhoto()
+    {
+        String objectName = "recipes/10/old.jpg";
+        RecipePhotoCleanupEvent event = new RecipePhotoCleanupEvent(
+            10,
+            "https://storage.googleapis.com/recipe-photo-bucket/" + objectName
+        );
+
+        recipePhotoService.deletePhotoAfterCommit(event);
+
+        verify(storage).delete(BlobId.of("recipe-photo-bucket", objectName));
+    }
+
+    @Test
+    void deletePhotoAfterCommit_ignoresExternalPhotoUrl()
+    {
+        RecipePhotoCleanupEvent event = new RecipePhotoCleanupEvent(
+            10,
+            "https://example.com/photo.jpg"
+        );
+
+        recipePhotoService.deletePhotoAfterCommit(event);
+
+        verifyNoInteractions(storage);
+    }
+
+    @Test
+    void deletePhotoAfterCommit_ignoresAnotherBucket()
+    {
+        RecipePhotoCleanupEvent event = new RecipePhotoCleanupEvent(
+            10,
+            "https://storage.googleapis.com/another-bucket/recipes/10/photo.jpg"
+        );
+
+        recipePhotoService.deletePhotoAfterCommit(event);
+
+        verifyNoInteractions(storage);
+    }
+
+    @Test
+    void deletePhotoAfterCommit_ignoresAnotherRecipePath()
+    {
+        RecipePhotoCleanupEvent event = new RecipePhotoCleanupEvent(
+            10,
+            "https://storage.googleapis.com/recipe-photo-bucket/recipes/20/photo.jpg"
+        );
+
+        recipePhotoService.deletePhotoAfterCommit(event);
+
+        verifyNoInteractions(storage);
+    }
+
+    @Test
+    void deletePhotoAfterCommit_doesNotThrow_whenStorageDeleteFails()
+    {
+        String objectName = "recipes/10/old.jpg";
+        RecipePhotoCleanupEvent event = new RecipePhotoCleanupEvent(
+            10,
+            "https://storage.googleapis.com/recipe-photo-bucket/" + objectName
+        );
+        when(storage.delete(BlobId.of("recipe-photo-bucket", objectName)))
+            .thenThrow(new IllegalStateException("Delete failed"));
+
+        assertDoesNotThrow(() -> recipePhotoService.deletePhotoAfterCommit(event));
     }
 }
