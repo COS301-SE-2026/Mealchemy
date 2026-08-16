@@ -50,9 +50,10 @@ public class RecipeService
     }
 
     // Get all recipes
-    public List<RecipeResponse> getAllRecipes()
+    // modified to call query with user ID instead of unrestricted findAll
+    public List<RecipeResponse> getAllRecipes(Integer userId)
     {
-        return recipeRepository.findAll().stream().map(RecipeResponse::from).collect(Collectors.toList());
+        return recipeRepository.findAllAccessibleByUserId(userId).stream().map(RecipeResponse::from).collect(Collectors.toList());
     }
 
     // Get all community publishe recipes (global vault)
@@ -62,9 +63,22 @@ public class RecipeService
     }
 
     // Get a single recipe by Id
-    public RecipeResponse getRecipeById(Integer id)
+    // Modified to find accessible recipe, returns it when acess allowed, checkif reciepe exists if acess fails, returns 403 if exists but not allowed access, returns 404 when it doesnt exist.
+    public RecipeResponse getRecipeById(Integer id, Integer userId)
     {
-        Recipe recipeForReturn = recipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
+        Optional<Recipe> accessibleRecipe = recipeRepository.findAccessibleByIdAndUserId(id, userId);
+
+        if (accessibleRecipe.isEmpty())
+        {
+            if (recipeRepository.existsById(id))
+            {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to view this recipe.");
+            }
+
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
+        }
+
+        Recipe recipeForReturn = accessibleRecipe.get();
         return RecipeResponse.from(recipeForReturn);
     }
 

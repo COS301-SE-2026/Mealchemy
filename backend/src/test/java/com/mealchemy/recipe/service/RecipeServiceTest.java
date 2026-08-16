@@ -108,9 +108,9 @@ public class RecipeServiceTest {
     @Test
     void getAllRecipes_returnsListOfRecipes_whenFound()
     {
-        when(recipeRepository.findAll()).thenReturn(List.of(recipe));
+        when(recipeRepository.findAllAccessibleByUserId(1)).thenReturn(List.of(recipe));
 
-        List<RecipeResponse> result = recipeService.getAllRecipes();
+        List<RecipeResponse> result = recipeService.getAllRecipes(1);
 
         assertNotNull(result);
         assertEquals("Recipe 1", result.get(0).title());
@@ -119,9 +119,9 @@ public class RecipeServiceTest {
     @Test
     void getAllRecipes_returnsEmptyList_whenNotFound()
     {
-        when(recipeRepository.findAll()).thenReturn(List.of());
+        when(recipeRepository.findAllAccessibleByUserId(1)).thenReturn(List.of());
 
-        List<RecipeResponse> result = recipeService.getAllRecipes();
+        List<RecipeResponse> result = recipeService.getAllRecipes(1);
 
         assertTrue(result.isEmpty());
     }
@@ -129,9 +129,9 @@ public class RecipeServiceTest {
     @Test
     void getRecipeById_returnsRecipe_whenFound()
     {
-        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeRepository.findAccessibleByIdAndUserId(1, 1)).thenReturn(Optional.of(recipe));
 
-        RecipeResponse result = recipeService.getRecipeById(1);
+        RecipeResponse result = recipeService.getRecipeById(1, 1);
 
         assertNotNull(result);
         assertEquals("Recipe 1", result.title());
@@ -140,12 +140,25 @@ public class RecipeServiceTest {
     @Test
     void getRecipeById_throwsException_whenNotFound()
     {
-        when(recipeRepository.findById(99)).thenReturn(Optional.empty());
+        when(recipeRepository.findAccessibleByIdAndUserId(99, 1)).thenReturn(Optional.empty());
+        when(recipeRepository.existsById(99)).thenReturn(false);
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.getRecipeById(99));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.getRecipeById(99, 1));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Recipe not found.", ex.getReason());
+    }
+
+    @Test
+    void getRecipeById_throwsException_whenRecipeIsNotAccessible()
+    {
+        when(recipeRepository.findAccessibleByIdAndUserId(1, 2)).thenReturn(Optional.empty());
+        when(recipeRepository.existsById(1)).thenReturn(true);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.getRecipeById(1, 2));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("You do not have permission to view this recipe.", ex.getReason());
     }
 
     @Test
