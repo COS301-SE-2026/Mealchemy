@@ -85,7 +85,7 @@ public class RecipeControllerTest {
     @Test
     void getAllRecipes_returns200_withList() throws Exception
     {
-        when(recipeService.getAllRecipes()).thenReturn(List.of(response));
+        when(recipeService.getAllRecipes(1)).thenReturn(List.of(response));
         
         mockMvc.perform(get("/recipes/all")).andExpect(status().isOk()).andExpect(jsonPath("$[0].title").value("Recipe 1"));
     }
@@ -101,7 +101,7 @@ public class RecipeControllerTest {
     @Test
     void getRecipeById_returns200_whenFound() throws Exception
     {
-        when(recipeService.getRecipeById(1)).thenReturn(response);
+        when(recipeService.getRecipeById(1, 1)).thenReturn(response);
 
         mockMvc.perform(get("/recipes/single/1")).andExpect(status().isOk()).andExpect(jsonPath("$.title").value("Recipe 1"));
     }
@@ -109,9 +109,19 @@ public class RecipeControllerTest {
     @Test
     void getRecipeById_returns404_whenNotFound() throws Exception
     {
-        when(recipeService.getRecipeById(99)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
+        when(recipeService.getRecipeById(99, 1)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         mockMvc.perform(get("/recipes/single/99")).andExpect(status().isNotFound()).andExpect(jsonPath("$.message").value("Recipe not found."));
+    }
+
+    @Test
+    void getRecipeById_returns403_whenNotAccessible() throws Exception
+    {
+        when(recipeService.getRecipeById(1, 1)).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to view this recipe."));
+
+        mockMvc.perform(get("/recipes/single/1"))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message").value("You do not have permission to view this recipe."));
     }
 
     @Test

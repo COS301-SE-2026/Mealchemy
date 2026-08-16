@@ -28,10 +28,11 @@ public class RecipeController
     /* Mapping functions */
 
     // Get
+    // changed to receive the authenticated user ID
     @GetMapping("/all")
-    public List<RecipeResponse> getAllRecipes()
+    public List<RecipeResponse> getAllRecipes(@AuthenticationPrincipal String userId)
     {
-        return recipeService.getAllRecipes();
+        return recipeService.getAllRecipes(Integer.parseInt(userId));
     }
 
     // Get
@@ -42,10 +43,11 @@ public class RecipeController
     }
 
     // Get
+    // changed to receive the authenticated user ID
     @GetMapping("/single/{id}")
-    public RecipeResponse getRecipeById(@PathVariable Integer id)
+    public RecipeResponse getRecipeById(@PathVariable Integer id, @AuthenticationPrincipal String userId)
     {
-        return recipeService.getRecipeById(id);
+        return recipeService.getRecipeById(id, Integer.parseInt(userId));
     }
 
     // Post
