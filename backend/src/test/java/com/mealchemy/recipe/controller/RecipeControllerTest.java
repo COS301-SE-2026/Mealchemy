@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.OffsetDateTime;
+import java.util.Map;
 import java.util.List;
 import java.math.BigDecimal;
 
@@ -33,8 +34,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import com.mealchemy.recipe.dto.RecipeRequest;
 import com.mealchemy.recipe.dto.RecipeFullRequest;
 import com.mealchemy.recipe.dto.RecipeIngredientRequest;
+import com.mealchemy.recipe.dto.RecipePhotoUploadRequest;
+import com.mealchemy.recipe.dto.RecipePhotoUploadResponse;
 import com.mealchemy.recipe.dto.RecipeStepRequest;
 import com.mealchemy.recipe.dto.RecipeResponse;
+import com.mealchemy.recipe.service.RecipePhotoService;
 import com.mealchemy.recipe.service.RecipeService;
 import com.mealchemy.config.WithMockJwtUser;
 
@@ -50,6 +54,9 @@ public class RecipeControllerTest {
 
     @MockitoBean
     private RecipeService recipeService;
+
+    @MockitoBean
+    private RecipePhotoService recipePhotoService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -193,6 +200,74 @@ public class RecipeControllerTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(invalidFullRequest)))
             .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createPhotoUploadUrl_returns200_withUploadDetails() throws Exception
+    {
+        RecipePhotoUploadRequest photoRequest = new RecipePhotoUploadRequest(
+            "image/jpeg",
+            2048L
+        );
+        RecipePhotoUploadResponse photoResponse = new RecipePhotoUploadResponse(
+            "https://storage.googleapis.com/signed-upload",
+            "https://storage.googleapis.com/bucket/recipes/1/photo.jpg",
+            Map.of("Content-Type", "image/jpeg", "Content-Length", "2048"),
+            OffsetDateTime.now().plusMinutes(10)
+        );
+        when(recipePhotoService.createPhotoUploadUrl(
+            eq(1),
+            any(RecipePhotoUploadRequest.class),
+            eq(1)
+        )).thenReturn(photoResponse);
+
+        mockMvc.perform(post("/recipes/1/photo-upload-url")
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(photoRequest)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.uploadUrl").value(photoResponse.uploadUrl()))
+            .andExpect(jsonPath("$.photoUrl").value(photoResponse.photoUrl()))
+            .andExpect(jsonPath("$.requiredHeaders.Content-Type").value("image/jpeg"))
+            .andExpect(jsonPath("$.requiredHeaders.Content-Length").value("2048"));
+    }
+
+    @Test
+    void createPhotoUploadUrl_returns400_whenRequestIsInvalid() throws Exception
+    {
+        RecipePhotoUploadRequest photoRequest = new RecipePhotoUploadRequest("", 0L);
+
+        mockMvc.perform(post("/recipes/1/photo-upload-url")
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(photoRequest)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createPhotoUploadUrl_returns403_whenUserDoesNotOwnRecipe() throws Exception
+    {
+        RecipePhotoUploadRequest photoRequest = new RecipePhotoUploadRequest(
+            "image/jpeg",
+            2048L
+        );
+        when(recipePhotoService.createPhotoUploadUrl(
+            eq(1),
+            any(RecipePhotoUploadRequest.class),
+            eq(1)
+        )).thenThrow(new ResponseStatusException(
+            HttpStatus.FORBIDDEN,
+            "Only the owner of this recipe can upload a photo."
+        ));
+
+        mockMvc.perform(post("/recipes/1/photo-upload-url")
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(photoRequest)))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message").value(
+                "Only the owner of this recipe can upload a photo."
+            ));
     }
 
     @Test
