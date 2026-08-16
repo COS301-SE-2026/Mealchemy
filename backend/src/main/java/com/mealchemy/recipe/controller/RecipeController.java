@@ -11,7 +11,10 @@ import jakarta.validation.Valid;
 
 import com.mealchemy.recipe.dto.RecipeRequest;
 import com.mealchemy.recipe.dto.RecipeFullRequest;
+import com.mealchemy.recipe.dto.RecipePhotoUploadRequest;
+import com.mealchemy.recipe.dto.RecipePhotoUploadResponse;
 import com.mealchemy.recipe.dto.RecipeResponse;
+import com.mealchemy.recipe.service.RecipePhotoService;
 import com.mealchemy.recipe.service.RecipeService;
 
 @RestController
@@ -19,10 +22,12 @@ import com.mealchemy.recipe.service.RecipeService;
 public class RecipeController
 {
     private final RecipeService recipeService;
+    private final RecipePhotoService recipePhotoService;
 
-    public RecipeController(RecipeService recipeService)
+    public RecipeController(RecipeService recipeService, RecipePhotoService recipePhotoService)
     {
         this.recipeService = recipeService;
+        this.recipePhotoService = recipePhotoService;
     }
 
     /* Mapping functions */
@@ -62,6 +67,22 @@ public class RecipeController
     public RecipeResponse createFromFullRecipe(@Valid @RequestBody RecipeFullRequest request, @AuthenticationPrincipal String ownerId, @PathVariable Integer sourceId)
     {
         return recipeService.createFromFullRecipe(request, Integer.parseInt(ownerId), sourceId);
+    }
+
+    // Post
+    // gets recipe id from path, validates reuqest dto, gets authenticated user id, returns signed upload info.
+    @PostMapping("/{id}/photo-upload-url")
+    public RecipePhotoUploadResponse createPhotoUploadUrl(
+        @PathVariable Integer id,
+        @Valid @RequestBody RecipePhotoUploadRequest request,
+        @AuthenticationPrincipal String ownerId
+    )
+    {
+        return recipePhotoService.createPhotoUploadUrl(
+            id,
+            request,
+            Integer.parseInt(ownerId)
+        );
     }
 
     // Put
