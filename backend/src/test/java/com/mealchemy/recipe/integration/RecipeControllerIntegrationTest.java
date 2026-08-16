@@ -19,6 +19,8 @@ import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.shared.enums.VaultType;
 import com.mealchemy.cuisinetype.repository.FlavourProfileOptionsRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.Storage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
@@ -31,6 +33,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.http.MediaType;
 
@@ -43,10 +47,12 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@TestPropertySource(properties = "recipe.photo.bucket-name=recipe-photo-bucket")
 public class RecipeControllerIntegrationTest {
 
     @Autowired
@@ -78,6 +84,10 @@ public class RecipeControllerIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    // mock cloud storage to limit usage costs
+    @MockitoBean
+    private Storage storage;
 
 
     private String validCuisine;
@@ -507,6 +517,36 @@ public class RecipeControllerIntegrationTest {
     }
 
     @Test
+    void updateRecipe_commitsNewPhotoBeforeDeletingOldPhoto() throws Exception {
+        Recipe recipe = saveRecipe(owner, "Old Title");
+        String oldObjectName = "recipes/" + recipe.getRecipeId() + "/old.jpg";
+        String oldPhotoUrl = "https://storage.googleapis.com/recipe-photo-bucket/"
+                + oldObjectName;
+        String newPhotoUrl = "https://storage.googleapis.com/recipe-photo-bucket/recipes/"
+                + recipe.getRecipeId() + "/new.jpg";
+        recipe.setPhotoUrl(oldPhotoUrl);
+        recipeRepository.save(recipe);
+        RecipeRequest request = new RecipeRequest(
+                "New Title", "A description.", validCuisine,
+                10, 20, 2,
+                newPhotoUrl, null, null, false, null
+        );
+
+        mockMvc.perform(put("/recipes/edit/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId())))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        org.junit.jupiter.api.Assertions.assertEquals(
+                newPhotoUrl,
+                recipeRepository.findById(recipe.getRecipeId()).get().getPhotoUrl()
+        );
+        verify(storage).delete(BlobId.of("recipe-photo-bucket", oldObjectName));
+    }
+
+    @Test
     void updateRecipe_returns403_whenNotOwner() throws Exception {
         Recipe recipe = saveRecipe(owner, "Owner's Recipe");
         RecipeRequest request = recipeRequest("Hijacked", validCuisine, null);
@@ -561,6 +601,26 @@ public class RecipeControllerIntegrationTest {
         org.junit.jupiter.api.Assertions.assertTrue(
                 recipeRepository.findById(recipe.getRecipeId()).isEmpty()
         );
+    }
+
+    @Test
+    void deleteRecipe_commitsDeletionBeforeDeletingPhoto() throws Exception {
+        Recipe recipe = saveRecipe(owner, "Doomed Recipe");
+        String objectName = "recipes/" + recipe.getRecipeId() + "/photo.jpg";
+        recipe.setPhotoUrl(
+                "https://storage.googleapis.com/recipe-photo-bucket/" + objectName
+        );
+        recipeRepository.save(recipe);
+
+        mockMvc.perform(delete("/recipes/delete/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId())))
+                        .with(csrf()))
+                .andExpect(status().isOk());
+
+        org.junit.jupiter.api.Assertions.assertTrue(
+                recipeRepository.findById(recipe.getRecipeId()).isEmpty()
+        );
+        verify(storage).delete(BlobId.of("recipe-photo-bucket", objectName));
     }
 
     @Test
