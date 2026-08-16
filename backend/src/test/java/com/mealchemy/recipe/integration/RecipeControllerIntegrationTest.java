@@ -10,8 +10,11 @@ import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.model.VaultFolder;
+import com.mealchemy.vault.model.VaultFolderRecipe;
+import com.mealchemy.vault.model.VaultMember;
 import com.mealchemy.vault.repository.VaultFolderRepository;
 import com.mealchemy.vault.repository.VaultFolderRecipeRepository;
+import com.mealchemy.vault.repository.VaultMemberRepository;
 import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.shared.enums.VaultType;
 import com.mealchemy.cuisinetype.repository.FlavourProfileOptionsRepository;
@@ -31,6 +34,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.http.MediaType;
 
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -61,6 +65,9 @@ public class RecipeControllerIntegrationTest {
     private VaultFolderRecipeRepository vaultFolderRecipeRepository;
 
     @Autowired
+    private VaultMemberRepository vaultMemberRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -85,6 +92,7 @@ public class RecipeControllerIntegrationTest {
     void setUp() {
         
         vaultFolderRecipeRepository.deleteAll();
+        vaultMemberRepository.deleteAll();
         recipeRepository.deleteAll();
         vaultFolderRepository.deleteAll();
         vaultRepository.deleteAll();
@@ -152,6 +160,35 @@ public class RecipeControllerIntegrationTest {
         return recipeRepository.save(recipe);
     }
 
+    private Vault saveVault(User vaultOwner, VaultType vaultType, String name) {
+        Vault vault = new Vault();
+        vault.setOwnerId(vaultOwner.getUserId());
+        vault.setVaultType(vaultType);
+        vault.setName(name);
+        return vaultRepository.save(vault);
+    }
+
+    private VaultFolder saveFolder(Vault vault, String name) {
+        VaultFolder folder = new VaultFolder();
+        folder.setVault(vault);
+        folder.setFolderName(name);
+        return vaultFolderRepository.save(folder);
+    }
+
+    private void addVaultMember(Vault vault, User user) {
+        VaultMember member = new VaultMember();
+        member.setVault(vault);
+        member.setUser(user);
+        vaultMemberRepository.save(member);
+    }
+
+    private void addRecipeToFolder(Recipe recipe, VaultFolder folder) {
+        VaultFolderRecipe folderRecipe = new VaultFolderRecipe();
+        folderRecipe.setRecipe(recipe);
+        folderRecipe.setFolder(folder);
+        vaultFolderRecipeRepository.save(folderRecipe);
+    }
+
     private RecipeRequest recipeRequest(String title, String cuisine, Integer folderId) {
         return new RecipeRequest(
                 title, "A description.", cuisine,
@@ -178,14 +215,47 @@ public class RecipeControllerIntegrationTest {
     // GET /recipes/all
 
     @Test
-    void getAllRecipes_returns200_withEveryRecipe() throws Exception {
-        saveRecipe(owner, "Recipe One");
-        saveRecipe(otherUser, "Recipe Two");
+    void getAllRecipes_returns200_withOnlyAccessibleRecipes() throws Exception {
+        saveRecipe(owner, "Owned Recipe");
+        saveRecipe(otherUser, "Inaccessible Recipe");
+        savePublishedRecipe(otherUser, "Community Recipe");
+
+        Vault ownerVault = saveVault(owner, VaultType.SHARED, "Owner Shared Vault");
+        VaultFolder ownerFolder = saveFolder(ownerVault, "Owner Folder");
+        Recipe vaultOwnedRecipe = saveRecipe(otherUser, "Vault Owner Recipe");
+        addRecipeToFolder(vaultOwnedRecipe, ownerFolder);
+
+        Vault memberVault = saveVault(otherUser, VaultType.SHARED, "Member Shared Vault");
+        VaultFolder memberFolder = saveFolder(memberVault, "Member Folder");
+        Recipe sharedRecipe = saveRecipe(otherUser, "Shared Recipe");
+        addVaultMember(memberVault, owner);
+        addRecipeToFolder(sharedRecipe, memberFolder);
 
         mockMvc.perform(get("/recipes/all")
                         .with(authentication(authAs(owner.getUserId()))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)));
+                .andExpect(jsonPath("$", hasSize(4)))
+                .andExpect(jsonPath("$[*].title", hasItems(
+                        "Owned Recipe",
+                        "Community Recipe",
+                        "Vault Owner Recipe",
+                        "Shared Recipe"
+                )));
+    }
+
+    @Test
+    void getAllRecipes_returnsEachRecipeOnce_whenAccessibleInMultipleWays() throws Exception {
+        Recipe recipe = savePublishedRecipe(owner, "Accessible Recipe");
+        Vault sharedVault = saveVault(otherUser, VaultType.SHARED, "Shared Vault");
+        VaultFolder sharedFolder = saveFolder(sharedVault, "Shared Folder");
+        addVaultMember(sharedVault, owner);
+        addRecipeToFolder(recipe, sharedFolder);
+
+        mockMvc.perform(get("/recipes/all")
+                        .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].title", is("Accessible Recipe")));
     }
 
     // GET /recipes/community
@@ -224,6 +294,53 @@ public class RecipeControllerIntegrationTest {
                         .with(authentication(authAs(owner.getUserId()))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Recipe not found."));
+    }
+
+    @Test
+    void getRecipeById_returns403_whenPrivateRecipeIsNotAccessible() throws Exception {
+        Recipe recipe = saveRecipe(otherUser, "Private Recipe");
+
+        mockMvc.perform(get("/recipes/single/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("You do not have permission to view this recipe."));
+    }
+
+    @Test
+    void getRecipeById_returns200_whenCommunityPublished() throws Exception {
+        Recipe recipe = savePublishedRecipe(otherUser, "Community Recipe");
+
+        mockMvc.perform(get("/recipes/single/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title", is("Community Recipe")));
+    }
+
+    @Test
+    void getRecipeById_returns200_whenUserIsSharedVaultMember() throws Exception {
+        Vault sharedVault = saveVault(otherUser, VaultType.SHARED, "Shared Vault");
+        VaultFolder sharedFolder = saveFolder(sharedVault, "Shared Folder");
+        Recipe recipe = saveRecipe(otherUser, "Shared Recipe");
+        addVaultMember(sharedVault, owner);
+        addRecipeToFolder(recipe, sharedFolder);
+
+        mockMvc.perform(get("/recipes/single/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title", is("Shared Recipe")));
+    }
+
+    @Test
+    void getRecipeById_returns403_whenUserIsNotSharedVaultMember() throws Exception {
+        Vault sharedVault = saveVault(otherUser, VaultType.SHARED, "Shared Vault");
+        VaultFolder sharedFolder = saveFolder(sharedVault, "Shared Folder");
+        Recipe recipe = saveRecipe(otherUser, "Shared Recipe");
+        addRecipeToFolder(recipe, sharedFolder);
+
+        mockMvc.perform(get("/recipes/single/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("You do not have permission to view this recipe."));
     }
 
     // POST /recipes/create
