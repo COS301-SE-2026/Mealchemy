@@ -6,6 +6,7 @@ import com.google.cloud.storage.HttpMethod;
 import com.google.cloud.storage.Storage;
 import com.mealchemy.recipe.dto.RecipePhotoUploadRequest;
 import com.mealchemy.recipe.dto.RecipePhotoUploadResponse;
+import com.mealchemy.recipe.event.RecipePhotoCleanupEvent;
 import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import java.net.URL;
@@ -22,6 +23,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.util.unit.DataSize;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -159,5 +162,50 @@ public class RecipePhotoService
             requiredHeaders,
             expiresAt
         );
+    }
+
+    // added an after comit transaction even listener.
+    // receives a cleanup event
+    // validates bucket is configured, url not empty, url points to configured bucket, object is inside the correct recipe directory, object has filename after directory prefix.
+    // Then calls GCS to delete object
+    // if storage deletion fails - logged. The recipe update or deletion still occurs
+    // worst outcome is an unused object remaining in bucket, which will be removed by a cleanup sweep later.
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void deletePhotoAfterCommit(RecipePhotoCleanupEvent event)
+    {
+        if (bucketName.isBlank() || event.photoUrl() == null || event.photoUrl().isBlank())
+        {
+            return;
+        }
+
+        String bucketUrlPrefix = String.format(
+            "https://storage.googleapis.com/%s/",
+            bucketName
+        );
+        if (!event.photoUrl().startsWith(bucketUrlPrefix))
+        {
+            return;
+        }
+
+        String objectName = event.photoUrl().substring(bucketUrlPrefix.length());
+        String recipeObjectPrefix = String.format("recipes/%d/", event.recipeId());
+        if (!objectName.startsWith(recipeObjectPrefix)
+            || objectName.length() == recipeObjectPrefix.length())
+        {
+            return;
+        }
+
+        try
+        {
+            storage.delete(BlobId.of(bucketName, objectName));
+        }
+        catch (RuntimeException exception)
+        {
+            log.error(
+                "Failed to delete an old photo for recipe {}",
+                event.recipeId(),
+                exception
+            );
+        }
     }
 }

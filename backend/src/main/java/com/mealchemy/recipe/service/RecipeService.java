@@ -2,6 +2,7 @@ package com.mealchemy.recipe.service;
 
 /* Import libraries */
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 import java.util.*;
 import java.util.stream.*;
 import org.springframework.web.server.*;
@@ -19,6 +20,7 @@ import com.mealchemy.vault.dto.VaultFolderRecipeRequest;
 import com.mealchemy.recipe.dto.RecipeRequest;
 import com.mealchemy.recipe.dto.RecipeFullRequest;
 import com.mealchemy.recipe.dto.RecipeResponse;
+import com.mealchemy.recipe.event.RecipePhotoCleanupEvent;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.cuisinetype.repository.FlavourProfileOptionsRepository;
@@ -38,15 +40,19 @@ public class RecipeService
 
     private final VaultFolderRecipeService vaultFolderRecipeService;
 
+    // lets it annouce that an old photo needs cleanup without making RecipeService directly responsible for GC Storage
+    private final ApplicationEventPublisher eventPublisher;
+
     public RecipeService(RecipeRepository recipeRepository, IngredientCatalogueRepository ingredientCatalogueRepository, 
         FlavourProfileOptionsRepository flavourProfileOptionsRepository, VaultFolderRepository vaultFolderRepository, 
-        VaultFolderRecipeService vaultFolderRecipeService)
+        VaultFolderRecipeService vaultFolderRecipeService, ApplicationEventPublisher eventPublisher)
     {
         this.recipeRepository = recipeRepository;
         this.ingredientCatalogueRepository = ingredientCatalogueRepository;
         this.flavourProfileOptionsRepository = flavourProfileOptionsRepository;
         this.vaultFolderRepository = vaultFolderRepository;
         this.vaultFolderRecipeService = vaultFolderRecipeService;
+        this.eventPublisher = eventPublisher;
     }
 
     // Get all recipes
@@ -169,6 +175,7 @@ public class RecipeService
     }
 
     // Put to update an existing recipe
+    @Transactional
     public RecipeResponse updateRecipe(int id, RecipeRequest request, Integer ownerId)
     {
         Recipe recipeForReturn = recipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
@@ -183,6 +190,8 @@ public class RecipeService
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cuisine type is invalid.");
         }
 
+        String oldPhotoUrl = recipeForReturn.getPhotoUrl();
+
         recipeForReturn.setTitle(request.title());
         recipeForReturn.setDescription(request.description());
         recipeForReturn.setCuisineType(request.cuisineType());
@@ -194,10 +203,14 @@ public class RecipeService
         recipeForReturn.setExternalUrl(request.externalUrl());
         recipeForReturn.setIsCommunityPublished(request.isCommunityPublished());
 
-        return RecipeResponse.from(recipeRepository.save(recipeForReturn));
+        Recipe saved = recipeRepository.save(recipeForReturn);
+        publishPhotoCleanupWhenChanged(id, oldPhotoUrl, request.photoUrl());
+
+        return RecipeResponse.from(saved);
     }
 
     // Delete a specific vault using id
+    @Transactional
     public void deleteRecipe(int id, Integer ownerId)
     {
         Recipe recipeForDeletion = recipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
@@ -208,6 +221,7 @@ public class RecipeService
         }
 
         recipeRepository.deleteById(id);
+        publishPhotoCleanup(id, recipeForDeletion.getPhotoUrl());
     }
 
     /* Mapping functions */
@@ -251,6 +265,27 @@ public class RecipeService
     }
 
     /* Helper */
+
+    private void publishPhotoCleanupWhenChanged(
+        Integer recipeId,
+        String oldPhotoUrl,
+        String newPhotoUrl
+    )
+    {
+        if (!Objects.equals(oldPhotoUrl, newPhotoUrl))
+        {
+            publishPhotoCleanup(recipeId, oldPhotoUrl);
+        }
+    }
+    //publish clean up event for old photo
+    //recipe deleted from db, url therefore deleted, then only photo object in storage requested for deletion. Ensures DB correctness, recipe url won't point to an already deleted GCS object.
+    private void publishPhotoCleanup(Integer recipeId, String photoUrl)
+    {
+        if (photoUrl != null && !photoUrl.isBlank())
+        {
+            eventPublisher.publishEvent(new RecipePhotoCleanupEvent(recipeId, photoUrl));
+        }
+    }
 
     private void validateFolderIsInPrivateVault(Integer folderId, Integer ownerId)
 {
