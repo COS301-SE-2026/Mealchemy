@@ -215,6 +215,57 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     );
   }
 
+//updates item's quantity and unit
+  Future<void> updateShoppingListItem({
+    required String listId,
+    required String itemId,
+    required String quantity,
+    required String unit,
+  }) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final list = current.getListById(listId);
+    if (list == null) return;
+
+    ShoppingListItem? existingItem;
+
+    for (final item in list.items) {
+      if (item.id == itemId) {
+        existingItem = item;
+        break;
+      }
+    }
+
+    if (existingItem == null) return;
+
+    final updatedItem = await _repository.updateShoppingListItem(
+      listId: listId,
+      itemId: itemId,
+      ingId: existingItem.ingId,
+      // Catalogue items are identified only by ing_id. Custom items use name.
+      name: existingItem.ingId == null ? existingItem.name : null,
+      quantity: quantity,
+      unit: unit,
+      purchased: existingItem.checked,
+    );
+
+    final updatedLists = current.lists.map((list) {
+      if (list.id != listId) return list;
+
+      final updatedItems = list.items.map((item) {
+        if (item.id != itemId) return item;
+        return updatedItem;
+      }).toList();
+
+      return list.copyWith(items: updatedItems);
+    }).toList();
+
+    state = AsyncData(
+      current.copyWith(lists: updatedLists),
+    );
+  }
+
   //loads the full shopping list, including its items
   Future<void> loadShoppingListDetail(String listId) async {
     final current = state.valueOrNull;
@@ -302,26 +353,25 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     state = AsyncData(current.copyWith(lists: updatedLists));
   }
 
-  //adds manual item through the active repository
+  //adds catalogue ingredient or custom item through the active repo
   Future<void> addItemToList({
     required String listId,
-    required String name,
+    int? ingId,
+    String? name,
     required String quantity,
     required String category,
   }) async {
     final current = state.valueOrNull;
-    final cleanedName = name.trim();
+    if (current == null) return;
+
+    final cleanedName = name?.trim();
     final cleanedQuantity = quantity.trim();
     final cleanedCategory = category.trim();
-
-    if (current == null || cleanedName.isEmpty) {
-      return;
-    }
-
     final parsed = _splitQuantityAndUnit(cleanedQuantity);
 
     final createdItem = await _repository.addItemToShoppingList(
       listId: listId,
+      ingId: ingId,
       name: cleanedName,
       quantity: parsed.quantity,
       unit: parsed.unit.isEmpty ? cleanedCategory : parsed.unit,
@@ -330,7 +380,7 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     final updatedLists = current.lists.map((list) {
       if (list.id != listId) return list;
 
-      //backend-created item is source of truth now
+      //backend-created item
       return list.copyWith(
         items: [...list.items, createdItem],
       );
@@ -358,9 +408,8 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
 
     state = AsyncData(
       current.copyWith(
-        lists: result.shoppingListDeleted
-            ? updatedLists.where((list) => list.id != listId).toList()
-            : updatedLists,
+        //backend leaves an empty list in place
+        lists: updatedLists,
       ),
     );
 

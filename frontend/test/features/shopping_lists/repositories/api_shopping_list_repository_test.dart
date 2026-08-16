@@ -37,8 +37,34 @@ void main() {
             return;
           }
 
+          if (options.method == 'PUT' &&
+              options.path == '/api/shopping-lists/1/items/10') {
+            final ingId = options.data['ing_id'];
+
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: {
+                  'item_id': 10,
+                  'shopping_list_id': 1,
+                  'ing_id': ingId,
+                  'name':
+                      ingId == null ? options.data['name'] : 'Chicken Breast',
+                  'category': ingId == null ? null : 'meat',
+                  'quantity': options.data['quantity'],
+                  'unit': options.data['unit'],
+                  'purchased': options.data['purchased'],
+                },
+              ),
+            );
+            return;
+          }
+
           if (options.method == 'POST' &&
               options.path == '/api/shopping-lists/1/items') {
+            final ingId = options.data['ing_id'];
+
             handler.resolve(
               Response(
                 requestOptions: options,
@@ -46,9 +72,10 @@ void main() {
                 data: {
                   'item_id': 11,
                   'shopping_list_id': 1,
-                  'ing_id': null,
-                  'name': options.data['name'],
-                  'category': null,
+                  'ing_id': ingId,
+                  'name':
+                      ingId == null ? options.data['name'] : 'Chicken Breast',
+                  'category': ingId == null ? null : 'meat',
                   'quantity': options.data['quantity'],
                   'unit': options.data['unit'],
                   'purchased': false,
@@ -67,7 +94,7 @@ void main() {
                 data: {
                   'added_to_pantry_count': 2,
                   'skipped_manual_items': ['Fresh basil bunch'],
-                  'shopping_list_deleted': false,
+                  'can_delete_shopping_list': false,
                 },
               ),
             );
@@ -305,6 +332,85 @@ void main() {
     expect(item.checked, isTrue);
   });
 
+  test('updateShoppingListItem puts updated manual item and maps response',
+      () async {
+    final item = await repository.updateShoppingListItem(
+      listId: '1',
+      itemId: '10',
+      name: 'Greek Yogurt',
+      quantity: '2.5',
+      unit: 'kg',
+      purchased: true,
+    );
+
+    expect(lastRequest?.method, 'PUT');
+    expect(lastRequest?.path, '/api/shopping-lists/1/items/10');
+    expect(lastRequest?.data['ing_id'], isNull);
+    expect(lastRequest?.data['name'], 'Greek Yogurt');
+    expect(lastRequest?.data['quantity'], 2.5);
+    expect(lastRequest?.data['unit'], 'kg');
+    expect(lastRequest?.data['purchased'], isTrue);
+
+    expect(item.itemId, 10);
+    expect(item.ingId, isNull);
+    expect(item.name, 'Greek Yogurt');
+    expect(item.quantity, '2.5 kg');
+    expect(item.unit, 'kg');
+    expect(item.checked, isTrue);
+  });
+
+  test('updateShoppingListItem rejects both item identities', () {
+    expect(
+      () => repository.updateShoppingListItem(
+        listId: '1',
+        itemId: '10',
+        ingId: 101,
+        name: 'Chicken Breast',
+        quantity: '2',
+        unit: 'kg',
+        purchased: false,
+      ),
+      throwsArgumentError,
+    );
+  });
+
+  test('updateShoppingListItem rejects non-positive quantity', () {
+    expect(
+      () => repository.updateShoppingListItem(
+        listId: '1',
+        itemId: '10',
+        name: 'Greek Yogurt',
+        quantity: '0',
+        unit: 'kg',
+        purchased: false,
+      ),
+      throwsArgumentError,
+    );
+  });
+
+  test('updateShoppingListItem preserves catalogue ingredient identity',
+      () async {
+    final item = await repository.updateShoppingListItem(
+      listId: '1',
+      itemId: '10',
+      ingId: 101,
+      quantity: '3',
+      unit: 'kg',
+      purchased: false,
+    );
+
+    expect(lastRequest?.data['ing_id'], 101);
+    expect(lastRequest?.data['name'], isNull);
+    expect(lastRequest?.data['quantity'], 3);
+    expect(lastRequest?.data['unit'], 'kg');
+    expect(lastRequest?.data['purchased'], isFalse);
+
+    expect(item.ingId, 101);
+    expect(item.name, 'Chicken Breast');
+    expect(item.category, 'MEAT');
+    expect(item.quantity, '3 kg');
+  });
+
   test('addItemToShoppingList posts manual item and maps response', () async {
     final item = await repository.addItemToShoppingList(
       listId: '1',
@@ -328,13 +434,50 @@ void main() {
     expect(item.checked, isFalse);
   });
 
-  test('addItemToShoppingList rejects blank name before API call', () {
+  test('addItemToShoppingList posts catalogue item and maps response',
+      () async {
+    final item = await repository.addItemToShoppingList(
+      listId: '1',
+      ingId: 101,
+      quantity: '1.5',
+      unit: 'kg',
+    );
+
+    expect(lastRequest?.method, 'POST');
+    expect(lastRequest?.path, '/api/shopping-lists/1/items');
+    expect(lastRequest?.data['ing_id'], 101);
+    expect(lastRequest?.data['name'], isNull);
+    expect(lastRequest?.data['quantity'], 1.5);
+    expect(lastRequest?.data['unit'], 'kg');
+
+    expect(item.itemId, 11);
+    expect(item.shoppingListId, 1);
+    expect(item.ingId, 101);
+    expect(item.name, 'Chicken Breast');
+    expect(item.category, 'MEAT');
+    expect(item.quantity, '1.5 kg');
+    expect(item.checked, isFalse);
+  });
+
+  test('addItemToShoppingList rejects missing item identity', () {
     expect(
       () => repository.addItemToShoppingList(
         listId: '1',
-        name: '   ',
         quantity: '2',
         unit: 'bunches',
+      ),
+      throwsArgumentError,
+    );
+  });
+
+  test('addItemToShoppingList rejects both item identities', () {
+    expect(
+      () => repository.addItemToShoppingList(
+        listId: '1',
+        ingId: 101,
+        name: 'Chicken Breast',
+        quantity: '2',
+        unit: 'kg',
       ),
       throwsArgumentError,
     );
@@ -360,7 +503,7 @@ void main() {
 
     expect(result.addedToPantryCount, 2);
     expect(result.skippedManualItems, ['Fresh basil bunch']);
-    expect(result.shoppingListDeleted, isFalse);
+    expect(result.canDeleteShoppingList, isFalse);
   });
 
   test('createShoppingList posts list metadata and maps response', () async {

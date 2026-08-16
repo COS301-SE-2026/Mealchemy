@@ -1,14 +1,17 @@
-//result returned after purchased shopping items moved into pantry
+// Result returned after purchased shopping items are processed.
 class CompleteShopResult {
   const CompleteShopResult({
     required this.addedToPantryCount,
     required this.skippedManualItems,
-    required this.shoppingListDeleted,
+    required this.canDeleteShoppingList,
   });
 
   final int addedToPantryCount;
   final List<String> skippedManualItems;
-  final bool shoppingListDeleted;
+
+  // True means the list is empty and the frontend may offer deletion.
+  // The backend does not delete the list automatically.
+  final bool canDeleteShoppingList;
 
   factory CompleteShopResult.fromJson(Map<String, dynamic> json) {
     return CompleteShopResult(
@@ -16,12 +19,11 @@ class CompleteShopResult {
       skippedManualItems: (json['skipped_manual_items'] as List<dynamic>? ?? [])
           .map((item) => item.toString())
           .toList(),
-      shoppingListDeleted: json['shopping_list_deleted'] == true,
+      canDeleteShoppingList: json['can_delete_shopping_list'] == true,
     );
   }
 }
 
-//helper
 int? _readInt(dynamic value) {
   if (value == null) return null;
   if (value is int) return value;
