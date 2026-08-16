@@ -35,6 +35,15 @@ class IngredientEditorRow extends ConsumerStatefulWidget {
 }
 
 class _IngredientEditorRowState extends ConsumerState<IngredientEditorRow> {
+  String? get _matchedUnit {
+    final sel = widget.selectedUnit;
+    if (sel == null) return null;
+    for (final u in widget.units) {
+      if (u.name.toLowerCase() == sel.toLowerCase()) return u.name;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -68,7 +77,7 @@ class _IngredientEditorRowState extends ConsumerState<IngredientEditorRow> {
               Expanded(
                 flex: 3,
                 child: DropdownButtonFormField<String>(
-                  initialValue: widget.selectedUnit,
+                  initialValue: _matchedUnit,
                   isExpanded: true,
                   icon: const Icon(Icons.keyboard_arrow_down,
                       size: 18, color: AppColors.primary),

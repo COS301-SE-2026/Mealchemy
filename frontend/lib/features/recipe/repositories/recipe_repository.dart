@@ -12,7 +12,7 @@ abstract class RecipeRepository {
 
   //not saved in mock
   Future<Recipe> addRecipe(Recipe recipe, int folderId);
-  Future<Recipe> updateRecipe(int id, Recipe recipe);
+  Future<Recipe> updateRecipeFull(int id, Recipe recipe);
 
   //cuisine type enum values
   Future<List<String>> getCuisineTypes();

@@ -4,6 +4,7 @@ import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import '../../../core/shared_widgets/Molecules/app_confirm_dialog.dart';
+
 //single recipe row inside a vault folder
 class FolderRecipeRow extends StatelessWidget {
   const FolderRecipeRow({
@@ -27,7 +28,7 @@ class FolderRecipeRow extends StatelessWidget {
     return parts.join(' · ');
   }
 
-    Future<void> _handleDeleteTap(BuildContext context) async {
+  Future<void> _handleDeleteTap(BuildContext context) async {
     final confirmed = await showAppConfirmDialog(
       context: context,
       title: 'Delete recipe',
@@ -90,7 +91,7 @@ class FolderRecipeRow extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      onPressed:  () => _handleDeleteTap(context),
+                      onPressed: () => _handleDeleteTap(context),
                       icon: const Icon(
                         Icons.delete_outline,
                         size: 18,
@@ -100,8 +101,8 @@ class FolderRecipeRow extends StatelessWidget {
                       padding: const EdgeInsets.all(6),
                     ),
                     IconButton(
-                      //Will add a edit recipe screen point
-                      onPressed: onEditTap,
+                      onPressed: onEditTap ??
+                          () => context.push('/edit-recipe/${recipe.recipeId}'),
                       icon: const Icon(
                         Icons.edit_outlined,
                         size: 18,

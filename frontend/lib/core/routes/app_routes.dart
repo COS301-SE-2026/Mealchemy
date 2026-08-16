@@ -17,4 +17,5 @@ class AppRoutes {
   static const String shoppingLists = '/shopping-lists';
   static const String shoppingListDetail = '/shopping-lists/:id';
   static const String help = '/help';
+  static const String editRecipe = '/edit-recipe/:id';
 }
