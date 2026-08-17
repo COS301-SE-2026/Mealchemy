@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_input_dialog.dart';
 import '../../../core/shared_widgets/atoms/app_button.dart';
+import '../../../core/shared_widgets/atoms/app_toast.dart';
+import '../../../core/providers/feedback_provider.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../vault/models/vault.dart';
@@ -37,6 +39,7 @@ class _SaveToVaultSheet extends ConsumerStatefulWidget {
 class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
   int? _vaultId;
   int? _folderId;
+  String? _folderName;
   bool _saving = false;
 
   @override
@@ -120,6 +123,7 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
       onChanged: (id) => setState(() {
         _vaultId = id;
         _folderId = null; // reset folder when vault changes
+        _folderName = null;
       }),
     );
   }
@@ -138,7 +142,9 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
               _disabledField('No folders in this vault yet')
             else
               DropdownButtonFormField<int>(
-                initialValue: _folderId,
+                initialValue: folders.any((f) => f.folderId == _folderId)
+                    ? _folderId
+                    : null,
                 isExpanded: true,
                 decoration: _decoration(),
                 hint: Text('Select a folder',
@@ -151,7 +157,11 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
                       child: Text(f.folderName),
                     ),
                 ],
-                onChanged: (id) => setState(() => _folderId = id),
+                onChanged: (id) => setState(() {
+                  _folderId = id;
+                  _folderName =
+                      folders.firstWhere((f) => f.folderId == id).folderName;
+                }),
               ),
             const SizedBox(height: 12),
             AppButton.dashed(
@@ -177,12 +187,37 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
       prefixIcon: Icons.folder_outlined,
     );
     if (name == null) return;
-    await ref.read(vaultRepositoryProvider).createFolder(_vaultId!, name);
-    ref.invalidate(vaultFoldersProvider(_vaultId!));
+
+    final feedback = ref.read(feedbackProvider.notifier);
+    try {
+      final created =
+          await ref.read(vaultRepositoryProvider).createFolder(_vaultId!, name);
+      final folders = await ref.refresh(vaultFoldersProvider(_vaultId!).future);
+      if (!mounted) return;
+      setState(() {
+        _folderId = created.folderId;
+        _folderName = folders
+            .firstWhere((f) => f.folderId == created.folderId)
+            .folderName;
+      });
+      feedback.showShort(
+        'Folder "${created.folderName}" created',
+        kind: ToastKind.success,
+        icon: Icons.create_new_folder,
+      );
+    } catch (_) {
+      feedback.showShort(
+        'Could not create folder. Try again.',
+        kind: ToastKind.error,
+        icon: Icons.error_outline,
+      );
+    }
   }
 
   Future<void> _save() async {
     setState(() => _saving = true);
+    final feedback = ref.read(feedbackProvider.notifier);
+    final folderName = _folderName;
     try {
       await ref
           .read(vaultRepositoryProvider)
@@ -190,19 +225,19 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
       ref.invalidate(vaultFoldersProvider(_vaultId!));
       ref.invalidate(folderRecipesProvider(_folderId!));
       ref.invalidate(folderRecipeDisplayProvider(_folderId!));
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Recipe saved to vault')),
-        );
-      }
+      if (mounted) Navigator.pop(context);
+      feedback.showShort(
+        folderName != null ? 'Saved to $folderName' : 'Recipe saved to vault',
+        kind: ToastKind.success,
+        icon: Icons.bookmark_added,
+      );
     } catch (_) {
       setState(() => _saving = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not save. Try again.')),
-        );
-      }
+      feedback.showShort(
+        'Could not save. Try again.',
+        kind: ToastKind.error,
+        icon: Icons.error_outline,
+      );
     }
   }
 
