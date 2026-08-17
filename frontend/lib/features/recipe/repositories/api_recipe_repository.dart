@@ -37,6 +37,8 @@ class ApiRecipeRepository implements RecipeRepository {
   }
 
 // Updates the recipe
+// Placeholder waiting for the backend to add PUT /recipes/{id}/full.
+// The bulk replace endpoint for nsted ingredients/steps does not exist yet
   @override
   Future<Recipe> updateRecipeFull(int id, Recipe recipe) async {
     final response =
