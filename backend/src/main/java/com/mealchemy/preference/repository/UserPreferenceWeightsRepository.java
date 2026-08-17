@@ -10,5 +10,5 @@ import java.util.*;
 
 public interface UserPreferenceWeightsRepository extends JpaRepository<UserPreferenceWeights, Integer>
 {
-    
+    Optional<UserPreferenceWeights> findByUserId(Integer userId);
 }
