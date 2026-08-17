@@ -11,6 +11,7 @@ import java.util.List;
 import java.math.BigDecimal;
 
 public class UserCuisineAffinities {
+    
     /* Declaring fields */
 
     @Id
@@ -32,6 +33,31 @@ public class UserCuisineAffinities {
     private OffsetDateTime updatedAt;
 
     /* Getters */
+
+    public Integer getAffinityId()
+    {
+        return affinityId;
+    }
+
+    public Integer getUserId()
+    {
+        return userId;
+    }
+
+    public String getCuisineValue()
+    {
+        return cuisineValue;
+    }
+
+    public BigDecimal getAffinityScore()
+    {
+        return affinityScore;
+    }
+
+    public OffsetDateTime getUpdatedAt()
+    {
+        return updatedAt;
+    }
 
     /* Setters */
 
