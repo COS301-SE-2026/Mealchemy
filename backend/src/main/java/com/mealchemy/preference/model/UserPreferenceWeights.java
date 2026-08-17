@@ -5,12 +5,12 @@ package com.mealchemy.preference.model;
 /* Importing libraries */
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.math.BigDecimal;
 
+@Entity
+@Table(name = "user_preference_weights")
 public class UserPreferenceWeights {
     /* Declaring variables */
 
@@ -80,7 +80,7 @@ public class UserPreferenceWeights {
 
     public OffsetDateTime getUpdatedAt()
     {
-        return updateAt;
+        return updatedAt;
     }
 
     /* Setters */

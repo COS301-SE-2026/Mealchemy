@@ -5,12 +5,12 @@ package com.mealchemy.preference.model;
 /* Import libraries */
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.math.BigDecimal;
 
+@Entity
+@Table(name = "user_cuisine_affinities", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "cuisine_value"}))
 public class UserCuisineAffinities {
     
     /* Declaring fields */
@@ -64,12 +64,12 @@ public class UserCuisineAffinities {
 
     public void setUserId(Integer userIdIn)
     {
-        this.userId = userId;
+        this.userId = userIdIn;
     }
 
     public void setCuisineValue(String cuisineValueIn)
     {
-        this.cuisineValue = cuisineValue;
+        this.cuisineValue = cuisineValueIn;
     }
 
     public void setAffinityScore(BigDecimal affinityScoreIn)
