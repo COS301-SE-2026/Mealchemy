@@ -39,7 +39,7 @@ class _RecordingRepo implements RecipeRepository {
   }
 
   @override
-  Future<Recipe> updateRecipe(int id, Recipe recipe) async => recipe;
+  Future<Recipe> updateRecipeFull(int id, Recipe recipe) async => recipe;
 
   @override
   Future<List<Recipe>> getRecipes() async => const [];
@@ -156,7 +156,7 @@ void main() {
     required RecipeRepository recipeRepo,
     VaultRepository? vaultRepo,
   }) async {
-    tester.view.physicalSize = const Size(414, 1600);
+    tester.view.physicalSize = const Size(414, 2200);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
       tester.view.resetPhysicalSize();
@@ -167,7 +167,17 @@ void main() {
   }
 
   Future<void> tapCreateRecipe(WidgetTester tester) async {
-    await tester.tap(find.text('Create Recipe').last);
+    final cta = find.text('Create Recipe');
+    await tester.ensureVisible(cta.last);
+    await tester.pumpAndSettle();
+    await tester.tap(cta.last);
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> selectCuisine(WidgetTester tester, String label) async {
+    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(label).last);
     await tester.pumpAndSettle();
   }
 
@@ -189,7 +199,7 @@ void main() {
     await pumpAddRecipe(tester, recipeRepo: _RecordingRepo());
     await tester.pumpAndSettle();
 
-    expect(find.text('Create Recipe'), findsWidgets); 
+    expect(find.text('Create Recipe'), findsWidgets);
     expect(find.text('Recipe Details'), findsOneWidget);
     expect(find.text('Time & Servings'), findsOneWidget);
     expect(find.text('Save To'), findsOneWidget);
@@ -210,7 +220,7 @@ void main() {
     expect(find.text('Cuisine is required.'), findsOneWidget);
     expect(find.text('Prep, cook, and servings are all required.'),
         findsOneWidget);
-    expect(repo.savedRecipes, isEmpty); 
+    expect(repo.savedRecipes, isEmpty);
   });
 
   testWidgets('a fully valid form saves the recipe with the entered values',
@@ -219,17 +229,13 @@ void main() {
     await pumpAddRecipe(tester, recipeRepo: repo);
     await tester.pumpAndSettle();
 
-    
     final fields = find.byType(TextField);
     await tester.enterText(fields.at(0), 'My New Recipe');
     await tester.enterText(fields.at(2), '10');
     await tester.enterText(fields.at(3), '25');
     await tester.enterText(fields.at(4), '6');
 
-    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Italian').last);
-    await tester.pumpAndSettle();
+    await selectCuisine(tester, 'Italian');
 
     await tapCreateRecipe(tester);
 
@@ -240,8 +246,8 @@ void main() {
     expect(saved.prepTimeMins, 10);
     expect(saved.cookingTimeMins, 25);
     expect(saved.servingSize, 6);
-    expect(saved.recipeId, 0); 
-    expect(saved.isCommunityPublished, isFalse); 
+    expect(saved.recipeId, 0);
+    expect(saved.isCommunityPublished, isFalse);
     expect(repo.savedFolderIds, [10]);
   });
 
@@ -256,11 +262,8 @@ void main() {
     await tester.enterText(fields.at(2), '5');
     await tester.enterText(fields.at(3), '5');
     await tester.enterText(fields.at(4), '2');
-    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
-    await tester.pumpAndSettle();
-    
-    await tester.tap(find.text('Asian').last);
-    await tester.pumpAndSettle();
+
+    await selectCuisine(tester, 'Asian');
 
     await tapCreateRecipe(tester);
 

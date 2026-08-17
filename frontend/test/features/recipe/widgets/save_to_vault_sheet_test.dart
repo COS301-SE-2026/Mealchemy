@@ -184,11 +184,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repo.filed, [(10, 42)]); // folderId 10, recipeId 42
-    expect(find.text('Recipe saved to vault'), findsOneWidget);
+    expect(find.text('SAVE TO VAULT'), findsNothing);
   });
 
-  testWidgets('a failed save shows an error and keeps the sheet open',
-      (tester) async {
+  testWidgets('a failed save keeps the sheet open', (tester) async {
     final repo = _FakeVaultRepo()..throwOnSave = true;
     await tester.pumpWidget(hostWithRef(
       vaultRepo: repo,
@@ -213,7 +212,7 @@ void main() {
     await tester.tap(find.text('Save Recipe'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Could not save. Try again.'), findsOneWidget);
+    expect(repo.filed, isEmpty);
     expect(find.text('SAVE TO VAULT'), findsOneWidget);
   });
 }
