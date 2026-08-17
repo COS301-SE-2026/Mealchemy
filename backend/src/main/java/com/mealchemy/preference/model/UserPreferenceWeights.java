@@ -42,6 +42,45 @@ public class UserPreferenceWeights {
 
     /* Getters */
     
+    public Integer getWeightId()
+    {
+        return weightId;
+    }
+
+    public Integer getUserId()
+    {
+        return userId;
+    }
+
+    public BigDecimal getPantryMatch()
+    {
+        return pantryMatch;
+    }
+
+    public BigDecimal getCuisine()
+    {
+        return cuisine;
+    }
+
+    public BigDecimal getNutrition()
+    {
+        return nutrition;
+    }
+
+    public BigDecimal getFreshness()
+    {
+        return freshness;
+    }
+
+    public BigDecimal getNovelty()
+    {
+        return novelty;
+    }
+
+    public OffsetDateTime getUpdatedAt()
+    {
+        return updateAt;
+    }
 
     /* Setters */
 }
