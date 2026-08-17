@@ -5,7 +5,9 @@ package com.mealchemy.engine.config;
 /* Import libraries */
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
+@Component
 @ConfigurationProperties(prefix = "engine")
 public class EngineProperties {
     /* Declaring variables */
@@ -20,7 +22,7 @@ public class EngineProperties {
         return url;
     }
 
-    public String getTimeoutMs()
+    public int getTimeoutMs()
     {
         return timeoutMs;
     }
