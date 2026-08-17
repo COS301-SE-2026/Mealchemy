@@ -84,6 +84,14 @@ final appRouter = GoRouter(
       path: AppRoutes.addRecipe,
       builder: (context, state) => const AddRecipeScreen(),
     ),
+    //recipe edit route
+    GoRoute(
+      path: AppRoutes.recipeEdit,
+      builder: (context, state) {
+        final id = int.parse(state.pathParameters['id']!);
+        return AddRecipeScreen(recipeId: id);
+      },
+    ),
     GoRoute(
       path: AppRoutes.shoppingLists,
       builder: (context, state) => const ShoppingListsScreen(),
