@@ -83,4 +83,34 @@ public class UserPreferenceWeights {
     }
 
     /* Setters */
+
+    public void setUserId(Integer userIdIn)
+    {
+        this.userId = userIdIn;
+    }
+
+    public void setPantryMatch(BigDecimal pantryMatchIn)
+    {
+        this.pantryMatch = pantryMatchIn;
+    }
+
+    public void setCuisine(BigDecimal cuisineIn)
+    {
+        this.cuisine = cuisineIn;
+    }
+
+    public void setNutrition(BigDecimal nutritionIn)
+    {
+        this.nutrition = nutritionIn;
+    }
+
+    public void setFreshness(BigDecimal freshnessIn)
+    {
+        this.freshness = freshnessIn;
+    }
+
+    public void setNovelty(BigDecimal noveltyIn)
+    {
+        this.novelty = noveltyIn;
+    }
 }
