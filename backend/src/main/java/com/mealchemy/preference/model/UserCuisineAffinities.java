@@ -6,6 +6,7 @@ package com.mealchemy.preference.model;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.math.BigDecimal;
@@ -60,5 +61,20 @@ public class UserCuisineAffinities {
     }
 
     /* Setters */
+
+    public void setUserId(Integer userIdIn)
+    {
+        this.userId = userId;
+    }
+
+    public void setCuisineValue(String cuisineValueIn)
+    {
+        this.cuisineValue = cuisineValue;
+    }
+
+    public void setAffinityScore(BigDecimal affinityScoreIn)
+    {
+        this.affinityScore = affinityScoreIn;
+    }
 
 }
