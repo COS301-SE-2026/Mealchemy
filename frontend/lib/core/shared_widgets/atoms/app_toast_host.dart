@@ -47,7 +47,9 @@ class _AppToastHostState extends ConsumerState<AppToastHost>
   void _onRequest(ToastRequest? req) {
     _timer?.cancel();
     if (req == null) {
-      _controller.reverse();
+      _controller.reverse().whenComplete(() {
+        if (mounted) setState(() => _current = null);
+      });
       return;
     }
     setState(() => _current = req);
@@ -58,7 +60,10 @@ class _AppToastHostState extends ConsumerState<AppToastHost>
   }
 
   void _hide() {
-    _controller.reverse();
+    _timer?.cancel();
+    _controller.reverse().whenComplete(() {
+      if (mounted) setState(() => _current = null);
+    });
     ref.read(feedbackProvider.notifier).dismiss();
   }
 
