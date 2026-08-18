@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,10 +8,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
+import 'package:mealchemy/features/recipe/models/selected_recipe_photo.dart';
 import 'package:mealchemy/features/recipe/models/unit_of_measurement.dart';
+import 'package:mealchemy/features/recipe/providers/recipe_photo_provider.dart';
 import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
+import 'package:mealchemy/features/recipe/repositories/recipe_photo_repository.dart';
 import 'package:mealchemy/features/recipe/repositories/recipe_repository.dart';
 import 'package:mealchemy/features/recipe/screens/add_recipe_screen.dart';
+import 'package:mealchemy/features/recipe/services/recipe_photo_picker.dart';
 import 'package:mealchemy/features/vault/models/vault.dart';
 import 'package:mealchemy/features/vault/models/vault_folder.dart';
 import 'package:mealchemy/features/vault/models/vault_folder_recipe.dart';
@@ -19,11 +24,16 @@ import 'package:mealchemy/features/vault/repositories/vault_repository.dart';
 
 
 class _RecordingRepo implements RecipeRepository {
+  _RecordingRepo({this.events});
+
   final List<Recipe> savedRecipes = [];
   final List<int> savedFolderIds = [];
+  final List<(int, Recipe)> updatedRecipes = [];
+  final List<String>? events;
 
   @override
   Future<Recipe> addRecipe(Recipe recipe, int folderId) async {
+    events?.add('create');
     savedRecipes.add(recipe);
     savedFolderIds.add(folderId);
     return Recipe(
@@ -39,7 +49,11 @@ class _RecordingRepo implements RecipeRepository {
   }
 
   @override
-  Future<Recipe> updateRecipe(int id, Recipe recipe) async => recipe;
+  Future<Recipe> updateRecipe(int id, Recipe recipe) async {
+    events?.add('update');
+    updatedRecipes.add((id, recipe));
+    return recipe.copyWith(recipeId: id);
+  }
 
   @override
   Future<List<Recipe>> getRecipes() async => const [];
@@ -84,6 +98,50 @@ class _ThrowingCuisinesRepo extends _RecordingRepo {
   @override
   Future<List<String>> getCuisineTypes() async => throw Exception('boom');
 }
+
+class _FakePhotoPicker implements RecipePhotoPicker {
+  _FakePhotoPicker({this.photo});
+
+  final SelectedRecipePhoto? photo;
+  RecipePhotoSource? selectedSource;
+
+  @override
+  Future<SelectedRecipePhoto?> pickPhoto(RecipePhotoSource source) async {
+    selectedSource = source;
+    return photo;
+  }
+
+  @override
+  Future<SelectedRecipePhoto?> recoverLostPhoto() async => null;
+}
+
+class _RecordingPhotoRepository implements RecipePhotoRepository {
+  _RecordingPhotoRepository({
+    this.events,
+    this.shouldFail = false,
+  });
+
+  final List<String>? events;
+  final bool shouldFail;
+  int? uploadedRecipeId;
+
+  @override
+  Future<String> uploadRecipePhoto({
+    required int recipeId,
+    required SelectedRecipePhoto photo,
+  }) async {
+    events?.add('upload');
+    uploadedRecipeId = recipeId;
+    if (shouldFail) throw Exception('upload failed');
+    return 'https://storage.googleapis.com/recipes/$recipeId/photo.jpg';
+  }
+}
+
+final _selectedPhoto = SelectedRecipePhoto.validate(
+  bytes: Uint8List.fromList([1, 2, 3]),
+  fileName: 'meal.jpg',
+  contentType: 'image/jpeg',
+);
 
 
 class _FakeVaultRepo implements VaultRepository {
@@ -131,6 +189,8 @@ void main() {
   Widget host({
     required RecipeRepository recipeRepo,
     VaultRepository? vaultRepo,
+    RecipePhotoPicker? photoPicker,
+    RecipePhotoRepository? photoRepository,
   }) {
     final router = GoRouter(
       initialLocation: '/recipe/add',
@@ -144,6 +204,12 @@ void main() {
     return ProviderScope(
       overrides: [
         recipeRepositoryProvider.overrideWithValue(recipeRepo),
+        recipePhotoPickerProvider.overrideWithValue(
+          photoPicker ?? _FakePhotoPicker(),
+        ),
+        recipePhotoRepositoryProvider.overrideWithValue(
+          photoRepository ?? _RecordingPhotoRepository(),
+        ),
         vaultRepositoryProvider
             .overrideWithValue(vaultRepo ?? _FakeVaultRepo()),
       ],
@@ -155,6 +221,8 @@ void main() {
     WidgetTester tester, {
     required RecipeRepository recipeRepo,
     VaultRepository? vaultRepo,
+    RecipePhotoPicker? photoPicker,
+    RecipePhotoRepository? photoRepository,
   }) async {
     tester.view.physicalSize = const Size(414, 1600);
     tester.view.devicePixelRatio = 1.0;
@@ -163,11 +231,34 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    await tester.pumpWidget(host(recipeRepo: recipeRepo, vaultRepo: vaultRepo));
+    await tester.pumpWidget(host(
+      recipeRepo: recipeRepo,
+      vaultRepo: vaultRepo,
+      photoPicker: photoPicker,
+      photoRepository: photoRepository,
+    ));
   }
 
   Future<void> tapCreateRecipe(WidgetTester tester) async {
+    await tester.scrollUntilVisible(
+      find.text('Cancel'),
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Create Recipe').last);
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> fillRequiredFields(WidgetTester tester) async {
+    final fields = find.byType(TextField);
+    await tester.enterText(fields.at(0), 'My New Recipe');
+    await tester.enterText(fields.at(2), '10');
+    await tester.enterText(fields.at(3), '25');
+    await tester.enterText(fields.at(4), '6');
+    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Italian').last);
     await tester.pumpAndSettle();
   }
 
@@ -191,10 +282,16 @@ void main() {
 
     expect(find.text('Create Recipe'), findsWidgets); 
     expect(find.text('Recipe Details'), findsOneWidget);
+    expect(find.text('Recipe Photo'), findsOneWidget);
     expect(find.text('Time & Servings'), findsOneWidget);
     expect(find.text('Save To'), findsOneWidget);
     expect(find.text('Ingredients'), findsOneWidget);
     expect(find.text('Preparation Steps'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Cancel'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Cancel'), findsOneWidget);
   });
 
@@ -206,8 +303,19 @@ void main() {
 
     await tapCreateRecipe(tester);
 
+    final scrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(
+      find.text('Title is required.'),
+      -400,
+      scrollable: scrollable,
+    );
     expect(find.text('Title is required.'), findsOneWidget);
     expect(find.text('Cuisine is required.'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Prep, cook, and servings are all required.'),
+      400,
+      scrollable: scrollable,
+    );
     expect(find.text('Prep, cook, and servings are all required.'),
         findsOneWidget);
     expect(repo.savedRecipes, isEmpty); 
@@ -265,5 +373,57 @@ void main() {
     await tapCreateRecipe(tester);
 
     expect(repo.savedRecipes.first.description, isNull);
+  });
+
+  testWidgets('selected photo is previewed and uploaded after recipe creation',
+      (tester) async {
+    final events = <String>[];
+    final recipeRepo = _RecordingRepo(events: events);
+    final photoRepo = _RecordingPhotoRepository(events: events);
+    final picker = _FakePhotoPicker(photo: _selectedPhoto);
+    await pumpAddRecipe(
+      tester,
+      recipeRepo: recipeRepo,
+      photoPicker: picker,
+      photoRepository: photoRepo,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('recipe-photo-gallery')));
+    await tester.pumpAndSettle();
+    expect(picker.selectedSource, RecipePhotoSource.gallery);
+    expect(find.byKey(const Key('recipe-photo-preview')), findsOneWidget);
+
+    await fillRequiredFields(tester);
+    await tapCreateRecipe(tester);
+
+    expect(events, ['create', 'upload', 'update']);
+    expect(photoRepo.uploadedRecipeId, 501);
+    expect(
+      recipeRepo.updatedRecipes.single.$2.photoUrl,
+      'https://storage.googleapis.com/recipes/501/photo.jpg',
+    );
+  });
+
+  testWidgets('photo upload failure does not fail the saved recipe',
+      (tester) async {
+    final recipeRepo = _RecordingRepo();
+    await pumpAddRecipe(
+      tester,
+      recipeRepo: recipeRepo,
+      photoPicker: _FakePhotoPicker(photo: _selectedPhoto),
+      photoRepository: _RecordingPhotoRepository(shouldFail: true),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('recipe-photo-camera')));
+    await tester.pumpAndSettle();
+    await fillRequiredFields(tester);
+
+    await tapCreateRecipe(tester);
+
+    expect(recipeRepo.savedRecipes, hasLength(1));
+    expect(recipeRepo.updatedRecipes, isEmpty);
+    expect(find.text('Recipe saved, but the photo did not upload.'),
+        findsOneWidget);
   });
 }
