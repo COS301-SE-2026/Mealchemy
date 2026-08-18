@@ -28,6 +28,7 @@ class _RecordingRepo implements RecipeRepository {
 
   final List<Recipe> savedRecipes = [];
   final List<int> savedFolderIds = [];
+  final List<(int id, Recipe recipe)> updatedRecipes = [];
   final List<(int, Recipe)> updatedRecipes = [];
   final List<String>? events;
 
@@ -49,8 +50,7 @@ class _RecordingRepo implements RecipeRepository {
   }
 
   @override
-  Future<Recipe> updateRecipe(int id, Recipe recipe) async {
-    events?.add('update');
+  Future<Recipe> updateRecipeFull(int id, Recipe recipe) async {
     updatedRecipes.add((id, recipe));
     return recipe.copyWith(recipeId: id);
   }
@@ -181,6 +181,20 @@ class _FakeVaultRepo implements VaultRepository {
       throw UnimplementedError('${invocation.memberName} not stubbed');
 }
 
+const _editRecipe = Recipe(
+  recipeId: 77,
+  title: 'Existing Risotto',
+  description: 'Creamy and rich',
+  cuisineType: 'italian',
+  prepTimeMins: 12,
+  cookingTimeMins: 22,
+  servingSize: 3,
+  steps: [
+    RecipeStep(stepNr: 1, content: 'Toast the rice'),
+    RecipeStep(stepNr: 2, content: 'Add stock slowly'),
+  ],
+);
+
 void main() {
   setUpAll(() {
     GoogleFonts.config.allowRuntimeFetching = false;
@@ -189,6 +203,9 @@ void main() {
   Widget host({
     required RecipeRepository recipeRepo,
     VaultRepository? vaultRepo,
+    int? editRecipeId,
+    Recipe? initialRecipe,
+    List<Override> extraOverrides = const [],
     RecipePhotoPicker? photoPicker,
     RecipePhotoRepository? photoRepository,
   }) {
@@ -197,7 +214,10 @@ void main() {
       routes: [
         GoRoute(
           path: '/recipe/add',
-          builder: (context, state) => const AddRecipeScreen(),
+          builder: (context, state) => AddRecipeScreen(
+            editRecipeId: editRecipeId,
+            initialRecipe: initialRecipe,
+          ),
         ),
       ],
     );
@@ -212,6 +232,7 @@ void main() {
         ),
         vaultRepositoryProvider
             .overrideWithValue(vaultRepo ?? _FakeVaultRepo()),
+        ...extraOverrides,
       ],
       child: MaterialApp.router(routerConfig: router),
     );
@@ -221,10 +242,13 @@ void main() {
     WidgetTester tester, {
     required RecipeRepository recipeRepo,
     VaultRepository? vaultRepo,
+    int? editRecipeId,
+    Recipe? initialRecipe,
+    List<Override> extraOverrides = const [],
     RecipePhotoPicker? photoPicker,
     RecipePhotoRepository? photoRepository,
   }) async {
-    tester.view.physicalSize = const Size(414, 1600);
+    tester.view.physicalSize = const Size(414, 2200);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
       tester.view.resetPhysicalSize();
@@ -232,10 +256,16 @@ void main() {
     });
 
     await tester.pumpWidget(host(
+      
       recipeRepo: recipeRepo,
+     
       vaultRepo: vaultRepo,
       photoPicker: photoPicker,
       photoRepository: photoRepository,
+    ,
+      editRecipeId: editRecipeId,
+      initialRecipe: initialRecipe,
+      extraOverrides: extraOverrides,
     ));
   }
 
@@ -246,7 +276,25 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Create Recipe').last);
+    final cta = find.text('Create Recipe');
+    await tester.ensureVisible(cta.last);
+    await tester.pumpAndSettle();
+    await tester.tap(cta.last);
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> tapSaveChanges(WidgetTester tester) async {
+    final cta = find.text('Save Changes');
+    await tester.ensureVisible(cta.last);
+    await tester.pumpAndSettle();
+    await tester.tap(cta.last);
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> selectCuisine(WidgetTester tester, String label) async {
+    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(label).last);
     await tester.pumpAndSettle();
   }
 
@@ -280,7 +328,7 @@ void main() {
     await pumpAddRecipe(tester, recipeRepo: _RecordingRepo());
     await tester.pumpAndSettle();
 
-    expect(find.text('Create Recipe'), findsWidgets); 
+    expect(find.text('Create Recipe'), findsWidgets);
     expect(find.text('Recipe Details'), findsOneWidget);
     expect(find.text('Recipe Photo'), findsOneWidget);
     expect(find.text('Time & Servings'), findsOneWidget);
@@ -318,7 +366,7 @@ void main() {
     );
     expect(find.text('Prep, cook, and servings are all required.'),
         findsOneWidget);
-    expect(repo.savedRecipes, isEmpty); 
+    expect(repo.savedRecipes, isEmpty);
   });
 
   testWidgets('a fully valid form saves the recipe with the entered values',
@@ -327,17 +375,13 @@ void main() {
     await pumpAddRecipe(tester, recipeRepo: repo);
     await tester.pumpAndSettle();
 
-    
     final fields = find.byType(TextField);
     await tester.enterText(fields.at(0), 'My New Recipe');
     await tester.enterText(fields.at(2), '10');
     await tester.enterText(fields.at(3), '25');
     await tester.enterText(fields.at(4), '6');
 
-    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Italian').last);
-    await tester.pumpAndSettle();
+    await selectCuisine(tester, 'Italian');
 
     await tapCreateRecipe(tester);
 
@@ -348,8 +392,8 @@ void main() {
     expect(saved.prepTimeMins, 10);
     expect(saved.cookingTimeMins, 25);
     expect(saved.servingSize, 6);
-    expect(saved.recipeId, 0); 
-    expect(saved.isCommunityPublished, isFalse); 
+    expect(saved.recipeId, 0);
+    expect(saved.isCommunityPublished, isFalse);
     expect(repo.savedFolderIds, [10]);
   });
 
@@ -364,15 +408,66 @@ void main() {
     await tester.enterText(fields.at(2), '5');
     await tester.enterText(fields.at(3), '5');
     await tester.enterText(fields.at(4), '2');
-    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
-    await tester.pumpAndSettle();
-    
-    await tester.tap(find.text('Asian').last);
-    await tester.pumpAndSettle();
+
+    await selectCuisine(tester, 'Asian');
 
     await tapCreateRecipe(tester);
 
     expect(repo.savedRecipes.first.description, isNull);
+  });
+
+  testWidgets('edit mode prefills the form and shows edit labels',
+      (tester) async {
+    await pumpAddRecipe(
+      tester,
+      recipeRepo: _RecordingRepo(),
+      editRecipeId: 77,
+      initialRecipe: _editRecipe,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit Recipe'), findsWidgets);
+    expect(find.text('Save Changes'), findsOneWidget);
+    expect(find.text('Save To'), findsNothing);
+    expect(find.text('Existing Risotto'), findsOneWidget);
+    expect(find.text('Creamy and rich'), findsOneWidget);
+    expect(find.text('Toast the rice'), findsOneWidget);
+    expect(find.text('Add stock slowly'), findsOneWidget);
+  });
+
+  testWidgets('saving an edit calls updateRecipeFull with the recipe id',
+      (tester) async {
+    final repo = _RecordingRepo();
+    await pumpAddRecipe(
+      tester,
+      recipeRepo: repo,
+      editRecipeId: 77,
+      initialRecipe: _editRecipe,
+    );
+    await tester.pumpAndSettle();
+
+    await tapSaveChanges(tester);
+
+    expect(repo.updatedRecipes, hasLength(1));
+    expect(repo.updatedRecipes.first.$1, 77);
+    expect(repo.updatedRecipes.first.$2.title, 'Existing Risotto');
+    expect(repo.savedRecipes, isEmpty);
+  });
+
+  testWidgets('edit mode shows the error widget when the detail load fails',
+      (tester) async {
+    await pumpAddRecipe(
+      tester,
+      recipeRepo: _RecordingRepo(),
+      editRecipeId: 99,
+      extraOverrides: [
+        recipeDetailProvider(99)
+            .overrideWith((ref) async => throw Exception('detail boom')),
+      ],
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unable to load form data.'), findsOneWidget);
   });
 
   testWidgets('selected photo is previewed and uploaded after recipe creation',

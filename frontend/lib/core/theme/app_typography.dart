@@ -18,4 +18,8 @@ class AppTextStyles {
   // UI buttons labels
   static TextStyle button    = GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.3);
   static TextStyle label     = GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5);
+
+ // Toast snackbar
+  static TextStyle toast         = GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w700, height: 1.35);
+  static TextStyle toastSubtitle = GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w400, height: 1.3);
 }

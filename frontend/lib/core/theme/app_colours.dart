@@ -33,6 +33,7 @@ class AppColors {
   //Semantic
   static const Color success = Color(0xFF4CAF50);
   static const Color error = Color(0xFFDC2626);
+  static Color get errorBorder => error.withValues(alpha: 0.3);
   static const Color warning = Color(0xFFF97316);
   static const Color divider = Color(0xFFE5E2E1);
 

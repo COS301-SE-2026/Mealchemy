@@ -9,7 +9,6 @@ import 'folder_recipe_row.dart';
 import 'folder_menu.dart';
 import '../models/vault.dart';
 
-
 //folder row that expands in place to reveal its recipes
 class VaultFolderRow extends ConsumerStatefulWidget {
   const VaultFolderRow({
@@ -130,8 +129,7 @@ class _VaultFolderRowState extends ConsumerState<VaultFolderRow> {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
                   'Unable to load recipes.',
-                  style: AppTextStyles.caption
-                  .copyWith(color: AppColors.error),
+                  style: AppTextStyles.caption.copyWith(color: AppColors.error),
                 ),
               ),
               data: (recipes) => recipes.isEmpty
@@ -149,7 +147,7 @@ class _VaultFolderRowState extends ConsumerState<VaultFolderRow> {
                           FolderRecipeRow(
                             recipe: recipe,
                             onEditTap: () =>
-                                context.push('/recipe/${recipe.recipeId}/edit'),
+                                context.push('/edit-recipe/${recipe.recipeId}'),
                             onDeleteConfirmed: () async {
                               try {
                                 await ref.read(

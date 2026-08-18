@@ -514,22 +514,11 @@ class MockRecipeRepository implements RecipeRepository {
     );
   }
 
-  @override
-  Future<Recipe> updateRecipe(int id, Recipe recipe) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return Recipe(
-      recipeId: id,
-      ownerId: recipe.ownerId ?? 1,
-      title: recipe.title,
-      description: recipe.description,
-      cuisineType: recipe.cuisineType,
-      prepTimeMins: recipe.prepTimeMins,
-      cookingTimeMins: recipe.cookingTimeMins,
-      servingSize: recipe.servingSize,
-      photoUrl: recipe.photoUrl,
-      isCommunityPublished: recipe.isCommunityPublished,
-    );
-  }
+@override
+Future<Recipe> updateRecipeFull(int id, Recipe recipe) async {
+  await Future.delayed(const Duration(milliseconds: 350));
+  return recipe.copyWith(recipeId: id, ownerId: recipe.ownerId ?? 1);
+}
 
   @override
   Future<List<String>> getCuisineTypes() async {

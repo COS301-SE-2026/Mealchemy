@@ -32,7 +32,7 @@ class _RecordingRepo implements RecipeRepository {
   }
 
   @override
-  Future<Recipe> updateRecipe(int id, Recipe recipe) async =>
+  Future<Recipe> updateRecipeFull(int id, Recipe recipe) async =>
       throw UnimplementedError();
 
   @override
@@ -138,12 +138,12 @@ ProviderContainer makeContainer({
 
 void main() {
   group('recipeRepositoryProvider', () {
-  test('resolves a RecipeRepository', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-    expect(container.read(recipeRepositoryProvider), isA<RecipeRepository>());
+    test('resolves a RecipeRepository', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      expect(container.read(recipeRepositoryProvider), isA<RecipeRepository>());
+    });
   });
-});
 
   group('AddRecipeState', () {
     test('default values are non-submitting, no error, not successful', () {
@@ -220,7 +220,6 @@ void main() {
 
       await container.read(addRecipeProvider.notifier).submit(_validRecipe);
 
-     
       expect(vault.createFolderCalled, false);
       expect(repo.saved.single.$2, 10);
       expect(container.read(addRecipeProvider).isSuccess, true);

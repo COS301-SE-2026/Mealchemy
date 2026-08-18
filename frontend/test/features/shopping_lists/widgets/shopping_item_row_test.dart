@@ -9,7 +9,7 @@ void main() {
     //disable google fonts during testing
     GoogleFonts.config.allowRuntimeFetching = false;
   });
-  
+
   //row shows item name, quantity, checkbox
   testWidgets('ShoppingItemRow renders item details', (tester) async {
     await tester.pumpWidget(
@@ -82,5 +82,34 @@ void main() {
 
     expect(checkbox.value, isTrue);
     expect(find.text('Shallots'), findsOneWidget);
+  });
+
+  testWidgets('ShoppingItemRow calls onEdit when edit icon is tapped', (
+    tester,
+  ) async {
+    var editTapped = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ShoppingItemRow(
+            item: const ShoppingListItem(
+              id: 'baby-arugula',
+              name: 'Baby Arugula',
+              quantity: '142 g',
+              category: 'PRODUCE',
+            ),
+            onChanged: (_) {},
+            onEdit: () => editTapped = true,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.edit_outlined));
+
+    expect(editTapped, isTrue);
   });
 }

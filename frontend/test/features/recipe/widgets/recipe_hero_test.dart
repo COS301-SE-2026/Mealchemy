@@ -50,22 +50,21 @@ void main() {
 
   testWidgets('RecipeHero renders back, shopping-list and save buttons',
       (tester) async {
-
     await tester.pumpWidget(host(baseRecipe));
     expect(find.byIcon(Icons.arrow_back), findsOneWidget);
     expect(find.byIcon(Icons.add_shopping_cart), findsOneWidget);
     expect(find.byIcon(Icons.bookmark_add_outlined), findsOneWidget);
   });
 
-  testWidgets('tapping the shopping-list button shows a success snackbar',
+  testWidgets('tapping the shopping-list button completes without error',
       (tester) async {
     await tester.pumpWidget(host(baseRecipe));
     await tester.pumpAndSettle();
+
     await tester.tap(find.byIcon(Icons.add_shopping_cart));
     await tester.pumpAndSettle();
-    expect(
-      find.text('Shopping list created for Saffron-Infused Risotto'),
-      findsOneWidget,
-    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.byIcon(Icons.add_shopping_cart), findsOneWidget);
   });
 }

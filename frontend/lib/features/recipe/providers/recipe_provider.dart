@@ -129,7 +129,7 @@ class AddRecipeNotifier extends StateNotifier<AddRecipeState> {
     try {
       final Recipe result;
       if (recipeId != null) {
-        result = await _repository.updateRecipe(recipeId, recipe);
+        result = await _repository.updateRecipeFull(recipeId, recipe);
       } else {
         final targetFolderId = folderId ?? await _resolveDefaultFolderId();
         result = await _repository.addRecipe(recipe, targetFolderId);
