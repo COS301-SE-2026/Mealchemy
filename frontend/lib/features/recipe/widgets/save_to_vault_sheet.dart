@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_input_dialog.dart';
 import '../../../core/shared_widgets/atoms/app_button.dart';
+import '../../../core/shared_widgets/atoms/app_picker.dart';
 import '../../../core/shared_widgets/atoms/app_toast.dart';
 import '../../../core/providers/feedback_provider.dart';
 import '../../../core/theme/app_colours.dart';
@@ -20,9 +21,9 @@ Future<void> showSaveToVaultSheet({
   return showDialog(
     context: context,
     builder: (_) => Dialog(
-      backgroundColor: AppColors.bgLight,
+      backgroundColor: AppColors.surfaceWhite,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: _SaveToVaultSheet(recipeId: recipeId),
     ),
   );
@@ -47,40 +48,36 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
     final vaultsAsync = ref.watch(vaultsProvider);
 
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('SAVE TO VAULT',
-              style: AppTextStyles.label
-                  .copyWith(color: AppColors.accentMuted, letterSpacing: 2)),
-          const SizedBox(height: 16),
+          _header(),
+          const SizedBox(height: 24),
 
-          // vault picker
-          Text('Vault',
-              style:
-                  AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted)),
+          Text('VAULT',
+              style: AppTextStyles.label
+                  .copyWith(color: AppColors.brown, letterSpacing: 1.5)),
           const SizedBox(height: 8),
           vaultsAsync.when(
             loading: () => const LinearProgressIndicator(),
             error: (_, __) => Text('Could not load vaults.',
                 style:
                     AppTextStyles.bodySmall.copyWith(color: AppColors.error)),
-            data: (vaults) => _vaultDropdown(vaults),
+            data: (vaults) => _vaultPicker(vaults),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
-          // folder picker (depends on chosen vault)
-          Text('Folder',
-              style:
-                  AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted)),
+          Text('FOLDER',
+              style: AppTextStyles.label
+                  .copyWith(color: AppColors.brown, letterSpacing: 1.5)),
           const SizedBox(height: 8),
           if (_vaultId == null)
             _disabledField('Pick a vault first')
           else
-            _folderPicker(_vaultId!),
-          const SizedBox(height: 24),
+            _folderSection(_vaultId!),
+          const SizedBox(height: 26),
 
           AppButton.primary(
             label: 'Save Recipe',
@@ -94,30 +91,51 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
     );
   }
 
-  Widget _vaultDropdown(List<Vault> vaults) {
-    return DropdownButtonFormField<int>(
-      initialValue: _vaultId,
-      isExpanded: true,
-      decoration: _decoration(),
-      hint: Text('Select a vault',
-          style: AppTextStyles.body.copyWith(color: AppColors.textMuted)),
-      items: [
+  Widget _header() {
+    return Row(
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            gradient: AppColors.brand,
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: const Icon(Icons.bookmark_add_outlined,
+              color: AppColors.textDark, size: 20),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('VAULT',
+                  style: AppTextStyles.label.copyWith(
+                      color: AppColors.accentMuted, letterSpacing: 2)),
+              const SizedBox(height: 2),
+              Text('Save to Vault',
+                  style: AppTextStyles.heading2
+                      .copyWith(color: AppColors.primary, fontSize: 22)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _vaultPicker(List<Vault> vaults) {
+    return AppPicker<int>(
+      value: _vaultId,
+      hint: 'Select a vault',
+      iconTone: PickerIconTone.accent,
+      options: [
         for (final v in vaults)
-          DropdownMenuItem<int>(
+          AppPickerOption(
             value: v.vaultId,
-            child: Row(
-              children: [
-                Icon(
-                  v.vaultType == VaultTypes.private
-                      ? Icons.lock
-                      : Icons.group_outlined,
-                  size: 18,
-                  color: AppColors.accent,
-                ),
-                const SizedBox(width: 8),
-                Flexible(child: Text(v.name, overflow: TextOverflow.ellipsis)),
-              ],
-            ),
+            label: v.name,
+            icon: v.vaultType == VaultTypes.private
+                ? Icons.lock
+                : Icons.group_outlined,
           ),
       ],
       onChanged: (id) => setState(() {
@@ -128,7 +146,7 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
     );
   }
 
-  Widget _folderPicker(int vaultId) {
+  Widget _folderSection(int vaultId) {
     final foldersAsync = ref.watch(vaultFoldersProvider(vaultId));
     return foldersAsync.when(
       loading: () => const LinearProgressIndicator(),
@@ -141,20 +159,18 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
             if (folders.isEmpty)
               _disabledField('No folders in this vault yet')
             else
-              DropdownButtonFormField<int>(
-                initialValue: folders.any((f) => f.folderId == _folderId)
+              AppPicker<int>(
+                value: folders.any((f) => f.folderId == _folderId)
                     ? _folderId
                     : null,
-                isExpanded: true,
-                decoration: _decoration(),
-                hint: Text('Select a folder',
-                    style: AppTextStyles.body
-                        .copyWith(color: AppColors.textMuted)),
-                items: [
+                hint: 'Select a folder',
+                iconTone: PickerIconTone.accent,
+                options: [
                   for (final VaultFolder f in folders)
-                    DropdownMenuItem<int>(
+                    AppPickerOption(
                       value: f.folderId,
-                      child: Text(f.folderName),
+                      label: f.folderName,
+                      icon: Icons.folder_outlined,
                     ),
                 ],
                 onChanged: (id) => setState(() {
@@ -246,21 +262,10 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           color: AppColors.surfaceMuted,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.inputBorder),
         ),
         child: Text(text,
             style: AppTextStyles.body.copyWith(color: AppColors.textMuted)),
-      );
-
-  InputDecoration _decoration() => InputDecoration(
-        filled: true,
-        fillColor: AppColors.surfaceMuted,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.inputBorder),
-        ),
       );
 }
