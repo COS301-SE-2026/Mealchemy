@@ -34,14 +34,13 @@ public class UsdaApiClient {
         }
     }
 
-    public UsdaFoodDetai; getFoodDetails(String fdcId) {
+    public UsdaFoodDetail getFoodDetails(String fdcId) {
         try {
-            UsdaFoodDetail foodDetail = restClient.get().uri(uriBuilder -> uriBuilder.path("/foods/{fdcId}")
-                                                                                        .queryParam("query", query)
+            UsdaFoodDetail foodDetail = restClient.get().uri(uriBuilder -> uriBuilder.path("/food/{fdcId}")
                                                                                         .queryParam("api_key", apiKey)
                                                                                         .build(fdcId))
                                                             .retrieve()
-                                                            .body(UsdaSearchResponse.class);
+                                                            .body(UsdaFoodDetail.class);
         
             if (foodDetail == null) {
                 throw new NutritionProviderException("USDA detail lookup returned an empty response body");

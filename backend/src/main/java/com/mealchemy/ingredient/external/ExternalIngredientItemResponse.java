@@ -2,8 +2,6 @@ package com.mealchemy.ingredient.external;
 
 import java.math.BigDecimal;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public record ExternalIngredientItemResponse ( //records are immutable and auto generate constructors
    String name,
    String categoryName,

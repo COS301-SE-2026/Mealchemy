@@ -23,7 +23,7 @@ public class IngredientCatalogue {
     @Column(name = "name", nullable = false, unique = true, length = 200)
     private String name;
 
-    @Column(name = "calories_kcal", nullable = false)
+    @Column(name = "calories_kcal")
     private Integer caloriesKCal;
 
     @Column(name = "protein_g")

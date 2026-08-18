@@ -4,9 +4,11 @@ package com.mealchemy.ingredient.repository;
 
 import com.mealchemy.ingredient.model.IngredientCatalogue;
 import com.mealchemy.ingredient.dto.IngredientCatalogueResponse;
+import com.mealchemy.ingredient.dto.IngredientSearchResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,14 +26,19 @@ public interface IngredientCatalogueRepository extends JpaRepository<IngredientC
     List<IngredientCatalogueResponse> getIngredientCatalogueItems();
 
     @Query("""
-        SELECT new com.mealchemy.ingredient.dto.IngredientCatalogueResponse(
+        SELECT new com.mealchemy.ingredient.dto.IngredientSearchResponse(
             c.ingId,
             c.name,
-            cat.name
+            cat.name,
+            null,
+            null
         )
         FROM IngredientCatalogue c
         JOIN IngredientCategory cat ON c.categoryId = cat.categoryId
         WHERE LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%'))
     """)
-    List<IngredientCatalogueResponse> getIngredientByName(@Param("name") String name);
+    List<IngredientSearchResponse> getIngredientByName(@Param("name") String name);
+
+    // exact match lookup - use to prevent concurrent saves
+    Optional<IngredientCatalogue> findByName(String name);
 }
