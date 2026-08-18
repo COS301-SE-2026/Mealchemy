@@ -69,12 +69,9 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     if (widget.isEditing && widget.initialRecipe != null) {
       _prefill(widget.initialRecipe!);
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _recoverLostPhoto());
+    if (!widget.isEditing) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _recoverLostPhoto());
+    }
   }
 
   @override
@@ -250,23 +247,21 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     var saveFailed = false;
     var photoFailed = false;
     final selectedPhoto = _selectedPhoto;
-    if (selectedPhoto != null) {
+    if (!widget.isEditing && selectedPhoto != null) {
       try {
         final photoUrl =
             await ref.read(recipePhotoRepositoryProvider).uploadRecipePhoto(
-                  recipeId: created.recipeId,
+                  recipeId: saved.recipeId,
                   photo: selectedPhoto,
                 );
         await recipeRepo.updateRecipe(
-          created.recipeId,
-          created.copyWith(photoUrl: photoUrl),
+          saved.recipeId,
+          saved.copyWith(photoUrl: photoUrl),
         );
       } catch (_) {
         photoFailed = true;
       }
     }
-
-
     if (!widget.isEditing) {
       for (final ingredient in ingredients) {
         try {
@@ -285,10 +280,23 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     }
 
     if (!mounted) return;
+    setState(() => _isSaving = false);
 
-    if (saveFailed) {
+    if (saveFailed && photoFailed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Recipe saved, but some items and the photo did not.'),
+        ),
+      );
+    } else if (saveFailed) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Recipe saved, but some items did not.')),
+      );
+    } else if (photoFailed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Recipe saved, but the photo did not upload.'),
+        ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -379,8 +387,11 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       data: (cuisines) => unitsState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => const _AddRecipeError(),
-        data: (units) =>
-            _buildForm(cuisines, units, submissionState.isSubmitting),
+        data: (units) => _buildForm(
+          cuisines,
+          units,
+          submissionState.isSubmitting || _isSaving,
+        ),
       ),
     );
 
@@ -397,8 +408,11 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
             data: (cuisines) => unitsState.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => const _AddRecipeError(),
-              data: (units) =>
-                  _buildForm(cuisines, units, submissionState.isSubmitting),
+              data: (units) => _buildForm(
+                cuisines,
+                units,
+                submissionState.isSubmitting || _isSaving,
+              ),
             ),
           );
         },
@@ -474,17 +488,18 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
         if (_showValidation && _selectedCuisine == null)
           const _FieldError('Cuisine is required.'),
         const SizedBox(height: 32),
-
-        _sectionHeader('Recipe Photo'),
-        const SizedBox(height: 16),
-        RecipePhotoSelector(
-          photo: _selectedPhoto,
-          onGalleryTap: () => _pickPhoto(RecipePhotoSource.gallery),
-          onCameraTap: () => _pickPhoto(RecipePhotoSource.camera),
-          onRemoveTap: () => setState(() => _selectedPhoto = null),
-          disabled: isSubmitting,
-        ),
-        const SizedBox(height: 32),
+        if (!widget.isEditing) ...[
+          _sectionHeader('Recipe Photo'),
+          const SizedBox(height: 16),
+          RecipePhotoSelector(
+            photo: _selectedPhoto,
+            onGalleryTap: () => _pickPhoto(RecipePhotoSource.gallery),
+            onCameraTap: () => _pickPhoto(RecipePhotoSource.camera),
+            onRemoveTap: () => setState(() => _selectedPhoto = null),
+            disabled: isSubmitting,
+          ),
+          const SizedBox(height: 32),
+        ],
         _sectionHeader('Time & Servings'),
         const SizedBox(height: 16),
         Row(

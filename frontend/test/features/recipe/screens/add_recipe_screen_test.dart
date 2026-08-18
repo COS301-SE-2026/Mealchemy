@@ -29,7 +29,6 @@ class _RecordingRepo implements RecipeRepository {
   final List<Recipe> savedRecipes = [];
   final List<int> savedFolderIds = [];
   final List<(int id, Recipe recipe)> updatedRecipes = [];
-  final List<(int, Recipe)> updatedRecipes = [];
   final List<String>? events;
 
   @override
@@ -47,6 +46,13 @@ class _RecordingRepo implements RecipeRepository {
       servingSize: recipe.servingSize,
       isCommunityPublished: recipe.isCommunityPublished,
     );
+  }
+
+  @override
+  Future<Recipe> updateRecipe(int id, Recipe recipe) async {
+    events?.add('update');
+    updatedRecipes.add((id, recipe));
+    return recipe.copyWith(recipeId: id);
   }
 
   @override
@@ -262,7 +268,6 @@ void main() {
       vaultRepo: vaultRepo,
       photoPicker: photoPicker,
       photoRepository: photoRepository,
-    ,
       editRecipeId: editRecipeId,
       initialRecipe: initialRecipe,
       extraOverrides: extraOverrides,

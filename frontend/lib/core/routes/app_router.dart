@@ -92,7 +92,7 @@ final appRouter = GoRouter(
       path: AppRoutes.recipeEdit,
       builder: (context, state) {
         final id = int.parse(state.pathParameters['id']!);
-        return AddRecipeScreen(recipeId: id);
+        return AddRecipeScreen(editRecipeId: id);
       },
     ),
     GoRoute(

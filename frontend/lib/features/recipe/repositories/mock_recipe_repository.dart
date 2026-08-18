@@ -514,11 +514,17 @@ class MockRecipeRepository implements RecipeRepository {
     );
   }
 
-@override
-Future<Recipe> updateRecipeFull(int id, Recipe recipe) async {
-  await Future.delayed(const Duration(milliseconds: 350));
-  return recipe.copyWith(recipeId: id, ownerId: recipe.ownerId ?? 1);
-}
+  @override
+  Future<Recipe> updateRecipe(int id, Recipe recipe) async {
+    await Future.delayed(const Duration(milliseconds: 350));
+    return recipe.copyWith(recipeId: id, ownerId: recipe.ownerId ?? 1);
+  }
+
+  @override
+  Future<Recipe> updateRecipeFull(int id, Recipe recipe) async {
+    await Future.delayed(const Duration(milliseconds: 350));
+    return recipe.copyWith(recipeId: id, ownerId: recipe.ownerId ?? 1);
+  }
 
   @override
   Future<List<String>> getCuisineTypes() async {
@@ -579,6 +585,5 @@ Future<Recipe> updateRecipeFull(int id, Recipe recipe) async {
   }
 
   @override
-  Future<void> deleteRecipe(int recipeId) async {
-  }
+  Future<void> deleteRecipe(int recipeId) async {}
 }

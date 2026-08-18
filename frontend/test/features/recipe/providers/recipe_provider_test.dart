@@ -32,6 +32,10 @@ class _RecordingRepo implements RecipeRepository {
   }
 
   @override
+  Future<Recipe> updateRecipe(int id, Recipe recipe) async =>
+      throw UnimplementedError();
+
+  @override
   Future<Recipe> updateRecipeFull(int id, Recipe recipe) async =>
       throw UnimplementedError();
 

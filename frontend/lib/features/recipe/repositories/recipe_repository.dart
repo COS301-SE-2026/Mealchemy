@@ -12,6 +12,9 @@ abstract class RecipeRepository {
 
   //not saved in mock
   Future<Recipe> addRecipe(Recipe recipe, int folderId);
+  //update recipe meadata, including photo url. (used for photo linking)
+  Future<Recipe> updateRecipe(int id, Recipe recipe);
+  //complete edit flow includes ingredients, steps, url update
   Future<Recipe> updateRecipeFull(int id, Recipe recipe);
 
   //cuisine type enum values
