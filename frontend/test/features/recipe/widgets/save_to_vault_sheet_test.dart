@@ -15,7 +15,9 @@ import 'package:mealchemy/features/vault/repositories/vault_repository.dart';
 
 class _FakeVaultRepo implements VaultRepository {
   final List<(int folderId, int recipeId)> filed = [];
+  final List<(int vaultId, String name)> createdFolders = [];
   bool throwOnSave = false;
+  bool throwOnCreate = false;
 
   @override
   Future<VaultFolderRecipe> addRecipeToFolder(int folderId, int recipeId) async {
@@ -26,6 +28,18 @@ class _FakeVaultRepo implements VaultRepository {
       folderId: folderId,
       recipeId: recipeId,
       addedAt: DateTime(2026, 1, 1),
+    );
+  }
+
+  @override
+  Future<VaultFolder> createFolder(int vaultId, String name) async {
+    if (throwOnCreate) throw Exception('create failed');
+    createdFolders.add((vaultId, name));
+    return VaultFolder(
+      folderId: 20,
+      vaultId: vaultId,
+      folderName: name,
+      createdAt: DateTime(2026, 1, 1),
     );
   }
 
@@ -93,6 +107,13 @@ void main() {
     await tester.pump(); // build the dialog
   }
 
+  Future<void> pickMyVault(WidgetTester tester) async {
+    await tester.tap(find.byType(DropdownButtonFormField<int>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('My Vault').last);
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('shows a progress indicator while vaults are loading',
       (tester) async {
     final pending = Completer<List<Vault>>();
@@ -129,10 +150,7 @@ void main() {
     await openSheet(tester);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(DropdownButtonFormField<int>).first);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('My Vault').last);
-    await tester.pumpAndSettle();
+    await pickMyVault(tester);
 
     // Folder field replaced the "pick a vault first" placeholder.
     expect(find.text('Pick a vault first'), findsNothing);
@@ -148,12 +166,33 @@ void main() {
     await openSheet(tester);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(DropdownButtonFormField<int>).first);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('My Vault').last);
-    await tester.pumpAndSettle();
+    await pickMyVault(tester);
 
     expect(find.text('No folders in this vault yet'), findsOneWidget);
+  });
+
+  testWidgets('shows an error when vaults fail to load', (tester) async {
+    await tester.pumpWidget(hostWithRef(overrides: [
+      vaultsProvider.overrideWith((ref) async => throw Exception('boom')),
+    ]));
+    await openSheet(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Could not load vaults.'), findsOneWidget);
+  });
+
+  testWidgets('shows an error when folders fail to load', (tester) async {
+    await tester.pumpWidget(hostWithRef(overrides: [
+      vaultsProvider.overrideWith((ref) async => [privateVault]),
+      vaultFoldersProvider(1)
+          .overrideWith((ref) async => throw Exception('boom')),
+    ]));
+    await openSheet(tester);
+    await tester.pumpAndSettle();
+
+    await pickMyVault(tester);
+
+    expect(find.text('Could not load folders.'), findsOneWidget);
   });
 
   testWidgets('selecting a folder and saving files the recipe', (tester) async {
@@ -168,11 +207,7 @@ void main() {
     await openSheet(tester);
     await tester.pumpAndSettle();
 
-    // choose vault
-    await tester.tap(find.byType(DropdownButtonFormField<int>).first);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('My Vault').last);
-    await tester.pumpAndSettle();
+    await pickMyVault(tester);
 
     // choose folder
     await tester.tap(find.byType(DropdownButtonFormField<int>).last);
@@ -184,11 +219,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repo.filed, [(10, 42)]); // folderId 10, recipeId 42
-    expect(find.text('Recipe saved to vault'), findsOneWidget);
+    expect(find.text('SAVE TO VAULT'), findsNothing);
   });
 
-  testWidgets('a failed save shows an error and keeps the sheet open',
-      (tester) async {
+  testWidgets('a failed save keeps the sheet open', (tester) async {
     final repo = _FakeVaultRepo()..throwOnSave = true;
     await tester.pumpWidget(hostWithRef(
       vaultRepo: repo,
@@ -200,10 +234,7 @@ void main() {
     await openSheet(tester);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(DropdownButtonFormField<int>).first);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('My Vault').last);
-    await tester.pumpAndSettle();
+    await pickMyVault(tester);
 
     await tester.tap(find.byType(DropdownButtonFormField<int>).last);
     await tester.pumpAndSettle();
@@ -213,7 +244,56 @@ void main() {
     await tester.tap(find.text('Save Recipe'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Could not save. Try again.'), findsOneWidget);
+    expect(repo.filed, isEmpty);
     expect(find.text('SAVE TO VAULT'), findsOneWidget);
+  });
+
+  testWidgets('creating a folder calls the repo with the entered name',
+      (tester) async {
+    final repo = _FakeVaultRepo();
+    await tester.pumpWidget(hostWithRef(
+      vaultRepo: repo,
+      overrides: [
+        vaultsProvider.overrideWith((ref) async => [privateVault]),
+        vaultFoldersProvider(1).overrideWith((ref) async => [recipesFolder]),
+      ],
+    ));
+    await openSheet(tester);
+    await tester.pumpAndSettle();
+
+    await pickMyVault(tester);
+
+    await tester.tap(find.text('CREATE A FOLDER'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).last, 'Weeknight Dinners');
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+
+    expect(repo.createdFolders, [(1, 'Weeknight Dinners')]);
+  });
+
+  testWidgets('a blank folder name is rejected by the dialog', (tester) async {
+    final repo = _FakeVaultRepo();
+    await tester.pumpWidget(hostWithRef(
+      vaultRepo: repo,
+      overrides: [
+        vaultsProvider.overrideWith((ref) async => [privateVault]),
+        vaultFoldersProvider(1).overrideWith((ref) async => [recipesFolder]),
+      ],
+    ));
+    await openSheet(tester);
+    await tester.pumpAndSettle();
+
+    await pickMyVault(tester);
+
+    await tester.tap(find.text('CREATE A FOLDER'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('This field is required.'), findsOneWidget);
+    expect(repo.createdFolders, isEmpty);
   });
 }
