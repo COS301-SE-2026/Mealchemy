@@ -73,4 +73,10 @@ abstract class ShoppingListRepository {
     required String name,
     required bool includeAvailablePantryItems,
   });
+  //adds a recipe ingredients into an existing shopping list
+  Future<ShoppingList> addRecipeToExistingList({
+    required String listId,
+    required int recipeId,
+    required bool includeAvailablePantryItems,
+  });
 }
