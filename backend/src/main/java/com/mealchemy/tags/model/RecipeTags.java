@@ -1,6 +1,7 @@
 package com.mealchemy.tags.model;
 
 /* Import classes */
+import com.mealchemy.recipe.model.Recipe;
 
 /* Import libraries */
 import jakarta.persistence.*;
@@ -17,11 +18,13 @@ public class RecipeTags {
     @Column(name = "id")
     private Integer id;
 
-    @Column(name = "recipe_id")
-    private Integer recipeId;
+    @ManyToOne
+    @JoinColumn(name = "recipe_id")
+    private Recipe recipe;
 
-    @Column(name = "tag_id")
-    private Integer tagId;
+    @ManyToOne
+    @JoinColumn(name = "tag_id")
+    private Tags tag;
 
     /* Getters */
 
@@ -30,25 +33,25 @@ public class RecipeTags {
         return id;
     }
 
-    public Integer getRecipeId()
+    public Recipe getRecipe()
     {
-        return recipeId;
+        return recipe;
     }
 
-    public Integer getTagId()
+    public Tags getTag()
     {
-        return tagId;
+        return tag;
     }
 
     /* Setters */
 
-    public void setRecipeId(Integer recipeIdIn)
+    public void setRecipe(Recipe recipeIn)
     {
-        this.recipeId = recipeIdIn;
+        this.recipe = recipeIn;
     }
 
-    public void setTagId(Integer tagIdIn)
+    public void setTag(Tags tagIn)
     {
-        this.tagId = tagIdIn;
+        this.tag = tagIn;
     }
 }
