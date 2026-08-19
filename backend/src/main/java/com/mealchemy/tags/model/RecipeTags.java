@@ -41,4 +41,14 @@ public class RecipeTags {
     }
 
     /* Setters */
+
+    public void setRecipeId(Integer recipeIdIn)
+    {
+        this.recipeId = recipeIdIn;
+    }
+
+    public void setTagId(Integer tagIdIn)
+    {
+        this.tagId = tagIdIn;
+    }
 }
