@@ -107,12 +107,20 @@ void main() {
     await tester.pump(); // build the dialog
   }
 
-  Future<void> pickMyVault(WidgetTester tester) async {
-    await tester.tap(find.byType(DropdownButtonFormField<int>).first);
+ 
+  Future<void> tapPickerOption(
+    WidgetTester tester, {
+    required String hint,
+    required String option,
+  }) async {
+    await tester.tap(find.text(hint));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('My Vault').last);
+    await tester.tap(find.text(option).last);
     await tester.pumpAndSettle();
   }
+
+  Future<void> pickMyVault(WidgetTester tester) =>
+      tapPickerOption(tester, hint: 'Select a vault', option: 'My Vault');
 
   testWidgets('shows a progress indicator while vaults are loading',
       (tester) async {
@@ -122,7 +130,7 @@ void main() {
     ]));
     await openSheet(tester);
 
-    expect(find.text('SAVE TO VAULT'), findsOneWidget);
+    expect(find.text('Save to Vault'), findsOneWidget);
     expect(find.byType(LinearProgressIndicator), findsOneWidget);
   });
 
@@ -208,18 +216,13 @@ void main() {
     await tester.pumpAndSettle();
 
     await pickMyVault(tester);
-
-    // choose folder
-    await tester.tap(find.byType(DropdownButtonFormField<int>).last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('My Recipes').last);
-    await tester.pumpAndSettle();
+    await tapPickerOption(tester, hint: 'Select a folder', option: 'My Recipes');
 
     await tester.tap(find.text('Save Recipe'));
     await tester.pumpAndSettle();
 
     expect(repo.filed, [(10, 42)]); // folderId 10, recipeId 42
-    expect(find.text('SAVE TO VAULT'), findsNothing);
+    expect(find.text('Save to Vault'), findsNothing);
   });
 
   testWidgets('a failed save keeps the sheet open', (tester) async {
@@ -235,17 +238,13 @@ void main() {
     await tester.pumpAndSettle();
 
     await pickMyVault(tester);
-
-    await tester.tap(find.byType(DropdownButtonFormField<int>).last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('My Recipes').last);
-    await tester.pumpAndSettle();
+    await tapPickerOption(tester, hint: 'Select a folder', option: 'My Recipes');
 
     await tester.tap(find.text('Save Recipe'));
     await tester.pumpAndSettle();
 
     expect(repo.filed, isEmpty);
-    expect(find.text('SAVE TO VAULT'), findsOneWidget);
+    expect(find.text('Save to Vault'), findsOneWidget);
   });
 
   testWidgets('creating a folder calls the repo with the entered name',
