@@ -5,6 +5,7 @@ import 'package:mealchemy/core/shared_widgets/Molecules/app_match_badge.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/features/dashboard/models/dashboard_recipe_card_data.dart';
+import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
 
 class RecipeRecommendationCard extends StatelessWidget {
   const RecipeRecommendationCard({
@@ -144,17 +145,10 @@ class _RecipeImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (photoUrl == null || photoUrl!.isEmpty) {
-      return Container(color: AppColors.primaryLight);
-    }
-    return Image.network(
-      photoUrl!,
+    return RecipeNetworkImage(
+      photoUrl: photoUrl,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Container(color: AppColors.primaryLight),
-      loadingBuilder: (_, child, progress) {
-        if (progress == null) return child;
-        return Container(color: AppColors.surfaceLight);
-      },
+      placeholder: Container(color: AppColors.primaryLight),
     );
   }
 }

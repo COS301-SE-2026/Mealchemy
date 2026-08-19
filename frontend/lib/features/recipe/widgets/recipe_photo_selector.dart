@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colours.dart';
 import '../models/selected_recipe_photo.dart';
+import 'recipe_network_image.dart';
 
 //photo controls used inside the add recipe form
 class RecipePhotoSelector extends StatelessWidget {
@@ -46,11 +47,11 @@ class RecipePhotoSelector extends StatelessWidget {
                     errorBuilder: (_, __, ___) => const _PhotoPlaceholder(),
                   )
                 else
-                  Image.network(
-                    existingPhotoUrl!,
+                  RecipeNetworkImage(
                     key: const Key('recipe-photo-preview'),
+                    photoUrl: existingPhotoUrl,
+                    placeholder: const _PhotoPlaceholder(),
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const _PhotoPlaceholder(),
                   ),
                 if (hasPhoto)
                   Positioned(

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
+import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
 import '../../../core/shared_widgets/Molecules/app_confirm_dialog.dart';
 
 //single recipe row inside a vault folder
@@ -129,26 +130,23 @@ class _RecipeThumb extends StatelessWidget {
   final String? photoUrl;
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: photoUrl == null ? AppColors.brand : null,
-        image: photoUrl != null
-            ? DecorationImage(
-                image: NetworkImage(photoUrl!),
-                fit: BoxFit.cover,
-              )
-            : null,
-      ),
-      child: photoUrl == null
-          ? const Icon(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        width: 56,
+        height: 56,
+        child: RecipeNetworkImage(
+          photoUrl: photoUrl,
+          placeholder: DecoratedBox(
+            decoration: const BoxDecoration(gradient: AppColors.brand),
+            child: const Icon(
               Icons.restaurant_rounded,
               color: AppColors.textDark,
               size: 22,
-            )
-          : null,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
