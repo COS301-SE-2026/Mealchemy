@@ -3,7 +3,8 @@ package com.mealchemy.profile.service;
 import com.mealchemy.profile.model.UserProfile;
 //repositories
 import com.mealchemy.profile.repository.UserProfileRepository;
-import com.mealchemy.equipment.repository;
+// services
+import com.mealchemy.equipment.service.EquipmentService;
 
 import org.springframework.transaction.annotation.Transactional; //need to annotate any function that makes an update to the database
 
@@ -22,10 +23,11 @@ import org.springframework.web.server.ResponseStatusException;
 public class UserProfileService {
 
     private final UserProfileRepository userProfileRepository;
+    private final EquipmentService equipmentService;
 
-    public UserProfileService(UserProfileRepository userProfileRepository) {
+    public UserProfileService(UserProfileRepository userProfileRepository, EquipmentService equipmentService) {
         this.userProfileRepository = userProfileRepository;
-
+        this.equipmentService = equipmentService;
     }
 
     // GET request - Logic to get user profile
