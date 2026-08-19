@@ -33,6 +33,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 /* Import classes */
 import com.mealchemy.recipe.dto.RecipeRequest;
 import com.mealchemy.recipe.dto.RecipeFullRequest;
+import com.mealchemy.recipe.dto.RecipeUpdateRequest;
 import com.mealchemy.recipe.dto.RecipeIngredientRequest;
 import com.mealchemy.recipe.dto.RecipePhotoUploadRequest;
 import com.mealchemy.recipe.dto.RecipePhotoUploadResponse;
@@ -273,7 +274,7 @@ public class RecipeControllerTest {
     @Test
     void updateRecipe_returns200_withUpdatedRecipe() throws Exception
     {
-        when(recipeService.updateRecipe(eq(1), any(RecipeRequest.class), eq(1))).thenReturn(response);
+        when(recipeService.updateRecipe(eq(1), any(RecipeUpdateRequest.class), eq(1))).thenReturn(response);
 
         mockMvc.perform(put("/recipes/edit/1")
             .with(csrf())
@@ -281,6 +282,22 @@ public class RecipeControllerTest {
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.title").value("Recipe 1"));
+    }
+
+    @Test
+    void updateRecipe_returns400_whenNestedStepIsInvalid() throws Exception
+    {
+        RecipeUpdateRequest invalidRequest = new RecipeUpdateRequest(
+            "Req Title", "Description", "Chinese", 10, 15, 2,
+            null, false, null, null, false, null,
+            List.of(new RecipeStepRequest(0, ""))
+        );
+
+        mockMvc.perform(put("/recipes/edit/1")
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(invalidRequest)))
+            .andExpect(status().isBadRequest());
     }
 
     @Test

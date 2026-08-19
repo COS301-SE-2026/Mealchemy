@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 
 import com.mealchemy.recipe.dto.RecipeRequest;
 import com.mealchemy.recipe.dto.RecipeFullRequest;
+import com.mealchemy.recipe.dto.RecipeUpdateRequest;
 import com.mealchemy.recipe.dto.RecipePhotoUploadRequest;
 import com.mealchemy.recipe.dto.RecipePhotoUploadResponse;
 import com.mealchemy.recipe.dto.RecipeResponse;
@@ -87,7 +88,7 @@ public class RecipeController
 
     // Put
     @PutMapping("/edit/{id}")
-    public RecipeResponse updateRecipe(@PathVariable int id, @Valid @RequestBody RecipeRequest request, @AuthenticationPrincipal String ownerId)
+    public RecipeResponse updateRecipe(@PathVariable int id, @Valid @RequestBody RecipeUpdateRequest request, @AuthenticationPrincipal String ownerId)
     {
         return recipeService.updateRecipe(id, request, Integer.parseInt(ownerId));
     }

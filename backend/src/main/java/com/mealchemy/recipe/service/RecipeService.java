@@ -19,6 +19,9 @@ import com.mealchemy.shared.enums.VaultType;
 import com.mealchemy.vault.dto.VaultFolderRecipeRequest;
 import com.mealchemy.recipe.dto.RecipeRequest;
 import com.mealchemy.recipe.dto.RecipeFullRequest;
+import com.mealchemy.recipe.dto.RecipeUpdateRequest;
+import com.mealchemy.recipe.dto.RecipeIngredientRequest;
+import com.mealchemy.recipe.dto.RecipeStepRequest;
 import com.mealchemy.recipe.dto.RecipeResponse;
 import com.mealchemy.recipe.event.RecipePhotoCleanupEvent;
 import com.mealchemy.recipe.repository.RecipeRepository;
@@ -136,29 +139,9 @@ public class RecipeService
             recipeForReturn.setParentRecipe(sourceRecipe);
         }
 
-        List<RecipeIngredient> ingredients = request.ingredients().stream().map(i -> {
-            
-            if (!ingredientCatalogueRepository.existsById(i.ingId()))
-            {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One of the ingredients you want to add does not exist.");
-            }
-            
-            RecipeIngredient recipeIngredient = new RecipeIngredient();
-            recipeIngredient.setIngId(i.ingId());
-            recipeIngredient.setQuantity(i.quantity());
-            recipeIngredient.setUnit(i.unit());
-            recipeIngredient.setSortOrder(i.sortOrder());
-            recipeIngredient.setRecipe(recipeForReturn);
-            return recipeIngredient;
-        }).toList();
+        List<RecipeIngredient> ingredients = mapIngredientRequests(request.ingredients(), recipeForReturn);
 
-        List<RecipeStep> steps = request.steps().stream().map(i -> {
-            RecipeStep recipeStep = new RecipeStep();
-            recipeStep.setStepNr(i.stepNr());
-            recipeStep.setContent(i.content());
-            recipeStep.setRecipe(recipeForReturn);
-            return recipeStep;
-        }).toList();
+        List<RecipeStep> steps = mapStepRequests(request.steps(), recipeForReturn);
 
         recipeForReturn.setIngredients(ingredients);
         recipeForReturn.setSteps(steps);
@@ -176,7 +159,7 @@ public class RecipeService
 
     // Put to update an existing recipe
     @Transactional
-    public RecipeResponse updateRecipe(int id, RecipeRequest request, Integer ownerId)
+    public RecipeResponse updateRecipe(int id, RecipeUpdateRequest request, Integer ownerId)
     {
         Recipe recipeForReturn = recipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
         
@@ -192,19 +175,66 @@ public class RecipeService
 
         String oldPhotoUrl = recipeForReturn.getPhotoUrl();
 
+        if (request.removePhoto() && request.photoUrl() != null && !request.photoUrl().isBlank())
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A replacement photo URL cannot be supplied when removing the photo.");
+        }
+
+        String newPhotoUrl = oldPhotoUrl;
+        if (request.removePhoto())
+        {
+            newPhotoUrl = null;
+        }
+        else if (request.photoUrl() != null)
+        {
+            if (request.photoUrl().isBlank())
+            {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Photo URL cannot be blank.");
+            }
+            newPhotoUrl = request.photoUrl();
+        }
+
+        List<RecipeIngredient> ingredients = request.ingredients() == null
+            ? null
+            : mapIngredientRequests(request.ingredients(), recipeForReturn);
+        List<RecipeStep> steps = request.steps() == null
+            ? null
+            : mapStepRequests(request.steps(), recipeForReturn);
+
         recipeForReturn.setTitle(request.title());
         recipeForReturn.setDescription(request.description());
         recipeForReturn.setCuisineType(request.cuisineType());
         recipeForReturn.setPrepTimeMins(request.prepTimeMins());
         recipeForReturn.setCookingTimeMins(request.cookingTimeMins());
         recipeForReturn.setServingSize(request.servingSize());
-        recipeForReturn.setPhotoUrl(request.photoUrl());
+        recipeForReturn.setPhotoUrl(newPhotoUrl);
         recipeForReturn.setVideoUrl(request.videoUrl());
         recipeForReturn.setExternalUrl(request.externalUrl());
         recipeForReturn.setIsCommunityPublished(request.isCommunityPublished());
 
+        if (ingredients != null)
+        {
+            recipeForReturn.getIngredients().clear();
+        }
+        if (steps != null)
+        {
+            recipeForReturn.getSteps().clear();
+        }
+        if (ingredients != null || steps != null)
+        {
+            recipeRepository.saveAndFlush(recipeForReturn);
+        }
+        if (ingredients != null)
+        {
+            recipeForReturn.getIngredients().addAll(ingredients);
+        }
+        if (steps != null)
+        {
+            recipeForReturn.getSteps().addAll(steps);
+        }
+
         Recipe saved = recipeRepository.save(recipeForReturn);
-        publishPhotoCleanupWhenChanged(id, oldPhotoUrl, request.photoUrl());
+        publishPhotoCleanupWhenChanged(id, oldPhotoUrl, newPhotoUrl);
 
         return RecipeResponse.from(saved);
     }
@@ -262,6 +292,41 @@ public class RecipeService
         recipe.setIsCommunityPublished(request.isCommunityPublished());
 
         return recipe;
+    }
+
+    private List<RecipeIngredient> mapIngredientRequests(
+        List<RecipeIngredientRequest> requests,
+        Recipe recipe
+    )
+    {
+        return requests.stream().map(request -> {
+            if (!ingredientCatalogueRepository.existsById(request.ingId()))
+            {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One of the ingredients you want to add does not exist.");
+            }
+
+            RecipeIngredient recipeIngredient = new RecipeIngredient();
+            recipeIngredient.setIngId(request.ingId());
+            recipeIngredient.setQuantity(request.quantity());
+            recipeIngredient.setUnit(request.unit());
+            recipeIngredient.setSortOrder(request.sortOrder());
+            recipeIngredient.setRecipe(recipe);
+            return recipeIngredient;
+        }).toList();
+    }
+
+    private List<RecipeStep> mapStepRequests(
+        List<RecipeStepRequest> requests,
+        Recipe recipe
+    )
+    {
+        return requests.stream().map(request -> {
+            RecipeStep recipeStep = new RecipeStep();
+            recipeStep.setStepNr(request.stepNr());
+            recipeStep.setContent(request.content());
+            recipeStep.setRecipe(recipe);
+            return recipeStep;
+        }).toList();
     }
 
     /* Helper */

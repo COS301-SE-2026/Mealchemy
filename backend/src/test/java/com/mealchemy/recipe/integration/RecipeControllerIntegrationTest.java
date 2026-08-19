@@ -4,6 +4,7 @@ import com.mealchemy.auth.model.User;
 import com.mealchemy.auth.repository.UserRepository;
 import com.mealchemy.recipe.dto.RecipeRequest;
 import com.mealchemy.recipe.dto.RecipeFullRequest;
+import com.mealchemy.recipe.dto.RecipeUpdateRequest;
 import com.mealchemy.recipe.dto.RecipeIngredientRequest;
 import com.mealchemy.recipe.dto.RecipeStepRequest;
 import com.mealchemy.recipe.model.Recipe;
@@ -215,6 +216,20 @@ public class RecipeControllerIntegrationTest {
                 List.of(new RecipeIngredientRequest(ingId, new BigDecimal("1.5"), "cups", 1)),
                 List.of(new RecipeStepRequest(1, "Mix everything.")),
                 folderId
+        );
+    }
+
+    private RecipeUpdateRequest updateRequest(
+            String title,
+            String photoUrl,
+            boolean removePhoto,
+            List<RecipeIngredientRequest> ingredients,
+            List<RecipeStepRequest> steps) {
+        return new RecipeUpdateRequest(
+                title, "A description.", validCuisine,
+                10, 20, 2,
+                photoUrl, removePhoto, null, null, false,
+                ingredients, steps
         );
     }
 
@@ -517,6 +532,73 @@ public class RecipeControllerIntegrationTest {
     }
 
     @Test
+    void updateRecipe_replacesIngredientsAndSteps_whenProvided() throws Exception {
+        Recipe recipe = saveRecipe(owner, "Old Title");
+        RecipeUpdateRequest request = updateRequest(
+                "New Title", null, false,
+                List.of(new RecipeIngredientRequest(ingId, new BigDecimal("2.5"), "cups", 0)),
+                List.of(new RecipeStepRequest(1, "Replacement step"))
+        );
+
+        mockMvc.perform(put("/recipes/edit/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId())))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title", is("New Title")));
+
+        mockMvc.perform(get("/ingredients/recipe/{recipeId}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].ingId", is(ingId)));
+
+        mockMvc.perform(get("/steps/recipe/{recipeId}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].content", is("Replacement step")));
+    }
+
+    @Test
+    void updateRecipe_clearsIngredientsAndSteps_whenEmptyListsAreProvided() throws Exception {
+        Recipe recipe = saveRecipe(owner, "Old Title");
+        RecipeUpdateRequest populatedRequest = updateRequest(
+                "Populated", null, false,
+                List.of(new RecipeIngredientRequest(ingId, BigDecimal.ONE, "cup", 0)),
+                List.of(new RecipeStepRequest(1, "Existing step"))
+        );
+        RecipeUpdateRequest clearRequest = updateRequest(
+                "Cleared", null, false, List.of(), List.of()
+        );
+
+        mockMvc.perform(put("/recipes/edit/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId())))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(populatedRequest)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put("/recipes/edit/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId())))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(clearRequest)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/ingredients/recipe/{recipeId}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+
+        mockMvc.perform(get("/steps/recipe/{recipeId}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
     void updateRecipe_commitsNewPhotoBeforeDeletingOldPhoto() throws Exception {
         Recipe recipe = saveRecipe(owner, "Old Title");
         String oldObjectName = "recipes/" + recipe.getRecipeId() + "/old.jpg";
@@ -541,6 +623,32 @@ public class RecipeControllerIntegrationTest {
 
         org.junit.jupiter.api.Assertions.assertEquals(
                 newPhotoUrl,
+                recipeRepository.findById(recipe.getRecipeId()).get().getPhotoUrl()
+        );
+        verify(storage).delete(BlobId.of("recipe-photo-bucket", oldObjectName));
+    }
+
+    @Test
+    void updateRecipe_removesPhotoAfterDatabaseCommit() throws Exception {
+        Recipe recipe = saveRecipe(owner, "Old Title");
+        String oldObjectName = "recipes/" + recipe.getRecipeId() + "/old.jpg";
+        String oldPhotoUrl = "https://storage.googleapis.com/recipe-photo-bucket/"
+                + oldObjectName;
+        recipe.setPhotoUrl(oldPhotoUrl);
+        recipeRepository.save(recipe);
+        RecipeUpdateRequest request = updateRequest(
+                "New Title", null, true, null, null
+        );
+
+        mockMvc.perform(put("/recipes/edit/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId())))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.photoUrl").doesNotExist());
+
+        org.junit.jupiter.api.Assertions.assertNull(
                 recipeRepository.findById(recipe.getRecipeId()).get().getPhotoUrl()
         );
         verify(storage).delete(BlobId.of("recipe-photo-bucket", oldObjectName));
