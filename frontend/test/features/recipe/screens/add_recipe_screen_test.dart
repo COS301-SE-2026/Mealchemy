@@ -29,6 +29,7 @@ class _RecordingRepo implements RecipeRepository {
   final List<Recipe> savedRecipes = [];
   final List<int> savedFolderIds = [];
   final List<(int id, Recipe recipe)> updatedRecipes = [];
+  final List<bool> removePhotoValues = [];
   final List<String>? events;
 
   @override
@@ -56,8 +57,11 @@ class _RecordingRepo implements RecipeRepository {
   }
 
   @override
-  Future<Recipe> updateRecipeFull(int id, Recipe recipe) async {
+  Future<Recipe> updateRecipeFull(int id, Recipe recipe,
+      {bool removePhoto = false}) async {
+    events?.add('update-full');
     updatedRecipes.add((id, recipe));
+    removePhotoValues.add(removePhoto);
     return recipe.copyWith(recipeId: id);
   }
 
@@ -456,7 +460,93 @@ void main() {
     expect(repo.updatedRecipes, hasLength(1));
     expect(repo.updatedRecipes.first.$1, 77);
     expect(repo.updatedRecipes.first.$2.title, 'Existing Risotto');
+    expect(repo.removePhotoValues.single, isFalse);
     expect(repo.savedRecipes, isEmpty);
+  });
+
+  testWidgets('an existing photo is preserved when the edit does not change it',
+      (tester) async {
+    final repo = _RecordingRepo();
+    await pumpAddRecipe(
+      tester,
+      recipeRepo: repo,
+      editRecipeId: 77,
+      initialRecipe: _editRecipe.copyWith(photoUrl: 'https://example.test/old.jpg'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('recipe-photo-remove')), findsOneWidget);
+    await tapSaveChanges(tester);
+
+    expect(repo.updatedRecipes.single.$2.photoUrl, isNull);
+    expect(repo.removePhotoValues.single, isFalse);
+  });
+
+  testWidgets('an edit uploads a replacement before saving its new photo url',
+      (tester) async {
+    final events = <String>[];
+    final repo = _RecordingRepo(events: events);
+    final photoRepo = _RecordingPhotoRepository(events: events);
+    await pumpAddRecipe(
+      tester,
+      recipeRepo: repo,
+      editRecipeId: 77,
+      initialRecipe: _editRecipe.copyWith(photoUrl: 'https://example.test/old.jpg'),
+      photoPicker: _FakePhotoPicker(photo: _selectedPhoto),
+      photoRepository: photoRepo,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('recipe-photo-gallery')));
+    await tester.pumpAndSettle();
+    await tapSaveChanges(tester);
+
+    expect(events, ['upload', 'update-full']);
+    expect(photoRepo.uploadedRecipeId, 77);
+    expect(repo.updatedRecipes.single.$2.photoUrl,
+        'https://storage.googleapis.com/recipes/77/photo.jpg');
+    expect(repo.removePhotoValues.single, isFalse);
+  });
+
+  testWidgets('an edit can explicitly remove the existing photo',
+      (tester) async {
+    final repo = _RecordingRepo();
+    await pumpAddRecipe(
+      tester,
+      recipeRepo: repo,
+      editRecipeId: 77,
+      initialRecipe: _editRecipe.copyWith(photoUrl: 'https://example.test/old.jpg'),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('recipe-photo-remove')));
+    await tester.pumpAndSettle();
+    await tapSaveChanges(tester);
+
+    expect(repo.updatedRecipes.single.$2.photoUrl, isNull);
+    expect(repo.removePhotoValues.single, isTrue);
+  });
+
+  testWidgets('a failed replacement upload does not save the edit',
+      (tester) async {
+    final repo = _RecordingRepo();
+    await pumpAddRecipe(
+      tester,
+      recipeRepo: repo,
+      editRecipeId: 77,
+      initialRecipe: _editRecipe.copyWith(photoUrl: 'https://example.test/old.jpg'),
+      photoPicker: _FakePhotoPicker(photo: _selectedPhoto),
+      photoRepository: _RecordingPhotoRepository(shouldFail: true),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('recipe-photo-gallery')));
+    await tester.pumpAndSettle();
+    await tapSaveChanges(tester);
+
+    expect(repo.updatedRecipes, isEmpty);
+    expect(find.text('Could not upload the photo. Changes were not saved.'),
+        findsOneWidget);
   });
 
   testWidgets('edit mode shows the error widget when the detail load fails',

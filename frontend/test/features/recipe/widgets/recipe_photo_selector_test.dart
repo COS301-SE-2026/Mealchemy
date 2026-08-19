@@ -18,6 +18,7 @@ void main() {
 
   Widget host({
     SelectedRecipePhoto? selectedPhoto,
+    String? existingPhotoUrl,
     VoidCallback? onGalleryTap,
     VoidCallback? onCameraTap,
     VoidCallback? onRemoveTap,
@@ -27,6 +28,7 @@ void main() {
       home: Scaffold(
         body: RecipePhotoSelector(
           photo: selectedPhoto,
+          existingPhotoUrl: existingPhotoUrl,
           onGalleryTap: onGalleryTap ?? () {},
           onCameraTap: onCameraTap ?? () {},
           onRemoveTap: onRemoveTap ?? () {},
@@ -49,6 +51,19 @@ void main() {
     var removed = false;
     await tester.pumpWidget(host(
       selectedPhoto: photo,
+      onRemoveTap: () => removed = true,
+    ));
+
+    expect(find.byKey(const Key('recipe-photo-preview')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('recipe-photo-remove')));
+    expect(removed, isTrue);
+  });
+
+  testWidgets('shows an existing network photo and calls remove',
+      (tester) async {
+    var removed = false;
+    await tester.pumpWidget(host(
+      existingPhotoUrl: 'https://example.test/meal.jpg',
       onRemoveTap: () => removed = true,
     ));
 
