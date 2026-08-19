@@ -6,6 +6,7 @@ package com.mealchemy.engine.dto;
 import jakarta.validation.constraints.*;
 import java.util.*;
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 
 public record PantryEntryRequest(
     @NotNull Integer ingId,

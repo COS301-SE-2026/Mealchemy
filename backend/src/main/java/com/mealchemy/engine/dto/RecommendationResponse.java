@@ -5,7 +5,7 @@ package com.mealchemy.engine.dto;
 /* Import libraries */
 import java.util.*;
 
-public class RecommendationResponse(
+public record RecommendationResponse(
     List<RecommendationDto> recommendations,
     Integer poolSizeUsed,
     boolean poolExhausted

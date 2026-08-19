@@ -12,7 +12,7 @@ public record SignalScoresResponse(
     Double novelty
 )
 {
-    public Static SignalScoresResponse from(Double pantryCoverageIn, Double cuisineAffinityIn, Double nutritionIn, Double freshnessIn, Double noveltyIn)
+    public static SignalScoresResponse from(Double pantryCoverageIn, Double cuisineAffinityIn, Double nutritionIn, Double freshnessIn, Double noveltyIn)
     {
         return new SignalScoresResponse(
             pantryCoverageIn,

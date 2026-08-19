@@ -8,8 +8,6 @@ import java.util.*;
 import java.math.BigDecimal;
 
 public record PreferenceWeightsRequest(
-    @NotNull Integer weightId,
-    @NotNull Integer userId,
     @NotNull BigDecimal pantryMatch,
     @NotNull BigDecimal cuisine,
     @NotNull BigDecimal nutrition,
