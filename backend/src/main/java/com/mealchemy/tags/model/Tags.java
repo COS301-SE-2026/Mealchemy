@@ -28,5 +28,25 @@ public class Tags {
 
     /* Getters */
 
+    public Integer getTagId()
+    {
+        return tagId;
+    }
+
+    public String getTagName()
+    {
+        return tagName;
+    }
+
+    public Boolean getIsActive()
+    {
+        return isActive;
+    }
+
+    public Boolean getIsDietary()
+    {
+        return isDietary;
+    }
+
     /* Setters */
 }
