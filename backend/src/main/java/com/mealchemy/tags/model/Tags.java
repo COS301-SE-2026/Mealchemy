@@ -1,0 +1,32 @@
+package com.mealchemy.tags.model;
+
+/* Import classes */
+
+/* Import libraries */
+import jakarta.persistence.*;
+import java.time.OffsetDateTime;
+import java.util.*;
+import org.hibernate.annotations.JdbcTypeCode;
+
+@Entity
+@Table(name = "tags")
+public class Tags {
+    /* Declaring fields */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "tag_id")
+    private Integer tagId;
+
+    @Column(name = "tag_name")
+    private String tagName;
+
+    @Column(name = "is_active")
+    private Boolean isActive;
+
+    @Column(name = "is_dietary")
+    private Boolean isDietary;
+
+    /* Getters */
+
+    /* Setters */
+}
