@@ -4,11 +4,12 @@ package com.mealchemy.engine.dto;
 
 /* Import libraries */
 import java.util.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record RecommendationResponse(
     List<RecommendationDto> recommendations,
-    Integer poolSizeUsed,
-    boolean poolExhausted
+    @JsonProperty("pool_size_used") Integer poolSizeUsed,
+    @JsonProperty("pool_exhausted") boolean poolExhausted
 )
 {
     public static RecommendationResponse from (List<RecommendationDto> recommendationsIn, Integer poolSizeIn, boolean poolExhaustedIn)
