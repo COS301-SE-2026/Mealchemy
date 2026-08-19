@@ -8,6 +8,7 @@ class RecipePhotoSelector extends StatelessWidget {
   const RecipePhotoSelector({
     super.key,
     required this.photo,
+    this.existingPhotoUrl,
     required this.onGalleryTap,
     required this.onCameraTap,
     required this.onRemoveTap,
@@ -15,6 +16,7 @@ class RecipePhotoSelector extends StatelessWidget {
   });
 
   final SelectedRecipePhoto? photo;
+  final String? existingPhotoUrl;
   final VoidCallback onGalleryTap;
   final VoidCallback onCameraTap;
   final VoidCallback onRemoveTap;
@@ -22,6 +24,8 @@ class RecipePhotoSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasPhoto = photo != null || existingPhotoUrl != null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -32,16 +36,23 @@ class RecipePhotoSelector extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                if (photo == null)
+                if (!hasPhoto)
                   const _PhotoPlaceholder()
-                else
+                else if (photo != null)
                   Image.memory(
                     photo!.bytes,
                     key: const Key('recipe-photo-preview'),
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => const _PhotoPlaceholder(),
+                  )
+                else
+                  Image.network(
+                    existingPhotoUrl!,
+                    key: const Key('recipe-photo-preview'),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const _PhotoPlaceholder(),
                   ),
-                if (photo != null)
+                if (hasPhoto)
                   Positioned(
                     top: 8,
                     right: 8,

@@ -15,7 +15,8 @@ abstract class RecipeRepository {
   //update recipe meadata, including photo url. (used for photo linking)
   Future<Recipe> updateRecipe(int id, Recipe recipe);
   //complete edit flow includes ingredients, steps, url update
-  Future<Recipe> updateRecipeFull(int id, Recipe recipe);
+  Future<Recipe> updateRecipeFull(int id, Recipe recipe,
+      {bool removePhoto = false});
 
   //cuisine type enum values
   Future<List<String>> getCuisineTypes();

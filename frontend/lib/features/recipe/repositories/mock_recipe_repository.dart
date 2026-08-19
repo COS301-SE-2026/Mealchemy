@@ -521,7 +521,8 @@ class MockRecipeRepository implements RecipeRepository {
   }
 
   @override
-  Future<Recipe> updateRecipeFull(int id, Recipe recipe) async {
+  Future<Recipe> updateRecipeFull(int id, Recipe recipe,
+      {bool removePhoto = false}) async {
     await Future.delayed(const Duration(milliseconds: 350));
     return recipe.copyWith(recipeId: id, ownerId: recipe.ownerId ?? 1);
   }
