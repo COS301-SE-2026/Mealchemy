@@ -58,6 +58,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
   // pre filled once in edit mode when data resolves
   bool _prefilled = false;
   bool _isSaving = false;
+  bool _isUploadingPhoto = false;
   SelectedRecipePhoto? _selectedPhoto;
   String? _existingPhotoUrl;
   bool _removePhoto = false;
@@ -192,6 +193,21 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     });
   }
 
+  Future<String> _uploadPhoto(
+    int recipeId,
+    SelectedRecipePhoto photo,
+  ) async {
+    setState(() => _isUploadingPhoto = true);
+    try {
+      return await ref.read(recipePhotoRepositoryProvider).uploadRecipePhoto(
+            recipeId: recipeId,
+            photo: photo,
+          );
+    } finally {
+      if (mounted) setState(() => _isUploadingPhoto = false);
+    }
+  }
+
   Future<void> _handleSubmit() async {
     final titleValid = _titleController.text.trim().isNotEmpty;
     final cuisineValid = _selectedCuisine != null;
@@ -239,17 +255,17 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     String? replacementPhotoUrl;
     if (widget.isEditing && _selectedPhoto != null) {
       try {
-        replacementPhotoUrl =
-            await ref.read(recipePhotoRepositoryProvider).uploadRecipePhoto(
-                  recipeId: widget.editRecipeId!,
-                  photo: _selectedPhoto!,
-                );
+        replacementPhotoUrl = await _uploadPhoto(
+          widget.editRecipeId!,
+          _selectedPhoto!,
+        );
       } catch (_) {
         if (!mounted) return;
         setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Could not upload the photo. Changes were not saved.'),
+            content:
+                Text('Could not upload the photo. Changes were not saved.'),
           ),
         );
         return;
@@ -288,11 +304,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     final selectedPhoto = _selectedPhoto;
     if (!widget.isEditing && selectedPhoto != null) {
       try {
-        final photoUrl =
-            await ref.read(recipePhotoRepositoryProvider).uploadRecipePhoto(
-                  recipeId: saved.recipeId,
-                  photo: selectedPhoto,
-                );
+        final photoUrl = await _uploadPhoto(saved.recipeId, selectedPhoto);
         await recipeRepo.updateRecipe(
           saved.recipeId,
           saved.copyWith(photoUrl: photoUrl),
@@ -536,6 +548,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
           onCameraTap: () => _pickPhoto(RecipePhotoSource.camera),
           onRemoveTap: _removeSelectedPhoto,
           disabled: isSubmitting,
+          uploading: _isUploadingPhoto,
         ),
         const SizedBox(height: 32),
         _sectionHeader('Time & Servings'),

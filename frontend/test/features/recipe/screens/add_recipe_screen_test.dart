@@ -22,7 +22,6 @@ import 'package:mealchemy/features/vault/models/vault_folder_recipe.dart';
 import 'package:mealchemy/features/vault/providers/vault_repository_provider.dart';
 import 'package:mealchemy/features/vault/repositories/vault_repository.dart';
 
-
 class _RecordingRepo implements RecipeRepository {
   _RecordingRepo({this.events});
 
@@ -129,10 +128,12 @@ class _RecordingPhotoRepository implements RecipePhotoRepository {
   _RecordingPhotoRepository({
     this.events,
     this.shouldFail = false,
+    this.uploadCompleter,
   });
 
   final List<String>? events;
   final bool shouldFail;
+  final Completer<String>? uploadCompleter;
   int? uploadedRecipeId;
 
   @override
@@ -143,6 +144,7 @@ class _RecordingPhotoRepository implements RecipePhotoRepository {
     events?.add('upload');
     uploadedRecipeId = recipeId;
     if (shouldFail) throw Exception('upload failed');
+    if (uploadCompleter != null) return uploadCompleter!.future;
     return 'https://storage.googleapis.com/recipes/$recipeId/photo.jpg';
   }
 }
@@ -152,7 +154,6 @@ final _selectedPhoto = SelectedRecipePhoto.validate(
   fileName: 'meal.jpg',
   contentType: 'image/jpeg',
 );
-
 
 class _FakeVaultRepo implements VaultRepository {
   @override
@@ -266,9 +267,7 @@ void main() {
     });
 
     await tester.pumpWidget(host(
-      
       recipeRepo: recipeRepo,
-     
       vaultRepo: vaultRepo,
       photoPicker: photoPicker,
       photoRepository: photoRepository,
@@ -278,7 +277,10 @@ void main() {
     ));
   }
 
-  Future<void> tapCreateRecipe(WidgetTester tester) async {
+  Future<void> tapCreateRecipe(
+    WidgetTester tester, {
+    bool settle = true,
+  }) async {
     await tester.scrollUntilVisible(
       find.text('Cancel'),
       500,
@@ -289,7 +291,11 @@ void main() {
     await tester.ensureVisible(cta.last);
     await tester.pumpAndSettle();
     await tester.tap(cta.last);
-    await tester.pumpAndSettle();
+    if (settle) {
+      await tester.pumpAndSettle();
+    } else {
+      await tester.pump();
+    }
   }
 
   Future<void> tapSaveChanges(WidgetTester tester) async {
@@ -471,7 +477,8 @@ void main() {
       tester,
       recipeRepo: repo,
       editRecipeId: 77,
-      initialRecipe: _editRecipe.copyWith(photoUrl: 'https://example.test/old.jpg'),
+      initialRecipe:
+          _editRecipe.copyWith(photoUrl: 'https://example.test/old.jpg'),
     );
     await tester.pumpAndSettle();
 
@@ -491,7 +498,8 @@ void main() {
       tester,
       recipeRepo: repo,
       editRecipeId: 77,
-      initialRecipe: _editRecipe.copyWith(photoUrl: 'https://example.test/old.jpg'),
+      initialRecipe:
+          _editRecipe.copyWith(photoUrl: 'https://example.test/old.jpg'),
       photoPicker: _FakePhotoPicker(photo: _selectedPhoto),
       photoRepository: photoRepo,
     );
@@ -515,7 +523,8 @@ void main() {
       tester,
       recipeRepo: repo,
       editRecipeId: 77,
-      initialRecipe: _editRecipe.copyWith(photoUrl: 'https://example.test/old.jpg'),
+      initialRecipe:
+          _editRecipe.copyWith(photoUrl: 'https://example.test/old.jpg'),
     );
     await tester.pumpAndSettle();
 
@@ -534,7 +543,8 @@ void main() {
       tester,
       recipeRepo: repo,
       editRecipeId: 77,
-      initialRecipe: _editRecipe.copyWith(photoUrl: 'https://example.test/old.jpg'),
+      initialRecipe:
+          _editRecipe.copyWith(photoUrl: 'https://example.test/old.jpg'),
       photoPicker: _FakePhotoPicker(photo: _selectedPhoto),
       photoRepository: _RecordingPhotoRepository(shouldFail: true),
     );
@@ -593,6 +603,34 @@ void main() {
       recipeRepo.updatedRecipes.single.$2.photoUrl,
       'https://storage.googleapis.com/recipes/501/photo.jpg',
     );
+  });
+
+  testWidgets('shows progress while the selected photo is uploading',
+      (tester) async {
+    final uploadCompleter = Completer<String>();
+    await pumpAddRecipe(
+      tester,
+      recipeRepo: _RecordingRepo(),
+      photoPicker: _FakePhotoPicker(photo: _selectedPhoto),
+      photoRepository: _RecordingPhotoRepository(
+        uploadCompleter: uploadCompleter,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('recipe-photo-gallery')));
+    await tester.pumpAndSettle();
+    await fillRequiredFields(tester);
+
+    await tapCreateRecipe(tester, settle: false);
+
+    expect(find.byKey(const Key('recipe-photo-uploading')), findsOneWidget);
+
+    uploadCompleter.complete(
+      'https://storage.googleapis.com/recipes/501/photo.jpg',
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('recipe-photo-uploading')), findsNothing);
   });
 
   testWidgets('photo upload failure does not fail the saved recipe',

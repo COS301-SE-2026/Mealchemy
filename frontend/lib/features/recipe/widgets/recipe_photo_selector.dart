@@ -14,6 +14,7 @@ class RecipePhotoSelector extends StatelessWidget {
     required this.onCameraTap,
     required this.onRemoveTap,
     this.disabled = false,
+    this.uploading = false,
   });
 
   final SelectedRecipePhoto? photo;
@@ -22,10 +23,12 @@ class RecipePhotoSelector extends StatelessWidget {
   final VoidCallback onCameraTap;
   final VoidCallback onRemoveTap;
   final bool disabled;
+  final bool uploading;
 
   @override
   Widget build(BuildContext context) {
     final hasPhoto = photo != null || existingPhotoUrl != null;
+    final actionsDisabled = disabled || uploading;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -59,7 +62,7 @@ class RecipePhotoSelector extends StatelessWidget {
                     right: 8,
                     child: IconButton.filled(
                       key: const Key('recipe-photo-remove'),
-                      onPressed: disabled ? null : onRemoveTap,
+                      onPressed: actionsDisabled ? null : onRemoveTap,
                       tooltip: 'Remove photo',
                       style: IconButton.styleFrom(
                         backgroundColor:
@@ -68,6 +71,12 @@ class RecipePhotoSelector extends StatelessWidget {
                       ),
                       icon: const Icon(Icons.delete_outline),
                     ),
+                  ),
+                if (uploading)
+                  ColoredBox(
+                    key: const Key('recipe-photo-uploading'),
+                    color: AppColors.surfaceWhite.withValues(alpha: 0.75),
+                    child: const Center(child: CircularProgressIndicator()),
                   ),
               ],
             ),
@@ -79,7 +88,7 @@ class RecipePhotoSelector extends StatelessWidget {
             Expanded(
               child: OutlinedButton.icon(
                 key: const Key('recipe-photo-gallery'),
-                onPressed: disabled ? null : onGalleryTap,
+                onPressed: actionsDisabled ? null : onGalleryTap,
                 icon: const Icon(Icons.photo_library_outlined),
                 label: const Text('Gallery'),
               ),
@@ -88,7 +97,7 @@ class RecipePhotoSelector extends StatelessWidget {
             Expanded(
               child: OutlinedButton.icon(
                 key: const Key('recipe-photo-camera'),
-                onPressed: disabled ? null : onCameraTap,
+                onPressed: actionsDisabled ? null : onCameraTap,
                 icon: const Icon(Icons.photo_camera_outlined),
                 label: const Text('Camera'),
               ),

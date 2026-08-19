@@ -23,6 +23,7 @@ void main() {
     VoidCallback? onCameraTap,
     VoidCallback? onRemoveTap,
     bool disabled = false,
+    bool uploading = false,
   }) {
     return MaterialApp(
       home: Scaffold(
@@ -33,6 +34,7 @@ void main() {
           onCameraTap: onCameraTap ?? () {},
           onRemoveTap: onRemoveTap ?? () {},
           disabled: disabled,
+          uploading: uploading,
         ),
       ),
     );
@@ -88,6 +90,28 @@ void main() {
 
   testWidgets('disables all actions while saving', (tester) async {
     await tester.pumpWidget(host(selectedPhoto: photo, disabled: true));
+
+    final gallery = tester.widget<OutlinedButton>(
+      find.byKey(const Key('recipe-photo-gallery')),
+    );
+    final camera = tester.widget<OutlinedButton>(
+      find.byKey(const Key('recipe-photo-camera')),
+    );
+    final remove = tester.widget<IconButton>(
+      find.byKey(const Key('recipe-photo-remove')),
+    );
+
+    expect(gallery.onPressed, isNull);
+    expect(camera.onPressed, isNull);
+    expect(remove.onPressed, isNull);
+  });
+
+  testWidgets('shows progress and disables actions while uploading',
+      (tester) async {
+    await tester.pumpWidget(host(selectedPhoto: photo, uploading: true));
+
+    expect(find.byKey(const Key('recipe-photo-uploading')), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
     final gallery = tester.widget<OutlinedButton>(
       find.byKey(const Key('recipe-photo-gallery')),
