@@ -9,19 +9,9 @@ import java.math.BigDecimal;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record NutritionRequest(
-    @JsonProperty("calories_kcal") BigDecimal caloriesKcal,
-    @JsonProperty("protein_g") BigDecimal proteinG,
-    @JsonProperty("carbs_g") BigDecimal carbsG,
-    @JsonProperty("fat_g") BigDecimal fatG
+    @JsonProperty("calories_kcal") @NotNull BigDecimal caloriesKcal,
+    @JsonProperty("protein_g") @NotNull BigDecimal proteinG,
+    @JsonProperty("carbs_g") @NotNull BigDecimal carbsG,
+    @JsonProperty("fat_g") @NotNull BigDecimal fatG
 )
-{
-    public static NutritionRequest from(BigDecimal caloriesKcalIn, BigDecimal proteinGIn, BigDecimal carbsGIn, BigDecimal fatGIn)
-    {
-        return new NutritionRequest(
-            caloriesKcalIn,
-            proteinGIn,
-            carbsGIn,
-            fatGIn
-        );
-    }
-}
+{}
