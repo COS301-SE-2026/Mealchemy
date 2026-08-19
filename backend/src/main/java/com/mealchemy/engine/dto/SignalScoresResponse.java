@@ -3,10 +3,11 @@ package com.mealchemy.engine.dto;
 /* Import classes */
 
 /* Import libraries */
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record SignalScoresResponse(
-    Double pantryCoverage,
-    Double cuisineAffinity,
+    @JsonProperty("pantry_coverage") Double pantryCoverage,
+    @JsonProperty("cuisine_affinity") Double cuisineAffinity,
     Double nutrition,
     Double freshness,
     Double novelty
