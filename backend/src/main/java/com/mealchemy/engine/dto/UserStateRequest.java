@@ -6,15 +6,16 @@ package com.mealchemy.engine.dto;
 import jakarta.validation.constraints.*;
 import java.util.*;
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record UserStateRequest(
-    @NotNull Integer userId,
+    @JsonProperty("user_id") @NotNull Integer userId,
     @NotNull List<String> allergies,
-    @NotNull List<String> dislikedIngredients,
-    @NotNull List<String> dietaryRestrictions,
-    @NotNull List<String> nutritionalGoals,
-    @NotNull PreferenceWeightsRequest preferenceWeights,
-    @NotNull Map<String, BigDecimal> cuisineAffinities,
+    @JsonProperty("disliked_ingredients") @NotNull List<String> dislikedIngredients,
+    @JsonProperty("dietary_restrictions") @NotNull List<String> dietaryRestrictions,
+    @JsonProperty("nutritional_goals") @NotNull List<String> nutritionalGoals,
+    @JsonProperty("preference_weights") @NotNull PreferenceWeightsRequest preferenceWeights,
+    @JsonProperty("cuisine_affinities") @NotNull Map<String, BigDecimal> cuisineAffinities,
     @NotNull List<PantryEntryRequest> pantry
 )
 {}
