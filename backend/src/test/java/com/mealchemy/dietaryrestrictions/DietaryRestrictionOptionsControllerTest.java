@@ -1,15 +1,15 @@
 // unit testing for allergens
 
-package com.mealchemy.nutritionalgoals;
+package com.mealchemy.dietaryrestrictions;
 
 // dtos
-import com.mealchemy.nutritionalgoals.dto.NutritionalGoalOptionsResponse;
+import com.mealchemy.dietaryrestrictions.dto.DietaryRestrictionOptionsResponse;
 
 // controller
-import com.mealchemy.nutritionalgoals.controller.NutritionalGoalOptionsController;
+import com.mealchemy.dietaryrestrictions.controller.DietaryRestrictionOptionsController;
 
 // import service
-import com.mealchemy.nutritionalgoals.service.NutritionalGoalOptionsService;
+import com.mealchemy.dietaryrestrictions.service.DietaryRestrictionOptionsService;
 
 import com.mealchemy.config.JwtUtil;
 
@@ -34,8 +34,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
-@WebMvcTest(NutritionalGoalOptionsController.class)
-public class NutritionalGoalOptionsControllerTest {
+@WebMvcTest(DietaryRestrictionOptionsController.class)
+public class DietaryRestrictionOptionsControllerTest {
 
     // setup
     @TestConfiguration
@@ -56,39 +56,45 @@ public class NutritionalGoalOptionsControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private NutritionalGoalOptionsService nutritionalGoalOptionsService;
+    private DietaryRestrictionOptionsService dietaryRestrictionOptionsService;
 
     @MockitoBean
     private JwtUtil jwtUtil;
 
-    // ========== GET Testing (GET /nutritionalgoals/all) ==========
+    // ========== GET Testing (GET /dietaryrestrictions/all) ==========
 
     @Test
-    void getAllNutritionalGoalOptions_return200() throws Exception {
+    void getAllDietaryRestrictionOptions_return200() throws Exception {
         // Arrange - mock response
-        NutritionalGoalOptionsResponse highProtein = new NutritionalGoalOptionsResponse(
+        DietaryRestrictionOptionsResponse vegetarian = new DietaryRestrictionOptionsResponse(
             1, 
-            "HIGH_PROTEIN", 
-            "High Protein"
+            "VEGETARIAN", 
+            "Vegetarian"
         );
 
-        NutritionalGoalOptionsResponse lowCarb = new NutritionalGoalOptionsResponse(
+        DietaryRestrictionOptionsResponse glutenFree = new DietaryRestrictionOptionsResponse(
             2, 
-            "LOW_CARB", 
-            "Low Carb"
+            "GLUTEN_FREE", 
+            "Gluten Free"
+        );
+
+        DietaryRestrictionOptionsResponse diabetesFriendly = new DietaryRestrictionOptionsResponse(
+            3, 
+            "DIABETES_Friendly", 
+            "Diabetes-Friendly"
         );
 
 
-        when(nutritionalGoalOptionsService.getAllNutritionalGoalOptions()).thenReturn(List.of(highProtein, lowCarb));
+        when(dietaryRestrictionOptionsService.getAllDietaryRestrictionOptions()).thenReturn(List.of(vegetarian, glutenFree, diabetesFriendly));
 
 
         // Act and assert
-        mockMvc.perform(get("/nutritionalgoals/all").with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
+        mockMvc.perform(get("/dietaryrestrictions/all").with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
                 .andExpect(status().isOk())
                 // fields in response object
-                .andExpect(jsonPath("$[0].value").value("HIGH_PROTEIN"))
-                .andExpect(jsonPath("$[0].label").value("High Protein"))
-                .andExpect(jsonPath("$[1].value").value("LOW_CARB"))
-                .andExpect(jsonPath("$[1].label").value("Low Carb"));
+                .andExpect(jsonPath("$[0].value").value("VEGETARIAN"))
+                .andExpect(jsonPath("$[0].label").value("Vegetarian"))
+                .andExpect(jsonPath("$[2].value").value("DIABETES_Friendly"))
+                .andExpect(jsonPath("$[2].label").value("Diabetes-Friendly"));
     }
 }
