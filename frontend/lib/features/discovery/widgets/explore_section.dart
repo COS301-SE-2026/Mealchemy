@@ -6,6 +6,7 @@ import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/discovery/providers/discovery_provider.dart';
+import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
 
 const double _cellHeight = 130.0;
 const double _gap = 2;
@@ -92,13 +93,10 @@ class _RecipeCell extends StatelessWidget {
               decoration: BoxDecoration(gradient: AppColors.brand),
             ),
             if (photoUrl != null && photoUrl.isNotEmpty)
-              Image.network(
-                photoUrl,
+              RecipeNetworkImage(
+                photoUrl: photoUrl,
+                placeholder: const SizedBox.shrink(),
                 fit: BoxFit.cover,
-                loadingBuilder: (context, child, progress) =>
-                    progress == null ? child : const SizedBox.shrink(),
-                errorBuilder: (context, error, stack) =>
-                    const SizedBox.shrink(),
               ),
             const Positioned.fill(
               child: DecoratedBox(
