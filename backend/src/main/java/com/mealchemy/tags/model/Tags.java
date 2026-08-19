@@ -49,4 +49,19 @@ public class Tags {
     }
 
     /* Setters */
+
+    public void setTagName(String tagNameIn)
+    {
+        this.tagName = tagNameIn;
+    }
+
+    public void setIsActive(Boolean isActiveIn)
+    {
+        this.isActive = isActiveIn;
+    }
+
+    public void setIsDietary(Boolean isDietaryIn)
+    {
+        this.isDietary = isDietaryIn;
+    }
 }
