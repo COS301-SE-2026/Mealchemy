@@ -12,8 +12,12 @@ import '../../ingredients/models/ingredient_catalogue_item.dart';
 import '../models/recipe.dart';
 import '../models/recipe_ingredient.dart';
 import '../models/recipe_step.dart';
+import '../models/selected_recipe_photo.dart';
+import '../providers/recipe_photo_provider.dart';
 import '../providers/recipe_provider.dart';
+import '../services/recipe_photo_picker.dart';
 import '../widgets/ingredient_editor_row.dart';
+import '../widgets/recipe_photo_selector.dart';
 import '../widgets/step_editor_row.dart';
 import '../models/unit_of_measurement.dart';
 
@@ -53,6 +57,11 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
 
   // pre filled once in edit mode when data resolves
   bool _prefilled = false;
+  bool _isSaving = false;
+  bool _isUploadingPhoto = false;
+  SelectedRecipePhoto? _selectedPhoto;
+  String? _existingPhotoUrl;
+  bool _removePhoto = false;
 
   final List<_IngredientRowData> _ingredientRows = [_IngredientRowData()];
   final List<_StepRowData> _stepRows = [_StepRowData()];
@@ -62,6 +71,9 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     super.initState();
     if (widget.isEditing && widget.initialRecipe != null) {
       _prefill(widget.initialRecipe!);
+    }
+    if (!widget.isEditing) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _recoverLostPhoto());
     }
   }
 
@@ -92,6 +104,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     _servingsController.text = recipe.servingSize?.toString() ?? '';
     _selectedCuisine = recipe.cuisineType;
     _publishToGlobal = recipe.isCommunityPublished;
+    _existingPhotoUrl = recipe.photoUrl;
 
     final ingredients = recipe.ingredients ?? const [];
     if (ingredients.isNotEmpty) {
@@ -131,6 +144,67 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
           return row;
         }));
       if (_stepRows.isEmpty) _stepRows.add(_StepRowData());
+    }
+  }
+
+  Future<void> _recoverLostPhoto() async {
+    try {
+      final photo =
+          await ref.read(recipePhotoPickerProvider).recoverLostPhoto();
+      if (mounted && photo != null) {
+        setState(() => _selectedPhoto = photo);
+      }
+    } catch (error) {
+      if (mounted) _showPhotoError(error);
+    }
+  }
+
+  Future<void> _pickPhoto(RecipePhotoSource source) async {
+    try {
+      final photo = await ref.read(recipePhotoPickerProvider).pickPhoto(source);
+      if (mounted && photo != null) {
+        setState(() {
+          _selectedPhoto = photo;
+          _removePhoto = false;
+        });
+      }
+    } catch (error) {
+      if (mounted) _showPhotoError(error);
+    }
+  }
+
+  void _showPhotoError(Object error) {
+    final message = error is RecipePhotoValidationException
+        ? error.message
+        : 'Could not select the photo. Try again.';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  void _removeSelectedPhoto() {
+    setState(() {
+      if (_selectedPhoto != null) {
+        _selectedPhoto = null;
+        _removePhoto = false;
+      } else if (widget.isEditing && _existingPhotoUrl != null) {
+        _removePhoto = true;
+      }
+    });
+  }
+
+  Future<String> _uploadPhoto(
+    int recipeId,
+    SelectedRecipePhoto photo,
+  ) async {
+    setState(() => _isUploadingPhoto = true);
+    try {
+      return await ref.read(recipePhotoRepositoryProvider).uploadRecipePhoto(
+            recipeId: recipeId,
+            photo: photo,
+          );
+    } finally {
+      if (mounted) setState(() => _isUploadingPhoto = false);
     }
   }
 
@@ -176,6 +250,28 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     final ingredients = _collectIngredients();
     final steps = _collectSteps();
 
+    setState(() => _isSaving = true);
+
+    String? replacementPhotoUrl;
+    if (widget.isEditing && _selectedPhoto != null) {
+      try {
+        replacementPhotoUrl = await _uploadPhoto(
+          widget.editRecipeId!,
+          _selectedPhoto!,
+        );
+      } catch (_) {
+        if (!mounted) return;
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text('Could not upload the photo. Changes were not saved.'),
+          ),
+        );
+        return;
+      }
+    }
+
     final recipe = Recipe(
       recipeId: widget.editRecipeId ?? 0,
       title: _titleController.text.trim(),
@@ -186,6 +282,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       prepTimeMins: int.tryParse(_prepTimeController.text),
       cookingTimeMins: int.tryParse(_cookTimeController.text),
       servingSize: int.tryParse(_servingsController.text),
+      photoUrl: replacementPhotoUrl,
       isCommunityPublished: _publishToGlobal,
       ingredients: widget.isEditing ? ingredients : null,
       steps: widget.isEditing ? steps : null,
@@ -195,11 +292,27 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
           recipe,
           folderId: widget.isEditing ? null : _selectedFolderId,
           recipeId: widget.editRecipeId,
+          removePhoto: widget.isEditing && _removePhoto,
         );
-    if (saved == null) return;
+    if (saved == null) {
+      if (mounted) setState(() => _isSaving = false);
+      return;
+    }
 
     var saveFailed = false;
-
+    var photoFailed = false;
+    final selectedPhoto = _selectedPhoto;
+    if (!widget.isEditing && selectedPhoto != null) {
+      try {
+        final photoUrl = await _uploadPhoto(saved.recipeId, selectedPhoto);
+        await recipeRepo.updateRecipe(
+          saved.recipeId,
+          saved.copyWith(photoUrl: photoUrl),
+        );
+      } catch (_) {
+        photoFailed = true;
+      }
+    }
     if (!widget.isEditing) {
       for (final ingredient in ingredients) {
         try {
@@ -218,10 +331,23 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     }
 
     if (!mounted) return;
+    setState(() => _isSaving = false);
 
-    if (saveFailed) {
+    if (saveFailed && photoFailed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Recipe saved, but some items and the photo did not.'),
+        ),
+      );
+    } else if (saveFailed) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Recipe saved, but some items did not.')),
+      );
+    } else if (photoFailed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Recipe saved, but the photo did not upload.'),
+        ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -312,8 +438,11 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       data: (cuisines) => unitsState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => const _AddRecipeError(),
-        data: (units) =>
-            _buildForm(cuisines, units, submissionState.isSubmitting),
+        data: (units) => _buildForm(
+          cuisines,
+          units,
+          submissionState.isSubmitting || _isSaving,
+        ),
       ),
     );
 
@@ -330,8 +459,11 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
             data: (cuisines) => unitsState.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => const _AddRecipeError(),
-              data: (units) =>
-                  _buildForm(cuisines, units, submissionState.isSubmitting),
+              data: (units) => _buildForm(
+                cuisines,
+                units,
+                submissionState.isSubmitting || _isSaving,
+              ),
             ),
           );
         },
@@ -406,6 +538,18 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
         ),
         if (_showValidation && _selectedCuisine == null)
           const _FieldError('Cuisine is required.'),
+        const SizedBox(height: 32),
+        _sectionHeader('Recipe Photo'),
+        const SizedBox(height: 16),
+        RecipePhotoSelector(
+          photo: _selectedPhoto,
+          existingPhotoUrl: _removePhoto ? null : _existingPhotoUrl,
+          onGalleryTap: () => _pickPhoto(RecipePhotoSource.gallery),
+          onCameraTap: () => _pickPhoto(RecipePhotoSource.camera),
+          onRemoveTap: _removeSelectedPhoto,
+          disabled: isSubmitting,
+          uploading: _isUploadingPhoto,
+        ),
         const SizedBox(height: 32),
         _sectionHeader('Time & Servings'),
         const SizedBox(height: 16),

@@ -1,4 +1,4 @@
-package com.mealchemy.vault.controller;
+package com.mealchemy.vault.integration;
 
 import com.mealchemy.auth.model.User;
 import com.mealchemy.auth.repository.UserRepository;

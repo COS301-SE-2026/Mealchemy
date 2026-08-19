@@ -111,7 +111,8 @@ class AddRecipeNotifier extends StateNotifier<AddRecipeState> {
     return created.folderId;
   }
 
-  Future<Recipe?> submit(Recipe recipe, {int? folderId, int? recipeId}) async {
+  Future<Recipe?> submit(Recipe recipe,
+      {int? folderId, int? recipeId, bool removePhoto = false}) async {
     final missing = recipe.title.trim().isEmpty ||
         (recipe.cuisineType ?? '').isEmpty ||
         recipe.prepTimeMins == null ||
@@ -129,7 +130,8 @@ class AddRecipeNotifier extends StateNotifier<AddRecipeState> {
     try {
       final Recipe result;
       if (recipeId != null) {
-        result = await _repository.updateRecipeFull(recipeId, recipe);
+        result = await _repository.updateRecipeFull(recipeId, recipe,
+            removePhoto: removePhoto);
       } else {
         final targetFolderId = folderId ?? await _resolveDefaultFolderId();
         result = await _repository.addRecipe(recipe, targetFolderId);

@@ -11,7 +11,11 @@ import jakarta.validation.Valid;
 
 import com.mealchemy.recipe.dto.RecipeRequest;
 import com.mealchemy.recipe.dto.RecipeFullRequest;
+import com.mealchemy.recipe.dto.RecipeUpdateRequest;
+import com.mealchemy.recipe.dto.RecipePhotoUploadRequest;
+import com.mealchemy.recipe.dto.RecipePhotoUploadResponse;
 import com.mealchemy.recipe.dto.RecipeResponse;
+import com.mealchemy.recipe.service.RecipePhotoService;
 import com.mealchemy.recipe.service.RecipeService;
 
 @RestController
@@ -19,19 +23,22 @@ import com.mealchemy.recipe.service.RecipeService;
 public class RecipeController
 {
     private final RecipeService recipeService;
+    private final RecipePhotoService recipePhotoService;
 
-    public RecipeController(RecipeService recipeService)
+    public RecipeController(RecipeService recipeService, RecipePhotoService recipePhotoService)
     {
         this.recipeService = recipeService;
+        this.recipePhotoService = recipePhotoService;
     }
 
     /* Mapping functions */
 
     // Get
+    // changed to receive the authenticated user ID
     @GetMapping("/all")
-    public List<RecipeResponse> getAllRecipes()
+    public List<RecipeResponse> getAllRecipes(@AuthenticationPrincipal String userId)
     {
-        return recipeService.getAllRecipes();
+        return recipeService.getAllRecipes(Integer.parseInt(userId));
     }
 
     // Get
@@ -42,10 +49,11 @@ public class RecipeController
     }
 
     // Get
+    // changed to receive the authenticated user ID
     @GetMapping("/single/{id}")
-    public RecipeResponse getRecipeById(@PathVariable Integer id)
+    public RecipeResponse getRecipeById(@PathVariable Integer id, @AuthenticationPrincipal String userId)
     {
-        return recipeService.getRecipeById(id);
+        return recipeService.getRecipeById(id, Integer.parseInt(userId));
     }
 
     // Post
@@ -62,9 +70,25 @@ public class RecipeController
         return recipeService.createFromFullRecipe(request, Integer.parseInt(ownerId), sourceId);
     }
 
+    // Post
+    // gets recipe id from path, validates reuqest dto, gets authenticated user id, returns signed upload info.
+    @PostMapping("/{id}/photo-upload-url")
+    public RecipePhotoUploadResponse createPhotoUploadUrl(
+        @PathVariable Integer id,
+        @Valid @RequestBody RecipePhotoUploadRequest request,
+        @AuthenticationPrincipal String ownerId
+    )
+    {
+        return recipePhotoService.createPhotoUploadUrl(
+            id,
+            request,
+            Integer.parseInt(ownerId)
+        );
+    }
+
     // Put
     @PutMapping("/edit/{id}")
-    public RecipeResponse updateRecipe(@PathVariable int id, @Valid @RequestBody RecipeRequest request, @AuthenticationPrincipal String ownerId)
+    public RecipeResponse updateRecipe(@PathVariable int id, @Valid @RequestBody RecipeUpdateRequest request, @AuthenticationPrincipal String ownerId)
     {
         return recipeService.updateRecipe(id, request, Integer.parseInt(ownerId));
     }
