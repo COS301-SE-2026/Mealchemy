@@ -12,10 +12,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public record PantryEntryRequest(
     @JsonProperty("ing_id") @NotNull Integer ingId,
     @JsonProperty("category_id")  @NotNull Integer categoryId,
-    @JsonProperty("quantity") @NotNull BigDecimal quantity,
-    @JsonProperty("unit") @NotBlank String unit,
+    @NotNull BigDecimal quantity,
+    @NotBlank String unit,
     @JsonProperty("added_at") @NotNull OffsetDateTime addedAt,
     @JsonProperty("shelf_life_days") @NotNull Integer shelfLifeDays,
-    @JsonProperty("storageLocation") @NotBlank String storageLocation
+    @JsonProperty("storage_location") @NotBlank String storageLocation
 )
 {}

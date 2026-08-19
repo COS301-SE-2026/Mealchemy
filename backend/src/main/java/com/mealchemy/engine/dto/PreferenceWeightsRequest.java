@@ -6,9 +6,10 @@ package com.mealchemy.engine.dto;
 import jakarta.validation.constraints.*;
 import java.util.*;
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record PreferenceWeightsRequest(
-    @NotNull BigDecimal pantryMatch,
+    @JsonProperty("pantry_match") @NotNull BigDecimal pantryMatch,
     @NotNull BigDecimal cuisine,
     @NotNull BigDecimal nutrition,
     @NotNull BigDecimal freshness,
