@@ -4,13 +4,14 @@ package com.mealchemy.engine.dto;
 
 /* Import libraries */
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record RecommendationDto(
-    Integer recipeId,
+    @JsonProperty("recipe_id") Integer recipeId,
     String cuisine,
     BigDecimal score,
-    String slotType,
-    SignalScoresResponse signalScores
+    @JsonProperty("slot_type") String slotType,
+    @JsonProperty("signal_scores") SignalScoresResponse signalScores
 )
 {
     public static RecommendationDto from(Integer recipeIdIn, String cuisineIn, BigDecimal scoreIn, String slotTypeIn, SignalScoresResponse signalScoresIn)
