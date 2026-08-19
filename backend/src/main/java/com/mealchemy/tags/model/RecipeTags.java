@@ -25,5 +25,20 @@ public class RecipeTags {
 
     /* Getters */
 
+    public Integer getId()
+    {
+        return id;
+    }
+
+    public Integer getRecipeId()
+    {
+        return recipeId;
+    }
+
+    public Integer getTagId()
+    {
+        return tagId;
+    }
+
     /* Setters */
 }
