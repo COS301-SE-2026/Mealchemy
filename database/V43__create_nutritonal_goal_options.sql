@@ -1,5 +1,5 @@
 -- =============================================================================
--- V43__create_nutritional_goal_options
+-- V43__create_nutritional_goal_options.sql
 --
 -- create a lookup table with potential nutritianal goals and seeds them as well
 -- =============================================================================
