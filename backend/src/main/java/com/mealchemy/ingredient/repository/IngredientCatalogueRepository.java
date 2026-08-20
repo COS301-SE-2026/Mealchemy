@@ -35,6 +35,8 @@ public interface IngredientCatalogueRepository extends JpaRepository<IngredientC
     """)
     List<IngredientCatalogueResponse> getIngredientByName(@Param("name") String name);
 
-    @Query("""SELECT c.name FROM IngredientCatalogue c WHERE c.name IN :names""")
+    @Query("""
+        SELECT c.name FROM IngredientCatalogue c WHERE c.name IN :names
+    """)
     List<String> findExistingNames(@Param("names") List<String> names);
 }

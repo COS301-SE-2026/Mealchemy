@@ -23,6 +23,8 @@ public interface AllergenOptionsRepository extends JpaRepository<AllergenOptions
         """)
         List<AllergenOptionsResponse> getAllAllergenOptions();
 
-    @Query("""SELECT a.value from AllergenOptions a""")
+    @Query("""
+        SELECT a.value from AllergenOptions a
+    """)
     List<String> getAllAllergenValues();
 }

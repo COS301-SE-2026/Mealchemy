@@ -30,6 +30,6 @@ public class FlavourProfileOptionsService {
 
     // for user preference profile
     public List<String> getValidCuisineTypes() {
-        return flavourProfileOptionsRepository.findAllValues()
+        return flavourProfileOptionsRepository.getAllValues();
     }
 }

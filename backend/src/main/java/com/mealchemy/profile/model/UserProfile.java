@@ -31,7 +31,7 @@ public class UserProfile {
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "preferred_unit", columnDefinition = "preferred_unit_enum") //METRIC / IMPERIAL
-    private PreferredUnit preferredUnit;
+    private PreferredUnit preferredUnit = PreferredUnit.METRIC;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "equipment", columnDefinition = "jsonb")
@@ -74,7 +74,7 @@ public class UserProfile {
         return preferredUnit;
     }
 
-    public void setPrefrRedUnit(PreferredUnit preferredUnit) {
+    public void setPreferredUnit(PreferredUnit preferredUnit) {
         this.preferredUnit = preferredUnit;
     }
 

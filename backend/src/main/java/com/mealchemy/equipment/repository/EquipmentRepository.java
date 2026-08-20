@@ -22,6 +22,8 @@ public interface EquipmentRepository extends JpaRepository<Equipment, Integer> {
         """)
         List<EquipmentResponse> getAllEquipment();
 
-    @Query("""SELECT e.value from Equipment e""")
+    @Query("""
+        SELECT e.value from Equipment e
+    """)
     List<String> getAllEquipmentValues();
 }

@@ -23,6 +23,8 @@ public interface NutritionalGoalOptionsRepository extends JpaRepository<Nutritio
         """)
         List<NutritionalGoalOptionsResponse> getAllNutritionalGoalOptions();
 
-    @Query("""SELECT n.value from NutritionalGoalOptions n""")
+    @Query("""
+        SELECT n.value from NutritionalGoalOptions n
+    """)
     List<String> getAllNutritionalGoalOptionsValues();
 }

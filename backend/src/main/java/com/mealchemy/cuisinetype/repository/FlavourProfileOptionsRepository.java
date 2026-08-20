@@ -15,6 +15,8 @@ public interface FlavourProfileOptionsRepository extends JpaRepository<FlavourPr
 {
     boolean existsByValue(String value);
 
-    @Query("""SELECT f.value FROM FlavourProfileOptions f""")
+    @Query("""
+        SELECT f.value FROM FlavourProfileOptions f
+    """)
     List<String> getAllValues();
 }

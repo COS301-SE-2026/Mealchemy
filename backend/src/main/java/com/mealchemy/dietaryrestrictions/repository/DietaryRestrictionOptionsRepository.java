@@ -23,6 +23,8 @@ public interface DietaryRestrictionOptionsRepository extends JpaRepository<Dieta
         """)
         List<DietaryRestrictionOptionsResponse> getAllDietaryRestrictionOptions();
 
-    @Query("""SELECT d.value from DietaryRestrictionOptions d""")
+    @Query("""
+        SELECT d.value from DietaryRestrictionOptions d
+    """)
     List<String> getAllDietaryRestrictionOptionsValues();
 }
