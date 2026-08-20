@@ -90,7 +90,7 @@ public class FlavourProfileOptionsControllerTest {
                 // fields in response object
                 .andExpect(jsonPath("$[0].value").value("ITALIAN"))
                 .andExpect(jsonPath("$[0].label").value("Italian"))
-                .andExpect(jsonPath("$[2].value").value("MEXICAN"))
-                .andExpect(jsonPath("$[2].label").value("Mexican"));
+                .andExpect(jsonPath("$[2].value").value("CARIBBEAN"))
+                .andExpect(jsonPath("$[2].label").value("Caribbean"));
     }
 }

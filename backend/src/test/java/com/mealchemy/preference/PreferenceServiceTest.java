@@ -199,7 +199,7 @@ public class PreferenceServiceTest {
         when(userPreferencesRepository.findByUserId(1)).thenReturn(Optional.of(existingPreferences));
         when(dietaryRestrictionOptionsService.getValidDietaryRestrictionOptions()).thenReturn(List.of("VEGAN"));
         when(allergenOptionsService.getValidAllergenOptions()).thenReturn(List.of("GLUTEN"));
-        when(flavourProfileOptionsService.getValidCuisineTypes()).thenReturn(List.of("MEDITERRANEAN"));
+        when(flavourProfileOptionsService.getValidCuisineTypes()).thenReturn(List.of("JAPANESE"));
         when(nutritionalGoalOptionsService.getValidNutritionalGoalOptions()).thenReturn(List.of("HIGH_PROTEIN"));
         when(ingredientCatalogueService.findExistingIngredientNames(List.of("anchovies"))).thenReturn(List.of());
 

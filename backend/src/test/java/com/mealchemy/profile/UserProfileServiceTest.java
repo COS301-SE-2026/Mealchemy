@@ -182,7 +182,7 @@ public class UserProfileServiceTest {
         assertEquals("test", response.displayName());
         assertEquals("url", response.avatarUrl());
         assertEquals(PreferredUnit.IMPERIAL, response.preferredUnit());
-        assertEquals(List.of(""), response.equipment());
+        assertEquals(List.of(), response.equipment());
 
         // Verify save was called once
         verify(userProfileRepository).save(any(UserProfile.class));

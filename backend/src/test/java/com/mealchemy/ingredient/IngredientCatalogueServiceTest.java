@@ -97,7 +97,7 @@ public class IngredientCatalogueServiceTest {
     void findExistingIngredientNames_withEmptyList_returnsEmptyList() {
         when(ingredientCatalogueRepository.findExistingNames(List.of())).thenReturn(List.of());
 
-        List<String> existing = ingredientCatalogueService.findExistingIngredientNames(List.of());
+       List<String> existing = ingredientCatalogueService.findExistingIngredientNames(List.of("Hummus", "DoesNotExist"));
 
         assertTrue(existing.isEmpty());
     }

@@ -59,7 +59,7 @@ public class FlavourProfileOptionsServiceTest {
         assertEquals(3, flavourProfileOptionsList.size());
         FlavourProfileOptionsResponse firstFlavourProfileOptionsResponse = flavourProfileOptionsList.get(0);
         assertEquals("ITALIAN", firstFlavourProfileOptionsResponse.value());
-        assertEquals("italian", firstFlavourProfileOptionsResponse.label());
+        assertEquals("Italian", firstFlavourProfileOptionsResponse.label());
     }
 
     @Test
