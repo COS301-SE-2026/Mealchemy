@@ -1,12 +1,9 @@
 package com.mealchemy.ingredient.service;
 //models
 import com.mealchemy.ingredient.model.IngredientCatalogue;
-import com.mealchemy.category.model.IngredientCategory;
 
 //repositories
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
-import com.mealchemy.category.repository.IngredientCategoryRepository;
-
 
 import org.springframework.transaction.annotation.Transactional; //need to annotate any function that makes an update to the database
 
@@ -38,5 +35,10 @@ public class IngredientCatalogueService {
     // GET request - search by name
     public List<IngredientCatalogueResponse> getIngredientByName(String name) {
         return ingredientCatalogueRepository.getIngredientByName(name);
+    }
+
+    // for user preferneces validation
+     public List<String> findExistingIngredientNames(List<String> names) {
+        return ingredientCatalogueRepository.findExistingNames(names);
     }
 }

@@ -34,4 +34,7 @@ public interface IngredientCatalogueRepository extends JpaRepository<IngredientC
         WHERE LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%'))
     """)
     List<IngredientCatalogueResponse> getIngredientByName(@Param("name") String name);
+
+    @Query("""SELECT c.name FROM IngredientCatalogue c WHERE c.name IN :names""")
+    List<String> findExistingNames(@Param("names") List<String> names);
 }

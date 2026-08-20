@@ -11,6 +11,7 @@ import com.mealchemy.dietaryrestrictions.service.DietaryRestrictionOptionsServic
 import com.mealchemy.allergens.service.AllergenOptionsService;
 import com.mealchemy.cuisinetype.service.FlavourProfileOptionsService;
 import com.mealchemy.nutritionalgoals.service.NutritionalGoalOptionsService;
+import com.mealchemy.ingredient.service.IngredientCatalogueService;
 
 
 import org.springframework.transaction.annotation.Transactional; //need to annotate any function that makes an update to the database
@@ -29,14 +30,16 @@ public class PreferenceService {
     private final AllergenOptionsService allergenOptionsService;
     private final FlavourProfileOptionsService flavourProfileOptionsService;
     private final NutritionalGoalOptionsService nutritionalGoalOptionsService;
+    private final IngredientCatalogueService ingredientCatalogueService;
 
 
-    public PreferenceService(UserPreferencesRepository userPreferencesRepository, DietaryRestrictionOptionsService dietaryRestrictionOptionsService, AllergenOptionsService allergenOptionsService, FlavourProfileOptionsService flavourProfileOptionsService, NutritionalGoalOptionsService nutritionalGoalOptionsService) {
+    public PreferenceService(UserPreferencesRepository userPreferencesRepository, DietaryRestrictionOptionsService dietaryRestrictionOptionsService, AllergenOptionsService allergenOptionsService, FlavourProfileOptionsService flavourProfileOptionsService, NutritionalGoalOptionsService nutritionalGoalOptionsService, IngredientCatalogueService ingredientCatalogueService) {
         this.userPreferencesRepository = userPreferencesRepository;
-        this.dietaryRestrictionOptions = dietaryRestrictionOptionsService;
-        this.allergenOptions = allergenOptionsService;
+        this.dietaryRestrictionOptionsService = dietaryRestrictionOptionsService;
+        this.allergenOptionsService = allergenOptionsService;
         this.flavourProfileOptionsService = flavourProfileOptionsService;
-        this.nutritionalGoalOptions = nutritionalGoalOptionsService;
+        this.nutritionalGoalOptionsService = nutritionalGoalOptionsService;
+        this.ingredientCatalogueService = ingredientCatalogueService;
     }
 
     // GET request - Logic to get user preferences
@@ -73,7 +76,7 @@ public class PreferenceService {
         }
 
         // check flavour profile from cuisine type values
-        List<String> validFlavourProfiles = flavourProfileOptionsService.getValidCusineTypes();
+        List<String> validFlavourProfiles = flavourProfileOptionsService.getValidCuisineTypes();
         List<String> invalidFlavourProfiles = request.flavourProfile().stream()
                                                                       .filter(profile -> !validFlavourProfiles.contains(profile)) // if current allergen item being streamed in is'nt a valid option, add it to invalid list
                                                                       .toList();
@@ -92,7 +95,15 @@ public class PreferenceService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid nutritional goal item");
         }
 
-        //TODO Disliked ingredients?
+        // check disliked ingredients are valid from the catalogue
+        List<String> existingIngredients = ingredientCatalogueService.findExistingIngredientNames(request.dislikedIngredients());
+        List<String> invalidIngredients = request.dislikedIngredients().stream()
+                                                                       .filter(ingredient -> !existingIngredients.contains(ingredient)) // if current nutritionl goal item being streamed in is'nt a valid option, add it to invalid list
+                                                                       .toList();
+
+        if (!invalidIngredients.isEmpty()) { //some invalid equipment was passed in
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid disliked ingredient item");
+        }
 
         userPreferences.setDietaryRestrictions(request.dietaryRestrictions());
         userPreferences.setAllergies(request.allergies());

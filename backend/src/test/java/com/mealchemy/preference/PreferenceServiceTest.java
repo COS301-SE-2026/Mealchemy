@@ -12,6 +12,7 @@ import com.mealchemy.dietaryrestrictions.service.DietaryRestrictionOptionsServic
 import com.mealchemy.allergens.service.AllergenOptionsService;
 import com.mealchemy.nutritionalgoals.service.NutritionalGoalOptionsService;
 import com.mealchemy.cuisinetype.service.FlavourProfileOptionsService;
+import com.mealchemy.ingredient.service.IngredientCatalogueService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,7 @@ public class PreferenceServiceTest {
     @Mock private AllergenOptionsService allergenOptionsService;
     @Mock private NutritionalGoalOptionsService nutritionalGoalOptionsService;
     @Mock private FlavourProfileOptionsService flavourProfileOptionsService;
+    @Mock private IngredientCatalogueService ingredientCatalogueService;
 
     // @InjectMocks creates the real PreferenceService and injects the mocks above into it - actually testing PreferenceSer
     @InjectMocks
@@ -129,6 +131,7 @@ public class PreferenceServiceTest {
         when(allergenOptionsService.getValidAllergenOptions()).thenReturn(List.of("GLUTEN", "PEANUTS"));
         when(flavourProfileOptionsService.getValidCuisineTypes()).thenReturn(List.of("JAPANESE", "MEDITERRANEAN"));
         when(nutritionalGoalOptionsService.getValidNutritionalGoalOptions()).thenReturn(List.of("HIGH_PROTEIN", "LOW_CARB"));
+        when(ingredientCatalogueService.findExistingIngredientNames(List.of("anchovies"))).thenReturn(List.of("anchovies"));
         when(userPreferencesRepository.save(any(UserPreferences.class))).thenReturn(existingPreferences);
 
         // Act
@@ -169,6 +172,40 @@ public class PreferenceServiceTest {
         ResponseStatusException ex = assertThrows(
             ResponseStatusException.class,
             () -> preferenceService.updatePreferences(1, updateRequest) // requests "GLUTEN"
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(userPreferencesRepository, never()).save(any());
+    }
+
+    @Test
+    void updatePreferences_withInvalidFlavourProfile_throwsBadRequest() {
+        when(userPreferencesRepository.findByUserId(1)).thenReturn(Optional.of(existingPreferences));
+        when(dietaryRestrictionOptionsService.getValidDietaryRestrictionOptions()).thenReturn(List.of("VEGAN"));
+        when(allergenOptionsService.getValidAllergenOptions()).thenReturn(List.of("GLUTEN"));
+        when(flavourProfileOptionsService.getValidCuisineTypes()).thenReturn(List.of("MEDITERRANEAN"));
+
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> preferenceService.updatePreferences(1, updateRequest) // requests "JAPANESE"
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(userPreferencesRepository, never()).save(any());
+    }
+
+    @Test
+    void updatePreferences_withInvalidDislikedIngredients_throwsBadRequest() {
+        when(userPreferencesRepository.findByUserId(1)).thenReturn(Optional.of(existingPreferences));
+        when(dietaryRestrictionOptionsService.getValidDietaryRestrictionOptions()).thenReturn(List.of("VEGAN"));
+        when(allergenOptionsService.getValidAllergenOptions()).thenReturn(List.of("GLUTEN"));
+        when(flavourProfileOptionsService.getValidCuisineTypes()).thenReturn(List.of("MEDITERRANEAN"));
+        when(nutritionalGoalOptionsService.getValidNutritionalGoalOptions()).thenReturn(List.of("HIGH_PROTEIN"));
+        when(ingredientCatalogueService.findExistingIngredientNames(List.of("anchovies"))).thenReturn(List.of());
+
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> preferenceService.updatePreferences(1, updateRequest) // requests "anchovies"
         );
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
