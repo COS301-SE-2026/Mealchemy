@@ -55,6 +55,15 @@ class _DeleteMenuShoppingListRepository implements ShoppingListRepository {
   }
 
   @override
+  Future<ShoppingList> addRecipeToExistingList({
+    required String listId,
+    required int recipeId,
+    required bool includeAvailablePantryItems,
+  }) async {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<ShoppingList?> getShoppingListById(String id) async {
     final lists = await getShoppingLists();
     return lists.firstWhere((list) => list.id == id);
