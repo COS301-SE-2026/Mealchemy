@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
+import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
 import '../../../core/shared_widgets/Molecules/app_confirm_dialog.dart';
+
 //single recipe row inside a vault folder
 class FolderRecipeRow extends StatelessWidget {
   const FolderRecipeRow({
@@ -27,7 +29,7 @@ class FolderRecipeRow extends StatelessWidget {
     return parts.join(' · ');
   }
 
-    Future<void> _handleDeleteTap(BuildContext context) async {
+  Future<void> _handleDeleteTap(BuildContext context) async {
     final confirmed = await showAppConfirmDialog(
       context: context,
       title: 'Delete recipe',
@@ -90,7 +92,7 @@ class FolderRecipeRow extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      onPressed:  () => _handleDeleteTap(context),
+                      onPressed: () => _handleDeleteTap(context),
                       icon: const Icon(
                         Icons.delete_outline,
                         size: 18,
@@ -100,8 +102,8 @@ class FolderRecipeRow extends StatelessWidget {
                       padding: const EdgeInsets.all(6),
                     ),
                     IconButton(
-                      //Will add a edit recipe screen point
-                      onPressed: onEditTap,
+                      onPressed: onEditTap ??
+                          () => context.push('/edit-recipe/${recipe.recipeId}'),
                       icon: const Icon(
                         Icons.edit_outlined,
                         size: 18,
@@ -128,26 +130,23 @@ class _RecipeThumb extends StatelessWidget {
   final String? photoUrl;
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: photoUrl == null ? AppColors.brand : null,
-        image: photoUrl != null
-            ? DecorationImage(
-                image: NetworkImage(photoUrl!),
-                fit: BoxFit.cover,
-              )
-            : null,
-      ),
-      child: photoUrl == null
-          ? const Icon(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        width: 56,
+        height: 56,
+        child: RecipeNetworkImage(
+          photoUrl: photoUrl,
+          placeholder: DecoratedBox(
+            decoration: const BoxDecoration(gradient: AppColors.brand),
+            child: const Icon(
               Icons.restaurant_rounded,
               color: AppColors.textDark,
               size: 22,
-            )
-          : null,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

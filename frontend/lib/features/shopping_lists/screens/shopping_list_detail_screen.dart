@@ -11,6 +11,20 @@ import '../widgets/shopping_bottom_action_bar.dart';
 import '../widgets/shopping_item_row.dart';
 import '../widgets/shopping_section_header.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../pantry/providers/pantry_provider.dart';
+import '../models/complete_shop_result.dart';
+
+const List<String> _shoppingItemUnitOptions = [
+  'g',
+  'kg',
+  'ml',
+  'L',
+  'cups',
+  'tbsp',
+  'tsp',
+  'oz',
+  'pcs',
+];
 
 //detail screen for one shopping list
 class ShoppingListDetailScreen extends ConsumerStatefulWidget {
@@ -81,6 +95,20 @@ class _ShoppingListDetailScreenState
                     itemId: itemId,
                   );
             },
+            onUpdateItem: ({
+              required itemId,
+              required quantity,
+              required unit,
+            }) async {
+              await ref
+                  .read(shoppingListsProvider.notifier)
+                  .updateShoppingListItem(
+                    listId: list.id,
+                    itemId: itemId,
+                    quantity: quantity,
+                    unit: unit,
+                  );
+            },
             onSelectAll: () async {
               await ref
                   .read(shoppingListsProvider.notifier)
@@ -96,22 +124,22 @@ class _ShoppingListDetailScreenState
                   .read(shoppingListsProvider.notifier)
                   .deleteSelectedItems(list.id);
             },
-            onAddItem: ({
-              required name,
-              required quantity,
-              required category,
-            }) async {
-              await ref.read(shoppingListsProvider.notifier).addItemToList(
-                    listId: list.id,
-                    name: name,
-                    quantity: quantity,
-                    category: category,
-                  );
+            onDeleteList: () async {
+              await ref
+                  .read(shoppingListsProvider.notifier)
+                  .deleteShoppingList(list.id);
             },
             onCompleteShop: () async {
-              return ref
+              final result = await ref
                   .read(shoppingListsProvider.notifier)
                   .completeShop(list.id);
+
+              //complete-shop endpoint changed pantry data outside the pantry feature
+              //recreate the repository to clear internal ingredient cache, then reloadthe pantry state from the backend
+              ref.invalidate(pantryRepositoryProvider);
+              ref.invalidate(pantryStateProvider);
+
+              return result;
             },
           );
         },
@@ -138,25 +166,27 @@ class _ShoppingListDetailContent extends StatelessWidget {
   const _ShoppingListDetailContent({
     required this.list,
     required this.onToggleItem,
+    required this.onUpdateItem,
     required this.onSelectAll,
     required this.onDeselectAll,
-    required this.onAddItem,
     required this.onCompleteShop,
     required this.onDeleteSelected,
+    required this.onDeleteList,
   });
 
   final ShoppingList list;
   final Future<void> Function(String itemId) onToggleItem;
+  final Future<void> Function({
+    required String itemId,
+    required String quantity,
+    required String unit,
+  }) onUpdateItem;
   final Future<void> Function() onSelectAll;
   final Future<void> Function() onDeselectAll;
   final Future<void> Function() onDeleteSelected;
+  final Future<void> Function() onDeleteList;
 
-  final Future<void> Function({
-    required String name,
-    required String quantity,
-    required String category,
-  }) onAddItem;
-  final Future<Object?> Function() onCompleteShop;
+  final Future<CompleteShopResult?> Function() onCompleteShop;
 
   @override
   Widget build(BuildContext context) {
@@ -202,7 +232,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
                 onDeselectAll: onDeselectAll,
               ),
               const SizedBox(height: 22),
-              ..._buildItemSections(groupedItems),
+              ..._buildItemSections(context, groupedItems),
             ],
           ),
           Positioned(
@@ -211,7 +241,9 @@ class _ShoppingListDetailContent extends StatelessWidget {
             bottom: 118,
             child: ShoppingBottomActionBar(
               onMicTap: () {},
-              onAddTap: () => _showAddItemDialog(context),
+              onAddTap: () {
+                context.push('/shopping-lists/${list.id}/add-item');
+              },
               onFilterTap: () {},
             ),
           ),
@@ -236,13 +268,9 @@ class _ShoppingListDetailContent extends StatelessWidget {
 
                 if (!context.mounted) return;
 
-                final addedCount = result == null
-                    ? checkedCount
-                    : (result as dynamic).addedToPantryCount as int;
+                final addedCount = result?.addedToPantryCount ?? checkedCount;
 
-                final skippedItems = result == null
-                    ? <String>[]
-                    : (result as dynamic).skippedManualItems as List<String>;
+                final skippedItems = result?.skippedManualItems ?? <String>[];
 
                 final skippedText = skippedItems.isEmpty
                     ? ''
@@ -253,92 +281,34 @@ class _ShoppingListDetailContent extends StatelessWidget {
                     : '$addedCount items sent to pantry.$skippedText';
 
                 _showSnackBar(context, message);
+
+                if (result?.canDeleteShoppingList != true) return;
+
+                final shouldDelete = await _showDeleteEmptyShoppingListDialog(
+                  context: context,
+                  listName: list.title,
+                );
+
+                if (!context.mounted || !shouldDelete) return;
+
+                try {
+                  await onDeleteList();
+
+                  if (!context.mounted) return;
+                  context.go(AppRoutes.shoppingLists);
+                } catch (_) {
+                  if (!context.mounted) return;
+
+                  _showSnackBar(
+                    context,
+                    'Could not delete the shopping list. Try again.',
+                  );
+                }
               },
             ),
           ),
         ],
       ),
-    );
-  }
-
-  //opens dialog to add temp mock shopping item
-  Future<void> _showAddItemDialog(BuildContext context) async {
-    final nameController = TextEditingController();
-    final quantityController = TextEditingController();
-    final categoryController = TextEditingController(text: 'Produce');
-
-    final result = await showDialog<Map<String, String>>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppColors.bgLight,
-          title: Text(
-            'Add Item',
-            style: AppTextStyles.heading2.copyWith(
-              color: AppColors.primary,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _AddItemField(
-                controller: nameController,
-                label: 'Item name',
-              ),
-              const SizedBox(height: 12),
-              _AddItemField(
-                controller: quantityController,
-                label: 'Quantity',
-              ),
-              const SizedBox(height: 12),
-              _AddItemField(
-                controller: categoryController,
-                label: 'Category',
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Cancel',
-                style: AppTextStyles.button.copyWith(
-                  color: AppColors.textMuted,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop({
-                  'name': nameController.text,
-                  'quantity': quantityController.text,
-                  'category': categoryController.text,
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.textDark,
-              ),
-              child: const Text('Add'),
-            ),
-          ],
-        );
-      },
-    );
-
-    //dispose controllers after dialogue finished closing
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      nameController.dispose();
-      quantityController.dispose();
-      categoryController.dispose();
-    });
-
-    if (result == null) return;
-
-    await onAddItem(
-      name: result['name'] ?? '',
-      quantity: result['quantity'] ?? '',
-      category: result['category'] ?? '',
     );
   }
 
@@ -358,6 +328,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
 
   //builds category headers and item rows
   List<Widget> _buildItemSections(
+    BuildContext context,
     Map<String, List<ShoppingListItem>> groupedItems,
   ) {
     final widgets = <Widget>[];
@@ -382,6 +353,20 @@ class _ShoppingListDetailContent extends StatelessWidget {
           ShoppingItemRow(
             item: item,
             onChanged: (_) async => onToggleItem(item.id),
+            onEdit: () => _showEditShoppingListItemDialog(
+              context: context,
+              item: item,
+              onSave: ({
+                required quantity,
+                required unit,
+              }) {
+                return onUpdateItem(
+                  itemId: item.id,
+                  quantity: quantity,
+                  unit: unit,
+                );
+              },
+            ),
           ),
         );
       }
@@ -567,43 +552,263 @@ class _UpdatePantryButton extends StatelessWidget {
   }
 }
 
-//text field used inside add item dialog
-class _AddItemField extends StatelessWidget {
-  const _AddItemField({
-    required this.controller,
-    required this.label,
+Future<void> _showEditShoppingListItemDialog({
+  required BuildContext context,
+  required ShoppingListItem item,
+  required Future<void> Function({
+    required String quantity,
+    required String unit,
+  }) onSave,
+}) async {
+  final editableValues = _editableQuantityAndUnit(item);
+  final quantityController = TextEditingController(
+    text: editableValues.quantity,
+  );
+
+  var selectedUnit = editableValues.unit;
+  var quantityError = false;
+  var unitError = false;
+  var isSaving = false;
+  String? saveError;
+
+  final availableUnits = <String>{
+    ..._shoppingItemUnitOptions,
+    if (selectedUnit != null && selectedUnit.isNotEmpty) selectedUnit,
+  }.toList();
+
+  final saved = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (context, setDialogState) {
+          Future<void> saveChanges() async {
+            final quantity = quantityController.text.trim();
+            final parsedQuantity = num.tryParse(quantity);
+            final unit = selectedUnit?.trim() ?? '';
+
+            final hasValidQuantity =
+                parsedQuantity != null && parsedQuantity > 0;
+            final hasUnit = unit.isNotEmpty;
+
+            if (!hasValidQuantity || !hasUnit) {
+              setDialogState(() {
+                quantityError = !hasValidQuantity;
+                unitError = !hasUnit;
+                saveError = null;
+              });
+              return;
+            }
+
+            setDialogState(() {
+              isSaving = true;
+              saveError = null;
+            });
+
+            try {
+              await onSave(
+                quantity: quantity,
+                unit: unit,
+              );
+
+              if (dialogContext.mounted) {
+                Navigator.of(dialogContext).pop(true);
+              }
+            } catch (_) {
+              if (!dialogContext.mounted) return;
+
+              setDialogState(() {
+                isSaving = false;
+                saveError = 'Could not update the item. Try again.';
+              });
+            }
+          }
+
+          return AlertDialog(
+            backgroundColor: AppColors.bgCream,
+            title: Text(
+              'Edit Shopping List Item',
+              style: AppTextStyles.heading2.copyWith(
+                color: AppColors.primary,
+              ),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.name,
+                  style: AppTextStyles.title.copyWith(
+                    color: AppColors.textLight,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                TextField(
+                  controller: quantityController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: 'Quantity',
+                    errorText: quantityError
+                        ? 'Enter a quantity greater than zero.'
+                        : null,
+                  ),
+                  onChanged: (_) {
+                    if (!quantityError) return;
+                    setDialogState(() => quantityError = false);
+                  },
+                ),
+                const SizedBox(height: 14),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedUnit,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: 'Unit',
+                    errorText: unitError ? 'Unit is required.' : null,
+                  ),
+                  items: availableUnits.map((unit) {
+                    return DropdownMenuItem<String>(
+                      value: unit,
+                      child: Text(unit),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setDialogState(() {
+                      selectedUnit = value;
+                      unitError = false;
+                    });
+                  },
+                ),
+                if (saveError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Text(
+                      saveError!,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.error,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSaving
+                    ? null
+                    : () => Navigator.of(dialogContext).pop(false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: isSaving ? null : saveChanges,
+                child: isSaving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text('Save'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    quantityController.dispose();
   });
 
-  final TextEditingController controller;
-  final String label;
+  if (saved != true || !context.mounted) return;
 
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      style: AppTextStyles.body.copyWith(
-        color: AppColors.textLight,
-      ),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: AppTextStyles.bodySmall.copyWith(
-          color: AppColors.tertiaryMuted,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(
-            color: AppColors.inputBorder,
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(
-            color: AppColors.primary,
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
+  _showSnackBar(
+    context,
+    '${item.name} updated.',
+  );
+}
+
+({String quantity, String? unit}) _editableQuantityAndUnit(
+  ShoppingListItem item,
+) {
+  final rawQuantity = item.quantity.trim();
+  final storedUnit = item.unit?.trim();
+
+  if (storedUnit != null && storedUnit.isNotEmpty) {
+    final quantityWithoutUnit = rawQuantity.endsWith(storedUnit)
+        ? rawQuantity
+            .substring(0, rawQuantity.length - storedUnit.length)
+            .trim()
+        : rawQuantity;
+
+    return (
+      quantity: quantityWithoutUnit,
+      unit: storedUnit,
     );
   }
+
+  //older mock fixtures store quantity and unit together
+  final match = RegExp(
+    r'^([0-9]+(?:\.[0-9]+)?)\s*(.*)$',
+  ).firstMatch(rawQuantity);
+
+  if (match == null) {
+    return (
+      quantity: rawQuantity == '-' ? '' : rawQuantity,
+      unit: null,
+    );
+  }
+
+  final parsedUnit = match.group(2)?.trim() ?? '';
+
+  return (
+    quantity: match.group(1) ?? '',
+    unit: parsedUnit.isEmpty ? null : parsedUnit,
+  );
+}
+
+Future<bool> _showDeleteEmptyShoppingListDialog({
+  required BuildContext context,
+  required String listName,
+}) async {
+  final shouldDelete = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        backgroundColor: AppColors.bgCream,
+        title: Text(
+          'Shopping List Empty',
+          style: AppTextStyles.heading2.copyWith(
+            color: AppColors.primary,
+          ),
+        ),
+        content: Text(
+          'All purchased items have been processed. '
+          'Would you like to delete "$listName"?',
+          style: AppTextStyles.body.copyWith(
+            color: AppColors.textLight,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Keep List'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.error,
+            ),
+            child: const Text('Delete List'),
+          ),
+        ],
+      );
+    },
+  );
+
+  return shouldDelete ?? false;
 }
 
 void _showSnackBar(BuildContext context, String message) {

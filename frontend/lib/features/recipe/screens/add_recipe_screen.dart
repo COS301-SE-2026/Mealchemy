@@ -12,13 +12,27 @@ import '../../ingredients/models/ingredient_catalogue_item.dart';
 import '../models/recipe.dart';
 import '../models/recipe_ingredient.dart';
 import '../models/recipe_step.dart';
+import '../models/selected_recipe_photo.dart';
+import '../providers/recipe_photo_provider.dart';
 import '../providers/recipe_provider.dart';
+import '../services/recipe_photo_picker.dart';
 import '../widgets/ingredient_editor_row.dart';
+import '../widgets/recipe_photo_selector.dart';
 import '../widgets/step_editor_row.dart';
 import '../models/unit_of_measurement.dart';
 
 class AddRecipeScreen extends ConsumerStatefulWidget {
-  const AddRecipeScreen({super.key});
+  const AddRecipeScreen({
+    super.key,
+    this.editRecipeId,
+    this.initialRecipe,
+  });
+
+  final int? editRecipeId;
+
+  final Recipe? initialRecipe;
+
+  bool get isEditing => editRecipeId != null;
 
   @override
   ConsumerState<AddRecipeScreen> createState() => _AddRecipeScreenState();
@@ -31,13 +45,37 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
   final _cookTimeController = TextEditingController();
   final _servingsController = TextEditingController();
 
+  final _scrollController = ScrollController();
+  final _titleKey = GlobalKey();
+  final _cuisineKey = GlobalKey();
+  final _timeKey = GlobalKey();
+
   String? _selectedCuisine;
   int? _selectedFolderId;
   bool _publishToGlobal = false;
   bool _showValidation = false;
 
+  // pre filled once in edit mode when data resolves
+  bool _prefilled = false;
+  bool _isSaving = false;
+  bool _isUploadingPhoto = false;
+  SelectedRecipePhoto? _selectedPhoto;
+  String? _existingPhotoUrl;
+  bool _removePhoto = false;
+
   final List<_IngredientRowData> _ingredientRows = [_IngredientRowData()];
   final List<_StepRowData> _stepRows = [_StepRowData()];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isEditing && widget.initialRecipe != null) {
+      _prefill(widget.initialRecipe!);
+    }
+    if (!widget.isEditing) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _recoverLostPhoto());
+    }
+  }
 
   @override
   void dispose() {
@@ -46,6 +84,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     _prepTimeController.dispose();
     _cookTimeController.dispose();
     _servingsController.dispose();
+    _scrollController.dispose();
     for (final r in _ingredientRows) {
       r.dispose();
     }
@@ -55,25 +94,149 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     super.dispose();
   }
 
+  void _prefill(Recipe recipe) {
+    if (_prefilled) return;
+    _prefilled = true;
+    _titleController.text = recipe.title;
+    _descriptionController.text = recipe.description ?? '';
+    _prepTimeController.text = recipe.prepTimeMins?.toString() ?? '';
+    _cookTimeController.text = recipe.cookingTimeMins?.toString() ?? '';
+    _servingsController.text = recipe.servingSize?.toString() ?? '';
+    _selectedCuisine = recipe.cuisineType;
+    _publishToGlobal = recipe.isCommunityPublished;
+    _existingPhotoUrl = recipe.photoUrl;
+
+    final ingredients = recipe.ingredients ?? const [];
+    if (ingredients.isNotEmpty) {
+      for (final r in _ingredientRows) {
+        r.dispose();
+      }
+      _ingredientRows
+        ..clear()
+        ..addAll(ingredients.map((ing) {
+          final row = _IngredientRowData();
+          row.item = IngredientCatalogueItem(
+            ingId: ing.ingId,
+            name: ing.name ?? 'Ingredient #${ing.ingId}',
+          );
+          row.quantity.text = ing.quantity == null
+              ? ''
+              : (ing.quantity == ing.quantity!.truncateToDouble()
+                  ? ing.quantity!.toInt().toString()
+                  : ing.quantity.toString());
+          row.unit = ing.unit;
+          return row;
+        }));
+      if (_ingredientRows.isEmpty) _ingredientRows.add(_IngredientRowData());
+    }
+
+    final steps = [...(recipe.steps ?? const <RecipeStep>[])]
+      ..sort((a, b) => a.stepNr.compareTo(b.stepNr));
+    if (steps.isNotEmpty) {
+      for (final s in _stepRows) {
+        s.dispose();
+      }
+      _stepRows
+        ..clear()
+        ..addAll(steps.map((step) {
+          final row = _StepRowData();
+          row.content.text = step.content;
+          return row;
+        }));
+      if (_stepRows.isEmpty) _stepRows.add(_StepRowData());
+    }
+  }
+
+  Future<void> _recoverLostPhoto() async {
+    try {
+      final photo =
+          await ref.read(recipePhotoPickerProvider).recoverLostPhoto();
+      if (mounted && photo != null) {
+        setState(() => _selectedPhoto = photo);
+      }
+    } catch (error) {
+      if (mounted) _showPhotoError(error);
+    }
+  }
+
+  Future<void> _pickPhoto(RecipePhotoSource source) async {
+    try {
+      final photo = await ref.read(recipePhotoPickerProvider).pickPhoto(source);
+      if (mounted && photo != null) {
+        setState(() {
+          _selectedPhoto = photo;
+          _removePhoto = false;
+        });
+      }
+    } catch (error) {
+      if (mounted) _showPhotoError(error);
+    }
+  }
+
+  void _showPhotoError(Object error) {
+    final message = error is RecipePhotoValidationException
+        ? error.message
+        : 'Could not select the photo. Try again.';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  void _removeSelectedPhoto() {
+    setState(() {
+      if (_selectedPhoto != null) {
+        _selectedPhoto = null;
+        _removePhoto = false;
+      } else if (widget.isEditing && _existingPhotoUrl != null) {
+        _removePhoto = true;
+      }
+    });
+  }
+
+  Future<String> _uploadPhoto(
+    int recipeId,
+    SelectedRecipePhoto photo,
+  ) async {
+    setState(() => _isUploadingPhoto = true);
+    try {
+      return await ref.read(recipePhotoRepositoryProvider).uploadRecipePhoto(
+            recipeId: recipeId,
+            photo: photo,
+          );
+    } finally {
+      if (mounted) setState(() => _isUploadingPhoto = false);
+    }
+  }
+
   Future<void> _handleSubmit() async {
-    final valid = _titleController.text.trim().isNotEmpty &&
-        _selectedCuisine != null &&
-        int.tryParse(_prepTimeController.text) != null &&
+    final titleValid = _titleController.text.trim().isNotEmpty;
+    final cuisineValid = _selectedCuisine != null;
+    final timeValid = int.tryParse(_prepTimeController.text) != null &&
         int.tryParse(_cookTimeController.text) != null &&
         int.tryParse(_servingsController.text) != null;
+
     final startedRows = _ingredientRows.where((r) => r.isStarted).toList();
     final ingredientsValid = startedRows.every((r) => r.isValid);
     final startedSteps = _stepRows.where((s) => s.isStarted).toList();
     final stepsValid = startedSteps.every((s) => s.isValid);
 
-    if (!valid || !ingredientsValid || !stepsValid) {
+    if (!titleValid ||
+        !cuisineValid ||
+        !timeValid ||
+        !ingredientsValid ||
+        !stepsValid) {
       setState(() => _showValidation = true);
+      _scrollToFirstError(
+        titleValid: titleValid,
+        cuisineValid: cuisineValid,
+        timeValid: timeValid,
+      );
       return;
     }
 
     final recipeRepo = ref.read(recipeRepositoryProvider);
 
-    if (_publishToGlobal) {
+    if (_publishToGlobal && !widget.isEditing) {
       final ok = await showAppConfirmDialog(
         context: context,
         title: 'Publish to Global Vault',
@@ -84,8 +247,33 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       if (ok != true) return;
     }
 
+    final ingredients = _collectIngredients();
+    final steps = _collectSteps();
+
+    setState(() => _isSaving = true);
+
+    String? replacementPhotoUrl;
+    if (widget.isEditing && _selectedPhoto != null) {
+      try {
+        replacementPhotoUrl = await _uploadPhoto(
+          widget.editRecipeId!,
+          _selectedPhoto!,
+        );
+      } catch (_) {
+        if (!mounted) return;
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text('Could not upload the photo. Changes were not saved.'),
+          ),
+        );
+        return;
+      }
+    }
+
     final recipe = Recipe(
-      recipeId: 0,
+      recipeId: widget.editRecipeId ?? 0,
       title: _titleController.text.trim(),
       description: _descriptionController.text.trim().isEmpty
           ? null
@@ -94,60 +282,131 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       prepTimeMins: int.tryParse(_prepTimeController.text),
       cookingTimeMins: int.tryParse(_cookTimeController.text),
       servingSize: int.tryParse(_servingsController.text),
+      photoUrl: replacementPhotoUrl,
       isCommunityPublished: _publishToGlobal,
+      ingredients: widget.isEditing ? ingredients : null,
+      steps: widget.isEditing ? steps : null,
     );
 
-    final created = await ref
-        .read(addRecipeProvider.notifier)
-        .submit(recipe, folderId: _selectedFolderId);
-    if (created == null) return;
+    final saved = await ref.read(addRecipeProvider.notifier).submit(
+          recipe,
+          folderId: widget.isEditing ? null : _selectedFolderId,
+          recipeId: widget.editRecipeId,
+          removePhoto: widget.isEditing && _removePhoto,
+        );
+    if (saved == null) {
+      if (mounted) setState(() => _isSaving = false);
+      return;
+    }
 
     var saveFailed = false;
-    final validRows = _ingredientRows.where((r) => r.isValid).toList();
-    for (int i = 0; i < validRows.length; i++) {
-      final r = validRows[i];
-      final ingredient = RecipeIngredient(
-        ingId: r.item!.ingId,
-        quantity: double.tryParse(r.quantity.text),
-        unit: r.unit!,
-        sortOrder: i,
-      );
+    var photoFailed = false;
+    final selectedPhoto = _selectedPhoto;
+    if (!widget.isEditing && selectedPhoto != null) {
       try {
-        await recipeRepo.addRecipeIngredient(created.recipeId, ingredient);
+        final photoUrl = await _uploadPhoto(saved.recipeId, selectedPhoto);
+        await recipeRepo.updateRecipe(
+          saved.recipeId,
+          saved.copyWith(photoUrl: photoUrl),
+        );
       } catch (_) {
-        saveFailed = true;
+        photoFailed = true;
+      }
+    }
+    if (!widget.isEditing) {
+      for (final ingredient in ingredients) {
+        try {
+          await recipeRepo.addRecipeIngredient(saved.recipeId, ingredient);
+        } catch (_) {
+          saveFailed = true;
+        }
+      }
+      for (final step in steps) {
+        try {
+          await recipeRepo.addRecipeStep(saved.recipeId, step);
+        } catch (_) {
+          saveFailed = true;
+        }
       }
     }
 
-    final validSteps = _stepRows.where((s) => s.isValid).toList();
-    for (int i = 0; i < validSteps.length; i++) {
-      final step = RecipeStep(
-        stepNr: i + 1,
-        content: validSteps[i].content.text.trim(),
+    if (!mounted) return;
+    setState(() => _isSaving = false);
+
+    if (saveFailed && photoFailed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Recipe saved, but some items and the photo did not.'),
+        ),
       );
-      try {
-        await recipeRepo.addRecipeStep(created.recipeId, step);
-      } catch (e) {
-        saveFailed = true;
-      }
+    } else if (saveFailed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Recipe saved, but some items did not.')),
+      );
+    } else if (photoFailed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Recipe saved, but the photo did not upload.'),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(widget.isEditing ? 'Changes saved' : 'Recipe saved'),
+        ),
+      );
     }
 
-    if (saveFailed && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Recipe saved, but some items did not.')),
-      );
-    }
-    if (saveFailed && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Recipe saved, but some items did not.')),
-      );
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Recipe saved')),
-      );
-    }
     ref.read(addRecipeProvider.notifier).reset();
-    if (mounted && context.canPop()) context.pop();
+    if (context.canPop()) context.pop();
+  }
+
+  List<RecipeIngredient> _collectIngredients() {
+    final valid = _ingredientRows.where((r) => r.isValid).toList();
+    return [
+      for (int i = 0; i < valid.length; i++)
+        RecipeIngredient(
+          ingId: valid[i].item!.ingId,
+          quantity: double.tryParse(valid[i].quantity.text),
+          unit: valid[i].unit!,
+          sortOrder: i,
+        ),
+    ];
+  }
+
+  List<RecipeStep> _collectSteps() {
+    final valid = _stepRows.where((s) => s.isValid).toList();
+    return [
+      for (int i = 0; i < valid.length; i++)
+        RecipeStep(stepNr: i + 1, content: valid[i].content.text.trim()),
+    ];
+  }
+
+  void _scrollToFirstError({
+    required bool titleValid,
+    required bool cuisineValid,
+    required bool timeValid,
+  }) {
+    final GlobalKey? target = !titleValid
+        ? _titleKey
+        : !cuisineValid
+            ? _cuisineKey
+            : !timeValid
+                ? _timeKey
+                : null;
+
+    if (target?.currentContext == null) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = target!.currentContext;
+      if (ctx == null) return;
+      Scrollable.ensureVisible(
+        ctx,
+        alignment: 0.1,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    });
   }
 
   @override
@@ -159,6 +418,9 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
         ref.invalidate(folderRecipesProvider);
         ref.invalidate(privateFoldersProvider);
         ref.invalidate(recipesProvider);
+        if (widget.editRecipeId != null) {
+          ref.invalidate(recipeDetailProvider(widget.editRecipeId!));
+        }
       } else if (next.errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(next.errorMessage!)),
@@ -169,6 +431,44 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     final cuisinesState = ref.watch(cuisineTypesProvider);
     final unitsState = ref.watch(unitsProvider);
     final submissionState = ref.watch(addRecipeProvider);
+
+    Widget body = cuisinesState.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => const _AddRecipeError(),
+      data: (cuisines) => unitsState.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => const _AddRecipeError(),
+        data: (units) => _buildForm(
+          cuisines,
+          units,
+          submissionState.isSubmitting || _isSaving,
+        ),
+      ),
+    );
+
+    if (widget.isEditing && widget.initialRecipe == null && !_prefilled) {
+      final detail = ref.watch(recipeDetailProvider(widget.editRecipeId!));
+      body = detail.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (_, __) => const _AddRecipeError(),
+        data: (recipe) {
+          _prefill(recipe);
+          return cuisinesState.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, _) => const _AddRecipeError(),
+            data: (cuisines) => unitsState.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => const _AddRecipeError(),
+              data: (units) => _buildForm(
+                cuisines,
+                units,
+                submissionState.isSubmitting || _isSaving,
+              ),
+            ),
+          );
+        },
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.bgLight,
@@ -181,38 +481,30 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
           tooltip: 'Back',
         ),
       ),
-      body: SafeArea(
-        child: cuisinesState.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => const _AddRecipeError(),
-          data: (cuisines) => unitsState.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => const _AddRecipeError(),
-            data: (units) =>
-                _buildForm(cuisines, units, submissionState.isSubmitting),
-          ),
-        ),
-      ),
+      body: SafeArea(child: body),
     );
   }
 
-  Widget _buildForm(List<String> cuisines, List<UnitOfMeasurement> units, bool isSubmitting) {
+  Widget _buildForm(
+      List<String> cuisines, List<UnitOfMeasurement> units, bool isSubmitting) {
     return ListView(
+      controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
       children: [
-        // centered header
         Center(
           child: Column(
             children: [
               Text(
-                'Create Recipe',
+                widget.isEditing ? 'Edit Recipe' : 'Create Recipe',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.heading1
                     .copyWith(color: AppColors.primary, fontSize: 28),
               ),
               const SizedBox(height: 6),
               Text(
-                'Add a new recipe to your vault',
+                widget.isEditing
+                    ? 'Update the details of your recipe'
+                    : 'Add a new recipe to your vault',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
               ),
@@ -220,10 +512,10 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
           ),
         ),
         const SizedBox(height: 32),
-
         _sectionHeader('Recipe Details'),
         const SizedBox(height: 16),
         AppTextField(
+          key: _titleKey,
           label: 'Title',
           hint: 'e.g. Saffron-Infused Risotto',
           controller: _titleController,
@@ -239,6 +531,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
         ),
         const SizedBox(height: 20),
         _CuisineSelector(
+          key: _cuisineKey,
           cuisines: cuisines,
           selected: _selectedCuisine,
           onSelected: (v) => setState(() => _selectedCuisine = v),
@@ -246,10 +539,22 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
         if (_showValidation && _selectedCuisine == null)
           const _FieldError('Cuisine is required.'),
         const SizedBox(height: 32),
-
+        _sectionHeader('Recipe Photo'),
+        const SizedBox(height: 16),
+        RecipePhotoSelector(
+          photo: _selectedPhoto,
+          existingPhotoUrl: _removePhoto ? null : _existingPhotoUrl,
+          onGalleryTap: () => _pickPhoto(RecipePhotoSource.gallery),
+          onCameraTap: () => _pickPhoto(RecipePhotoSource.camera),
+          onRemoveTap: _removeSelectedPhoto,
+          disabled: isSubmitting,
+          uploading: _isUploadingPhoto,
+        ),
+        const SizedBox(height: 32),
         _sectionHeader('Time & Servings'),
         const SizedBox(height: 16),
         Row(
+          key: _timeKey,
           children: [
             Expanded(
               child: AppTextField(
@@ -285,15 +590,15 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
                 int.tryParse(_servingsController.text) == null))
           const _FieldError('Prep, cook, and servings are all required.'),
         const SizedBox(height: 32),
-
-        _sectionHeader('Save To'),
-        const SizedBox(height: 16),
-        _FolderDropdown(
-          selectedFolderId: _selectedFolderId,
-          onChanged: (id) => setState(() => _selectedFolderId = id),
-        ),
-        const SizedBox(height: 32),
-
+        if (!widget.isEditing) ...[
+          _sectionHeader('Save To'),
+          const SizedBox(height: 16),
+          _FolderDropdown(
+            selectedFolderId: _selectedFolderId,
+            onChanged: (id) => setState(() => _selectedFolderId = id),
+          ),
+          const SizedBox(height: 32),
+        ],
         _sectionHeader('Sharing'),
         const SizedBox(height: 8),
         SwitchListTile(
@@ -309,7 +614,6 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
           onChanged: (v) => setState(() => _publishToGlobal = v),
         ),
         const SizedBox(height: 32),
-
         _sectionHeader('Ingredients'),
         const SizedBox(height: 16),
         for (int i = 0; i < _ingredientRows.length; i++)
@@ -360,9 +664,8 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
           onTap: () => setState(() => _stepRows.add(_StepRowData())),
         ),
         const SizedBox(height: 36),
-
         AppButton.primary(
-          label: 'Create Recipe',
+          label: widget.isEditing ? 'Save Changes' : 'Create Recipe',
           onPressed: isSubmitting ? null : _handleSubmit,
           isLoading: isSubmitting,
           isFullWidth: true,
@@ -410,11 +713,9 @@ class _IngredientRowData {
   final TextEditingController quantity = TextEditingController();
   String? unit;
 
-  // the user has begun filling this row
   bool get isStarted =>
       item != null || quantity.text.isNotEmpty || unit != null;
 
-  // fully valid for saving
   bool get isValid =>
       item != null && double.tryParse(quantity.text) != null && unit != null;
 
@@ -430,7 +731,6 @@ class _StepRowData {
   void dispose() => content.dispose();
 }
 
-// Private folder dropdown "My Recipes (default)" when nothing is picked
 class _FolderDropdown extends ConsumerWidget {
   const _FolderDropdown({
     required this.selectedFolderId,
@@ -483,6 +783,7 @@ class _FolderDropdown extends ConsumerWidget {
 
 class _CuisineSelector extends StatelessWidget {
   const _CuisineSelector({
+    super.key,
     required this.cuisines,
     required this.selected,
     required this.onSelected,
@@ -491,6 +792,14 @@ class _CuisineSelector extends StatelessWidget {
   final List<String> cuisines;
   final String? selected;
   final ValueChanged<String?> onSelected;
+
+  String? get _matchedValue {
+    if (selected == null) return null;
+    for (final c in cuisines) {
+      if (c.toLowerCase() == selected!.toLowerCase()) return c;
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -502,7 +811,7 @@ class _CuisineSelector extends StatelessWidget {
                 color: AppColors.textMuted, fontWeight: FontWeight.w500)),
         const SizedBox(height: 10),
         DropdownButtonFormField<String>(
-          initialValue: selected,
+          initialValue: _matchedValue,
           isExpanded: true,
           icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.primary),
           style: AppTextStyles.body.copyWith(color: AppColors.textLight),
