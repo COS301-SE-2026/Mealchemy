@@ -1,12 +1,12 @@
 package com.mealchemy.auth.service;
 //models
 import com.mealchemy.auth.model.User;
-import com.mealchemy.auth.model.UserProfile;
+import com.mealchemy.profile.model.UserProfile;
 import com.mealchemy.preference.model.UserPreferences;
 import com.mealchemy.vault.model.Vault;
 //repositories
 import com.mealchemy.auth.repository.UserRepository;
-import com.mealchemy.auth.repository.UserProfileRepository;
+import com.mealchemy.profile.repository.UserProfileRepository;
 import com.mealchemy.preference.repository.UserPreferencesRepository;
 import com.mealchemy.vault.repository.VaultRepository;
 //dtos
