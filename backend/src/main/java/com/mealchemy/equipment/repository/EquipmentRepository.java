@@ -14,11 +14,16 @@ public interface EquipmentRepository extends JpaRepository<Equipment, Integer> {
 
     @Query("""
             SELECT new com.mealchemy.equipment.dto.EquipmentResponse(
-                e.equipmentId,
+                e.id,
                 e.value,
                 e.label
             )
             FROM Equipment e
         """)
         List<EquipmentResponse> getAllEquipment();
+
+    @Query("""
+        SELECT e.value from Equipment e
+    """)
+    List<String> getAllEquipmentValues();
 }

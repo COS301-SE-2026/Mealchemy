@@ -73,4 +73,18 @@ public class EquipmentServiceTest {
         assertEquals("OVEN", firstEquipmentResponse.value());
         assertEquals("Oven", firstEquipmentResponse.label());
     }
+
+    @Test
+    void getValidEquipmentValues_returnAllValues() {
+        // Arrange
+        when(equipmentRepository.getAllEquipmentValues()).thenReturn(List.of("OVEN", "MICROWAVE", "AIRFRYER", "BLENDER"));
+
+        // Act 
+        List<String> validValues = equipmentService.getValidEquipmentValues();
+
+        // Assert
+        assertEquals(4, validValues.size());
+        assertTrue(validValues.contains("OVEN")); // first 
+        assertTrue(validValues.contains("BLENDER")); // last
+    }
 }

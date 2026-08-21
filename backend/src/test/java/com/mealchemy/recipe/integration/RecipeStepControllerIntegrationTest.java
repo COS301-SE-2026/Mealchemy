@@ -1,4 +1,4 @@
-package com.mealchemy.recipe.controller;
+package com.mealchemy.recipe.integration;
 
 import com.mealchemy.auth.model.User;
 import com.mealchemy.auth.repository.UserRepository;

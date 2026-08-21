@@ -2,6 +2,7 @@ package com.mealchemy.recipe.service;
 
 /* Import libraries */
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 import java.util.*;
 import java.util.stream.*;
 import org.springframework.web.server.*;
@@ -18,7 +19,11 @@ import com.mealchemy.shared.enums.VaultType;
 import com.mealchemy.vault.dto.VaultFolderRecipeRequest;
 import com.mealchemy.recipe.dto.RecipeRequest;
 import com.mealchemy.recipe.dto.RecipeFullRequest;
+import com.mealchemy.recipe.dto.RecipeUpdateRequest;
+import com.mealchemy.recipe.dto.RecipeIngredientRequest;
+import com.mealchemy.recipe.dto.RecipeStepRequest;
 import com.mealchemy.recipe.dto.RecipeResponse;
+import com.mealchemy.recipe.event.RecipePhotoCleanupEvent;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.cuisinetype.repository.FlavourProfileOptionsRepository;
@@ -38,21 +43,26 @@ public class RecipeService
 
     private final VaultFolderRecipeService vaultFolderRecipeService;
 
+    // lets it annouce that an old photo needs cleanup without making RecipeService directly responsible for GC Storage
+    private final ApplicationEventPublisher eventPublisher;
+
     public RecipeService(RecipeRepository recipeRepository, IngredientCatalogueRepository ingredientCatalogueRepository, 
         FlavourProfileOptionsRepository flavourProfileOptionsRepository, VaultFolderRepository vaultFolderRepository, 
-        VaultFolderRecipeService vaultFolderRecipeService)
+        VaultFolderRecipeService vaultFolderRecipeService, ApplicationEventPublisher eventPublisher)
     {
         this.recipeRepository = recipeRepository;
         this.ingredientCatalogueRepository = ingredientCatalogueRepository;
         this.flavourProfileOptionsRepository = flavourProfileOptionsRepository;
         this.vaultFolderRepository = vaultFolderRepository;
         this.vaultFolderRecipeService = vaultFolderRecipeService;
+        this.eventPublisher = eventPublisher;
     }
 
     // Get all recipes
-    public List<RecipeResponse> getAllRecipes()
+    // modified to call query with user ID instead of unrestricted findAll
+    public List<RecipeResponse> getAllRecipes(Integer userId)
     {
-        return recipeRepository.findAll().stream().map(RecipeResponse::from).collect(Collectors.toList());
+        return recipeRepository.findAllAccessibleByUserId(userId).stream().map(RecipeResponse::from).collect(Collectors.toList());
     }
 
     // Get all community publishe recipes (global vault)
@@ -62,9 +72,22 @@ public class RecipeService
     }
 
     // Get a single recipe by Id
-    public RecipeResponse getRecipeById(Integer id)
+    // Modified to find accessible recipe, returns it when acess allowed, checkif reciepe exists if acess fails, returns 403 if exists but not allowed access, returns 404 when it doesnt exist.
+    public RecipeResponse getRecipeById(Integer id, Integer userId)
     {
-        Recipe recipeForReturn = recipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
+        Optional<Recipe> accessibleRecipe = recipeRepository.findAccessibleByIdAndUserId(id, userId);
+
+        if (accessibleRecipe.isEmpty())
+        {
+            if (recipeRepository.existsById(id))
+            {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to view this recipe.");
+            }
+
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
+        }
+
+        Recipe recipeForReturn = accessibleRecipe.get();
         return RecipeResponse.from(recipeForReturn);
     }
 
@@ -116,29 +139,9 @@ public class RecipeService
             recipeForReturn.setParentRecipe(sourceRecipe);
         }
 
-        List<RecipeIngredient> ingredients = request.ingredients().stream().map(i -> {
-            
-            if (!ingredientCatalogueRepository.existsById(i.ingId()))
-            {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One of the ingredients you want to add does not exist.");
-            }
-            
-            RecipeIngredient recipeIngredient = new RecipeIngredient();
-            recipeIngredient.setIngId(i.ingId());
-            recipeIngredient.setQuantity(i.quantity());
-            recipeIngredient.setUnit(i.unit());
-            recipeIngredient.setSortOrder(i.sortOrder());
-            recipeIngredient.setRecipe(recipeForReturn);
-            return recipeIngredient;
-        }).toList();
+        List<RecipeIngredient> ingredients = mapIngredientRequests(request.ingredients(), recipeForReturn);
 
-        List<RecipeStep> steps = request.steps().stream().map(i -> {
-            RecipeStep recipeStep = new RecipeStep();
-            recipeStep.setStepNr(i.stepNr());
-            recipeStep.setContent(i.content());
-            recipeStep.setRecipe(recipeForReturn);
-            return recipeStep;
-        }).toList();
+        List<RecipeStep> steps = mapStepRequests(request.steps(), recipeForReturn);
 
         recipeForReturn.setIngredients(ingredients);
         recipeForReturn.setSteps(steps);
@@ -155,7 +158,8 @@ public class RecipeService
     }
 
     // Put to update an existing recipe
-    public RecipeResponse updateRecipe(int id, RecipeRequest request, Integer ownerId)
+    @Transactional
+    public RecipeResponse updateRecipe(int id, RecipeUpdateRequest request, Integer ownerId)
     {
         Recipe recipeForReturn = recipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
         
@@ -169,21 +173,74 @@ public class RecipeService
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cuisine type is invalid.");
         }
 
+        String oldPhotoUrl = recipeForReturn.getPhotoUrl();
+
+        if (request.removePhoto() && request.photoUrl() != null && !request.photoUrl().isBlank())
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A replacement photo URL cannot be supplied when removing the photo.");
+        }
+
+        String newPhotoUrl = oldPhotoUrl;
+        if (request.removePhoto())
+        {
+            newPhotoUrl = null;
+        }
+        else if (request.photoUrl() != null)
+        {
+            if (request.photoUrl().isBlank())
+            {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Photo URL cannot be blank.");
+            }
+            newPhotoUrl = request.photoUrl();
+        }
+
+        List<RecipeIngredient> ingredients = request.ingredients() == null
+            ? null
+            : mapIngredientRequests(request.ingredients(), recipeForReturn);
+        List<RecipeStep> steps = request.steps() == null
+            ? null
+            : mapStepRequests(request.steps(), recipeForReturn);
+
         recipeForReturn.setTitle(request.title());
         recipeForReturn.setDescription(request.description());
         recipeForReturn.setCuisineType(request.cuisineType());
         recipeForReturn.setPrepTimeMins(request.prepTimeMins());
         recipeForReturn.setCookingTimeMins(request.cookingTimeMins());
         recipeForReturn.setServingSize(request.servingSize());
-        recipeForReturn.setPhotoUrl(request.photoUrl());
+        recipeForReturn.setPhotoUrl(newPhotoUrl);
         recipeForReturn.setVideoUrl(request.videoUrl());
         recipeForReturn.setExternalUrl(request.externalUrl());
         recipeForReturn.setIsCommunityPublished(request.isCommunityPublished());
 
-        return RecipeResponse.from(recipeRepository.save(recipeForReturn));
+        if (ingredients != null)
+        {
+            recipeForReturn.getIngredients().clear();
+        }
+        if (steps != null)
+        {
+            recipeForReturn.getSteps().clear();
+        }
+        if (ingredients != null || steps != null)
+        {
+            recipeRepository.saveAndFlush(recipeForReturn);
+        }
+        if (ingredients != null)
+        {
+            recipeForReturn.getIngredients().addAll(ingredients);
+        }
+        if (steps != null)
+        {
+            recipeForReturn.getSteps().addAll(steps);
+        }
+
+        Recipe saved = recipeRepository.save(recipeForReturn);
+        publishPhotoCleanupWhenChanged(id, oldPhotoUrl, newPhotoUrl);
+
+        return RecipeResponse.from(saved);
     }
 
     // Delete a specific vault using id
+    @Transactional
     public void deleteRecipe(int id, Integer ownerId)
     {
         Recipe recipeForDeletion = recipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
@@ -194,6 +251,7 @@ public class RecipeService
         }
 
         recipeRepository.deleteById(id);
+        publishPhotoCleanup(id, recipeForDeletion.getPhotoUrl());
     }
 
     /* Mapping functions */
@@ -236,7 +294,63 @@ public class RecipeService
         return recipe;
     }
 
+    private List<RecipeIngredient> mapIngredientRequests(
+        List<RecipeIngredientRequest> requests,
+        Recipe recipe
+    )
+    {
+        return requests.stream().map(request -> {
+            if (!ingredientCatalogueRepository.existsById(request.ingId()))
+            {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One of the ingredients you want to add does not exist.");
+            }
+
+            RecipeIngredient recipeIngredient = new RecipeIngredient();
+            recipeIngredient.setIngId(request.ingId());
+            recipeIngredient.setQuantity(request.quantity());
+            recipeIngredient.setUnit(request.unit());
+            recipeIngredient.setSortOrder(request.sortOrder());
+            recipeIngredient.setRecipe(recipe);
+            return recipeIngredient;
+        }).toList();
+    }
+
+    private List<RecipeStep> mapStepRequests(
+        List<RecipeStepRequest> requests,
+        Recipe recipe
+    )
+    {
+        return requests.stream().map(request -> {
+            RecipeStep recipeStep = new RecipeStep();
+            recipeStep.setStepNr(request.stepNr());
+            recipeStep.setContent(request.content());
+            recipeStep.setRecipe(recipe);
+            return recipeStep;
+        }).toList();
+    }
+
     /* Helper */
+
+    private void publishPhotoCleanupWhenChanged(
+        Integer recipeId,
+        String oldPhotoUrl,
+        String newPhotoUrl
+    )
+    {
+        if (!Objects.equals(oldPhotoUrl, newPhotoUrl))
+        {
+            publishPhotoCleanup(recipeId, oldPhotoUrl);
+        }
+    }
+    //publish clean up event for old photo
+    //recipe deleted from db, url therefore deleted, then only photo object in storage requested for deletion. Ensures DB correctness, recipe url won't point to an already deleted GCS object.
+    private void publishPhotoCleanup(Integer recipeId, String photoUrl)
+    {
+        if (photoUrl != null && !photoUrl.isBlank())
+        {
+            eventPublisher.publishEvent(new RecipePhotoCleanupEvent(recipeId, photoUrl));
+        }
+    }
 
     private void validateFolderIsInPrivateVault(Integer folderId, Integer ownerId)
 {

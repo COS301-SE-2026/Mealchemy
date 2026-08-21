@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/recipe.dart';
+import 'recipe_network_image.dart';
 import 'save_to_vault_sheet.dart';
 import 'add_to_sl.dart';
 
@@ -102,14 +103,10 @@ class _HeroImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (photoUrl != null) {
-      return Image.network(
-        photoUrl!,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const _HeroPlaceholder(),
-      );
-    }
-    return const _HeroPlaceholder();
+    return RecipeNetworkImage(
+      photoUrl: photoUrl,
+      placeholder: const _HeroPlaceholder(),
+    );
   }
 }
 

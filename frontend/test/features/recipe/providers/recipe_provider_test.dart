@@ -24,6 +24,7 @@ const _validRecipe = Recipe(
 
 class _RecordingRepo implements RecipeRepository {
   final List<(Recipe, int)> saved = [];
+  final List<(int, Recipe, bool)> updated = [];
 
   @override
   Future<Recipe> addRecipe(Recipe recipe, int folderId) async {
@@ -32,8 +33,15 @@ class _RecordingRepo implements RecipeRepository {
   }
 
   @override
-  Future<Recipe> updateRecipeFull(int id, Recipe recipe) async =>
+  Future<Recipe> updateRecipe(int id, Recipe recipe) async =>
       throw UnimplementedError();
+
+  @override
+  Future<Recipe> updateRecipeFull(int id, Recipe recipe,
+      {bool removePhoto = false}) async {
+    updated.add((id, recipe, removePhoto));
+    return recipe.copyWith(recipeId: id);
+  }
 
   @override
   Future<List<Recipe>> getRecipes() async => const [];
@@ -237,6 +245,25 @@ void main() {
       expect(container.read(addRecipeProvider).errorMessage,
           'Could not save recipe. Try again.');
       expect(container.read(addRecipeProvider).isSuccess, false);
+    });
+
+    test('edit submit forwards the recipe id and photo removal choice',
+        () async {
+      final repo = _RecordingRepo();
+      final container = makeContainer(recipeRepo: repo);
+      addTearDown(container.dispose);
+
+      final result = await container.read(addRecipeProvider.notifier).submit(
+            _validRecipe,
+            recipeId: 77,
+            removePhoto: true,
+          );
+
+      expect(result, isNotNull);
+      expect(repo.updated.single.$1, 77);
+      expect(repo.updated.single.$2, _validRecipe);
+      expect(repo.updated.single.$3, isTrue);
+      expect(container.read(addRecipeProvider).isSuccess, true);
     });
 
     test('reset returns the state to its defaults', () async {
