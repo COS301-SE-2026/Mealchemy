@@ -20,6 +20,7 @@ class AppSectionHeader extends StatelessWidget {
     this.size = SectionHeaderSize.medium,
     this.weight = SectionHeaderWeight.semiBold,
     this.titleStyle,
+    this.leadingIcon,
   })  : icon = null,
         subtitle = null,
         _variant = _HeaderVariant.line;
@@ -34,6 +35,7 @@ class AppSectionHeader extends StatelessWidget {
         size = SectionHeaderSize.large,
         weight = SectionHeaderWeight.bold,
         titleStyle = null,
+        leadingIcon = null,
         _variant = _HeaderVariant.icon;
 
   final String title;
@@ -45,6 +47,7 @@ class AppSectionHeader extends StatelessWidget {
   final TextStyle? titleStyle;
   final IconData? icon;
   final String? subtitle;
+  final IconData? leadingIcon;
   final _HeaderVariant _variant;
 
   double get _fontSize {
@@ -111,6 +114,10 @@ class AppSectionHeader extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        if (leadingIcon != null) ...[
+          Icon(leadingIcon, size: _fontSize + 2, color: AppColors.accent),
+          const SizedBox(width: 8),
+        ],
         Text(
           title,
           style: titleStyle ??
