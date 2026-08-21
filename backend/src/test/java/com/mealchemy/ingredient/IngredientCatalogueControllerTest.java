@@ -6,8 +6,10 @@ import com.mealchemy.config.JwtUtil;
 import com.mealchemy.ingredient.controller.IngredientCatalogueController;
 // dtos
 import com.mealchemy.ingredient.dto.IngredientCatalogueResponse;
+import com.mealchemy.ingredient.dto.IngredientSearchResponse;
 // service
 import com.mealchemy.ingredient.service.IngredientCatalogueService;
+import com.mealchemy.ingredient.service.CategoryRequiredException;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,11 +26,15 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import static org.hamcrest.Matchers.nullValue;
+
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(IngredientCatalogueController.class)
@@ -97,15 +103,17 @@ public class IngredientCatalogueControllerTest {
     // ========== GET Testing (GET /api/ingredient-catalogue/search?=) ==========
 
     @Test
-    void getIngredientFromCatalogueByName_matchFound_returns200() throws Exception {
+    void getIngredientFromCatalogueByName_matchFoundInLocalCatalogue_returns200() throws Exception {
         // Arrange
-        IngredientCatalogueResponse mockResponse = new IngredientCatalogueResponse(
+        IngredientSearchResponse localMatch = new IngredientSearchResponse(
             1,
             "Hummus",
-            "Legumes and Legume Products"
+            "Legumes and Legume Products",
+            null,
+            null
         );
 
-        when(ingredientCatalogueService.getIngredientByName(eq("hummus"))).thenReturn(List.of(mockResponse));
+        when(ingredientCatalogueService.getIngredientByName(eq("hummus"))).thenReturn(List.of(localMatch));
 
         // Act and Assert
         mockMvc.perform(get("/api/ingredient-catalogue/search").param("q", "hummus")
@@ -113,7 +121,9 @@ public class IngredientCatalogueControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].ing_id").value(1))
                 .andExpect(jsonPath("$[0].name").value("Hummus"))
-                .andExpect(jsonPath("$[0].category").value("Legumes and Legume Products"));
+                .andExpect(jsonPath("$[0].category").value("Legumes and Legume Products"))
+                .andExpect(jsonPath("$[0].sourceId").value(nullValue()))
+                .andExpect(jsonPath("$[0].sourceApi").value(nullValue()));
     }
 
     @Test
@@ -129,4 +139,107 @@ public class IngredientCatalogueControllerTest {
                 .andExpect(jsonPath("$").isEmpty());
     }
 
+    @Test
+    void getIngredientFromCatalogueByName_usdaFallBack_returnsNullIngId() throws Exception {
+        // Arrange
+        IngredientSearchResponse externalMatch = new IngredientSearchResponse(
+            null,
+            "Kimchi",
+            null,
+            "2710077",
+            "USDA"
+        );
+
+        when(ingredientCatalogueService.getIngredientByName(eq("Kimchi"))).thenReturn(List.of(externalMatch));
+
+        // Act and Assert
+        mockMvc.perform(get("/api/ingredient-catalogue/search").param("q", "kimchi")
+                .with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))  
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].ing_id").value(nullValue()))
+                .andExpect(jsonPath("$[0].name").value("Kimchi"))
+                .andExpect(jsonPath("$[0].category").value(nullValue()))
+                .andExpect(jsonPath("$[0].sourceId").value("2710077"))
+                .andExpect(jsonPath("$[0].sourceApi").value("USDA"));
+    }
+
+    // ========== POST Testing (POST /api/ingredient-catalogue/add-external) ==========
+    @Test
+    void addExternalIngredient_ingredientAddedSuccessfully_returns200WithSavedIngredient() throws Exception {
+        // Arrange
+        IngredientCatalogueResponse saved = new IngredientCatalogueResponse(
+            306, 
+            "Kimchi", 
+            "Vegetables and Vegetable Products"
+        );
+
+        when(ingredientCatalogueService.saveExternalIngredientToCatalogue(eq("2710077"), isNull())).thenReturn(saved);
+
+        String requestBody = """
+                { 
+                    "sourceId": "2710077", 
+                    "categoryId": null 
+                }
+            """;
+
+        // Act and Assert
+        mockMvc.perform(post("/api/ingredient-catalogue/add-external")
+                .with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ing_id").value(306))
+                .andExpect(jsonPath("$.name").value("Kimchi"))
+                .andExpect(jsonPath("$.category").value("Vegetables and Vegetable Products"));
+    }
+
+    @Test
+    void addExternalIngredient_categoryRequired_returns422WithPendingResponse() throws Exception {
+        // Arrange
+        when(ingredientCatalogueService.saveExternalIngredientToCatalogue(eq("2710077"), isNull())).thenThrow(new CategoryRequiredException("2710077", "Kimchi"));
+
+        String requestBody = """
+                { 
+                    "sourceId": "2710077", 
+                    "categoryId": null 
+                }
+            """;
+
+        // Act and Assert
+        mockMvc.perform(post("/api/ingredient-catalogue/add-external")
+                .with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.sourceId").value("2710077"))
+                .andExpect(jsonPath("$.name").value("Kimchi"));
+    }
+
+    @Test
+    void addExternalIngredient_retryWithCategoryId_returns200() throws Exception {
+        // Arrange
+        IngredientCatalogueResponse saved = new IngredientCatalogueResponse(
+            306, 
+            "Kimchi", 
+            "Vegetables and Vegetable Products"
+        );
+
+        when(ingredientCatalogueService.saveExternalIngredientToCatalogue(eq("2710077"), eq(19))).thenReturn(saved);
+
+        String requestBody = """
+                { 
+                    "sourceId": "2710077", 
+                    "categoryId": 19 
+                }
+            """;
+
+
+        // Act and Assert
+        mockMvc.perform(post("/api/ingredient-catalogue/add-external")
+                .with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.category").value("Vegetables and Vegetable Products"));
+    }
 }
