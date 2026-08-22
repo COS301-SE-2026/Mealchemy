@@ -11,6 +11,7 @@ import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../providers/profile_provider.dart';
 import '../widgets/information_section.dart';
+import '../widgets/preferences_section.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -41,6 +42,8 @@ class ProfileScreen extends ConsumerWidget {
             _Intro(),
             SizedBox(height: 30),
             InformationSection(),
+            SizedBox(height: 40),
+            PreferencesSection(),
             SizedBox(height: 32),
             _SaveBar(),
           ],
@@ -87,37 +90,46 @@ class _Intro extends StatelessWidget {
   }
 }
 
+// One save action commits both profile and preferences changes
 class _SaveBar extends ConsumerWidget {
   const _SaveBar();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileState = ref.watch(profileProvider).valueOrNull;
+    final prefsState = ref.watch(preferencesProvider).valueOrNull;
 
-    final dirty = profileState?.dirty ?? false;
-    final saving = profileState?.saveStatus == SaveStatus.saving;
+    final profileDirty = profileState?.dirty ?? false;
+    final prefsDirty = prefsState?.dirty ?? false;
+    final anyDirty = profileDirty || prefsDirty;
 
-    ref.listen(profileProvider, (_, next) {
-      final status = next.valueOrNull?.saveStatus;
-      if (status == SaveStatus.error) {
-        ref.read(feedbackProvider.notifier).showShort(
-              next.valueOrNull?.errorMessage ?? 'Could not save. Try again.',
-              kind: ToastKind.error,
-              icon: Icons.error_outline,
-            );
-      }
-    });
+    final saving = profileState?.saveStatus == SaveStatus.saving ||
+        prefsState?.saveStatus == SaveStatus.saving;
+
+    ref.listen(profileProvider, (_, next) => _reportError(ref, next));
+    ref.listen(preferencesProvider, (_, next) => _reportError(ref, next));
 
     return AppButton(
-      label: dirty ? 'Save Changes' : 'All Changes Saved',
+      label: anyDirty ? 'Save Changes' : 'All Changes Saved',
       isLoading: saving,
-      onPressed: dirty && !saving
+      onPressed: anyDirty && !saving
           ? () async {
-              await ref.read(profileProvider.notifier).save();
-              final saved =
-                  ref.read(profileProvider).valueOrNull?.saveStatus ==
-                      SaveStatus.success;
-              if (saved) {
+              final futures = <Future<void>>[];
+              if (profileDirty) {
+                futures.add(ref.read(profileProvider.notifier).save());
+              }
+              if (prefsDirty) {
+                futures.add(ref.read(preferencesProvider.notifier).save());
+              }
+              await Future.wait(futures);
+
+              final profileOk =
+                  ref.read(profileProvider).valueOrNull?.saveStatus !=
+                      SaveStatus.error;
+              final prefsOk =
+                  ref.read(preferencesProvider).valueOrNull?.saveStatus !=
+                      SaveStatus.error;
+              if (profileOk && prefsOk) {
                 ref.read(feedbackProvider.notifier).showShort(
                       'Profile updated',
                       kind: ToastKind.success,
@@ -127,5 +139,16 @@ class _SaveBar extends ConsumerWidget {
             }
           : null,
     );
+  }
+
+  void _reportError(WidgetRef ref, AsyncValue next) {
+    final state = next.valueOrNull;
+    if (state?.saveStatus == SaveStatus.error) {
+      ref.read(feedbackProvider.notifier).showShort(
+            state?.errorMessage ?? 'Could not save. Try again.',
+            kind: ToastKind.error,
+            icon: Icons.error_outline,
+          );
+    }
   }
 }

@@ -4,6 +4,8 @@ import 'package:mealchemy/core/theme/app_typography.dart';
 
 enum PickerIconTone { primary, accent }
 
+enum PickerSurface { muted, white }
+
 class AppPickerOption<T> {
   final T value;
   final String label;
@@ -24,6 +26,7 @@ class AppPicker<T> extends StatefulWidget {
     required this.onChanged,
     this.hint,
     this.iconTone = PickerIconTone.primary,
+    this.surface = PickerSurface.muted,
     this.enabled = true,
   });
 
@@ -32,6 +35,7 @@ class AppPicker<T> extends StatefulWidget {
   final ValueChanged<T> onChanged;
   final String? hint;
   final PickerIconTone iconTone;
+  final PickerSurface surface;
   final bool enabled;
 
   @override
@@ -46,6 +50,14 @@ class _AppPickerState<T> extends State<AppPicker<T>> {
       ? AppColors.accent
       : AppColors.primary;
 
+  Color get _triggerFill => widget.surface == PickerSurface.white
+      ? AppColors.surfaceWhite
+      : AppColors.surfaceMuted;
+
+  Color get _menuFill => widget.surface == PickerSurface.white
+      ? AppColors.surfaceWhite
+      : AppColors.surfaceLight;
+
   AppPickerOption<T>? get _selected {
     for (final o in widget.options) {
       if (o.value == widget.value) return o;
@@ -58,7 +70,7 @@ class _AppPickerState<T> extends State<AppPicker<T>> {
   void _toggle() {
     if (!widget.enabled) return;
     _controller.toggle();
-    setState(() {}); 
+    setState(() {});
   }
 
   void _pick(T value) {
@@ -93,6 +105,7 @@ class _AppPickerState<T> extends State<AppPicker<T>> {
                 options: widget.options,
                 selectedValue: widget.value,
                 iconColor: _iconColor,
+                fill: _menuFill,
                 onPick: _pick,
               ),
             ),
@@ -129,7 +142,7 @@ class _AppPickerState<T> extends State<AppPicker<T>> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.surfaceMuted,
+          color: _triggerFill,
           borderRadius: radius,
           border: Border.all(color: AppColors.inputBorder),
         ),
@@ -177,6 +190,7 @@ class _PickerMenu<T> extends StatelessWidget {
     required this.options,
     required this.selectedValue,
     required this.iconColor,
+    required this.fill,
     required this.onPick,
   });
 
@@ -184,6 +198,7 @@ class _PickerMenu<T> extends StatelessWidget {
   final List<AppPickerOption<T>> options;
   final T? selectedValue;
   final Color iconColor;
+  final Color fill;
   final ValueChanged<T> onPick;
 
   static const _radius = BorderRadius.only(
@@ -199,7 +214,7 @@ class _PickerMenu<T> extends StatelessWidget {
         width: width,
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.surfaceLight,
+            color: fill,
             borderRadius: _radius,
             border: Border(
               left:
