@@ -122,8 +122,8 @@ public class IngredientCatalogueControllerTest {
                 .andExpect(jsonPath("$[0].ing_id").value(1))
                 .andExpect(jsonPath("$[0].name").value("Hummus"))
                 .andExpect(jsonPath("$[0].category").value("Legumes and Legume Products"))
-                .andExpect(jsonPath("$[0].sourceId").value(nullValue()))
-                .andExpect(jsonPath("$[0].sourceApi").value(nullValue()));
+                .andExpect(jsonPath("$[0].source_id").value(nullValue()))
+                .andExpect(jsonPath("$[0].source_api").value(nullValue()));
     }
 
     @Test
@@ -150,7 +150,7 @@ public class IngredientCatalogueControllerTest {
             "USDA"
         );
 
-        when(ingredientCatalogueService.getIngredientByName(eq("Kimchi"))).thenReturn(List.of(externalMatch));
+        when(ingredientCatalogueService.getIngredientByName(eq("kimchi"))).thenReturn(List.of(externalMatch));
 
         // Act and Assert
         mockMvc.perform(get("/api/ingredient-catalogue/search").param("q", "kimchi")
@@ -159,8 +159,8 @@ public class IngredientCatalogueControllerTest {
                 .andExpect(jsonPath("$[0].ing_id").value(nullValue()))
                 .andExpect(jsonPath("$[0].name").value("Kimchi"))
                 .andExpect(jsonPath("$[0].category").value(nullValue()))
-                .andExpect(jsonPath("$[0].sourceId").value("2710077"))
-                .andExpect(jsonPath("$[0].sourceApi").value("USDA"));
+                .andExpect(jsonPath("$[0].source_id").value("2710077"))
+                .andExpect(jsonPath("$[0].source_api").value("USDA"));
     }
 
     // ========== POST Testing (POST /api/ingredient-catalogue/add-external) ==========
@@ -177,8 +177,8 @@ public class IngredientCatalogueControllerTest {
 
         String requestBody = """
                 { 
-                    "sourceId": "2710077", 
-                    "categoryId": null 
+                    "source_id": "2710077", 
+                    "category_id": null 
                 }
             """;
 
@@ -200,8 +200,8 @@ public class IngredientCatalogueControllerTest {
 
         String requestBody = """
                 { 
-                    "sourceId": "2710077", 
-                    "categoryId": null 
+                    "source_id": "2710077", 
+                    "category_id": null 
                 }
             """;
 
@@ -211,7 +211,7 @@ public class IngredientCatalogueControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
                 .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.sourceId").value("2710077"))
+                .andExpect(jsonPath("$.source_id").value("2710077"))
                 .andExpect(jsonPath("$.name").value("Kimchi"));
     }
 
@@ -228,8 +228,8 @@ public class IngredientCatalogueControllerTest {
 
         String requestBody = """
                 { 
-                    "sourceId": "2710077", 
-                    "categoryId": 19 
+                    "source_id": "2710077", 
+                    "category_id": 19 
                 }
             """;
 

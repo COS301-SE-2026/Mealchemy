@@ -1,10 +1,12 @@
 package com.mealchemy.ingredient.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public record IngredientSearchResponse( //records are immutable and auto generate constructors
    //exactly what client sees not necessarily same as what model has
-   Integer ingId,
+   @JsonProperty("ing_id") Integer ingId,
    String name,
    String category,
-   String sourceId,
-   String sourceApi
+   @JsonProperty("source_id") String sourceId,
+   @JsonProperty("source_api") String sourceApi
 ) {}
