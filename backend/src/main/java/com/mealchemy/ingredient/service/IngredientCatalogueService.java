@@ -62,6 +62,11 @@ public class IngredientCatalogueService {
                                             )).toList();
     }
 
+    // GET - check all names already in catalogue
+    public List<String> findExistingIngredientNames(List<String> names) {
+        return ingredientCatalogueRepository.findExistingNames(names);
+    }
+
     @Transactional
     public IngredientCatalogueResponse saveExternalIngredientToCatalogue(String sourceId, Integer categoryId) {
         ExternalIngredientItemResponse ingDetails = nutritionDataProvider.getExternalIngredientDetails(sourceId);
