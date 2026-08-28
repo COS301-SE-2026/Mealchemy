@@ -7,6 +7,7 @@ import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/features/dashboard/models/trending_recipe_data.dart';
 import 'package:mealchemy/features/dashboard/providers/dashboard_provider.dart';
+import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
 
 class TrendingRecipesSection extends ConsumerWidget {
   const TrendingRecipesSection({super.key});
@@ -125,17 +126,14 @@ class _TrendingTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
 
-
-                  //the recipe tittle 
+                  //the recipe tittle
                   Text(
                     data.recipe.title,
                     style: AppTextStyles.bodyBold.copyWith(
                       color: AppColors.textLight,
-
                     ),
                     maxLines: 2,
-
-                     overflow: TextOverflow.ellipsis,
+                    overflow: TextOverflow.ellipsis,
                   ),
 
                   const SizedBox(height: 2),
@@ -152,10 +150,9 @@ class _TrendingTile extends StatelessWidget {
             const SizedBox(width: 8),
             Icon(
               Icons.chevron_right,
-               color: AppColors.textMuted,
-               size: 20,
+              color: AppColors.textMuted,
+              size: 20,
             ),
-
           ],
         ),
       ),
@@ -169,29 +166,17 @@ class _ThumbnailImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (photoUrl == null || photoUrl!.isEmpty) {
-      return Container(
+    return RecipeNetworkImage(
+      photoUrl: photoUrl,
+      fit: BoxFit.cover,
+      placeholder: Container(
         decoration: const BoxDecoration(gradient: AppColors.brand),
         child: const Icon(
           Icons.soup_kitchen_outlined,
-
           color: AppColors.textDark,
           size: 28,
         ),
-      );
-    }
-
-    return Image.network(
-      photoUrl!,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Container(
-        decoration: const BoxDecoration(gradient: AppColors.brand),
       ),
-      
-      loadingBuilder: (_, child, progress) {
-        if (progress == null) return child;
-        return Container(color: AppColors.surfaceLight);
-      },
     );
   }
 }

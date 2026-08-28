@@ -85,4 +85,36 @@ void main() {
 
     expect(find.byIcon(Icons.star), findsOneWidget);
   });
+
+  testWidgets('ShoppingListRow displays backend overview item count', (
+    tester,
+  ) async {
+    final overviewList = ShoppingList(
+      id: '7',
+      shoppingListId: 7,
+      userId: 3,
+      numItems: 5,
+      title: 'Weekend Braai',
+      subtitle: '0 items added by you',
+      section: 'OTHER LISTS',
+      iconType: 'list',
+
+      //overview endpoint returns metadata only
+      items: const [],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ShoppingListRow(
+            list: overviewList,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Weekend Braai'), findsOneWidget);
+    expect(find.text('5 items added by you'), findsOneWidget);
+    expect(overviewList.items, isEmpty);
+  });
 }

@@ -173,33 +173,115 @@ class MockShoppingListRepository implements ShoppingListRepository {
   }
 
   @override
-  Future<ShoppingListItem> addItemToShoppingList({
+  Future<ShoppingListItem> updateShoppingListItem({
     required String listId,
-    required String name,
+    required String itemId,
+    int? ingId,
+    String? name,
     required String quantity,
     required String unit,
+    required bool purchased,
   }) async {
-    final cleanedName = name.trim();
+    final cleanedName = name?.trim();
     final cleanedQuantity = quantity.trim();
     final cleanedUnit = unit.trim();
 
-    if (cleanedName.isEmpty) {
-      throw ArgumentError('Item name is required.');
+    final hasIngredientId = ingId != null;
+    final hasCustomName = cleanedName != null && cleanedName.isNotEmpty;
+
+    if (hasIngredientId == hasCustomName) {
+      throw ArgumentError(
+        'Provide either an ingredient id or a custom item name, but not both.',
+      );
     }
 
-    //mock version returns a backend-shaped manual item
+    final parsedQuantity = num.tryParse(cleanedQuantity);
+
+    if (parsedQuantity == null || parsedQuantity <= 0) {
+      throw ArgumentError('Quantity must be greater than zero.');
+    }
+
+    if (cleanedUnit.isEmpty) {
+      throw ArgumentError('Unit is required.');
+    }
+
+    ShoppingListItem? existingItem;
+
+    for (final list in _lists) {
+      if (list.id != listId) continue;
+
+      for (final item in list.items) {
+        if (item.id == itemId) {
+          existingItem = item;
+          break;
+        }
+      }
+    }
+
+    if (existingItem == null) {
+      throw StateError('Shopping list item not found.');
+    }
+
+    final displayQuantity = parsedQuantity % 1 == 0
+        ? parsedQuantity.toInt().toString()
+        : parsedQuantity.toString();
+
+    //return updated item
+    return existingItem.copyWith(
+      ingId: ingId,
+      name: hasCustomName ? cleanedName : existingItem.name,
+      quantity: '$displayQuantity $cleanedUnit',
+      unit: cleanedUnit,
+      checked: purchased,
+    );
+  }
+
+  @override
+  Future<ShoppingListItem> addItemToShoppingList({
+    required String listId,
+    int? ingId,
+    String? name,
+    required String quantity,
+    required String unit,
+  }) async {
+    final cleanedName = name?.trim();
+    final cleanedQuantity = quantity.trim();
+    final cleanedUnit = unit.trim();
+
+    final hasIngredientId = ingId != null;
+    final hasCustomName = cleanedName != null && cleanedName.isNotEmpty;
+
+    if (hasIngredientId == hasCustomName) {
+      throw ArgumentError(
+        'Provide either an ingredient id or a custom item name, but not both.',
+      );
+    }
+
+    final parsedQuantity =
+        cleanedQuantity.isEmpty ? null : num.tryParse(cleanedQuantity);
+
+    if (cleanedQuantity.isNotEmpty && parsedQuantity == null) {
+      throw ArgumentError('Quantity must be a valid number.');
+    }
+
+    final displayName =
+        hasIngredientId ? 'Mock catalogue ingredient' : cleanedName!;
+
+    //item shape returned by backend
     return ShoppingListItem(
-      id: cleanedName.toLowerCase().replaceAll(' ', '-'),
+      id: hasIngredientId
+          ? 'ingredient-$ingId'
+          : displayName.toLowerCase().replaceAll(' ', '-'),
       itemId: 999,
       shoppingListId: int.tryParse(listId),
-      ingId: null,
-      name: cleanedName,
-      quantity: cleanedQuantity.isEmpty
+      ingId: ingId,
+      name: displayName,
+      quantity: parsedQuantity == null
           ? '-'
           : cleanedUnit.isEmpty
-              ? cleanedQuantity
-              : '$cleanedQuantity $cleanedUnit',
-      category: 'MANUAL',
+              ? '$parsedQuantity'
+              : '$parsedQuantity $cleanedUnit',
+      category: hasIngredientId ? 'CATALOGUE' : 'MANUAL',
       unit: cleanedUnit.isEmpty ? null : cleanedUnit,
     );
   }
@@ -210,7 +292,7 @@ class MockShoppingListRepository implements ShoppingListRepository {
     return const CompleteShopResult(
       addedToPantryCount: 1,
       skippedManualItems: ['Mock manual item'],
-      shoppingListDeleted: false,
+      canDeleteShoppingList: false,
     );
   }
 

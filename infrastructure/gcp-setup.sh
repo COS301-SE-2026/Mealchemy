@@ -15,6 +15,9 @@
 # iam.googleapis.com - identity access management. Needed to create service accouns and grant/check roles
 # iamcredentials.googleapis.com - short lived credential creation. what WIF uses for a temp token instead of permanent key.
 # cloudresourcemanager.googleapis.com - project level resource management. Lets the script run IAM bindings at the project level
+
+# storage.googleapis.com - recipe photo object storage. Flutter uploads directly with backend-signed URLs.
+
 # ----------------------------------------------------------------------------
 #----addtioional security ----
   # - credentital are never hardcoded, echo statements at end of script with placeholders.
@@ -37,6 +40,9 @@
 #  -create artifcat reigstry repo with cleanup policy
 #  -create two service accounts
 #  -grant iam roles
+
+#  -create recipe photo buckets and grant bucket-scoped access
+
 #  -set up WIF
 #  -create empty secret containers
 #  -bind per secret access
@@ -65,6 +71,10 @@ GITHUB_REPO="Mealchemy"
 #name of artifact registery
 AR_REPO="mealchemy"
 
+#recipe photos are separated so staging uploads and cleanup cannot affect production
+RECIPE_PHOTO_BUCKET_PROD="${PROJECT_ID}-recipe-photos-prod"
+RECIPE_PHOTO_BUCKET_STAGING="${PROJECT_ID}-recipe-photos-staging"
+
 #workload idenitiy configuration pool and OICD Provider
 #WIF_LOCATION is always global for OIDC federation, made a constant instead
 WIF_LOCATION="global"
@@ -85,6 +95,7 @@ gcloud config set project "${PROJECT_ID}"
 gcloud services enable \
   run.googleapis.com \
   artifactregistry.googleapis.com \
+  storage.googleapis.com \
   secretmanager.googleapis.com \
   iam.googleapis.com \
   iamcredentials.googleapis.com \
@@ -163,6 +174,53 @@ gcloud iam service-accounts add-iam-policy-binding "${RUNTIME_SA_EMAIL}" \
 gcloud iam service-accounts add-iam-policy-binding "${ENGINE_SA_EMAIL}" \
   --member="serviceAccount:${CD_SA_EMAIL}" \
   --role="roles/iam.serviceAccountUser"
+
+#Recipe photo storage
+#Public users can fetch an object only when they know its exact URL; they cannot list the bucket.
+#The backend runtime can create, inspect, and delete objects in these buckets, but has no project-wide storage role. Soft delete is disabled so replaced/deleted photos stop accruing cost.
+for bucket in \
+  "${RECIPE_PHOTO_BUCKET_PROD}" \
+  "${RECIPE_PHOTO_BUCKET_STAGING}"; do
+  if ! gcloud storage buckets describe "gs://${bucket}" \
+      --project="${PROJECT_ID}" &>/dev/null; then
+    gcloud storage buckets create "gs://${bucket}" \
+      --project="${PROJECT_ID}" \
+      --location="${REGION}" \
+      --default-storage-class="STANDARD" \
+      --uniform-bucket-level-access \
+      --no-public-access-prevention \
+      --soft-delete-duration=0
+  fi
+
+  ACTUAL_LOCATION=$(gcloud storage buckets describe "gs://${bucket}" \
+    --project="${PROJECT_ID}" \
+    --format="value(location)" | tr '[:upper:]' '[:lower:]')
+  if [[ "${ACTUAL_LOCATION}" != "${REGION}" ]]; then
+    echo "Bucket gs://${bucket} is in ${ACTUAL_LOCATION}; expected ${REGION}."
+    exit 1
+  fi
+
+  gcloud storage buckets update "gs://${bucket}" \
+    --project="${PROJECT_ID}" \
+    --default-storage-class="STANDARD" \
+    --uniform-bucket-level-access \
+    --no-public-access-prevention \
+    --clear-soft-delete
+
+  gcloud storage buckets add-iam-policy-binding "gs://${bucket}" \
+    --member="allUsers" \
+    --role="roles/storage.legacyObjectReader"
+
+  gcloud storage buckets add-iam-policy-binding "gs://${bucket}" \
+    --member="serviceAccount:${RUNTIME_SA_EMAIL}" \
+    --role="roles/storage.objectUser"
+done
+
+#Cloud Run uses Google-managed credentials, so the runtime identity needs signBlob on itself to generate short-lived V4 upload URLs without a downloadable service-account key.
+gcloud iam service-accounts add-iam-policy-binding "${RUNTIME_SA_EMAIL}" \
+  --project="${PROJECT_ID}" \
+  --member="serviceAccount:${RUNTIME_SA_EMAIL}" \
+  --role="roles/iam.serviceAccountTokenCreator"
 
 
 
@@ -279,6 +337,8 @@ echo "  GCP_PROJECT_ID:        ${PROJECT_ID}"
 echo "  GCP_PROJECT_NUMBER:    ${PROJECT_NUMBER}"
 echo "  GCP_REGION:            ${REGION}"
 echo "  AR_REPOSITORY:         ${AR_REPO}"
+echo "  RECIPE_PHOTO_BUCKET_PROD: ${RECIPE_PHOTO_BUCKET_PROD}"
+echo "  RECIPE_PHOTO_BUCKET_STAGING: ${RECIPE_PHOTO_BUCKET_STAGING}"
 echo "  WIF_POOL_ID:           ${WIF_POOL}"
 echo "  WIF_PROVIDER_ID:       ${WIF_PROVIDER}"
 echo "  CD_SA_EMAIL:           ${CD_SA_EMAIL}"

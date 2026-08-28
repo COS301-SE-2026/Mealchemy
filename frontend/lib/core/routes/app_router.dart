@@ -17,8 +17,11 @@ import '../../features/discovery/screens/discovery_screen.dart';
 
 import '../../features/shopping_lists/screens/shopping_lists_screen.dart';
 import '../../features/shopping_lists/screens/shopping_list_detail_screen.dart';
+import '../../features/shopping_lists/screens/add_shopping_list_item_screen.dart';
 import '../../features/guided_discovery/screens/guided_discovery_screen.dart';
 import '../../features/help/screens/help_screen.dart';
+
+import '../../features/recipe/models/recipe.dart';
 
 final appRouter = GoRouter(
   initialLocation: AppRoutes.login,
@@ -84,6 +87,14 @@ final appRouter = GoRouter(
       path: AppRoutes.addRecipe,
       builder: (context, state) => const AddRecipeScreen(),
     ),
+    //recipe edit route
+    GoRoute(
+      path: AppRoutes.recipeEdit,
+      builder: (context, state) {
+        final id = int.parse(state.pathParameters['id']!);
+        return AddRecipeScreen(editRecipeId: id);
+      },
+    ),
     GoRoute(
       path: AppRoutes.shoppingLists,
       builder: (context, state) => const ShoppingListsScreen(),
@@ -93,6 +104,13 @@ final appRouter = GoRouter(
       builder: (context, state) {
         final id = state.pathParameters['id']!;
         return ShoppingListDetailScreen(listId: id);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.shoppingListAddItem,
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return AddShoppingListItemScreen(listId: id);
       },
     ),
     GoRoute(
@@ -111,6 +129,14 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.help,
       builder: (context, state) => const HelpScreen(),
-    )
+    ),GoRoute(
+      path: AppRoutes.editRecipe,
+      builder: (context, state) {
+        final id = int.parse(state.pathParameters['id']!);
+        final recipe = state.extra as Recipe?;
+        return AddRecipeScreen(editRecipeId: id, initialRecipe: recipe);
+      },
+    ),
+    
   ],
 );

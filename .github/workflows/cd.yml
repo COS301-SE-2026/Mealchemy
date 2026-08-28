@@ -66,6 +66,9 @@ name: CD
 # Changes to frontend, wiki, landing page docs, other workflow files, or the CI workflow won't triger a redeploy.
 #landing page now own job so that can manually trigger workflows without redeploying backend or engine
 
+#added photo bucket storage and recipe photo signing service account.
+#a bucket for prod and a bucket for staging. both ran by same service account
+
 
 
 #------------------------------------------------------------------------------------------------------------
@@ -97,6 +100,8 @@ env:
   CD_SA_EMAIL: cd-deployer@mealchemy.iam.gserviceaccount.com
   RUNTIME_SA_EMAIL: mealchemy-backend-runtime@mealchemy.iam.gserviceaccount.com
   ENGINE_RUNTIME_SA_EMAIL: mealchemy-engine-runtime@mealchemy.iam.gserviceaccount.com
+  RECIPE_PHOTO_BUCKET_PROD: mealchemy-recipe-photos-prod
+  RECIPE_PHOTO_BUCKET_STAGING: mealchemy-recipe-photos-staging
 
 
 
@@ -342,6 +347,12 @@ jobs:
           ENV: ${{ steps.env.outputs.name }}
           BACKEND_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/backend
         run: |
+          if [[ "${ENV}" == "prod" ]]; then
+            RECIPE_PHOTO_BUCKET="${{ env.RECIPE_PHOTO_BUCKET_PROD }}"
+          else
+            RECIPE_PHOTO_BUCKET="${{ env.RECIPE_PHOTO_BUCKET_STAGING }}"
+          fi
+
           SECRETS="SPRING_DATASOURCE_URL=mealchemy-db-url-${ENV}:latest,"
           SECRETS+="SPRING_DATASOURCE_USERNAME=mealchemy-db-username-${ENV}:latest,"
           SECRETS+="SPRING_DATASOURCE_PASSWORD=mealchemy-db-password-${ENV}:latest,"
@@ -361,7 +372,7 @@ jobs:
             --project "${{ env.GCP_PROJECT_ID }}"
             --service-account "${{ env.RUNTIME_SA_EMAIL }}"
             --set-secrets "${SECRETS}"
-            --set-env-vars "SPRING_FLYWAY_ENABLED=false,JWT_EXPIRATION_MS=86400000"
+            --set-env-vars "SPRING_FLYWAY_ENABLED=false,JWT_EXPIRATION_MS=86400000,RECIPE_PHOTO_BUCKET=${RECIPE_PHOTO_BUCKET},RECIPE_PHOTO_SIGNING_SERVICE_ACCOUNT=${{ env.RUNTIME_SA_EMAIL }}"
             --allow-unauthenticated
             --min-instances 0
             --max-instances 3

@@ -7,6 +7,7 @@ import 'package:mealchemy/core/shared_widgets/atoms/app_text_field.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/core/utils/validators.dart';
+import 'package:mealchemy/core/utils/scroll_helper.dart';
 import '../providers/auth_provider.dart';
 
 class SignupForm extends ConsumerStatefulWidget {
@@ -16,12 +17,18 @@ class SignupForm extends ConsumerStatefulWidget {
   ConsumerState<SignupForm> createState() => _SignupFormState();
 }
 
-class _SignupFormState extends ConsumerState<SignupForm> {
+class _SignupFormState extends ConsumerState<SignupForm> with ScrollHelper {
   // Input controllers for the signup fields
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+
+  // Keys used to scroll the first errored field into view
+  final _nameKey = GlobalKey();
+  final _emailKey = GlobalKey();
+  final _passwordKey = GlobalKey();
+  final _confirmPasswordKey = GlobalKey();
 
   bool _isLoading = false;
   //Validation error variables
@@ -54,9 +61,20 @@ class _SignupFormState extends ConsumerState<SignupForm> {
         _confirmPasswordError == null;
   }
 
+  // Fields in screen order, paired with whether each currently errors
+  List<(GlobalKey, bool)> get _errorFields => [
+        (_nameKey, _nameError != null),
+        (_emailKey, _emailError != null),
+        (_passwordKey, _passwordError != null),
+        (_confirmPasswordKey, _confirmPasswordError != null),
+      ];
+
   //On click register button logic
   Future<void> _handleRegister() async {
-    if (!_validate()) return;
+    if (!_validate()) {
+      scrollToFirstError(_errorFields);
+      return;
+    }
     setState(() => _isLoading = true);
     final success = await ref.read(authProvider.notifier).register(
           _emailController.text.trim(),
@@ -70,6 +88,7 @@ class _SignupFormState extends ConsumerState<SignupForm> {
     } else {
       final error = ref.read(authProvider).errorMessage;
       setState(() => _confirmPasswordError = error);
+      scrollToFirstError(_errorFields);
     }
   }
 
@@ -125,6 +144,7 @@ class _SignupFormState extends ConsumerState<SignupForm> {
 
             //Display name input field
             AppTextField.standard(
+              key: _nameKey,
               hint: 'e.g. Karen Smith',
               label: 'Display Name',
               controller: _nameController,
@@ -139,6 +159,7 @@ class _SignupFormState extends ConsumerState<SignupForm> {
 
             //Email input field
             AppTextField.standard(
+              key: _emailKey,
               hint: 'chef@mealchemy.com',
               label: 'Email Address',
               controller: _emailController,
@@ -151,19 +172,11 @@ class _SignupFormState extends ConsumerState<SignupForm> {
             ),
             const SizedBox(height: 16),
 
-            //Password label
-            Text(
-              'Password',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textLight,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 6),
-
             //Password input field (hiding the text)
             AppTextField.private(
+              key: _passwordKey,
               hint: '........',
+              label: 'Password',
               controller: _passwordController,
               errorText: _passwordError,
               onChanged: (_) {
@@ -174,19 +187,11 @@ class _SignupFormState extends ConsumerState<SignupForm> {
             ),
             const SizedBox(height: 16),
 
-            //Confirm password label
-            Text(
-              'Confirm Password',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textLight,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 6),
-
             //Confirm password input field (hiding the text)
             AppTextField.private(
+              key: _confirmPasswordKey,
               hint: '........',
+              label: 'Confirm Password',
               controller: _confirmPasswordController,
               errorText: _confirmPasswordError,
               onChanged: (_) {

@@ -50,6 +50,7 @@ void main() {
     final list = ShoppingList.fromJson({
       'shopping_list_id': 1,
       'user_id': 3,
+      'num_items': 1,
       'name': 'General List',
       'status': 'ACTIVE',
       'created_at': '2026-07-13T14:00:00Z',
@@ -76,5 +77,31 @@ void main() {
     expect(list.iconType, 'list');
     expect(list.items, hasLength(1));
     expect(list.items.first.name, 'Heirloom Tomatoes');
+    expect(list.numItems, 1);
+    expect(list.itemCount, 1);
+    expect(list.displaySubtitle, '1 items added by you');
+  });
+
+  test('ShoppingList overview uses backend num_items without loading items',
+      () {
+    final list = ShoppingList.fromOverviewJson({
+      'shopping_list_id': 7,
+      'user_id': 3,
+      'name': 'Weekend Braai',
+      'num_items': 5,
+      'status': 'ACTIVE',
+      'created_at': '2026-08-15T08:00:00Z',
+    });
+
+    expect(list.id, '7');
+    expect(list.title, 'Weekend Braai');
+
+    //overview endpoint returns data only, so no detail items loaded
+    expect(list.items, isEmpty);
+
+    //visible count must come from backend
+    expect(list.numItems, 5);
+    expect(list.itemCount, 5);
+    expect(list.displaySubtitle, '5 items added by you');
   });
 }
