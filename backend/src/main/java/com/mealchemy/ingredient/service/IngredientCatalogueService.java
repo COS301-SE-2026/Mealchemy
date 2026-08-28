@@ -1,6 +1,7 @@
 package com.mealchemy.ingredient.service;
 //models
 import com.mealchemy.ingredient.model.IngredientCatalogue;
+import com.mealchemy.category.model.IngredientCategory;
 
 //repositories
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
@@ -61,7 +62,7 @@ public class IngredientCatalogueService {
                                             )).toList();
     }
 
-    // GET - check all names already in catalogue
+    // for user preferneces validation
     public List<String> findExistingIngredientNames(List<String> names) {
         return ingredientCatalogueRepository.findExistingNames(names);
     }
@@ -133,8 +134,4 @@ public class IngredientCatalogueService {
         return ingredientCategoryRepository.save(newCategory);
     }
 
-    // for user preferneces validation
-     public List<String> findExistingIngredientNames(List<String> names) {
-        return ingredientCatalogueRepository.findExistingNames(names);
-    }
 }
