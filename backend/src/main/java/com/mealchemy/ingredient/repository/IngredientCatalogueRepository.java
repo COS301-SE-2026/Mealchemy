@@ -41,4 +41,9 @@ public interface IngredientCatalogueRepository extends JpaRepository<IngredientC
 
     // exact match lookup - use to prevent concurrent saves
     Optional<IngredientCatalogue> findByName(String name);
+
+    @Query("""
+        SELECT c.name FROM IngredientCatalogue c WHERE c.name IN :names
+    """)
+    List<String> findExistingNames(@Param("names") List<String> names);
 }

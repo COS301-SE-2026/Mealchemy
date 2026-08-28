@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.InjectMocks;
 
 import java.util.List;
 import java.math.BigDecimal;
@@ -256,6 +257,26 @@ public class IngredientCatalogueServiceTest {
         assertEquals("Snack", ex.getName());
         //don't save anything
         verify(ingredientCatalogueRepository, never()).save(any());
+    }
+    
+    @Test
+    void findExistingIngredientNames_returnsNamesThatExist() {
+        when(ingredientCatalogueRepository.findExistingNames(List.of("Hummus", "DoesNotExist"))).thenReturn(List.of("Hummus"));
+        
+        List<String> existing = ingredientCatalogueService.findExistingIngredientNames(List.of("Hummus", "DoesNotExist"));
+
+        assertEquals(1, existing.size());
+        assertTrue(existing.contains("Hummus"));
+        verify(ingredientCatalogueRepository, times(1)).findExistingNames(List.of("Hummus", "DoesNotExist"));
+    }
+
+    @Test
+    void findExistingIngredientNames_withEmptyList_returnsEmptyList() {
+        when(ingredientCatalogueRepository.findExistingNames(List.of())).thenReturn(List.of());
+
+       List<String> existing = ingredientCatalogueService.findExistingIngredientNames(List.of());
+
+        assertTrue(existing.isEmpty());
     }
 }
 
