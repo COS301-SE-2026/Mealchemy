@@ -4,7 +4,7 @@ import 'auth_repository.dart';
 import '../models/auth_result.dart';
 import '../models/user.dart';
 
-//Mock implemenation will always return success 
+//Mock implemenation will always return success
 class MockAuthRepository implements AuthRepository {
   @override
   Future<AuthResult> login(String email, String password) async {
@@ -42,7 +42,7 @@ class MockAuthRepository implements AuthRepository {
   Future<void> logout() async {
     await Future.delayed(const Duration(milliseconds: 300));
   }
-  
+
   String _mockToken(int userId) {
     final header = base64Url
         .encode(utf8.encode(jsonEncode({'alg': 'none', 'typ': 'JWT'})))
