@@ -11,6 +11,7 @@ import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/ingredient_catalogue_item.dart';
 import '../providers/pantry_provider.dart';
+import '../repositories/ingredient_catalogue_repository.dart';
 
 const double _blurArea = 240;
 const double _sheetTop = 212;
@@ -287,12 +288,87 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
       if (!mounted) return;
 
       _selectIngredient(importedIngredient);
+    } on ExternalIngredientCategoryRequiredException catch (error) {
+      if (!mounted) return;
+
+      await _chooseCategoryAndRetry(
+        sourceId: error.ingredient.sourceId,
+        ingredientName: error.ingredient.name,
+      );
     } catch (error) {
       if (!mounted) return;
 
       setState(() {
         _isSearchingIngredients = false;
         _ingredientSearchError = 'Could not import this ingredient. Try again.';
+      });
+    }
+  }
+
+  Future<void> _chooseCategoryAndRetry({
+    required String sourceId,
+    required String ingredientName,
+  }) async {
+    try {
+      final repository = ref.read(ingredientCatalogueRepositoryProvider);
+      final categories = await repository.getCategories();
+
+      if (!mounted) return;
+
+      setState(() => _isSearchingIngredients = false);
+
+      final selectedCategoryId = await showDialog<int>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Choose a category'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView(
+                shrinkWrap: true,
+                children: categories
+                    .map(
+                      (category) => ListTile(
+                        title: Text(category.name),
+                        onTap: () => Navigator.of(dialogContext).pop(
+                          category.categoryId,
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (!mounted || selectedCategoryId == null) return;
+
+      setState(() {
+        _isSearchingIngredients = true;
+        _ingredientSearchError = null;
+      });
+
+      final importedIngredient = await repository.importExternalIngredient(
+        sourceId: sourceId,
+        categoryId: selectedCategoryId,
+      );
+
+      if (!mounted) return;
+
+      _selectIngredient(importedIngredient);
+    } catch (error) {
+      if (!mounted) return;
+
+      setState(() {
+        _isSearchingIngredients = false;
+        _ingredientSearchError = 'Could not import $ingredientName. Try again.';
       });
     }
   }
