@@ -265,7 +265,9 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
   }
 
   Future<void> _saveIngredient() async {
-    final hasRequiredFields = _selectedIngredient != null &&
+    final selectedIngredientId = _selectedIngredient?.ingId;
+
+    final hasRequiredFields = selectedIngredientId != null &&
         _nameController.text.trim().isNotEmpty &&
         _selectedUnit != null;
 
@@ -285,7 +287,7 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
 
     try {
       await ref.read(pantryStateProvider.notifier).addIngredient(
-            ingId: _selectedIngredient!.ingId,
+            ingId: selectedIngredientId,
             quantity: '$_quantity',
             unit: _selectedUnit!,
           );
@@ -446,12 +448,17 @@ class _IngredientSearchResults extends StatelessWidget {
               ),
             ),
             subtitle: Text(
-              _formatCategory(ingredient.category),
+              _formatCategory(
+                ingredient.category ??
+                    '${ingredient.sourceApi ?? 'External'} result',
+              ),
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textMuted,
               ),
             ),
-            onTap: () => onSelected(ingredient),
+            //external results must be imported before they can be selected
+            onTap:
+                ingredient.requiresImport ? null : () => onSelected(ingredient),
           ),
         );
       }).toList(),
