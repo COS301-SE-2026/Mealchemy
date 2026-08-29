@@ -178,6 +178,7 @@
                     <exclude>**/model/**/*.class</exclude>
                     <exclude>**/dto/**/*.class</exclude>
                     <exclude>**/pantry/**/*.class</exclude>
+					<exclude>**/external/NutritionalDataProvider.class</exclude>
                 </excludes>
 				</configuration>
 				<executions>
