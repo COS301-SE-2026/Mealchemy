@@ -93,7 +93,7 @@ public class NutritionDataAdapterTest {
         UsdaSearchFood food1 = new UsdaSearchFood(123L, "Food 1", "Branded", List.of(new UsdaShortNutrient(1008, "Energy", 15.0, "KCAL")));
         UsdaSearchFood food2 = new UsdaSearchFood(456L, "Food 2", "Branded", List.of(new UsdaShortNutrient(1008, "Energy", 27.0, "KCAL")));
 
-        when(usdaApiClient.searchFoods("Food")).thenReturn(new UsdaSearchResponse(List.of(food1, food2)));
+        when(usdaApiClient.searchFoods("food")).thenReturn(new UsdaSearchResponse(List.of(food1, food2)));
 
         // Act
         List<ExternalIngredientItemResponse> results = nutritionDataAdapter.findExternalIngredient("food");
