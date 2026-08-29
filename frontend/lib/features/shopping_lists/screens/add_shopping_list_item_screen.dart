@@ -284,12 +284,55 @@ class _AddShoppingListItemScreenState
     }
   }
 
-  void _selectIngredient(IngredientCatalogueItem ingredient) {
+  Future<void> _selectIngredient(
+    IngredientCatalogueItem ingredient,
+  ) async {
+    if (!ingredient.requiresImport) {
+      _setSelectedIngredient(ingredient);
+      return;
+    }
+
+    final sourceId = ingredient.sourceId;
+
+    if (sourceId == null || sourceId.isEmpty) {
+      setState(() {
+        _searchError =
+            'This external ingredient cannot be imported. Try another item.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isSearching = true;
+      _searchError = null;
+    });
+
+    try {
+      final importedIngredient = await ref
+          .read(ingredientCatalogueRepositoryProvider)
+          .importExternalIngredient(sourceId: sourceId);
+
+      if (!mounted) return;
+
+      _setSelectedIngredient(importedIngredient);
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isSearching = false;
+        _searchError = 'Could not import this ingredient. Try again.';
+      });
+    }
+  }
+
+  void _setSelectedIngredient(IngredientCatalogueItem ingredient) {
     setState(() {
       _selectedIngredient = ingredient;
       _catalogueController.text = ingredient.name;
       _ingredientOptions = [];
       _identityError = null;
+      _searchError = null;
+      _isSearching = false;
     });
   }
 
@@ -455,9 +498,8 @@ class _CatalogueResults extends StatelessWidget {
               color: AppColors.textMuted,
             ),
           ),
-          //external results need importing before another feature can use them
-          onTap:
-              ingredient.requiresImport ? null : () => onSelected(ingredient),
+          //external results imported before being selected
+          onTap: () => onSelected(ingredient),
         );
       }).toList(),
     );

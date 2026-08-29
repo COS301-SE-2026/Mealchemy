@@ -16,10 +16,15 @@ import 'package:mealchemy/features/shopping_lists/screens/add_shopping_list_item
 class _FakeIngredientCatalogueRepository extends IngredientCatalogueRepository {
   _FakeIngredientCatalogueRepository({
     this.shouldFail = false,
+    this.returnExternalIngredient = false,
   }) : super(Dio());
 
   final bool shouldFail;
+  final bool returnExternalIngredient;
+
   String? lastSearchQuery;
+  String? lastImportedSourceId;
+  int? lastImportedCategoryId;
 
   @override
   Future<List<IngredientCatalogueItem>> searchIngredients(String query) async {
@@ -29,6 +34,18 @@ class _FakeIngredientCatalogueRepository extends IngredientCatalogueRepository {
       throw Exception('Catalogue unavailable.');
     }
 
+    if (returnExternalIngredient) {
+      return const [
+        IngredientCatalogueItem(
+          ingId: null,
+          name: 'Kimchi',
+          category: null,
+          sourceId: '2710077',
+          sourceApi: 'USDA',
+        ),
+      ];
+    }
+
     return const [
       IngredientCatalogueItem(
         ingId: 12,
@@ -36,6 +53,21 @@ class _FakeIngredientCatalogueRepository extends IngredientCatalogueRepository {
         category: 'Dairy',
       ),
     ];
+  }
+
+  @override
+  Future<IngredientCatalogueItem> importExternalIngredient({
+    required String sourceId,
+    int? categoryId,
+  }) async {
+    lastImportedSourceId = sourceId;
+    lastImportedCategoryId = categoryId;
+
+    return const IngredientCatalogueItem(
+      ingId: 25,
+      name: 'Kimchi',
+      category: 'Vegetables',
+    );
   }
 }
 
@@ -101,6 +133,7 @@ void main() {
   Future<_ScreenHarness> pumpEntryScreen(
     WidgetTester tester, {
     bool catalogueShouldFail = false,
+    bool catalogueReturnsExternal = false,
     bool shoppingShouldFail = false,
   }) async {
     tester.view.physicalSize = const Size(1080, 2400);
@@ -116,6 +149,7 @@ void main() {
     );
     final catalogueRepository = _FakeIngredientCatalogueRepository(
       shouldFail: catalogueShouldFail,
+      returnExternalIngredient: catalogueReturnsExternal,
     );
 
     final router = GoRouter(
@@ -292,6 +326,34 @@ void main() {
     expect(harness.shoppingRepository.addedName, isNull);
     expect(harness.shoppingRepository.addedQuantity, '1.5');
     expect(harness.shoppingRepository.addedUnit, 'L');
+  });
+
+  testWidgets('imports and selects a USDA catalogue ingredient', (
+    tester,
+  ) async {
+    final harness = await pumpEntryScreen(
+      tester,
+      catalogueReturnsExternal: true,
+    );
+
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Search catalogue, e.g. Chicken Breast',
+      ),
+      'kimchi',
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Kimchi'), findsOneWidget);
+    expect(find.text('USDA result'), findsOneWidget);
+
+    await tester.tap(find.text('Kimchi'));
+    await tester.pumpAndSettle();
+
+    expect(harness.catalogueRepository.lastImportedSourceId, '2710077');
+    expect(harness.catalogueRepository.lastImportedCategoryId, isNull);
+    expect(find.text('Category: Vegetables'), findsOneWidget);
   });
 
   testWidgets('submits a custom item without an ingredient id', (
