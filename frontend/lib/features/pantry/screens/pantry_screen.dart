@@ -448,7 +448,7 @@ Future<void> _showEditPantryIngredientDialog({
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
-                        'Select a catalogue ingredient, quantity and unit.',
+                        'Quantity and unit are required.',
                         style: AppTextStyles.bodySmall.copyWith(
                           color: AppColors.error,
                         ),
