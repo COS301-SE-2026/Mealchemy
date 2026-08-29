@@ -8,6 +8,79 @@ import 'package:mealchemy/features/pantry/repositories/mock_pantry_repository.da
 import 'package:mealchemy/features/pantry/screens/pantry_screen.dart';
 import 'package:mealchemy/features/pantry/widgets/pantry_item_card.dart';
 import 'package:mealchemy/features/pantry/models/pantry_summary.dart';
+import 'package:dio/dio.dart';
+import 'package:mealchemy/features/pantry/models/ingredient_catalogue_item.dart';
+import 'package:mealchemy/features/pantry/repositories/ingredient_catalogue_repository.dart';
+import 'package:mealchemy/features/pantry/models/ingredient_category.dart';
+import 'package:mealchemy/features/pantry/models/pending_external_ingredient.dart';
+
+class _ExternalIngredientCatalogueRepository
+    extends IngredientCatalogueRepository {
+  _ExternalIngredientCatalogueRepository({
+    this.requiresCategory = false,
+  }) : super(Dio());
+
+  final bool requiresCategory;
+
+  String? lastImportedSourceId;
+  int? lastImportedCategoryId;
+  final List<int?> importedCategoryIds = [];
+  int categoryRequestCount = 0;
+
+  @override
+  Future<List<IngredientCatalogueItem>> searchIngredients(String query) async {
+    return const [
+      IngredientCatalogueItem(
+        ingId: null,
+        name: 'Kimchi',
+        category: null,
+        sourceId: '2710077',
+        sourceApi: 'USDA',
+      ),
+    ];
+  }
+
+  @override
+  Future<IngredientCatalogueItem> importExternalIngredient({
+    required String sourceId,
+    int? categoryId,
+  }) async {
+    lastImportedSourceId = sourceId;
+    lastImportedCategoryId = categoryId;
+    importedCategoryIds.add(categoryId);
+
+    if (requiresCategory && categoryId == null) {
+      throw const ExternalIngredientCategoryRequiredException(
+        PendingExternalIngredient(
+          sourceId: '2710077',
+          name: 'Kimchi',
+        ),
+      );
+    }
+
+    return IngredientCatalogueItem(
+      ingId: 25,
+      name: 'Kimchi',
+      category: categoryId == null ? 'Vegetables' : 'Dairy',
+    );
+  }
+
+  @override
+  Future<List<IngredientCategory>> getCategories() async {
+    categoryRequestCount++;
+
+    return const [
+      IngredientCategory(
+        categoryId: 1,
+        name: 'Baked Products',
+      ),
+      IngredientCategory(
+        categoryId: 4,
+        name: 'Dairy',
+      ),
+    ];
+  }
+}
 
 class _EditingPantryRepository extends MockPantryRepository {
   @override
@@ -84,6 +157,7 @@ void main() {
   Future<void> pumpPantryScreen(
     WidgetTester tester, {
     MockPantryRepository? pantryRepository,
+    IngredientCatalogueRepository? catalogueRepository,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -91,6 +165,10 @@ void main() {
           pantryRepositoryProvider.overrideWithValue(
             pantryRepository ?? MockPantryRepository(),
           ),
+          if (catalogueRepository != null)
+            ingredientCatalogueRepositoryProvider.overrideWithValue(
+              catalogueRepository,
+            ),
         ],
         child: const MaterialApp(
           home: PantryScreen(),
@@ -478,4 +556,123 @@ void main() {
 
     expect(find.text('Chicken Breast'), findsNothing);
   });
+
+  testWidgets('PantryScreen imports USDA result in edit dialog', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final catalogueRepository = _ExternalIngredientCatalogueRepository();
+
+    await pumpPantryScreen(
+      tester,
+      catalogueRepository: catalogueRepository,
+    );
+
+    final chickenCard = find.ancestor(
+      of: find.text('Chicken Breast'),
+      matching: find.byType(PantryItemCard),
+    );
+
+    final editIcon = find.descendant(
+      of: chickenCard,
+      matching: find.byIcon(Icons.edit_outlined),
+    );
+
+    await tester.ensureVisible(chickenCard);
+    await tester.pumpAndSettle();
+
+    await tester.tap(editIcon, warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'kimchi');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Kimchi'), findsOneWidget);
+    expect(find.text('USDA result'), findsOneWidget);
+
+    await tester.tap(find.text('Kimchi'));
+    await tester.pumpAndSettle();
+
+    expect(catalogueRepository.lastImportedSourceId, '2710077');
+    expect(catalogueRepository.lastImportedCategoryId, isNull);
+    expect(find.text('Could not import this ingredient.'), findsNothing);
+  });
+
+  testWidgets(
+    'PantryScreen chooses category and retries USDA import in edit dialog',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(430, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final catalogueRepository = _ExternalIngredientCatalogueRepository(
+        requiresCategory: true,
+      );
+
+      await pumpPantryScreen(
+        tester,
+        catalogueRepository: catalogueRepository,
+      );
+
+      final chickenCard = find.ancestor(
+        of: find.text('Chicken Breast'),
+        matching: find.byType(PantryItemCard),
+      );
+
+      final editIcon = find.descendant(
+        of: chickenCard,
+        matching: find.byIcon(Icons.edit_outlined),
+      );
+
+      await tester.ensureVisible(chickenCard);
+      await tester.pumpAndSettle();
+
+      await tester.tap(editIcon, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byType(TextField).first,
+        'kimchi',
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Kimchi'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Choose a category'), findsOneWidget);
+
+      final categoryDialog = find.widgetWithText(
+        AlertDialog,
+        'Choose a category',
+      );
+
+      final bakedProductsOption = find.descendant(
+        of: categoryDialog,
+        matching: find.text('Baked Products'),
+      );
+
+      final dairyOption = find.descendant(
+        of: categoryDialog,
+        matching: find.text('Dairy'),
+      );
+
+      expect(bakedProductsOption, findsOneWidget);
+      expect(dairyOption, findsOneWidget);
+      expect(catalogueRepository.categoryRequestCount, 1);
+
+      await tester.tap(dairyOption);
+      await tester.pumpAndSettle();
+
+      expect(
+        catalogueRepository.importedCategoryIds,
+        [null, 4],
+      );
+      expect(find.text('Choose a category'), findsNothing);
+      expect(
+        catalogueRepository.lastImportedCategoryId,
+        4,
+      );
+    },
+  );
 }
