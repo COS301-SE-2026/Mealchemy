@@ -297,9 +297,10 @@ class _AddShoppingListItemScreenState
     final quantityText = _quantityController.text.trim();
     final parsedQuantity = num.tryParse(quantityText);
     final customName = _customNameController.text.trim();
+    final selectedIngredientId = _selectedIngredient?.ingId;
 
     final hasValidIdentity = _mode == _ItemEntryMode.catalogue
-        ? _selectedIngredient != null
+        ? selectedIngredientId != null
         : customName.isNotEmpty;
 
     final hasValidQuantity = parsedQuantity != null && parsedQuantity > 0;
@@ -332,9 +333,8 @@ class _AddShoppingListItemScreenState
 
       await ref.read(shoppingListsProvider.notifier).addItemToList(
             listId: widget.listId,
-            ingId: _mode == _ItemEntryMode.catalogue
-                ? _selectedIngredient!.ingId
-                : null,
+            ingId:
+                _mode == _ItemEntryMode.catalogue ? selectedIngredientId : null,
             name: _mode == _ItemEntryMode.custom ? customName : null,
             quantity: quantityText,
             // The provider currently calls this category for legacy reasons,
@@ -449,12 +449,15 @@ class _CatalogueResults extends StatelessWidget {
             ),
           ),
           subtitle: Text(
-            ingredient.category,
+            ingredient.category ??
+                '${ingredient.sourceApi ?? 'External'} result',
             style: AppTextStyles.bodySmall.copyWith(
               color: AppColors.textMuted,
             ),
           ),
-          onTap: () => onSelected(ingredient),
+          //external results need importing before another feature can use them
+          onTap:
+              ingredient.requiresImport ? null : () => onSelected(ingredient),
         );
       }).toList(),
     );
