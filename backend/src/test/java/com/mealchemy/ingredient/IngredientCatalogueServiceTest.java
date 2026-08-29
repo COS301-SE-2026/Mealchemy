@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.InjectMocks;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class IngredientCatalogueServiceTest {
     // @Mock - create fake version of dependency
     @Mock private IngredientCatalogueRepository ingredientCatalogueRepository;
 
-    // @InjectMocks creates the real IngredientCatalogueServiceTest and injects the mocks above into it - actually testing IngredientCatalogueService
+    @InjectMocks // creates the real IngredientCatalogueServiceTest and injects the mocks above into it - actually testing IngredientCatalogueService
     private IngredientCatalogueService ingredientCatalogueService;
 
     private IngredientCatalogueResponse hummusResponse;
@@ -79,6 +80,26 @@ public class IngredientCatalogueServiceTest {
 
         // Assert
         assertTrue(response.isEmpty());
+    }
+
+    @Test
+    void findExistingIngredientNames_returnsNamesThatExist() {
+        when(ingredientCatalogueRepository.findExistingNames(List.of("Hummus", "DoesNotExist"))).thenReturn(List.of("Hummus"));
+        
+        List<String> existing = ingredientCatalogueService.findExistingIngredientNames(List.of("Hummus", "DoesNotExist"));
+
+        assertEquals(1, existing.size());
+        assertTrue(existing.contains("Hummus"));
+        verify(ingredientCatalogueRepository, times(1)).findExistingNames(List.of("Hummus", "DoesNotExist"));
+    }
+
+    @Test
+    void findExistingIngredientNames_withEmptyList_returnsEmptyList() {
+        when(ingredientCatalogueRepository.findExistingNames(List.of())).thenReturn(List.of());
+
+       List<String> existing = ingredientCatalogueService.findExistingIngredientNames(List.of());
+
+        assertTrue(existing.isEmpty());
     }
 }
 

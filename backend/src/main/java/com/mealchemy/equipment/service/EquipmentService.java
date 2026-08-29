@@ -25,4 +25,9 @@ public class EquipmentService {
     public List<EquipmentResponse> getAllEquipmentOptions() {
         return equipmentRepository.getAllEquipment();
     }
+
+    // for user profile 
+    public List<String> getValidEquipmentValues() {
+        return equipmentRepository.getAllEquipmentValues();
+    }
 }
