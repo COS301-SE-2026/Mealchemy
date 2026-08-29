@@ -23,6 +23,31 @@ void main() {
           final isImportRequest =
               options.path == '/api/ingredient-catalogue/add-external';
 
+          final importData = options.data;
+
+          final needsCategory = isImportRequest &&
+              importData is Map &&
+              importData['source_id'] == 'requires-category' &&
+              importData['category_id'] == null;
+
+          if (needsCategory) {
+            handler.reject(
+              DioException(
+                requestOptions: options,
+                response: Response(
+                  requestOptions: options,
+                  statusCode: 422,
+                  data: {
+                    'source_id': 'requires-category',
+                    'name': 'Kimchi',
+                  },
+                ),
+                type: DioExceptionType.badResponse,
+              ),
+            );
+            return;
+          }
+
           handler.resolve(
             Response(
               requestOptions: options,
@@ -158,6 +183,51 @@ void main() {
     expect(lastRequest?.data, {
       'source_id': '2710077',
       'category_id': null,
+    });
+
+    expect(ingredient.ingId, 25);
+    expect(ingredient.name, 'Kimchi');
+    expect(ingredient.category, 'Vegetables');
+    expect(ingredient.requiresImport, isFalse);
+  });
+
+  test('importExternalIngredient exposes category-required response', () async {
+    try {
+      await repository.importExternalIngredient(
+        sourceId: 'requires-category',
+      );
+
+      fail('Expected category-required exception.');
+    } on ExternalIngredientCategoryRequiredException catch (error) {
+      expect(lastRequest?.method, 'POST');
+      expect(
+        lastRequest?.path,
+        '/api/ingredient-catalogue/add-external',
+      );
+      expect(lastRequest?.data, {
+        'source_id': 'requires-category',
+        'category_id': null,
+      });
+
+      expect(error.ingredient.sourceId, 'requires-category');
+      expect(error.ingredient.name, 'Kimchi');
+    }
+  });
+
+  test('importExternalIngredient retries with selected category id', () async {
+    final ingredient = await repository.importExternalIngredient(
+      sourceId: 'requires-category',
+      categoryId: 4,
+    );
+
+    expect(lastRequest?.method, 'POST');
+    expect(
+      lastRequest?.path,
+      '/api/ingredient-catalogue/add-external',
+    );
+    expect(lastRequest?.data, {
+      'source_id': 'requires-category',
+      'category_id': 4,
     });
 
     expect(ingredient.ingId, 25);

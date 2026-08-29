@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../models/ingredient_catalogue_item.dart';
 import '../models/ingredient_category.dart';
+import '../models/pending_external_ingredient.dart';
 
 //talks to the backend ingredient catalogue endpoints
 class IngredientCatalogueRepository {
@@ -48,23 +49,40 @@ class IngredientCatalogueRepository {
     required String sourceId,
     int? categoryId,
   }) async {
-    final response = await _dio.post<Map<String, dynamic>>(
-      '/api/ingredient-catalogue/add-external',
-      data: {
-        'source_id': sourceId,
-        'category_id': categoryId,
-      },
-    );
-
-    final data = response.data;
-
-    if (data == null) {
-      throw const FormatException(
-        'External ingredient import returned no data.',
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/api/ingredient-catalogue/add-external',
+        data: {
+          'source_id': sourceId,
+          'category_id': categoryId,
+        },
       );
-    }
 
-    return IngredientCatalogueItem.fromJson(data);
+      final data = response.data;
+
+      if (data == null) {
+        throw const FormatException(
+          'External ingredient import returned no data.',
+        );
+      }
+
+      return IngredientCatalogueItem.fromJson(data);
+    } on DioException catch (error) {
+      final response = error.response;
+
+      if (response?.statusCode == 422 && response?.data is Map) {
+        final pendingData = Map<String, dynamic>.from(
+          response!.data as Map,
+        );
+
+        throw ExternalIngredientCategoryRequiredException(
+          PendingExternalIngredient.fromJson(pendingData),
+        );
+      }
+
+      //anything other than expected 422 remains a normal API error
+      rethrow;
+    }
   }
 
   List<IngredientCatalogueItem> _itemsFromResponse(List<dynamic>? data) {
@@ -76,4 +94,11 @@ class IngredientCatalogueRepository {
             ))
         .toList();
   }
+}
+
+//signals to UI that import must be retried after choosing category
+class ExternalIngredientCategoryRequiredException implements Exception {
+  const ExternalIngredientCategoryRequiredException(this.ingredient);
+
+  final PendingExternalIngredient ingredient;
 }
