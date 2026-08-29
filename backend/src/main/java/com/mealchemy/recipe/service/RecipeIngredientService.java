@@ -17,6 +17,10 @@ import com.mealchemy.recipe.dto.RecipeIngredientResponse;
 import com.mealchemy.recipe.repository.RecipeIngredientRepository;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
+import com.mealchemy.profile.repository.UserProfileRepository;
+import com.mealchemy.profile.model.UserProfile;
+import com.mealchemy.shared.enums.PreferredUnit;
+import com.mealchemy.shared.unitconverter.UnitConverter;
 
 @Service
 public class RecipeIngredientService 
@@ -27,16 +31,23 @@ public class RecipeIngredientService
 
     private final IngredientCatalogueRepository ingredientCatalogueRepository;
 
-    public RecipeIngredientService(RecipeIngredientRepository recipeIngredientRepository, RecipeRepository recipeRepository, IngredientCatalogueRepository ingredientCatalogueRepository)
+    private final UserProfileRepository userProfileRepository;
+
+    public RecipeIngredientService(RecipeIngredientRepository recipeIngredientRepository, RecipeRepository recipeRepository, IngredientCatalogueRepository ingredientCatalogueRepository, UserProfileRepository userProfileRepository)
     {
         this.recipeIngredientRepository = recipeIngredientRepository;
         this.recipeRepository = recipeRepository;
         this.ingredientCatalogueRepository = ingredientCatalogueRepository;
+        this.userProfileRepository = userProfileRepository;
     }
 
     // Retrieve all ingredients relating to a specific recipe
-    public List<RecipeIngredientResponse> getAllIngredientsByRecipeId(Integer recipeId)
+    public List<RecipeIngredientResponse> getAllIngredientsByRecipeId(Integer recipeId, Integer userId)
     {
+        PreferredUnit preferredUnit = userProfileRepository.findByUserId(userId).map(UserProfile::getPreferredUnit)
+                                                                               .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User profile not found."));
+
+
         List<RecipeIngredient> recipeIngredients = recipeIngredientRepository.findByRecipe_RecipeId(recipeId);
 
         List<Integer> ingIds = recipeIngredients.stream().map(RecipeIngredient::getIngId).distinct().toList();
@@ -44,7 +55,11 @@ public class RecipeIngredientService
         Map<Integer, String> ingredientNamesById = ingredientCatalogueRepository.findAllById(ingIds).stream()
         .collect(Collectors.toMap(IngredientCatalogue::getIngId, IngredientCatalogue::getName));
 
-        return recipeIngredients.stream().map(ri -> RecipeIngredientResponse.from(ri, ingredientNamesById.getOrDefault(ri.getIngId(), "Unknown Ingredient")))
+        return recipeIngredients.stream().map(ri -> {
+            UnitConverter.NormalisedQuantity displayQuantity = UnitConverter.convertToUsersPreferredUnit(ri.getQuantity(), ri.getUnit(), preferredUnit);
+
+            return RecipeIngredientResponse.from(ri, ingredientNamesById.getOrDefault(ri.getIngId(), "Unknown Ingredient"), displayQuantity);
+        })
         .collect(Collectors.toList());
     }
 
@@ -89,9 +104,12 @@ public class RecipeIngredientService
         IngredientCatalogue ingredientCatalogue = ingredientCatalogueRepository.findById(request.ingId())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "The ingredient you want to change to does not exist."));
 
+        // Normalise the quantity and unit
+        UnitConverter.NormalisedQuantity normalised = UnitConverter.normaliseIngredient(request.quantity(), request.unit());
+
         recipeIngredientForReturn.setIngId(request.ingId());
-        recipeIngredientForReturn.setQuantity(request.quantity());
-        recipeIngredientForReturn.setUnit(request.unit());
+        recipeIngredientForReturn.setQuantity(normalised.quantity());
+        recipeIngredientForReturn.setUnit(normalised.unit());
         recipeIngredientForReturn.setSortOrder(request.sortOrder());
 
         RecipeIngredient saved = recipeIngredientRepository.save(recipeIngredientForReturn);
@@ -124,10 +142,12 @@ public class RecipeIngredientService
     {
         RecipeIngredient recipeIngredient = new RecipeIngredient();
 
+        UnitConverter.NormalisedQuantity normalised = UnitConverter.normaliseIngredient(request.quantity(), request.unit());
+
         recipeIngredient.setRecipe(recipe);
         recipeIngredient.setIngId(request.ingId());
-        recipeIngredient.setQuantity(request.quantity());
-        recipeIngredient.setUnit(request.unit());
+        recipeIngredient.setQuantity(normalised.quantity());
+        recipeIngredient.setUnit(normalised.unit());
         recipeIngredient.setSortOrder(request.sortOrder());
 
         return recipeIngredient;
