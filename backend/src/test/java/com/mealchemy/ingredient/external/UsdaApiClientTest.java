@@ -32,7 +32,7 @@ public class UsdaApiClientTest {
                     "foods": [
                         {
                             "fdcId": 2710077,
-                            "description": "Kimchi",
+                            "description": "kimchi",
                             "dataType": "Branded",
                             "foodNutrients": [
                                 { "number": 1008, "name": "Energy", "amount": 15.0, "unitName": "KCAL" }
@@ -45,11 +45,11 @@ public class UsdaApiClientTest {
         mockServer.expect(requestTo(containsString("foods/search"))).andRespond(withSuccess(jsonResponse, MediaType.APPLICATION_JSON));
 
         // Act 
-        UsdaSearchResponse response = usdaApiClient.searchFoods("Kimchi");
+        UsdaSearchResponse response = usdaApiClient.searchFoods("kimchi");
 
         // Assert
         assertEquals(1, response.foods().size());
-        assertEquals("Kimchi", response.foods().get(0).description());
+        assertEquals("kimchi", response.foods().get(0).description());
         assertEquals(1008, response.foods().get(0).foodNutrients().get(0).number());
         mockServer.verify();       
     }
@@ -60,7 +60,7 @@ public class UsdaApiClientTest {
         String jsonResponse = """
                 {
                     "fdcId": 2710077,
-                    "description": "Kimchi",
+                    "description": "kimchi",
                     "dataType": "Foundation",
                     "foodCategory": { "id": 11, "code": "1100", "description": "Vegetables and Vegetable Products" },
                     "foodNutrients": [
@@ -75,7 +75,7 @@ public class UsdaApiClientTest {
         UsdaFoodDetail foodDetails = usdaApiClient.getFoodDetails("2710077");
 
         // Assert
-        assertEquals("Kimchi", foodDetails.description());
+        assertEquals("kimchi", foodDetails.description());
         assertEquals("Vegetables and Vegetable Products", foodDetails.foodCategory().description());
         mockServer.verify();       
     }
@@ -87,7 +87,7 @@ public class UsdaApiClientTest {
         mockServer.expect(requestTo(containsString("foods/search"))).andRespond(withServerError());
 
         //Assert
-        asserThrows(NutritionalProviderException.class, () -> usdaApiClient.searchFoods("Kimchi"));      
+        assertThrows(NutritionProviderException.class, () -> usdaApiClient.searchFoods("kimchi"));      
     }
 
 }

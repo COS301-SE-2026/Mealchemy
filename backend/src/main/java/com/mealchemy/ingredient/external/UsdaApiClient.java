@@ -11,8 +11,7 @@ public class UsdaApiClient {
     private final String apiKey;
 
     public UsdaApiClient(RestClient.Builder restClientBuilder, @Value("${usda.api.base-url}") String baseUrl, @Value("${usda.api.key}") String apiKey) {
-        this.restClient = RestClient.builder().baseUrl(baseUrl).build();
-        this.restClient = restClient;
+        this.restClient = restClientBuilder.baseUrl(baseUrl).build();
         this.apiKey = apiKey;
     }
 
