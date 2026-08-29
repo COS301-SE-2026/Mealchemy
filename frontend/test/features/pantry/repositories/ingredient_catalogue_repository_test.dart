@@ -20,51 +20,59 @@ void main() {
           final isSearchRequest =
               options.path == '/api/ingredient-catalogue/search';
           final isCategoriesRequest = options.path == '/api/categories';
+          final isImportRequest =
+              options.path == '/api/ingredient-catalogue/add-external';
 
           handler.resolve(
             Response(
               requestOptions: options,
               statusCode: 200,
-              data: isCategoriesRequest
-                  ? [
-                      {
-                        'category_id': 1,
-                        'name': 'Baked Products',
-                      },
-                      {
-                        'category_id': 4,
-                        'name': 'Dairy',
-                      },
-                    ]
-                  : isSearchRequest
+              data: isImportRequest
+                  ? {
+                      'ing_id': 25,
+                      'name': 'Kimchi',
+                      'category': 'Vegetables',
+                    }
+                  : isCategoriesRequest
                       ? [
                           {
-                            'ing_id': 10,
-                            'name': 'Milk',
-                            'category': 'Dairy',
-                            'source_id': null,
-                            'source_api': null,
+                            'category_id': 1,
+                            'name': 'Baked Products',
                           },
                           {
-                            'ing_id': null,
-                            'name': 'Kimchi',
-                            'category': null,
-                            'source_id': '2710077',
-                            'source_api': 'USDA',
+                            'category_id': 4,
+                            'name': 'Dairy',
                           },
                         ]
-                      : [
-                          {
-                            'ing_id': 10,
-                            'name': 'Milk',
-                            'category': 'Dairy',
-                          },
-                          {
-                            'ing_id': '11',
-                            'name': 'Chicken Breast',
-                            'category': 'poultry',
-                          },
-                        ],
+                      : isSearchRequest
+                          ? [
+                              {
+                                'ing_id': 10,
+                                'name': 'Milk',
+                                'category': 'Dairy',
+                                'source_id': null,
+                                'source_api': null,
+                              },
+                              {
+                                'ing_id': null,
+                                'name': 'Kimchi',
+                                'category': null,
+                                'source_id': '2710077',
+                                'source_api': 'USDA',
+                              },
+                            ]
+                          : [
+                              {
+                                'ing_id': 10,
+                                'name': 'Milk',
+                                'category': 'Dairy',
+                              },
+                              {
+                                'ing_id': '11',
+                                'name': 'Chicken Breast',
+                                'category': 'poultry',
+                              },
+                            ],
             ),
           );
         },
@@ -134,5 +142,27 @@ void main() {
 
     expect(categories.last.categoryId, 4);
     expect(categories.last.name, 'Dairy');
+  });
+
+  test('importExternalIngredient posts source and nullable category id',
+      () async {
+    final ingredient = await repository.importExternalIngredient(
+      sourceId: '2710077',
+    );
+
+    expect(lastRequest?.method, 'POST');
+    expect(
+      lastRequest?.path,
+      '/api/ingredient-catalogue/add-external',
+    );
+    expect(lastRequest?.data, {
+      'source_id': '2710077',
+      'category_id': null,
+    });
+
+    expect(ingredient.ingId, 25);
+    expect(ingredient.name, 'Kimchi');
+    expect(ingredient.category, 'Vegetables');
+    expect(ingredient.requiresImport, isFalse);
   });
 }

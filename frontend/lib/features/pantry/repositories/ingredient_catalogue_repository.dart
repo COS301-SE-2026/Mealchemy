@@ -43,6 +43,30 @@ class IngredientCatalogueRepository {
         .toList();
   }
 
+  //imports USDA result into local catalogue
+  Future<IngredientCatalogueItem> importExternalIngredient({
+    required String sourceId,
+    int? categoryId,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/api/ingredient-catalogue/add-external',
+      data: {
+        'source_id': sourceId,
+        'category_id': categoryId,
+      },
+    );
+
+    final data = response.data;
+
+    if (data == null) {
+      throw const FormatException(
+        'External ingredient import returned no data.',
+      );
+    }
+
+    return IngredientCatalogueItem.fromJson(data);
+  }
+
   List<IngredientCatalogueItem> _itemsFromResponse(List<dynamic>? data) {
     final items = data ?? [];
 
