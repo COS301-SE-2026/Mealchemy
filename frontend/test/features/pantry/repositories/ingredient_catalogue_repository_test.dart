@@ -19,40 +19,52 @@ void main() {
 
           final isSearchRequest =
               options.path == '/api/ingredient-catalogue/search';
+          final isCategoriesRequest = options.path == '/api/categories';
 
           handler.resolve(
             Response(
               requestOptions: options,
               statusCode: 200,
-              data: isSearchRequest
+              data: isCategoriesRequest
                   ? [
                       {
-                        'ing_id': 10,
-                        'name': 'Milk',
-                        'category': 'Dairy',
-                        'source_id': null,
-                        'source_api': null,
+                        'category_id': 1,
+                        'name': 'Baked Products',
                       },
                       {
-                        'ing_id': null,
-                        'name': 'Kimchi',
-                        'category': null,
-                        'source_id': '2710077',
-                        'source_api': 'USDA',
+                        'category_id': 4,
+                        'name': 'Dairy',
                       },
                     ]
-                  : [
-                      {
-                        'ing_id': 10,
-                        'name': 'Milk',
-                        'category': 'Dairy',
-                      },
-                      {
-                        'ing_id': '11',
-                        'name': 'Chicken Breast',
-                        'category': 'poultry',
-                      },
-                    ],
+                  : isSearchRequest
+                      ? [
+                          {
+                            'ing_id': 10,
+                            'name': 'Milk',
+                            'category': 'Dairy',
+                            'source_id': null,
+                            'source_api': null,
+                          },
+                          {
+                            'ing_id': null,
+                            'name': 'Kimchi',
+                            'category': null,
+                            'source_id': '2710077',
+                            'source_api': 'USDA',
+                          },
+                        ]
+                      : [
+                          {
+                            'ing_id': 10,
+                            'name': 'Milk',
+                            'category': 'Dairy',
+                          },
+                          {
+                            'ing_id': '11',
+                            'name': 'Chicken Breast',
+                            'category': 'poultry',
+                          },
+                        ],
             ),
           );
         },
@@ -109,5 +121,18 @@ void main() {
 
     expect(lastRequest, isNull);
     expect(ingredients, isEmpty);
+  });
+
+  test('getCategories maps backend category options', () async {
+    final categories = await repository.getCategories();
+
+    expect(lastRequest?.path, '/api/categories');
+    expect(categories, hasLength(2));
+
+    expect(categories.first.categoryId, 1);
+    expect(categories.first.name, 'Baked Products');
+
+    expect(categories.last.categoryId, 4);
+    expect(categories.last.name, 'Dairy');
   });
 }

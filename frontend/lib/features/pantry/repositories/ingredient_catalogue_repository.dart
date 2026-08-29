@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../models/ingredient_catalogue_item.dart';
+import '../models/ingredient_category.dart';
 
 //talks to the backend ingredient catalogue endpoints
 class IngredientCatalogueRepository {
@@ -26,6 +27,20 @@ class IngredientCatalogueRepository {
     );
 
     return _itemsFromResponse(response.data);
+  }
+
+  //loads the category choices used when USDA cannot determine a category
+  Future<List<IngredientCategory>> getCategories() async {
+    final response = await _dio.get<List<dynamic>>('/api/categories');
+    final categories = response.data ?? [];
+
+    return categories
+        .map(
+          (category) => IngredientCategory.fromJson(
+            category as Map<String, dynamic>,
+          ),
+        )
+        .toList();
   }
 
   List<IngredientCatalogueItem> _itemsFromResponse(List<dynamic>? data) {
