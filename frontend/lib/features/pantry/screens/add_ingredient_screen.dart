@@ -255,12 +255,55 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
     }
   }
 
-  //locks in a catalogue ingredient so save files its real ing_id
-  void _onIngredientSelected(IngredientCatalogueItem item) {
+  //local items can be selected immediately, USDA items imported first
+  Future<void> _onIngredientSelected(
+    IngredientCatalogueItem item,
+  ) async {
+    if (!item.requiresImport) {
+      _selectIngredient(item);
+      return;
+    }
+
+    final sourceId = item.sourceId;
+
+    if (sourceId == null || sourceId.isEmpty) {
+      setState(() {
+        _ingredientSearchError =
+            'This external ingredient cannot be imported. Try another item.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isSearchingIngredients = true;
+      _ingredientSearchError = null;
+    });
+
+    try {
+      final importedIngredient = await ref
+          .read(ingredientCatalogueRepositoryProvider)
+          .importExternalIngredient(sourceId: sourceId);
+
+      if (!mounted) return;
+
+      _selectIngredient(importedIngredient);
+    } catch (error) {
+      if (!mounted) return;
+
+      setState(() {
+        _isSearchingIngredients = false;
+        _ingredientSearchError = 'Could not import this ingredient. Try again.';
+      });
+    }
+  }
+
+  void _selectIngredient(IngredientCatalogueItem item) {
     setState(() {
       _selectedIngredient = item;
       _nameController.text = item.name;
       _ingredientOptions = [];
+      _isSearchingIngredients = false;
+      _ingredientSearchError = null;
     });
   }
 
@@ -456,9 +499,8 @@ class _IngredientSearchResults extends StatelessWidget {
                 color: AppColors.textMuted,
               ),
             ),
-            //external results must be imported before they can be selected
-            onTap:
-                ingredient.requiresImport ? null : () => onSelected(ingredient),
+            //screen imports external results before selecting them
+            onTap: () => onSelected(ingredient),
           ),
         );
       }).toList(),

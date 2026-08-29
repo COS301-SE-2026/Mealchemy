@@ -17,10 +17,24 @@ class _FakeIngredientCatalogueRepository extends IngredientCatalogueRepository {
   _FakeIngredientCatalogueRepository() : super(Dio());
 
   String? lastSearchQuery;
+  String? lastImportedSourceId;
+  int? lastImportedCategoryId;
 
   @override
   Future<List<IngredientCatalogueItem>> searchIngredients(String query) async {
     lastSearchQuery = query;
+
+    if (query.toLowerCase().contains('kimchi')) {
+      return const [
+        IngredientCatalogueItem(
+          ingId: null,
+          name: 'Kimchi',
+          category: null,
+          sourceId: '2710077',
+          sourceApi: 'USDA',
+        ),
+      ];
+    }
 
     return const [
       IngredientCatalogueItem(
@@ -29,6 +43,22 @@ class _FakeIngredientCatalogueRepository extends IngredientCatalogueRepository {
         category: 'Dairy',
       ),
     ];
+  }
+
+  @override
+  Future<IngredientCatalogueItem> importExternalIngredient({
+    required String sourceId,
+    int? categoryId,
+  }) async {
+    lastImportedSourceId = sourceId;
+    lastImportedCategoryId = categoryId;
+
+    //pretend backend imported USDA item into local catalogue
+    return const IngredientCatalogueItem(
+      ingId: 25,
+      name: 'Kimchi',
+      category: 'Vegetables',
+    );
   }
 }
 
@@ -250,5 +280,29 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Category: Dairy'), findsOneWidget);
+  });
+
+  testWidgets('AddIngredientScreen imports and selects USDA result', (
+    tester,
+  ) async {
+    final ingredientRepository = _FakeIngredientCatalogueRepository();
+
+    await pumpAddIngredientScreen(
+      tester,
+      ingredientRepository: ingredientRepository,
+    );
+
+    await tester.enterText(find.byType(TextField).first, 'kimchi');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Kimchi'), findsOneWidget);
+    expect(find.text('USDA result'), findsOneWidget);
+
+    await tester.tap(find.text('Kimchi'));
+    await tester.pumpAndSettle();
+
+    expect(ingredientRepository.lastImportedSourceId, '2710077');
+    expect(ingredientRepository.lastImportedCategoryId, isNull);
+    expect(find.text('Category: Vegetables'), findsOneWidget);
   });
 }
