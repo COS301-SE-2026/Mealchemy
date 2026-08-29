@@ -389,6 +389,28 @@ void main() {
     expect(harness.catalogueRepository.lastImportedSourceId, '2710077');
     expect(harness.catalogueRepository.lastImportedCategoryId, isNull);
     expect(find.text('Category: Vegetables'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(TextField, 'e.g. 1.5'),
+      '2',
+    );
+
+    await tester.tap(
+      find.byType(DropdownButtonFormField<String>),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('pcs').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Add Item'));
+    await tester.pump();
+
+    //saved local catalogue id is submitted after USDA import
+    expect(harness.shoppingRepository.addedListId, 'general-list');
+    expect(harness.shoppingRepository.addedIngId, 25);
+    expect(harness.shoppingRepository.addedName, isNull);
+    expect(harness.shoppingRepository.addedQuantity, '2');
+    expect(harness.shoppingRepository.addedUnit, 'pcs');
   });
 
   testWidgets('chooses category and retries USDA ingredient import', (
