@@ -324,8 +324,11 @@ Future<void> _showEditPantryIngredientDialog({
           Future<void> saveChanges() async {
             final quantity = quantityController.text.trim();
             final unit = selectedUnit?.trim() ?? '';
+            final selectedIngredientId = selectedIngredient.ingId;
 
-            if (quantity.isEmpty || unit.isEmpty) {
+            if (quantity.isEmpty ||
+                unit.isEmpty ||
+                selectedIngredientId == null) {
               setDialogState(() {
                 showValidation = true;
                 saveError = null;
@@ -341,7 +344,7 @@ Future<void> _showEditPantryIngredientDialog({
             try {
               await ref.read(pantryStateProvider.notifier).updateIngredient(
                     pIngredientId: ingredient.pIngredientId!,
-                    ingId: selectedIngredient.ingId,
+                    ingId: selectedIngredientId,
                     quantity: quantity,
                     unit: unit,
                   );
@@ -400,14 +403,19 @@ Future<void> _showEditPantryIngredientDialog({
                         dense: true,
                         contentPadding: EdgeInsets.zero,
                         title: Text(option.name),
-                        subtitle: Text(option.category),
-                        onTap: () {
-                          setDialogState(() {
-                            selectedIngredient = option;
-                            nameController.text = option.name;
-                            ingredientOptions = [];
-                          });
-                        },
+                        subtitle: Text(
+                          option.category ??
+                              '${option.sourceApi ?? 'External'} result',
+                        ),
+                        onTap: option.requiresImport
+                            ? null
+                            : () {
+                                setDialogState(() {
+                                  selectedIngredient = option;
+                                  nameController.text = option.name;
+                                  ingredientOptions = [];
+                                });
+                              },
                       ),
                     ),
                   const SizedBox(height: 14),
@@ -440,7 +448,7 @@ Future<void> _showEditPantryIngredientDialog({
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
-                        'Quantity and unit are required.',
+                        'Select a catalogue ingredient, quantity and unit.',
                         style: AppTextStyles.bodySmall.copyWith(
                           color: AppColors.error,
                         ),
