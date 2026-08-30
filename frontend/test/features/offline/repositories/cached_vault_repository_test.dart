@@ -185,6 +185,68 @@ void main() {
     );
     expect((await offlineRepository.getFolderRecipes(4)).single.recipeId, 7);
   });
+
+  test('anonymous viewers use remote data and never use another cache',
+      () async {
+    await cache.replaceVaultsFromCompleteFetch(
+      viewerUserId: 11,
+      vaults: [_vault('Another user cache')],
+      syncedAt: DateTime.now().toUtc(),
+    );
+    final error = _connectionError();
+    final repository = CachedVaultRepository(
+      remote: _VaultRepositoryStub(
+        getMyVaultsResult: () => Future.error(error),
+      ),
+      cache: cache,
+      viewerUserId: null,
+    );
+
+    await expectLater(repository.getMyVaults(), throwsA(same(error)));
+  });
+
+  test('forwards all mutation and reference operations to the remote',
+      () async {
+    final remote = _RecordingVaultRepository();
+    final repository = CachedVaultRepository(
+      remote: remote,
+      cache: cache,
+      viewerUserId: 11,
+    );
+
+    expect((await repository.getVaultById(7)).vaultId, 7);
+    expect((await repository.createVault('Dinner')).name, 'Dinner');
+    await repository.deleteVault(7);
+    expect((await repository.createFolder(7, 'Soups')).folderName, 'Soups');
+    await repository.deleteFolder(4, 7);
+    expect((await repository.renameFolder(4, 7, 'Mains')).folderName, 'Mains');
+    expect((await repository.addRecipeToFolder(4, 9)).recipeId, 9);
+    expect((await repository.moveRecipe(5, 6)).folderId, 6);
+    await repository.removeRecipeFromFolder(5);
+    expect(await repository.getFoldersForRecipe(9), hasLength(1));
+    expect(await repository.getMembers(7), hasLength(1));
+    expect((await repository.addMember(7, 'chef@example.test')).userId, 11);
+    await repository.removeMember(7, 'chef@example.test');
+
+    expect(
+      remote.calls,
+      containsAll(<String>[
+        'getVaultById',
+        'createVault',
+        'deleteVault',
+        'createFolder',
+        'deleteFolder',
+        'renameFolder',
+        'addRecipeToFolder',
+        'moveRecipe',
+        'removeRecipeFromFolder',
+        'getFoldersForRecipe',
+        'getMembers',
+        'addMember',
+        'removeMember',
+      ]),
+    );
+  });
 }
 
 Vault _vault(String name) => Vault(
@@ -281,3 +343,118 @@ class _VaultRepositoryStub implements VaultRepository {
           int folderId, int vaultId, String folderName) =>
       throw UnimplementedError();
 }
+
+class _RecordingVaultRepository implements VaultRepository {
+  final calls = <String>[];
+
+  @override
+  Future<Vault> getVaultById(int vaultId) async {
+    calls.add('getVaultById');
+    return _vault('Remote detail');
+  }
+
+  @override
+  Future<Vault> createVault(String name) async {
+    calls.add('createVault');
+    return _vault(name);
+  }
+
+  @override
+  Future<void> deleteVault(int vaultId) async => calls.add('deleteVault');
+
+  @override
+  Future<VaultFolder> createFolder(int vaultId, String folderName) async {
+    calls.add('createFolder');
+    return _folder(folderName);
+  }
+
+  @override
+  Future<void> deleteFolder(int folderId, int vaultId) async {
+    calls.add('deleteFolder');
+  }
+
+  @override
+  Future<VaultFolder> renameFolder(
+    int folderId,
+    int vaultId,
+    String folderName,
+  ) async {
+    calls.add('renameFolder');
+    return _folder(folderName);
+  }
+
+  @override
+  Future<VaultFolderRecipe> addRecipeToFolder(
+    int folderId,
+    int recipeId,
+  ) async {
+    calls.add('addRecipeToFolder');
+    return VaultFolderRecipe(
+      id: 5,
+      folderId: folderId,
+      recipeId: recipeId,
+      addedAt: DateTime.utc(2026, 1, 2),
+      addedByUserId: 11,
+    );
+  }
+
+  @override
+  Future<VaultFolderRecipe> moveRecipe(
+    int folderRecipeId,
+    int targetFolderId,
+  ) async {
+    calls.add('moveRecipe');
+    return VaultFolderRecipe(
+      id: folderRecipeId,
+      folderId: targetFolderId,
+      recipeId: 9,
+      addedAt: DateTime.utc(2026, 1, 2),
+      addedByUserId: 11,
+    );
+  }
+
+  @override
+  Future<void> removeRecipeFromFolder(int folderRecipId) async {
+    calls.add('removeRecipeFromFolder');
+  }
+
+  @override
+  Future<List<VaultFolderRecipe>> getFoldersForRecipe(int recipeId) async {
+    calls.add('getFoldersForRecipe');
+    return [_folderRecipe()];
+  }
+
+  @override
+  Future<List<VaultMember>> getMembers(int vaultId) async {
+    calls.add('getMembers');
+    return [_member()];
+  }
+
+  @override
+  Future<VaultMember> addMember(int vaultId, String email) async {
+    calls.add('addMember');
+    return _member();
+  }
+
+  @override
+  Future<void> removeMember(int vaultId, String email) async {
+    calls.add('removeMember');
+  }
+
+  @override
+  Future<List<Vault>> getMyVaults() async => const [];
+
+  @override
+  Future<List<VaultFolder>> getFolders(int vaultId) async => const [];
+
+  @override
+  Future<List<VaultFolderRecipe>> getFolderRecipes(int folderId) async =>
+      const [];
+}
+
+VaultMember _member() => VaultMember(
+      id: 3,
+      vaultId: 7,
+      userId: 11,
+      joinedAt: DateTime.utc(2026, 1, 3),
+    );
