@@ -2,23 +2,28 @@ package com.mealchemy.recipe.service;
 
 /* Import libraries */
 import org.springframework.stereotype.Service;
-import org.springframework.context.ApplicationEventPublisher;
 import java.util.*;
 import java.util.stream.*;
 import org.springframework.web.server.*;
 import org.springframework.http.*;
-import org.springframework.transaction.annotation.Transactional;
 
 /* Import classes */
 import com.mealchemy.pantry.model.PantryIngredient;
 import com.mealchemy.ingredient.model.IngredientCatalogue;
 import com.mealchemy.category.model.IngredientCategory;
+import com.mealchemy.recipe.model.Recipe;
+import com.mealchemy.recipe.model.RecipeIngredient;
+import com.mealchemy.tags.model.RecipeTags;
+import com.mealchemy.tags.model.Tags;
+import com.mealchemy.preference.model.UserPreferences;
+import com.mealchemy.preference.model.UserPreferenceWeights;
+import com.mealchemy.preference.model.UserCuisineAffinities;
 import com.mealchemy.pantry.repository.PantryIngredientRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
-import com.mealchemy.category.model.IngredientCategoryRepository;
-import com.mealchemy.preferences.repository.UserCuisineAffinitiesRepository;
-import com.mealchemy.preferences.repository.UserPreferencesRepository;
-import com.mealchemy.preferences.repository.UserPreferenceWeightsRepository;
+import com.mealchemy.category.repository.IngredientCategoryRepository;
+import com.mealchemy.preference.repository.UserCuisineAffinitiesRepository;
+import com.mealchemy.preference.repository.UserPreferencesRepository;
+import com.mealchemy.preference.repository.UserPreferenceWeightsRepository;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.tags.repository.RecipeTagsRepository;
 import com.mealchemy.engine.client.EngineClient;
@@ -28,6 +33,9 @@ import com.mealchemy.engine.dto.IngredientRequest;
 import com.mealchemy.engine.dto.UserStateRequest;
 import com.mealchemy.engine.dto.PreferenceWeightsRequest;
 import com.mealchemy.engine.dto.RecommendationRequest;
+import com.mealchemy.engine.dto.RecommendationResponse;
+import com.mealchemy.engine.client.EmptyPoolException;
+import java.math.BigDecimal;
 
 @Service
 public class RecommendationService {
@@ -35,7 +43,7 @@ public class RecommendationService {
     private final IngredientCatalogueRepository ingredientCatalogueRepository;
     private final IngredientCategoryRepository ingredientCategoryRepository;
     private final UserCuisineAffinitiesRepository userCuisineAffinitiesRepository;
-    private final UserPreferencesRepository userPreferenceRepository;
+    private final UserPreferencesRepository userPreferencesRepository;
     private final UserPreferenceWeightsRepository userPreferenceWeightsRepository;
     private final RecipeRepository recipeRepository;
     private final RecipeTagsRepository recipeTagsRepository;
@@ -67,7 +75,7 @@ public class RecommendationService {
         Map<Integer, IngredientCatalogue> catalogueById = ingredientCatalogueRepository.findAllById(ingIds).stream().collect(Collectors.toMap(IngredientCatalogue::getIngId, ic -> ic));
 
         // Resolve shelf life per category
-        List<Integer> categoryIds = catalogueById().values().stream().map(IngredientCatalogue::getCategoryId).distinct().toList();
+        List<Integer> categoryIds = catalogueById.values().stream().map(IngredientCatalogue::getCategoryId).distinct().toList();
         Map<Integer, IngredientCategory> categoryById = ingredientCategoryRepository.findAllById(categoryIds).stream().collect(Collectors.toMap(IngredientCategory::getCategoryId, c -> c));
 
         // Map each pantry item
@@ -108,7 +116,7 @@ public class RecommendationService {
 
     private List<CandidatePoolEntryRequest> buildCandidatePool()
     {
-        List<Recipe> recipes = recipeRepository.findByIsCommunityPublishes();
+        List<Recipe> recipes = recipeRepository.findByIsCommunityPublishedTrue();
 
         return recipes.stream().map(recipe -> new CandidatePoolEntryRequest(
             recipe.getRecipeId(),
@@ -143,7 +151,7 @@ public class RecommendationService {
                 catalogue.getName(),
                 ri.getQuantity(),
                 ri.getUnit()
-            )
+            );
         }).toList();
     }
 
@@ -180,7 +188,7 @@ public class RecommendationService {
     {
         UserStateRequest userState = buildUserState(userId);
 
-        List<CandidatePoolRequest> candidatePool = buildCandidatePool();
+        List<CandidatePoolEntryRequest> candidatePool = buildCandidatePool();
 
         RecommendationRequest request = new RecommendationRequest(
             userState, 
