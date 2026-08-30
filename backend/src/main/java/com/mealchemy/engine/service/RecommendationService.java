@@ -16,21 +16,46 @@ import com.mealchemy.category.model.IngredientCategory;
 import com.mealchemy.pantry.repository.PantryIngredientRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.category.model.IngredientCategoryRepository;
+import com.mealchemy.preferences.repository.UserCuisineAffinitiesRepository;
+import com.mealchemy.preferences.repository.UserPreferencesRepository;
+import com.mealchemy.preferences.repository.UserPreferenceWeightsRepository;
+import com.mealchemy.recipe.repository.RecipeRepository;
+import com.mealchemy.tags.repository.RecipeTagsRepository;
+import com.mealchemy.engine.client.EngineClient;
 import com.mealchemy.engine.dto.PantryEntryRequest; 
 import com.mealchemy.engine.dto.CandidatePoolEntryRequest;
+import com.mealchemy.engine.dto.IngredientRequest;
+import com.mealchemy.engine.dto.UserStateRequest;
+import com.mealchemy.engine.dto.PreferenceWeightsRequest;
+import com.mealchemy.engine.dto.RecommendationRequest;
 
 @Service
 public class RecommendationService {
     private final PantryIngredientRepository pantryIngredientRepository;
     private final IngredientCatalogueRepository ingredientCatalogueRepository;
     private final IngredientCategoryRepository ingredientCategoryRepository;
+    private final UserCuisineAffinitiesRepository userCuisineAffinitiesRepository;
+    private final UserPreferencesRepository userPreferenceRepository;
+    private final UserPreferenceWeightsRepository userPreferenceWeightsRepository;
+    private final RecipeRepository recipeRepository;
+    private final RecipeTagsRepository recipeTagsRepository;
+    private final EngineClient engineClient;
 
     public RecommendationService(PantryIngredientRepository pantryIngredientRepository, 
-        IngredientCatalogueRepository ingredientCatalogueRepository, IngredientCategoryRepository ingredientCategoryRepository)
+        IngredientCatalogueRepository ingredientCatalogueRepository, IngredientCategoryRepository ingredientCategoryRepository,
+        UserCuisineAffinitiesRepository userCuisineAffinitiesRepository, UserPreferencesRepository userPreferencesRepository,
+        UserPreferenceWeightsRepository userPreferenceWeightsRepository, RecipeRepository recipeRepository, 
+        RecipeTagsRepository recipeTagsRepository, EngineClient engineClient)
     {
         this.pantryIngredientRepository = pantryIngredientRepository;
         this.ingredientCatalogueRepository = ingredientCatalogueRepository;
         this.ingredientCategoryRepository = ingredientCategoryRepository;
+        this.userCuisineAffinitiesRepository = userCuisineAffinitiesRepository;
+        this.userPreferencesRepository = userPreferencesRepository;
+        this.userPreferenceWeightsRepository = userPreferenceWeightsRepository;
+        this.recipeRepository = recipeRepository;
+        this.recipeTagsRepository = recipeTagsRepository;
+        this.engineClient = engineClient;
     }
 
     private List<PantryEntryRequest> buildPantryEntries(Integer userId)
