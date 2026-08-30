@@ -121,4 +121,33 @@ public class RecommendationService {
             )
         }).toList();
     }
+
+    private UserStateRequest buildUserState(Integer userId)
+    {
+        UserPreferences preferences = userPreferencesRepository.findByUserId(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User preferences not initialized."));
+
+        UserPreferenceWeights weights = userPreferenceWeightsRepository.findByUserId(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User preference weights not initialized."));
+
+        List<UserCuisineAffinities> affinities = userCuisineAffinitiesRepository.findAllByUserId(userId);
+        Map<String, BigDecimal> cuisineAffinityMap = affinities.stream().collect(Collectors.toMap(UserCuisineAffinities::getCuisineValue, UserCuisineAffinities::getAffinityScore));
+
+        PreferenceWeightsRequest weightsRequest = new PreferenceWeightsRequest(
+            weights.getPantryMatch(),
+            weights.getCuisine(),
+            weights.getNutrition(),
+            weights.getFreshness(),
+            weights.getNovelty()
+        );
+
+        return new UserStateRequest(
+            userId,
+            preferences.getAllergies(),
+            preferences.getDislikedIngredients(),
+            preferences.getDietaryRestrictions(),
+            preferences.getNutritionalGoals(),
+            weightsRequest,
+            cuisineAffinityMap,
+            buildPantryEntries(userId)
+        );
+    }
 }
