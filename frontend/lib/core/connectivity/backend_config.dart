@@ -5,7 +5,5 @@ const String _configuredBackendUrl =
 
 String get backendBaseUrl {
   if (_configuredBackendUrl.isNotEmpty) return _configuredBackendUrl;
-  return Platform.isAndroid
-      ? 'http://10.0.2.2:8080'
-      : 'http://localhost:8080';
+  return Platform.isAndroid ? 'http://10.0.2.2:8080' : 'http://localhost:8080';
 }

@@ -8,9 +8,9 @@ import '../models/vault.dart';
 import '../models/vault_folder.dart';
 import 'vault_menu.dart';
 import 'vault_folder_row.dart';
-import '../providers/vault_repository_provider.dart';   
-import '../providers/vault_provider.dart';   
-import '../../../core/connectivity/network_status_provider.dart';            
+import '../providers/vault_repository_provider.dart';
+import '../providers/vault_provider.dart';
+import '../../../core/connectivity/network_status_provider.dart';
 
 //folder section vault name label plus one row per folder
 class VaultFolderList extends ConsumerWidget {

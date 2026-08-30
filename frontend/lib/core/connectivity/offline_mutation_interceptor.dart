@@ -35,7 +35,7 @@ class OfflineMutationInterceptor extends Interceptor {
     if (method == 'GET' || method == 'HEAD' || method == 'OPTIONS') {
       return false;
     }
-    
+
     return !options.path.startsWith('/auth/');
   }
 }

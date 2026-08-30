@@ -52,7 +52,7 @@ class DioBackendReachability implements BackendReachability {
   @override
   Future<bool> isReachable() async {
     try {
-      // Any HTTP response proves reachability. 
+      // Any HTTP response proves reachability.
       // Health or server errors remain online states, feature repositories decide whether to use cache fallback.
       await _dio.get<void>('/actuator/health');
       return true;
