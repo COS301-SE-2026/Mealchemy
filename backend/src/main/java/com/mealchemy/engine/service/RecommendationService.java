@@ -101,4 +101,24 @@ public class RecommendationService {
 
         return recipeTags.stream().map(RecipeTags::getTag).filter(Tags::getIsDietary).map(Tags::getTagName).toList();
     }
+
+    private List<IngredientRequest> buildIngredients(Recipe recipe)
+    {
+        List<RecipeIngredient> recipeIngredients = recipe.getIngredients();
+
+        List<Integer> ingIds = recipeIngredients.stream().map(RecipeIngredient::getIngId).distinct().toList();
+
+        Map<Integer, IngredientCatalogue> catalogueById = ingredientCatalogueRepository.findAllById(ingIds).stream().collect(Collectors.toMap(IngredientCatalogue::getIngId, ic -> ic));
+
+        return recipeIngredients.stream().map(ri -> {
+            IngredientCatalogue catalogue = catalogueById.get(ri.getIngId());
+            return new IngredientRequest(
+                ri.getIngId(),
+                catalogue.getCategoryId(),
+                catalogue.getName(),
+                ri.getQuantity(),
+                ri.getUnit()
+            )
+        }).toList();
+    }
 }
