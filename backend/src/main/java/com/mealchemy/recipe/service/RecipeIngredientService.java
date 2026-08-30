@@ -79,8 +79,13 @@ public class RecipeIngredientService
         RecipeIngredient recipeIngredientForReturn = mapRequestToEntity(request, recipeToCheck);
 
         RecipeIngredient saved = recipeIngredientRepository.save(recipeIngredientForReturn);
+
+        PreferredUnit preferredUnit = userProfileRepository.findByUserId(ownerId).map(UserProfile::getPreferredUnit)
+                                                                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User profile not found."));
+
+        UnitConverter.NormalisedQuantity display = UnitConverter.convertToUsersPreferredUnit(saved.getQuantity(), saved.getUnit(), preferredUnit);
         
-        return RecipeIngredientResponse.from(saved, ingredientCatalogue.getName());
+        return RecipeIngredientResponse.from(saved, ingredientCatalogue.getName(), display);
     }
 
     // Update a specific ingredient in an existing recipe
@@ -113,7 +118,13 @@ public class RecipeIngredientService
         recipeIngredientForReturn.setSortOrder(request.sortOrder());
 
         RecipeIngredient saved = recipeIngredientRepository.save(recipeIngredientForReturn);
-        return RecipeIngredientResponse.from(saved, ingredientCatalogue.getName());
+
+        PreferredUnit preferredUnit = userProfileRepository.findByUserId(ownerId).map(UserProfile::getPreferredUnit)
+                                                                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User profile not found."));
+
+        UnitConverter.NormalisedQuantity display = UnitConverter.convertToUsersPreferredUnit(saved.getQuantity(), saved.getUnit(), preferredUnit);
+
+        return RecipeIngredientResponse.from(saved, ingredientCatalogue.getName(), display);
     }
 
     // Delete a specific ingredient in an existing recipe

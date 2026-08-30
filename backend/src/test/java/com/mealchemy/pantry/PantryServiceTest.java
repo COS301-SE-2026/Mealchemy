@@ -9,12 +9,19 @@ import com.mealchemy.pantry.dto.PantryIngredientResponse;
 import com.mealchemy.pantry.model.PantryIngredient;
 import com.mealchemy.ingredient.model.IngredientCatalogue;
 import com.mealchemy.category.model.IngredientCategory;
+import com.mealchemy.profile.model.UserProfile;
+
 // import repository
 import com.mealchemy.pantry.repository.PantryIngredientRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.category.repository.IngredientCategoryRepository;
+import com.mealchemy.profile.repository.UserProfileRepository;
+
 // import service
 import com.mealchemy.pantry.service.PantryService;
+
+// shared
+import com.mealchemy.shared.enums.PreferredUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +39,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyInt;
 
 
 @ExtendWith(MockitoExtension.class) //tells JUnit to use Mockito to create mocks
@@ -40,10 +48,12 @@ public class PantryServiceTest {
     @Mock private PantryIngredientRepository pantryIngredientRepository;
     @Mock private IngredientCatalogueRepository ingredientCatalogueRepository;
     @Mock private IngredientCategoryRepository ingredientCategoryRepository;
+    @Mock private UserProfileRepository userProfileRepository; 
 
     // @InjectMocks creates the real PantryService and injects the mocks above into it - actually testing PantryService
     @InjectMocks
     private PantryService pantryService;
+    private UserProfile userProfile;
 
     private PantryIngredient existingPantryIngredient;
     private IngredientCatalogue catalogueInstance;
@@ -53,6 +63,9 @@ public class PantryServiceTest {
 
     @BeforeEach
     void setUp() {
+
+        userProfile = new UserProfile();
+        userProfile.setPreferredUnit(PreferredUnit.METRIC);
         // simulates what db returns for existing user pantry
         existingPantryIngredient = new PantryIngredient();
         existingPantryIngredient.setUserId(1);
@@ -73,6 +86,9 @@ public class PantryServiceTest {
             new BigDecimal("150"),
             "g"
         );
+
+        // so call doesn't have to change in every test
+        lenient().when(userProfileRepository.findByUserId(anyInt())).thenReturn(Optional.of(userProfile));
     }
 
 
