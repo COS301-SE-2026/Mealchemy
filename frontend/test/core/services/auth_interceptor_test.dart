@@ -31,11 +31,8 @@ void main() {
       headers: {'Authorization': 'Bearer expired'},
     );
 
-    final handler = ErrorInterceptorHandler();
-    final forwarded = expectLater(
-      handler.future,
-      throwsA(anything),
-    );
+    final handler = _TestErrorInterceptorHandler();
+    final forwarded = handler.expectForwarded();
     interceptor.onError(
       DioException.badResponse(
         statusCode: 401,
@@ -63,11 +60,8 @@ void main() {
       (403, const {'Authorization': 'Bearer valid'}),
     ]) {
       final options = RequestOptions(path: '/resource', headers: entry.$2);
-      final handler = ErrorInterceptorHandler();
-      final forwarded = expectLater(
-        handler.future,
-        throwsA(anything),
-      );
+      final handler = _TestErrorInterceptorHandler();
+      final forwarded = handler.expectForwarded();
       interceptor.onError(
         DioException.badResponse(
           statusCode: entry.$1,
@@ -84,4 +78,10 @@ void main() {
 
     expect(unauthorizedCalls, 0);
   });
+}
+
+class _TestErrorInterceptorHandler extends ErrorInterceptorHandler {
+  Future<void> expectForwarded() async {
+    await expectLater(future, throwsA(anything));
+  }
 }
