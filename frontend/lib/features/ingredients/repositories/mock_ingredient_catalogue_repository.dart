@@ -1,5 +1,6 @@
 import '../models/ingredient_catalogue_item.dart';
 import 'ingredient_catalogue_repository.dart';
+import '../models/ingredient_category.dart';
 
 class MockIngredientCatalogueRepository
     implements IngredientCatalogueRepository {
@@ -7,13 +8,15 @@ class MockIngredientCatalogueRepository
     IngredientCatalogueItem(ingId: 1, name: 'Chicken Breast', category: 'Meat'),
     IngredientCatalogueItem(ingId: 2, name: 'Broccoli', category: 'Vegetable'),
     IngredientCatalogueItem(ingId: 3, name: 'Brown Rice', category: 'Grain'),
-    IngredientCatalogueItem(ingId: 4, name: 'Cherry Tomatoes', category: 'Vegetable'),
+    IngredientCatalogueItem(
+        ingId: 4, name: 'Cherry Tomatoes', category: 'Vegetable'),
     IngredientCatalogueItem(ingId: 5, name: 'Mozzarella', category: 'Dairy'),
     IngredientCatalogueItem(ingId: 6, name: 'Basil', category: 'Herb'),
     IngredientCatalogueItem(ingId: 7, name: 'Penne Pasta', category: 'Grain'),
     IngredientCatalogueItem(ingId: 8, name: 'Salmon Fillet', category: 'Fish'),
     IngredientCatalogueItem(ingId: 9, name: 'Black Beans', category: 'Legume'),
-    IngredientCatalogueItem(ingId: 10, name: 'Sweetcorn', category: 'Vegetable'),
+    IngredientCatalogueItem(
+        ingId: 10, name: 'Sweetcorn', category: 'Vegetable'),
     IngredientCatalogueItem(ingId: 11, name: 'Garlic', category: 'Vegetable'),
     IngredientCatalogueItem(ingId: 12, name: 'Olive Oil', category: 'Oil'),
     IngredientCatalogueItem(ingId: 13, name: 'Lemon', category: 'Fruit'),
@@ -34,8 +37,36 @@ class MockIngredientCatalogueRepository
     await _delay();
     final q = query.trim().toLowerCase();
     if (q.isEmpty) return _items;
-    return _items
-        .where((i) => i.name.toLowerCase().contains(q))
-        .toList();
+    return _items.where((i) => i.name.toLowerCase().contains(q)).toList();
+  }
+
+  @override
+  Future<List<IngredientCategory>> getCategories() async {
+    await _delay();
+
+    return const [
+      IngredientCategory(
+        categoryId: 1,
+        name: 'Baked Products',
+      ),
+      IngredientCategory(
+        categoryId: 4,
+        name: 'Dairy',
+      ),
+    ];
+  }
+
+  @override
+  Future<IngredientCatalogueItem> importExternalIngredient({
+    required String sourceId,
+    int? categoryId,
+  }) async {
+    await _delay();
+
+    return const IngredientCatalogueItem(
+      ingId: 100,
+      name: 'Imported Ingredient',
+      category: 'Other',
+    );
   }
 }

@@ -3,10 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/features/shopping_lists/screens/shopping_list_detail_screen.dart';
 import 'package:mealchemy/features/shopping_lists/screens/add_shopping_list_item_screen.dart';
 import 'package:mealchemy/features/shopping_lists/screens/shopping_lists_screen.dart';
+import 'package:mealchemy/features/shopping_lists/widgets/shopping_bottom_action_bar.dart';
 import 'package:mealchemy/features/shopping_lists/models/complete_shop_result.dart';
 import 'package:mealchemy/features/shopping_lists/models/shopping_list.dart';
 import 'package:mealchemy/features/shopping_lists/models/shopping_list_item.dart';
@@ -206,10 +208,12 @@ void main() {
   Future<void> pumpShoppingListDetailScreen(
     WidgetTester tester, {
     String listId = 'general-list',
+    bool isOffline = false,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          offlineReadOnlyProvider.overrideWithValue(isOffline),
           shoppingListRepositoryProvider.overrideWithValue(
             MockShoppingListRepository(),
           ),
@@ -653,6 +657,39 @@ void main() {
 
     expect(find.text('Shopping list not found.'), findsOneWidget);
   });
+
+  testWidgets(
+    'ShoppingListDetailScreen keeps cached items and disables writes offline',
+    (tester) async {
+      await pumpShoppingListDetailScreen(tester, isOffline: true);
+
+      expect(find.text('Heirloom Tomatoes'), findsOneWidget);
+
+      final checkbox = tester.widget<Checkbox>(find.byType(Checkbox).first);
+      expect(checkbox.onChanged, isNull);
+
+      final actionBar = tester.widget<ShoppingBottomActionBar>(
+        find.byType(ShoppingBottomActionBar),
+      );
+      expect(actionBar.onAddTap, isNull);
+      expect(actionBar.onMicTap, isNull);
+
+      final menu = tester.widget<PopupMenuButton<String>>(
+        find.byType(PopupMenuButton<String>),
+      );
+      expect(menu.enabled, isFalse);
+
+      final updatePantry = tester.widget<InkWell>(
+        find
+            .ancestor(
+              of: find.text('Update Pantry'),
+              matching: find.byType(InkWell),
+            )
+            .first,
+      );
+      expect(updatePantry.onTap, isNull);
+    },
+  );
 
   testWidgets('ShoppingListDetailScreen back button returns to overview', (
     tester,

@@ -8,6 +8,9 @@ import '../models/shopping_list_item.dart';
 import '../../../core/providers/api_service_provider.dart';
 import '../repositories/api_shopping_list_repository.dart';
 import '../models/complete_shop_result.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../offline/providers/offline_cache_provider.dart';
+import '../../offline/repositories/cached_shopping_list_repository.dart';
 
 //select mock/API
 final shoppingListRepositoryProvider = Provider<ShoppingListRepository>((ref) {
@@ -15,7 +18,14 @@ final shoppingListRepositoryProvider = Provider<ShoppingListRepository>((ref) {
     return MockShoppingListRepository();
   }
 
-  return ApiShoppingListRepository(ref.read(dioProvider));
+  final remote = ApiShoppingListRepository(ref.read(dioProvider));
+  final viewerUserId = ref.watch(activeIdentityProvider);
+  if (viewerUserId == null) return remote;
+  return CachedShoppingListRepository(
+    remote: remote,
+    cache: ref.watch(shoppingListCacheStoreProvider),
+    viewerUserId: viewerUserId,
+  );
 });
 
 //state management provider

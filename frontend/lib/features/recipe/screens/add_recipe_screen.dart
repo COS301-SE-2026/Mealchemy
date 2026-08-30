@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -366,7 +367,8 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     return [
       for (int i = 0; i < valid.length; i++)
         RecipeIngredient(
-          ingId: valid[i].item!.ingId,
+          //isValid guarantees external item has been imported
+          ingId: valid[i].item!.ingId!,
           quantity: double.tryParse(valid[i].quantity.text),
           unit: valid[i].unit!,
           sortOrder: i,
@@ -427,6 +429,53 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
         );
       }
     });
+
+    final isReadOnly = ref.watch(offlineReadOnlyProvider);
+    if (isReadOnly) {
+      return Scaffold(
+        backgroundColor: AppColors.bgLight,
+        appBar: AppBar(
+          backgroundColor: AppColors.bgLight,
+          elevation: 0,
+          leading: IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+            tooltip: 'Back',
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.cloud_off_outlined,
+                  size: 40,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Changes are unavailable offline',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.heading2.copyWith(
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Your saved recipes are still available to view.',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     final cuisinesState = ref.watch(cuisineTypesProvider);
     final unitsState = ref.watch(unitsProvider);
@@ -717,7 +766,9 @@ class _IngredientRowData {
       item != null || quantity.text.isNotEmpty || unit != null;
 
   bool get isValid =>
-      item != null && double.tryParse(quantity.text) != null && unit != null;
+      item?.ingId != null &&
+      double.tryParse(quantity.text) != null &&
+      unit != null;
 
   void dispose() => quantity.dispose();
 }

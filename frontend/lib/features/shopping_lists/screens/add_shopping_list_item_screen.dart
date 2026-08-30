@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/connectivity/network_status_provider.dart';
 import '../../../core/shared_widgets/Molecules/app_section_header.dart';
 import '../../../core/shared_widgets/atoms/app_button.dart';
 import '../../../core/shared_widgets/atoms/app_text_field.dart';
@@ -10,6 +11,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../pantry/models/ingredient_catalogue_item.dart';
 import '../../pantry/providers/pantry_provider.dart';
 import '../providers/shopping_list_provider.dart';
+import '../../pantry/repositories/ingredient_catalogue_repository.dart';
 
 const List<String> _unitOptions = [
   'g',
@@ -73,6 +75,53 @@ class _AddShoppingListItemScreenState
 
   @override
   Widget build(BuildContext context) {
+    final isReadOnly = ref.watch(offlineReadOnlyProvider);
+    if (isReadOnly) {
+      return Scaffold(
+        backgroundColor: AppColors.bgLight,
+        appBar: AppBar(
+          backgroundColor: AppColors.bgLight,
+          elevation: 0,
+          leading: IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+            tooltip: 'Back',
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.cloud_off_outlined,
+                  size: 40,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Changes are unavailable offline',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.heading2.copyWith(
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Your shopping lists are still available to view.',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.bgCream,
       appBar: AppBar(
@@ -284,12 +333,134 @@ class _AddShoppingListItemScreenState
     }
   }
 
-  void _selectIngredient(IngredientCatalogueItem ingredient) {
+  Future<void> _selectIngredient(
+    IngredientCatalogueItem ingredient,
+  ) async {
+    if (!ingredient.requiresImport) {
+      _setSelectedIngredient(ingredient);
+      return;
+    }
+
+    final sourceId = ingredient.sourceId;
+
+    if (sourceId == null || sourceId.isEmpty) {
+      setState(() {
+        _searchError =
+            'This external ingredient cannot be imported. Try another item.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isSearching = true;
+      _searchError = null;
+    });
+
+    try {
+      final importedIngredient = await ref
+          .read(ingredientCatalogueRepositoryProvider)
+          .importExternalIngredient(sourceId: sourceId);
+
+      if (!mounted) return;
+
+      _setSelectedIngredient(importedIngredient);
+    } on ExternalIngredientCategoryRequiredException catch (error) {
+      if (!mounted) return;
+
+      await _chooseCategoryAndRetry(
+        sourceId: error.ingredient.sourceId,
+        ingredientName: error.ingredient.name,
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isSearching = false;
+        _searchError = 'Could not import this ingredient. Try again.';
+      });
+    }
+  }
+
+  Future<void> _chooseCategoryAndRetry({
+    required String sourceId,
+    required String ingredientName,
+  }) async {
+    try {
+      final repository = ref.read(ingredientCatalogueRepositoryProvider);
+      final categories = await repository.getCategories();
+
+      if (!mounted) return;
+
+      setState(() => _isSearching = false);
+
+      final selectedCategoryId = await showDialog<int>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Choose a category'),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 300,
+              child: Scrollbar(
+                thumbVisibility: true,
+                child: ListView(
+                  primary: true,
+                  children: categories
+                      .map(
+                        (category) => ListTile(
+                          title: Text(category.name),
+                          onTap: () => Navigator.of(dialogContext).pop(
+                            category.categoryId,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (!mounted || selectedCategoryId == null) return;
+
+      setState(() {
+        _isSearching = true;
+        _searchError = null;
+      });
+
+      final importedIngredient = await repository.importExternalIngredient(
+        sourceId: sourceId,
+        categoryId: selectedCategoryId,
+      );
+
+      if (!mounted) return;
+
+      _setSelectedIngredient(importedIngredient);
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isSearching = false;
+        _searchError = 'Could not import $ingredientName. Try again.';
+      });
+    }
+  }
+
+  void _setSelectedIngredient(IngredientCatalogueItem ingredient) {
     setState(() {
       _selectedIngredient = ingredient;
       _catalogueController.text = ingredient.name;
       _ingredientOptions = [];
       _identityError = null;
+      _searchError = null;
+      _isSearching = false;
     });
   }
 
@@ -297,9 +468,10 @@ class _AddShoppingListItemScreenState
     final quantityText = _quantityController.text.trim();
     final parsedQuantity = num.tryParse(quantityText);
     final customName = _customNameController.text.trim();
+    final selectedIngredientId = _selectedIngredient?.ingId;
 
     final hasValidIdentity = _mode == _ItemEntryMode.catalogue
-        ? _selectedIngredient != null
+        ? selectedIngredientId != null
         : customName.isNotEmpty;
 
     final hasValidQuantity = parsedQuantity != null && parsedQuantity > 0;
@@ -332,9 +504,8 @@ class _AddShoppingListItemScreenState
 
       await ref.read(shoppingListsProvider.notifier).addItemToList(
             listId: widget.listId,
-            ingId: _mode == _ItemEntryMode.catalogue
-                ? _selectedIngredient!.ingId
-                : null,
+            ingId:
+                _mode == _ItemEntryMode.catalogue ? selectedIngredientId : null,
             name: _mode == _ItemEntryMode.custom ? customName : null,
             quantity: quantityText,
             // The provider currently calls this category for legacy reasons,
@@ -449,11 +620,13 @@ class _CatalogueResults extends StatelessWidget {
             ),
           ),
           subtitle: Text(
-            ingredient.category,
+            ingredient.category ??
+                '${ingredient.sourceApi ?? 'External'} result',
             style: AppTextStyles.bodySmall.copyWith(
               color: AppColors.textMuted,
             ),
           ),
+          //external results imported before being selected
           onTap: () => onSelected(ingredient),
         );
       }).toList(),

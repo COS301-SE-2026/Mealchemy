@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/features/pantry/models/ingredient_catalogue_item.dart';
 import 'package:mealchemy/features/pantry/models/pantry_ingredient.dart';
 import 'package:mealchemy/features/pantry/models/pantry_summary.dart';
@@ -12,21 +13,91 @@ import 'package:mealchemy/features/pantry/repositories/ingredient_catalogue_repo
 import 'package:mealchemy/features/pantry/repositories/pantry_repository.dart';
 import 'package:mealchemy/features/pantry/screens/add_ingredient_screen.dart';
 import 'package:mealchemy/features/pantry/widgets/pantry_item_card.dart';
+import 'package:mealchemy/features/pantry/models/ingredient_category.dart';
+import 'package:mealchemy/features/pantry/models/pending_external_ingredient.dart';
 
 class _FakeIngredientCatalogueRepository extends IngredientCatalogueRepository {
-  _FakeIngredientCatalogueRepository() : super(Dio());
+  _FakeIngredientCatalogueRepository({
+    this.requiresCategory = false,
+    this.shouldFailCategoryLoad = false,
+  }) : super(Dio());
+
+  final bool requiresCategory;
+  final bool shouldFailCategoryLoad;
 
   String? lastSearchQuery;
+  String? lastImportedSourceId;
+  int? lastImportedCategoryId;
+  final List<int?> importedCategoryIds = [];
+  int categoryRequestCount = 0;
 
   @override
   Future<List<IngredientCatalogueItem>> searchIngredients(String query) async {
     lastSearchQuery = query;
+
+    if (query.toLowerCase().contains('kimchi')) {
+      return const [
+        IngredientCatalogueItem(
+          ingId: null,
+          name: 'Kimchi',
+          category: null,
+          sourceId: '2710077',
+          sourceApi: 'USDA',
+        ),
+      ];
+    }
 
     return const [
       IngredientCatalogueItem(
         ingId: 12,
         name: 'Milk',
         category: 'Dairy',
+      ),
+    ];
+  }
+
+  @override
+  Future<IngredientCatalogueItem> importExternalIngredient({
+    required String sourceId,
+    int? categoryId,
+  }) async {
+    lastImportedSourceId = sourceId;
+    lastImportedCategoryId = categoryId;
+    importedCategoryIds.add(categoryId);
+
+    if (requiresCategory && categoryId == null) {
+      throw const ExternalIngredientCategoryRequiredException(
+        PendingExternalIngredient(
+          sourceId: '2710077',
+          name: 'Kimchi',
+        ),
+      );
+    }
+
+    //pretend backend imported USDA item into local catalogue
+    return IngredientCatalogueItem(
+      ingId: 25,
+      name: 'Kimchi',
+      category: categoryId == null ? 'Vegetables' : 'Dairy',
+    );
+  }
+
+  @override
+  Future<List<IngredientCategory>> getCategories() async {
+    categoryRequestCount++;
+
+    if (shouldFailCategoryLoad) {
+      throw Exception('Could not load categories.');
+    }
+
+    return const [
+      IngredientCategory(
+        categoryId: 1,
+        name: 'Baked Products',
+      ),
+      IngredientCategory(
+        categoryId: 4,
+        name: 'Dairy',
       ),
     ];
   }
@@ -109,6 +180,7 @@ void main() {
   Future<_RecordingPantryRepository> pumpAddIngredientScreen(
     WidgetTester tester, {
     _FakeIngredientCatalogueRepository? ingredientRepository,
+    bool isOffline = false,
   }) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 1;
@@ -138,6 +210,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          offlineReadOnlyProvider.overrideWithValue(isOffline),
           pantryRepositoryProvider.overrideWithValue(pantryRepository),
           if (ingredientRepository != null)
             ingredientCatalogueRepositoryProvider
@@ -172,6 +245,17 @@ void main() {
     expect(find.text('Ingredient Name'), findsOneWidget);
     expect(find.text('Unit'), findsOneWidget);
     expect(find.text('Save Ingredient'), findsOneWidget);
+  });
+
+  testWidgets('AddIngredientScreen blocks direct offline entry', (
+    tester,
+  ) async {
+    await pumpAddIngredientScreen(tester, isOffline: true);
+
+    expect(find.text('Changes are unavailable offline'), findsOneWidget);
+    expect(
+        find.text('Your pantry is still available to view.'), findsOneWidget);
+    expect(find.text('Save Ingredient'), findsNothing);
   });
 
   testWidgets('AddIngredientScreen validates required fields on save', (
@@ -251,4 +335,130 @@ void main() {
 
     expect(find.text('Category: Dairy'), findsOneWidget);
   });
+
+  testWidgets('AddIngredientScreen imports and selects USDA result', (
+    tester,
+  ) async {
+    final ingredientRepository = _FakeIngredientCatalogueRepository();
+
+    await pumpAddIngredientScreen(
+      tester,
+      ingredientRepository: ingredientRepository,
+    );
+
+    await tester.enterText(find.byType(TextField).first, 'kimchi');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Kimchi'), findsOneWidget);
+    expect(find.text('USDA result'), findsOneWidget);
+
+    await tester.tap(find.text('Kimchi'));
+    await tester.pumpAndSettle();
+
+    expect(ingredientRepository.lastImportedSourceId, '2710077');
+    expect(ingredientRepository.lastImportedCategoryId, isNull);
+    expect(find.text('Category: Vegetables'), findsOneWidget);
+  });
+
+  testWidgets(
+    'AddIngredientScreen chooses category and retries USDA import',
+    (tester) async {
+      final ingredientRepository = _FakeIngredientCatalogueRepository(
+        requiresCategory: true,
+      );
+
+      await pumpAddIngredientScreen(
+        tester,
+        ingredientRepository: ingredientRepository,
+      );
+
+      await tester.enterText(find.byType(TextField).first, 'kimchi');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Kimchi'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Choose a category'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.widgetWithText(AlertDialog, 'Choose a category'),
+          matching: find.byType(Scrollbar),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Baked Products'), findsOneWidget);
+      expect(find.text('Dairy'), findsOneWidget);
+      expect(ingredientRepository.categoryRequestCount, 1);
+
+      await tester.tap(find.text('Dairy').last);
+      await tester.pumpAndSettle();
+
+      expect(ingredientRepository.importedCategoryIds, [null, 4]);
+      expect(find.text('Choose a category'), findsNothing);
+      expect(find.text('Category: Dairy'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'AddIngredientScreen cancels category selection without retrying import',
+    (tester) async {
+      final ingredientRepository = _FakeIngredientCatalogueRepository(
+        requiresCategory: true,
+      );
+
+      await pumpAddIngredientScreen(
+        tester,
+        ingredientRepository: ingredientRepository,
+      );
+
+      await tester.enterText(find.byType(TextField).first, 'kimchi');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Kimchi'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Choose a category'), findsOneWidget);
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      //only the original request with category_id null was made
+      expect(ingredientRepository.importedCategoryIds, [null]);
+      expect(find.text('Choose a category'), findsNothing);
+      expect(find.text('Kimchi'), findsOneWidget);
+      expect(find.text('Category: Select an ingredient'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'AddIngredientScreen shows error when categories cannot be loaded',
+    (tester) async {
+      final ingredientRepository = _FakeIngredientCatalogueRepository(
+        requiresCategory: true,
+        shouldFailCategoryLoad: true,
+      );
+
+      await pumpAddIngredientScreen(
+        tester,
+        ingredientRepository: ingredientRepository,
+      );
+
+      await tester.enterText(find.byType(TextField).first, 'kimchi');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Kimchi'));
+      await tester.pumpAndSettle();
+
+      expect(ingredientRepository.categoryRequestCount, 1);
+      expect(ingredientRepository.importedCategoryIds, [null]);
+      expect(find.text('Choose a category'), findsNothing);
+      expect(
+        find.text(
+          'Could not import Kimchi. Try again.',
+          skipOffstage: false,
+        ),
+        findsOneWidget,
+      );
+    },
+  );
 }
