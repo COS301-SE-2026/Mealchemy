@@ -66,6 +66,7 @@ public class RecommendationService {
         this.engineClient = engineClient;
     }
 
+    // Helper function to build the pantry entries object
     private List<PantryEntryRequest> buildPantryEntries(Integer userId)
     {
         List<PantryIngredient> pantryItems = pantryIngredientRepository.findByUserId(userId);
@@ -98,6 +99,7 @@ public class RecommendationService {
             }).toList();
     }
 
+    // Helper function to resolve ingredient's shelf life
     private Integer resolveShelfLifeDays(IngredientCategory category)
     {
         Short fridge = category.getFridgeShelfLife();
@@ -114,6 +116,7 @@ public class RecommendationService {
         return null;
     }
 
+    // Helper function to build the candidate pool
     private List<CandidatePoolEntryRequest> buildCandidatePool()
     {
         List<Recipe> recipes = recipeRepository.findByIsCommunityPublishedTrue();
@@ -128,6 +131,7 @@ public class RecommendationService {
         )).toList();
     }
 
+    // Helper function to build the dietary tags object
     private List<String> buildDietaryTags(Recipe recipe)
     {
         List<RecipeTags> recipeTags = recipeTagsRepository.findByRecipeRecipeId(recipe.getRecipeId());
@@ -135,6 +139,7 @@ public class RecommendationService {
         return recipeTags.stream().map(RecipeTags::getTag).filter(Tags::getIsDietary).map(Tags::getTagName).toList();
     }
 
+    // Helper function to build ingredients object
     private List<IngredientRequest> buildIngredients(Recipe recipe)
     {
         List<RecipeIngredient> recipeIngredients = recipe.getIngredients();
@@ -155,6 +160,7 @@ public class RecommendationService {
         }).toList();
     }
 
+    // Helper function to built the user state object
     private UserStateRequest buildUserState(Integer userId)
     {
         UserPreferences preferences = userPreferencesRepository.findByUserId(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User preferences not initialized."));
@@ -184,6 +190,7 @@ public class RecommendationService {
         );
     }
 
+    // get all recommended recipes 
     public RecommendationResponse getRecommendations(Integer userId, Integer batchSize, List<Integer> excludeRecipeIds, Integer seed)
     {
         UserStateRequest userState = buildUserState(userId);
