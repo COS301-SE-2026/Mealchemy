@@ -31,4 +31,52 @@ public class RecommendationService {
         this.ingredientCatalogueRepository = ingredientCatalogueRepository;
         this.ingredientCategoryRepository = ingredientCategoryRepository;
     }
+
+    private List<PantryEntryRequest> buildPantryEntries(Integer userId)
+    {
+        List<PantryIngredient> pantryItems = pantryIngredientRepository.findByUserId(userId);
+
+        // Resolve categoryId per ingredient
+        List<Integer> ingIds = pantryItems.stream().map(PantryIngredient::getIngredientId).distinct().toList();
+        Map<Integer, IngredientCatalogue> catalogueById = ingredientCatalogueRepository.findAllById(ingIds).stream().collect(Collectors.toMap(IngredientCatalogue::getIngId, ic -> ic));
+
+        // Resolve shelf life per category
+        List<Integer> categoryIds = catalogueById().values().stream().map(IngredientCatalogue::getCategoryId).distinct().toList();
+        Map<Integer, IngredientCategory> categoryById = ingredientCategoryRepository.findAllById(categoryIds).stream().collect(Collectors.toMap(IngredientCategory::getCategoryId, c -> c));
+
+        // Map each pantry item
+        return pantryItems.stream().map(
+            item -> {
+                IngredientCatalogue catalogue = catalogueById.get(item.getIngredientId());
+                IngredientCategory category = categoryById.get(catalogue.getCategoryId());
+
+                Integer shelfLifeDays = resolveShelfLifeDays(category);
+
+                return new PantryEntryRequest(
+                    item.getIngredientId(),
+                    catalogue.getCategoryId(),
+                    item.getQuantity(),
+                    item.getUnit(),
+                    item.getCreatedAt(),
+                    shelfLifeDays,
+                    "FRIDGE"
+                );
+            }).toList();
+    }
+
+    private Integer resolveShelfLifeDays(IngredientCategory category)
+    {
+        Short fridge = category.getFridgeShelfLife();
+        Short pantryLife = category.getPantryShelfLife();
+
+        if(fridge != null)
+        {
+            return fridge.intValue();
+        }
+        if(pantryLife != null)
+        {
+            return pantryLife.intValue();
+        }
+        return null;
+    }
 }
