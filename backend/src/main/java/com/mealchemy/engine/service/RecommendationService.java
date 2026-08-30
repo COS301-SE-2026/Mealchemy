@@ -1,4 +1,4 @@
-package com.mealchemy.recipe.service;
+package com.mealchemy.engine.service;
 
 /* Import libraries */
 import org.springframework.stereotype.Service;
