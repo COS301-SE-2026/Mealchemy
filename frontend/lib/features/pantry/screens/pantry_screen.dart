@@ -15,6 +15,8 @@ import '../providers/pantry_provider.dart';
 import '../widgets/pantry_item_card.dart';
 import '../widgets/pantry_summary_card.dart';
 import '../models/ingredient_catalogue_item.dart';
+import '../../offline/data/offline_cache_store.dart';
+import '../../offline/widgets/cache_freshness_label.dart';
 
 const List<String> _unitOptions = [
   'g',
@@ -100,6 +102,11 @@ class _PantryContent extends ConsumerWidget {
           style: AppTextStyles.heading1.copyWith(
             color: AppColors.primary,
           ),
+        ),
+        const SizedBox(height: 6),
+        const CacheFreshnessLabel(
+          collection: CacheCollection.pantry,
+          scopeId: CacheScope.all,
         ),
         const SizedBox(height: 16),
         AppFilterBar(

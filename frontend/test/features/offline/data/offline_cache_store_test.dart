@@ -110,6 +110,7 @@ void main() {
       recipe: _completeRecipe('Recipe'),
       syncedAt: recipeSync,
     );
+    await store.readVaults(viewerUserId: 1);
 
     final vaultMetadata = await store.readSyncMetadata(
       viewerUserId: 1,
@@ -123,6 +124,7 @@ void main() {
     );
 
     expect(vaultMetadata?.lastSyncedAt, vaultSync);
+    expect(vaultMetadata?.lastAccessedAt, isNotNull);
     expect(recipeMetadata?.lastSyncedAt, recipeSync);
   });
 }

@@ -10,6 +10,8 @@ import '../models/shopping_list.dart';
 import '../providers/shopping_list_provider.dart';
 import '../widgets/shopping_list_row.dart';
 import '../widgets/shopping_section_header.dart';
+import '../../offline/data/offline_cache_store.dart';
+import '../../offline/widgets/cache_freshness_label.dart';
 
 //main overview screen
 class ShoppingListsScreen extends ConsumerWidget {
@@ -128,6 +130,11 @@ class _ShoppingListsContent extends StatelessWidget {
           ),
           const SizedBox(height: 26),
           const _ShoppingListsTitle(),
+          const SizedBox(height: 6),
+          const CacheFreshnessLabel(
+            collection: CacheCollection.shoppingLists,
+            scopeId: CacheScope.all,
+          ),
           const SizedBox(height: 30),
           ShoppingSectionHeader(
             title: 'Lists',

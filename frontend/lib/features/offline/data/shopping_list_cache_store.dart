@@ -16,6 +16,11 @@ class ShoppingListCacheStore {
           ..where((row) => row.viewerUserId.equals(viewerUserId))
           ..orderBy([(row) => OrderingTerm.desc(row.createdAt)]))
         .get();
+    await _metadata.markSyncMetadataAccess(
+      viewerUserId: viewerUserId,
+      collection: CacheCollection.shoppingLists,
+      scopeId: CacheScope.all,
+    );
     return rows.map(_summaryFromRow).toList();
   }
 
@@ -32,6 +37,11 @@ class ShoppingListCacheStore {
           ))
         .getSingleOrNull();
     if (listRow == null) return null;
+    await _metadata.markSyncMetadataAccess(
+      viewerUserId: viewerUserId,
+      collection: CacheCollection.shoppingList,
+      scopeId: listId,
+    );
 
     final itemRows =
         await (_database.select(_database.cachedShoppingListItemRows)

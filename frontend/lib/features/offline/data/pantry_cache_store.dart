@@ -18,6 +18,11 @@ class PantryCacheStore {
           ..where((row) => row.viewerUserId.equals(viewerUserId))
           ..orderBy([(row) => OrderingTerm.asc(row.name)]))
         .get();
+    await _metadata.markSyncMetadataAccess(
+      viewerUserId: viewerUserId,
+      collection: CacheCollection.pantry,
+      scopeId: CacheScope.all,
+    );
     return rows
         .map(
           (row) => PantryIngredient(

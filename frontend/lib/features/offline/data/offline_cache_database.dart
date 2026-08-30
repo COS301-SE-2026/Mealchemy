@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 
 part 'offline_cache_database.g.dart';
 
@@ -212,7 +215,45 @@ class OfflineCacheDatabase extends _$OfflineCacheDatabase {
 
   static QueryExecutor _openConnection() {
     return LazyDatabase(
-      () async => driftDatabase(name: 'mealchemy_offline_cache'),
+      () async {
+        await _migrateLegacyDatabaseToCache();
+        return driftDatabase(
+          name: 'mealchemy_offline_cache',
+          native: DriftNativeOptions(
+            databaseDirectory: getApplicationCacheDirectory,
+          ),
+        );
+      },
     );
+  }
+
+  static Future<void> _migrateLegacyDatabaseToCache() async {
+    final documents = await getApplicationDocumentsDirectory();
+    final cache = await getApplicationCacheDirectory();
+    const fileName = 'mealchemy_offline_cache.sqlite';
+    final oldDatabase = File('${documents.path}/$fileName');
+    final newDatabase = File('${cache.path}/$fileName');
+    if (!await oldDatabase.exists() || await newDatabase.exists()) return;
+
+    await cache.create(recursive: true);
+    await _moveFile(oldDatabase, newDatabase);
+    await _moveFile(
+      File('${oldDatabase.path}-wal'),
+      File('${newDatabase.path}-wal'),
+    );
+    await _moveFile(
+      File('${oldDatabase.path}-shm'),
+      File('${newDatabase.path}-shm'),
+    );
+  }
+
+  static Future<void> _moveFile(File source, File destination) async {
+    if (!await source.exists()) return;
+    try {
+      await source.rename(destination.path);
+    } on FileSystemException {
+      await source.copy(destination.path);
+      await source.delete();
+    }
   }
 }

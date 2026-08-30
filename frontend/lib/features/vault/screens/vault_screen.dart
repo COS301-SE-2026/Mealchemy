@@ -10,6 +10,8 @@ import 'package:mealchemy/features/vault/providers/vault_provider.dart';
 import 'package:mealchemy/features/vault/widgets/vault_folder_list.dart';
 
 import '../widgets/vault_hero.dart';
+import '../../offline/data/offline_cache_store.dart';
+import '../../offline/widgets/cache_freshness_label.dart';
 
 // Vault screen with the main widgets and layout.
 class VaultScreen extends ConsumerWidget {
@@ -62,6 +64,13 @@ class _VaultBody extends ConsumerWidget {
             VaultHero(
               onSearch: () {},
               onShoppingList: () => context.push(AppRoutes.shoppingLists),
+            ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
+              child: CacheFreshnessLabel(
+                collection: CacheCollection.vaults,
+                scopeId: CacheScope.all,
+              ),
             ),
             if (selected == null && isShared)
               Padding(

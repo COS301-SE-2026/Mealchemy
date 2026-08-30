@@ -13,6 +13,8 @@ import '../widgets/shopping_section_header.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../pantry/providers/pantry_provider.dart';
 import '../models/complete_shop_result.dart';
+import '../../offline/data/offline_cache_store.dart';
+import '../../offline/widgets/cache_freshness_label.dart';
 
 const List<String> _shoppingItemUnitOptions = [
   'g',
@@ -226,6 +228,11 @@ class _ShoppingListDetailContent extends StatelessWidget {
               ),
               const SizedBox(height: 42),
               ShoppingSectionHeader(title: list.title),
+              const SizedBox(height: 6),
+              CacheFreshnessLabel(
+                collection: CacheCollection.shoppingList,
+                scopeId: list.id,
+              ),
               const SizedBox(height: 30),
               _BulkSelectionControls(
                 onSelectAll: onSelectAll,

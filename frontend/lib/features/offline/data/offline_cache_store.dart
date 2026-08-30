@@ -17,6 +17,11 @@ class OfflineCacheStore {
     final query = _database.select(_database.cachedVaultRows)
       ..where((row) => row.viewerUserId.equals(viewerUserId));
     final rows = await query.get();
+    await markSyncMetadataAccess(
+      viewerUserId: viewerUserId,
+      collection: CacheCollection.vaults,
+      scopeId: CacheScope.all,
+    );
     return rows
         .map(
           (row) => Vault(
@@ -138,6 +143,11 @@ class OfflineCacheStore {
             row.viewerUserId.equals(viewerUserId) & row.vaultId.equals(vaultId),
       );
     final rows = await query.get();
+    await markSyncMetadataAccess(
+      viewerUserId: viewerUserId,
+      collection: CacheCollection.folders,
+      scopeId: vaultId.toString(),
+    );
     return rows
         .map(
           (row) => VaultFolder(
@@ -223,6 +233,11 @@ class OfflineCacheStore {
             row.folderId.equals(folderId),
       );
     final rows = await query.get();
+    await markSyncMetadataAccess(
+      viewerUserId: viewerUserId,
+      collection: CacheCollection.folderRecipes,
+      scopeId: folderId.toString(),
+    );
     return rows
         .map(
           (row) => VaultFolderRecipe(
@@ -289,6 +304,11 @@ class OfflineCacheStore {
           ))
         .getSingleOrNull();
     if (recipeRow == null) return null;
+    await markSyncMetadataAccess(
+      viewerUserId: viewerUserId,
+      collection: CacheCollection.recipe,
+      scopeId: recipeId.toString(),
+    );
 
     final ingredientRows =
         await (_database.select(_database.cachedRecipeIngredientRows)
@@ -354,6 +374,11 @@ class OfflineCacheStore {
       ..where((row) => row.viewerUserId.equals(viewerUserId))
       ..orderBy([(row) => OrderingTerm.desc(row.updatedAt)]);
     final rows = await query.get();
+    await markSyncMetadataAccess(
+      viewerUserId: viewerUserId,
+      collection: CacheCollection.recipes,
+      scopeId: CacheScope.all,
+    );
     return rows.map(_recipeSummaryFromRow).toList();
   }
 
@@ -508,6 +533,41 @@ class OfflineCacheStore {
                 row.scopeId.equals(scopeId),
           ))
         .getSingleOrNull();
+  }
+
+  Stream<CacheSyncMetadataRow?> watchSyncMetadata({
+    required int viewerUserId,
+    required String collection,
+    required String scopeId,
+  }) {
+    return (_database.select(_database.cacheSyncMetadataRows)
+          ..where(
+            (row) =>
+                row.viewerUserId.equals(viewerUserId) &
+                row.collection.equals(collection) &
+                row.scopeId.equals(scopeId),
+          ))
+        .watchSingleOrNull();
+  }
+
+  Future<void> markSyncMetadataAccess({
+    required int viewerUserId,
+    required String collection,
+    required String scopeId,
+    DateTime? accessedAt,
+  }) {
+    return (_database.update(_database.cacheSyncMetadataRows)
+          ..where(
+            (row) =>
+                row.viewerUserId.equals(viewerUserId) &
+                row.collection.equals(collection) &
+                row.scopeId.equals(scopeId),
+          ))
+        .write(
+      CacheSyncMetadataRowsCompanion(
+        lastAccessedAt: Value(accessedAt ?? DateTime.now().toUtc()),
+      ),
+    );
   }
 
   Future<void> writeSyncMetadata({
