@@ -23,9 +23,13 @@ final remoteRecipeRepositoryProvider = Provider<RecipeRepository>((ref) {
   return ApiRecipeRepository(ref.read(dioProvider));
 });
 
+final mockRecipeEnabledProvider = Provider<bool>((ref) {
+  return AppConfig.mockRecipe;
+});
+
 // Selects mock data or the cache-decorated API repository.
 final recipeRepositoryProvider = Provider<RecipeRepository>((ref) {
-  if (AppConfig.mockRecipe) return MockRecipeRepository();
+  if (ref.watch(mockRecipeEnabledProvider)) return MockRecipeRepository();
   final remote = ref.watch(remoteRecipeRepositoryProvider);
   final viewerUserId = ref.watch(activeIdentityProvider);
   if (viewerUserId == null) return remote;
@@ -53,7 +57,7 @@ final recipeByIdProvider = FutureProvider.family<Recipe, int>((ref, id) {
 //full recipe for the with metadata  ingredients  steps
 final recipeDetailProvider =
     FutureProvider.family<Recipe, int>((ref, id) async {
-  if (AppConfig.mockRecipe) {
+  if (ref.watch(mockRecipeEnabledProvider)) {
     final repository = ref.watch(recipeRepositoryProvider);
     final results = await Future.wait([
       repository.getRecipeById(id),
