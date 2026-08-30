@@ -123,6 +123,61 @@ class CacheSyncMetadataRows extends Table {
       };
 }
 
+class CachedPantryIngredientRows extends Table {
+  IntColumn get viewerUserId => integer()();
+  TextColumn get rowKey => text()();
+  IntColumn get pantryIngredientId => integer().nullable()();
+  IntColumn get ingId => integer().nullable()();
+  TextColumn get name => text()();
+  TextColumn get details => text()();
+  TextColumn get category => text()();
+  TextColumn get status => text()();
+  TextColumn get quantity => text().nullable()();
+  TextColumn get unit => text().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {viewerUserId, rowKey};
+}
+
+class CachedShoppingListRows extends Table {
+  IntColumn get viewerUserId => integer()();
+  TextColumn get listId => text()();
+  IntColumn get shoppingListId => integer().nullable()();
+  IntColumn get serverUserId => integer().nullable()();
+  IntColumn get numItems => integer().nullable()();
+  TextColumn get title => text()();
+  TextColumn get subtitle => text()();
+  TextColumn get section => text()();
+  TextColumn get iconType => text()();
+  TextColumn get status => text().nullable()();
+  TextColumn get createdAt =>
+      text().map(const UtcDateTimeConverter()).nullable()();
+  TextColumn get imageUrl => text().nullable()();
+  BoolColumn get favourite => boolean()();
+  BoolColumn get isComplete => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {viewerUserId, listId};
+}
+
+class CachedShoppingListItemRows extends Table {
+  IntColumn get viewerUserId => integer()();
+  TextColumn get listId => text()();
+  TextColumn get itemKey => text()();
+  IntColumn get itemId => integer().nullable()();
+  IntColumn get shoppingListId => integer().nullable()();
+  IntColumn get ingId => integer().nullable()();
+  TextColumn get name => text()();
+  TextColumn get quantity => text()();
+  TextColumn get category => text()();
+  TextColumn get unit => text().nullable()();
+  BoolColumn get checked => boolean()();
+  IntColumn get lineIndex => integer()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {viewerUserId, listId, itemKey};
+}
+
 @DriftDatabase(
   tables: [
     CachedVaultRows,
@@ -132,6 +187,9 @@ class CacheSyncMetadataRows extends Table {
     CachedRecipeIngredientRows,
     CachedRecipeStepRows,
     CacheSyncMetadataRows,
+    CachedPantryIngredientRows,
+    CachedShoppingListRows,
+    CachedShoppingListItemRows,
   ],
 )
 class OfflineCacheDatabase extends _$OfflineCacheDatabase {
@@ -139,7 +197,18 @@ class OfflineCacheDatabase extends _$OfflineCacheDatabase {
       : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onUpgrade: (migrator, from, to) async {
+          if (from < 2) {
+            await migrator.createTable(cachedPantryIngredientRows);
+            await migrator.createTable(cachedShoppingListRows);
+            await migrator.createTable(cachedShoppingListItemRows);
+          }
+        },
+      );
 
   static QueryExecutor _openConnection() {
     return LazyDatabase(
