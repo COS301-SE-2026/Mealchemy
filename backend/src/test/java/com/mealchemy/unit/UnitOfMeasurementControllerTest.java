@@ -108,7 +108,7 @@ public class UnitOfMeasurementControllerTest {
             MeasurementSystem.IMPERIAL
         );
 
-        when(unitOfMeasurementService.getAllUnits()).thenReturn(List.of(unit1, unit2, unit3, unit4));
+        when(unitOfMeasurementService.getUnitsForUser(anyInt())).thenReturn(List.of(unit1, unit2, unit3, unit4));
 
         // Act and assert
         mockMvc.perform(get("/api/units-of-measurement").with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
