@@ -85,6 +85,106 @@ void main() {
 
     await expectLater(repository.getMyVaults(), throwsA(same(error)));
   });
+
+  test('vault detail transport failure returns the viewer cache', () async {
+    await cache.replaceVaultsFromCompleteFetch(
+      viewerUserId: 11,
+      vaults: [_vault('Cached detail')],
+      syncedAt: DateTime.now().toUtc(),
+    );
+    final repository = CachedVaultRepository(
+      remote: _VaultRepositoryStub(
+        getMyVaultsResult: () async => const [],
+        getVaultByIdResult: (_) => Future.error(_connectionError()),
+      ),
+      cache: cache,
+      viewerUserId: 11,
+    );
+
+    expect((await repository.getVaultById(7)).name, 'Cached detail');
+  });
+
+  test('missing vault detail and HTTP errors are propagated', () async {
+    final transportError = _connectionError();
+    final httpError = DioException.badResponse(
+      statusCode: 404,
+      requestOptions: RequestOptions(path: '/vaults/7'),
+      response: Response<void>(
+        requestOptions: RequestOptions(path: '/vaults/7'),
+        statusCode: 404,
+      ),
+    );
+    final missingRepository = CachedVaultRepository(
+      remote: _VaultRepositoryStub(
+        getMyVaultsResult: () async => const [],
+        getVaultByIdResult: (_) => Future.error(transportError),
+      ),
+      cache: cache,
+      viewerUserId: 11,
+    );
+    final httpRepository = CachedVaultRepository(
+      remote: _VaultRepositoryStub(
+        getMyVaultsResult: () async => const [],
+        getVaultByIdResult: (_) => Future.error(httpError),
+      ),
+      cache: cache,
+      viewerUserId: 11,
+    );
+
+    await expectLater(
+        missingRepository.getVaultById(7), throwsA(same(transportError)));
+    await expectLater(httpRepository.getVaultById(7), throwsA(same(httpError)));
+  });
+
+  test('folders refresh cache and fall back after a transport failure',
+      () async {
+    final folder = _folder('Fresh folder');
+    final onlineRepository = CachedVaultRepository(
+      remote: _VaultRepositoryStub(
+        getMyVaultsResult: () async => const [],
+        getFoldersResult: (_) async => [folder],
+      ),
+      cache: cache,
+      viewerUserId: 11,
+    );
+    expect((await onlineRepository.getFolders(7)).single.folderName,
+        'Fresh folder');
+
+    final offlineRepository = CachedVaultRepository(
+      remote: _VaultRepositoryStub(
+        getMyVaultsResult: () async => const [],
+        getFoldersResult: (_) => Future.error(_connectionError()),
+      ),
+      cache: cache,
+      viewerUserId: 11,
+    );
+    expect((await offlineRepository.getFolders(7)).single.folderName,
+        'Fresh folder');
+  });
+
+  test('folder recipe links refresh and fall back after transport failure',
+      () async {
+    final link = _folderRecipe();
+    final onlineRepository = CachedVaultRepository(
+      remote: _VaultRepositoryStub(
+        getMyVaultsResult: () async => const [],
+        getFolderRecipesResult: (_) async => [link],
+      ),
+      cache: cache,
+      viewerUserId: 11,
+    );
+    expect((await onlineRepository.getFolderRecipes(4)).single.recipeId, 7);
+
+    final offlineRepository = CachedVaultRepository(
+      remote: _VaultRepositoryStub(
+        getMyVaultsResult: () async => const [],
+        getFolderRecipesResult: (_) => Future.error(_connectionError()),
+      ),
+      cache: cache,
+      viewerUserId: 11,
+    );
+    expect((await offlineRepository.getFolderRecipes(4)).single.recipeId, 7);
+  });
 }
 
 Vault _vault(String name) => Vault(
@@ -95,15 +195,39 @@ Vault _vault(String name) => Vault(
       createdAt: DateTime.utc(2026, 1, 1),
     );
 
+VaultFolder _folder(String name) => VaultFolder(
+      folderId: 4,
+      vaultId: 7,
+      folderName: name,
+      createdAt: DateTime.utc(2026, 1, 1),
+    );
+
+VaultFolderRecipe _folderRecipe() => VaultFolderRecipe(
+      id: 5,
+      folderId: 4,
+      recipeId: 7,
+      addedAt: DateTime.utc(2026, 1, 2),
+      addedByUserId: 11,
+    );
+
 DioException _connectionError() => DioException(
       requestOptions: RequestOptions(path: '/vaults/owner/vaults'),
       type: DioExceptionType.connectionError,
     );
 
 class _VaultRepositoryStub implements VaultRepository {
-  _VaultRepositoryStub({required this.getMyVaultsResult});
+  _VaultRepositoryStub({
+    required this.getMyVaultsResult,
+    this.getVaultByIdResult,
+    this.getFoldersResult,
+    this.getFolderRecipesResult,
+  });
 
   final Future<List<Vault>> Function() getMyVaultsResult;
+  final Future<Vault> Function(int vaultId)? getVaultByIdResult;
+  final Future<List<VaultFolder>> Function(int vaultId)? getFoldersResult;
+  final Future<List<VaultFolderRecipe>> Function(int folderId)?
+      getFolderRecipesResult;
 
   @override
   Future<List<Vault>> getMyVaults() => getMyVaultsResult();
@@ -126,10 +250,12 @@ class _VaultRepositoryStub implements VaultRepository {
   Future<void> deleteVault(int vaultId) => throw UnimplementedError();
   @override
   Future<List<VaultFolderRecipe>> getFolderRecipes(int folderId) =>
-      throw UnimplementedError();
+      getFolderRecipesResult?.call(folderId) ??
+      Future<List<VaultFolderRecipe>>.error(UnimplementedError());
   @override
   Future<List<VaultFolder>> getFolders(int vaultId) =>
-      throw UnimplementedError();
+      getFoldersResult?.call(vaultId) ??
+      Future<List<VaultFolder>>.error(UnimplementedError());
   @override
   Future<List<VaultFolderRecipe>> getFoldersForRecipe(int recipeId) =>
       throw UnimplementedError();
@@ -137,7 +263,9 @@ class _VaultRepositoryStub implements VaultRepository {
   Future<List<VaultMember>> getMembers(int vaultId) =>
       throw UnimplementedError();
   @override
-  Future<Vault> getVaultById(int vaultId) => throw UnimplementedError();
+  Future<Vault> getVaultById(int vaultId) =>
+      getVaultByIdResult?.call(vaultId) ??
+      Future<Vault>.error(UnimplementedError());
   @override
   Future<VaultFolderRecipe> moveRecipe(
           int folderRecipeId, int targetFolderId) =>
