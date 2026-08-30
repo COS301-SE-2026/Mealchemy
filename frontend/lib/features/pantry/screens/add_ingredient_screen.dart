@@ -12,6 +12,7 @@ import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/ingredient_catalogue_item.dart';
 import '../providers/pantry_provider.dart';
+import '../repositories/ingredient_catalogue_repository.dart';
 
 const double _blurArea = 240;
 const double _sheetTop = 212;
@@ -303,17 +304,141 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
     }
   }
 
-  //locks in a catalogue ingredient so save files its real ing_id
-  void _onIngredientSelected(IngredientCatalogueItem item) {
+  //local items can be selected immediately, USDA items imported first
+  Future<void> _onIngredientSelected(
+    IngredientCatalogueItem item,
+  ) async {
+    if (!item.requiresImport) {
+      _selectIngredient(item);
+      return;
+    }
+
+    final sourceId = item.sourceId;
+
+    if (sourceId == null || sourceId.isEmpty) {
+      setState(() {
+        _ingredientSearchError =
+            'This external ingredient cannot be imported. Try another item.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isSearchingIngredients = true;
+      _ingredientSearchError = null;
+    });
+
+    try {
+      final importedIngredient = await ref
+          .read(ingredientCatalogueRepositoryProvider)
+          .importExternalIngredient(sourceId: sourceId);
+
+      if (!mounted) return;
+
+      _selectIngredient(importedIngredient);
+    } on ExternalIngredientCategoryRequiredException catch (error) {
+      if (!mounted) return;
+
+      await _chooseCategoryAndRetry(
+        sourceId: error.ingredient.sourceId,
+        ingredientName: error.ingredient.name,
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      setState(() {
+        _isSearchingIngredients = false;
+        _ingredientSearchError = 'Could not import this ingredient. Try again.';
+      });
+    }
+  }
+
+  Future<void> _chooseCategoryAndRetry({
+    required String sourceId,
+    required String ingredientName,
+  }) async {
+    try {
+      final repository = ref.read(ingredientCatalogueRepositoryProvider);
+      final categories = await repository.getCategories();
+
+      if (!mounted) return;
+
+      setState(() => _isSearchingIngredients = false);
+
+      final selectedCategoryId = await showDialog<int>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Choose a category'),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 300,
+              child: Scrollbar(
+                thumbVisibility: true,
+                child: ListView(
+                  primary: true,
+                  children: categories
+                      .map(
+                        (category) => ListTile(
+                          title: Text(category.name),
+                          onTap: () => Navigator.of(dialogContext).pop(
+                            category.categoryId,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (!mounted || selectedCategoryId == null) return;
+
+      setState(() {
+        _isSearchingIngredients = true;
+        _ingredientSearchError = null;
+      });
+
+      final importedIngredient = await repository.importExternalIngredient(
+        sourceId: sourceId,
+        categoryId: selectedCategoryId,
+      );
+
+      if (!mounted) return;
+
+      _selectIngredient(importedIngredient);
+    } catch (error) {
+      if (!mounted) return;
+
+      setState(() {
+        _isSearchingIngredients = false;
+        _ingredientSearchError = 'Could not import $ingredientName. Try again.';
+      });
+    }
+  }
+
+  void _selectIngredient(IngredientCatalogueItem item) {
     setState(() {
       _selectedIngredient = item;
       _nameController.text = item.name;
       _ingredientOptions = [];
+      _isSearchingIngredients = false;
+      _ingredientSearchError = null;
     });
   }
 
   Future<void> _saveIngredient() async {
-    final hasRequiredFields = _selectedIngredient != null &&
+    final selectedIngredientId = _selectedIngredient?.ingId;
+
+    final hasRequiredFields = selectedIngredientId != null &&
         _nameController.text.trim().isNotEmpty &&
         _selectedUnit != null;
 
@@ -333,7 +458,7 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
 
     try {
       await ref.read(pantryStateProvider.notifier).addIngredient(
-            ingId: _selectedIngredient!.ingId,
+            ingId: selectedIngredientId,
             quantity: '$_quantity',
             unit: _selectedUnit!,
           );
@@ -494,11 +619,15 @@ class _IngredientSearchResults extends StatelessWidget {
               ),
             ),
             subtitle: Text(
-              _formatCategory(ingredient.category),
+              _formatCategory(
+                ingredient.category ??
+                    '${ingredient.sourceApi ?? 'External'} result',
+              ),
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textMuted,
               ),
             ),
+            //screen imports external results before selecting them
             onTap: () => onSelected(ingredient),
           ),
         );

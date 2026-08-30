@@ -18,6 +18,7 @@ import '../widgets/pantry_summary_card.dart';
 import '../models/ingredient_catalogue_item.dart';
 import '../../offline/data/offline_cache_store.dart';
 import '../../offline/widgets/cache_freshness_label.dart';
+import '../repositories/ingredient_catalogue_repository.dart';
 
 const List<String> _unitOptions = [
   'g',
@@ -340,11 +341,156 @@ Future<void> _showEditPantryIngredientDialog({
             }
           }
 
+          Future<void> chooseCategoryAndRetry({
+            required String sourceId,
+            required String ingredientName,
+          }) async {
+            try {
+              final repository =
+                  ref.read(ingredientCatalogueRepositoryProvider);
+              final categories = await repository.getCategories();
+
+              if (!dialogContext.mounted) return;
+
+              setDialogState(() => isSearching = false);
+
+              final selectedCategoryId = await showDialog<int>(
+                context: dialogContext,
+                builder: (categoryDialogContext) {
+                  return AlertDialog(
+                    title: const Text('Choose a category'),
+                    content: SizedBox(
+                      width: double.maxFinite,
+                      height: 300,
+                      child: Scrollbar(
+                        thumbVisibility: true,
+                        child: ListView(
+                          primary: true,
+                          children: categories
+                              .map(
+                                (category) => ListTile(
+                                  title: Text(category.name),
+                                  onTap: () => Navigator.of(
+                                    categoryDialogContext,
+                                  ).pop(category.categoryId),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(
+                          categoryDialogContext,
+                        ).pop(),
+                        child: const Text('Cancel'),
+                      ),
+                    ],
+                  );
+                },
+              );
+
+              if (!dialogContext.mounted || selectedCategoryId == null) {
+                return;
+              }
+
+              setDialogState(() {
+                isSearching = true;
+                searchError = null;
+              });
+
+              final importedIngredient =
+                  await repository.importExternalIngredient(
+                sourceId: sourceId,
+                categoryId: selectedCategoryId,
+              );
+
+              if (!dialogContext.mounted) return;
+
+              setDialogState(() {
+                selectedIngredient = importedIngredient;
+                nameController.text = importedIngredient.name;
+                ingredientOptions = [];
+                isSearching = false;
+                searchError = null;
+              });
+            } catch (_) {
+              if (!dialogContext.mounted) return;
+
+              setDialogState(() {
+                isSearching = false;
+                searchError = 'Could not import $ingredientName.';
+              });
+            }
+          }
+
+          Future<void> selectIngredient(
+            IngredientCatalogueItem option,
+          ) async {
+            if (!option.requiresImport) {
+              setDialogState(() {
+                selectedIngredient = option;
+                nameController.text = option.name;
+                ingredientOptions = [];
+                searchError = null;
+              });
+              return;
+            }
+
+            final sourceId = option.sourceId;
+
+            if (sourceId == null || sourceId.isEmpty) {
+              setDialogState(() {
+                searchError = 'This external ingredient cannot be imported.';
+              });
+              return;
+            }
+
+            setDialogState(() {
+              isSearching = true;
+              searchError = null;
+            });
+
+            try {
+              final importedIngredient = await ref
+                  .read(ingredientCatalogueRepositoryProvider)
+                  .importExternalIngredient(sourceId: sourceId);
+
+              if (!dialogContext.mounted) return;
+
+              setDialogState(() {
+                selectedIngredient = importedIngredient;
+                nameController.text = importedIngredient.name;
+                ingredientOptions = [];
+                isSearching = false;
+                searchError = null;
+              });
+            } on ExternalIngredientCategoryRequiredException catch (error) {
+              if (!dialogContext.mounted) return;
+
+              await chooseCategoryAndRetry(
+                sourceId: error.ingredient.sourceId,
+                ingredientName: error.ingredient.name,
+              );
+            } catch (_) {
+              if (!dialogContext.mounted) return;
+
+              setDialogState(() {
+                isSearching = false;
+                searchError = 'Could not import this ingredient.';
+              });
+            }
+          }
+
           Future<void> saveChanges() async {
             final quantity = quantityController.text.trim();
             final unit = selectedUnit?.trim() ?? '';
+            final selectedIngredientId = selectedIngredient.ingId;
 
-            if (quantity.isEmpty || unit.isEmpty) {
+            if (quantity.isEmpty ||
+                unit.isEmpty ||
+                selectedIngredientId == null) {
               setDialogState(() {
                 showValidation = true;
                 saveError = null;
@@ -360,7 +506,7 @@ Future<void> _showEditPantryIngredientDialog({
             try {
               await ref.read(pantryStateProvider.notifier).updateIngredient(
                     pIngredientId: ingredient.pIngredientId!,
-                    ingId: selectedIngredient.ingId,
+                    ingId: selectedIngredientId,
                     quantity: quantity,
                     unit: unit,
                   );
@@ -419,14 +565,12 @@ Future<void> _showEditPantryIngredientDialog({
                         dense: true,
                         contentPadding: EdgeInsets.zero,
                         title: Text(option.name),
-                        subtitle: Text(option.category),
-                        onTap: () {
-                          setDialogState(() {
-                            selectedIngredient = option;
-                            nameController.text = option.name;
-                            ingredientOptions = [];
-                          });
-                        },
+                        subtitle: Text(
+                          option.category ??
+                              '${option.sourceApi ?? 'External'} result',
+                        ),
+                        //external results are imported before selection
+                        onTap: () => selectIngredient(option),
                       ),
                     ),
                   const SizedBox(height: 14),

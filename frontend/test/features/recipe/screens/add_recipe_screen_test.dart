@@ -22,6 +22,10 @@ import 'package:mealchemy/features/vault/models/vault_folder.dart';
 import 'package:mealchemy/features/vault/models/vault_folder_recipe.dart';
 import 'package:mealchemy/features/vault/providers/vault_repository_provider.dart';
 import 'package:mealchemy/features/vault/repositories/vault_repository.dart';
+import 'package:mealchemy/features/ingredients/models/ingredient_catalogue_item.dart';
+import 'package:mealchemy/features/ingredients/models/ingredient_category.dart';
+import 'package:mealchemy/features/ingredients/providers/ingredient_catalogue_provider.dart';
+import 'package:mealchemy/features/ingredients/repositories/ingredient_catalogue_repository.dart';
 
 class _RecordingRepo implements RecipeRepository {
   _RecordingRepo({this.events});
@@ -31,6 +35,7 @@ class _RecordingRepo implements RecipeRepository {
   final List<(int id, Recipe recipe)> updatedRecipes = [];
   final List<bool> removePhotoValues = [];
   final List<String>? events;
+  final List<(int recipeId, RecipeIngredient ingredient)> savedIngredients = [];
 
   @override
   Future<Recipe> addRecipe(Recipe recipe, int folderId) async {
@@ -82,7 +87,12 @@ class _RecordingRepo implements RecipeRepository {
       ];
 
   @override
-  Future<void> addRecipeIngredient(int recipeId, RecipeIngredient i) async {}
+  Future<void> addRecipeIngredient(
+    int recipeId,
+    RecipeIngredient ingredient,
+  ) async {
+    savedIngredients.add((recipeId, ingredient));
+  }
 
   @override
   Future<void> addRecipeStep(int recipeId, RecipeStep s) async {}
@@ -96,6 +106,44 @@ class _RecordingRepo implements RecipeRepository {
 
   @override
   Future<void> deleteRecipe(int recipeId) async {}
+}
+
+class _RecipeExternalCatalogueRepository
+    implements IngredientCatalogueRepository {
+  String? lastImportedSourceId;
+
+  @override
+  Future<List<IngredientCatalogueItem>> getAll() async => const [];
+
+  @override
+  Future<List<IngredientCatalogueItem>> search(String query) async {
+    return const [
+      IngredientCatalogueItem(
+        ingId: null,
+        name: 'Kimchi',
+        category: null,
+        sourceId: '2710077',
+        sourceApi: 'USDA',
+      ),
+    ];
+  }
+
+  @override
+  Future<List<IngredientCategory>> getCategories() async => const [];
+
+  @override
+  Future<IngredientCatalogueItem> importExternalIngredient({
+    required String sourceId,
+    int? categoryId,
+  }) async {
+    lastImportedSourceId = sourceId;
+
+    return const IngredientCatalogueItem(
+      ingId: 25,
+      name: 'Kimchi',
+      category: 'Vegetables',
+    );
+  }
 }
 
 class _SlowCuisinesRepo extends _RecordingRepo {
@@ -431,6 +479,80 @@ void main() {
     expect(saved.recipeId, 0);
     expect(saved.isCommunityPublished, isFalse);
     expect(repo.savedFolderIds, [10]);
+  });
+
+  testWidgets('submits imported USDA ingredient id with new recipe', (
+    tester,
+  ) async {
+    final recipeRepo = _RecordingRepo();
+    final catalogueRepo = _RecipeExternalCatalogueRepository();
+
+    await pumpAddRecipe(
+      tester,
+      recipeRepo: recipeRepo,
+      extraOverrides: [
+        ingredientCatalogueRepositoryProvider.overrideWithValue(
+          catalogueRepo,
+        ),
+      ],
+    );
+    await tester.pumpAndSettle();
+
+    await fillRequiredFields(tester);
+
+    final searchIngredient = find.text('Search ingredient');
+
+    await tester.scrollUntilVisible(
+      searchIngredient,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(searchIngredient);
+    await tester.pumpAndSettle();
+
+    final catalogueSearchField = find.widgetWithText(
+      TextField,
+      'e.g. chicken',
+    );
+
+    await tester.enterText(catalogueSearchField, 'kimchi');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Kimchi'));
+    await tester.pumpAndSettle();
+
+    expect(catalogueRepo.lastImportedSourceId, '2710077');
+    expect(find.text('Kimchi'), findsOneWidget);
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Qty'),
+      '2',
+    );
+
+    final unitDropdown = find.widgetWithText(
+      DropdownButtonFormField<String>,
+      'Unit',
+    );
+
+    await tester.tap(unitDropdown);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('g').last);
+    await tester.pumpAndSettle();
+
+    await tapCreateRecipe(tester);
+
+    expect(recipeRepo.savedRecipes, hasLength(1));
+    expect(recipeRepo.savedIngredients, hasLength(1));
+
+    final savedIngredient = recipeRepo.savedIngredients.single;
+
+    expect(savedIngredient.$1, 501);
+    expect(savedIngredient.$2.ingId, 25);
+    expect(savedIngredient.$2.quantity, 2);
+    expect(savedIngredient.$2.unit, 'g');
   });
 
   testWidgets('empty description is sent as null, not an empty string',

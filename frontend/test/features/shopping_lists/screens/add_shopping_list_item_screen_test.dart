@@ -13,14 +13,26 @@ import 'package:mealchemy/features/shopping_lists/models/shopping_list_item.dart
 import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
 import 'package:mealchemy/features/shopping_lists/repositories/mock_shopping_list_repository.dart';
 import 'package:mealchemy/features/shopping_lists/screens/add_shopping_list_item_screen.dart';
+import 'package:mealchemy/features/pantry/models/ingredient_category.dart';
+import 'package:mealchemy/features/pantry/models/pending_external_ingredient.dart';
 
 class _FakeIngredientCatalogueRepository extends IngredientCatalogueRepository {
   _FakeIngredientCatalogueRepository({
     this.shouldFail = false,
+    this.returnExternalIngredient = false,
+    this.requiresCategory = false,
   }) : super(Dio());
 
   final bool shouldFail;
+  final bool returnExternalIngredient;
+  final bool requiresCategory;
+
   String? lastSearchQuery;
+  String? lastImportedSourceId;
+  int? lastImportedCategoryId;
+
+  final List<int?> importedCategoryIds = [];
+  int categoryRequestCount = 0;
 
   @override
   Future<List<IngredientCatalogueItem>> searchIngredients(String query) async {
@@ -30,11 +42,64 @@ class _FakeIngredientCatalogueRepository extends IngredientCatalogueRepository {
       throw Exception('Catalogue unavailable.');
     }
 
+    if (returnExternalIngredient) {
+      return const [
+        IngredientCatalogueItem(
+          ingId: null,
+          name: 'Kimchi',
+          category: null,
+          sourceId: '2710077',
+          sourceApi: 'USDA',
+        ),
+      ];
+    }
+
     return const [
       IngredientCatalogueItem(
         ingId: 12,
         name: 'Milk',
         category: 'Dairy',
+      ),
+    ];
+  }
+
+  @override
+  Future<IngredientCatalogueItem> importExternalIngredient({
+    required String sourceId,
+    int? categoryId,
+  }) async {
+    lastImportedSourceId = sourceId;
+    lastImportedCategoryId = categoryId;
+    importedCategoryIds.add(categoryId);
+
+    if (requiresCategory && categoryId == null) {
+      throw const ExternalIngredientCategoryRequiredException(
+        PendingExternalIngredient(
+          sourceId: '2710077',
+          name: 'Kimchi',
+        ),
+      );
+    }
+
+    return IngredientCatalogueItem(
+      ingId: 25,
+      name: 'Kimchi',
+      category: categoryId == null ? 'Vegetables' : 'Dairy',
+    );
+  }
+
+  @override
+  Future<List<IngredientCategory>> getCategories() async {
+    categoryRequestCount++;
+
+    return const [
+      IngredientCategory(
+        categoryId: 1,
+        name: 'Baked Products',
+      ),
+      IngredientCategory(
+        categoryId: 4,
+        name: 'Dairy',
       ),
     ];
   }
@@ -102,6 +167,8 @@ void main() {
   Future<_ScreenHarness> pumpEntryScreen(
     WidgetTester tester, {
     bool catalogueShouldFail = false,
+    bool catalogueReturnsExternal = false,
+    bool catalogueRequiresCategory = false,
     bool shoppingShouldFail = false,
     bool isOffline = false,
   }) async {
@@ -118,6 +185,8 @@ void main() {
     );
     final catalogueRepository = _FakeIngredientCatalogueRepository(
       shouldFail: catalogueShouldFail,
+      returnExternalIngredient: catalogueReturnsExternal,
+      requiresCategory: catalogueRequiresCategory,
     );
 
     final router = GoRouter(
@@ -306,6 +375,97 @@ void main() {
     expect(harness.shoppingRepository.addedName, isNull);
     expect(harness.shoppingRepository.addedQuantity, '1.5');
     expect(harness.shoppingRepository.addedUnit, 'L');
+  });
+
+  testWidgets('imports and selects a USDA catalogue ingredient', (
+    tester,
+  ) async {
+    final harness = await pumpEntryScreen(
+      tester,
+      catalogueReturnsExternal: true,
+    );
+
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Search catalogue, e.g. Chicken Breast',
+      ),
+      'kimchi',
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Kimchi'), findsOneWidget);
+    expect(find.text('USDA result'), findsOneWidget);
+
+    await tester.tap(find.text('Kimchi'));
+    await tester.pumpAndSettle();
+
+    expect(harness.catalogueRepository.lastImportedSourceId, '2710077');
+    expect(harness.catalogueRepository.lastImportedCategoryId, isNull);
+    expect(find.text('Category: Vegetables'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(TextField, 'e.g. 1.5'),
+      '2',
+    );
+
+    await tester.tap(
+      find.byType(DropdownButtonFormField<String>),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('pcs').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Add Item'));
+    await tester.pump();
+
+    //saved local catalogue id is submitted after USDA import
+    expect(harness.shoppingRepository.addedListId, 'general-list');
+    expect(harness.shoppingRepository.addedIngId, 25);
+    expect(harness.shoppingRepository.addedName, isNull);
+    expect(harness.shoppingRepository.addedQuantity, '2');
+    expect(harness.shoppingRepository.addedUnit, 'pcs');
+  });
+
+  testWidgets('chooses category and retries USDA ingredient import', (
+    tester,
+  ) async {
+    final harness = await pumpEntryScreen(
+      tester,
+      catalogueReturnsExternal: true,
+      catalogueRequiresCategory: true,
+    );
+
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Search catalogue, e.g. Chicken Breast',
+      ),
+      'kimchi',
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Kimchi'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Choose a category'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.widgetWithText(AlertDialog, 'Choose a category'),
+        matching: find.byType(Scrollbar),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Baked Products'), findsOneWidget);
+    expect(find.text('Dairy'), findsOneWidget);
+    expect(harness.catalogueRepository.categoryRequestCount, 1);
+
+    await tester.tap(find.text('Dairy').last);
+    await tester.pumpAndSettle();
+
+    expect(harness.catalogueRepository.importedCategoryIds, [null, 4]);
+    expect(find.text('Choose a category'), findsNothing);
+    expect(find.text('Category: Dairy'), findsOneWidget);
   });
 
   testWidgets('submits a custom item without an ingredient id', (

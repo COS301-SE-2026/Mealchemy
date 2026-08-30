@@ -11,6 +11,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../pantry/models/ingredient_catalogue_item.dart';
 import '../../pantry/providers/pantry_provider.dart';
 import '../providers/shopping_list_provider.dart';
+import '../../pantry/repositories/ingredient_catalogue_repository.dart';
 
 const List<String> _unitOptions = [
   'g',
@@ -332,12 +333,134 @@ class _AddShoppingListItemScreenState
     }
   }
 
-  void _selectIngredient(IngredientCatalogueItem ingredient) {
+  Future<void> _selectIngredient(
+    IngredientCatalogueItem ingredient,
+  ) async {
+    if (!ingredient.requiresImport) {
+      _setSelectedIngredient(ingredient);
+      return;
+    }
+
+    final sourceId = ingredient.sourceId;
+
+    if (sourceId == null || sourceId.isEmpty) {
+      setState(() {
+        _searchError =
+            'This external ingredient cannot be imported. Try another item.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isSearching = true;
+      _searchError = null;
+    });
+
+    try {
+      final importedIngredient = await ref
+          .read(ingredientCatalogueRepositoryProvider)
+          .importExternalIngredient(sourceId: sourceId);
+
+      if (!mounted) return;
+
+      _setSelectedIngredient(importedIngredient);
+    } on ExternalIngredientCategoryRequiredException catch (error) {
+      if (!mounted) return;
+
+      await _chooseCategoryAndRetry(
+        sourceId: error.ingredient.sourceId,
+        ingredientName: error.ingredient.name,
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isSearching = false;
+        _searchError = 'Could not import this ingredient. Try again.';
+      });
+    }
+  }
+
+  Future<void> _chooseCategoryAndRetry({
+    required String sourceId,
+    required String ingredientName,
+  }) async {
+    try {
+      final repository = ref.read(ingredientCatalogueRepositoryProvider);
+      final categories = await repository.getCategories();
+
+      if (!mounted) return;
+
+      setState(() => _isSearching = false);
+
+      final selectedCategoryId = await showDialog<int>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Choose a category'),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 300,
+              child: Scrollbar(
+                thumbVisibility: true,
+                child: ListView(
+                  primary: true,
+                  children: categories
+                      .map(
+                        (category) => ListTile(
+                          title: Text(category.name),
+                          onTap: () => Navigator.of(dialogContext).pop(
+                            category.categoryId,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (!mounted || selectedCategoryId == null) return;
+
+      setState(() {
+        _isSearching = true;
+        _searchError = null;
+      });
+
+      final importedIngredient = await repository.importExternalIngredient(
+        sourceId: sourceId,
+        categoryId: selectedCategoryId,
+      );
+
+      if (!mounted) return;
+
+      _setSelectedIngredient(importedIngredient);
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isSearching = false;
+        _searchError = 'Could not import $ingredientName. Try again.';
+      });
+    }
+  }
+
+  void _setSelectedIngredient(IngredientCatalogueItem ingredient) {
     setState(() {
       _selectedIngredient = ingredient;
       _catalogueController.text = ingredient.name;
       _ingredientOptions = [];
       _identityError = null;
+      _searchError = null;
+      _isSearching = false;
     });
   }
 
@@ -345,9 +468,10 @@ class _AddShoppingListItemScreenState
     final quantityText = _quantityController.text.trim();
     final parsedQuantity = num.tryParse(quantityText);
     final customName = _customNameController.text.trim();
+    final selectedIngredientId = _selectedIngredient?.ingId;
 
     final hasValidIdentity = _mode == _ItemEntryMode.catalogue
-        ? _selectedIngredient != null
+        ? selectedIngredientId != null
         : customName.isNotEmpty;
 
     final hasValidQuantity = parsedQuantity != null && parsedQuantity > 0;
@@ -380,9 +504,8 @@ class _AddShoppingListItemScreenState
 
       await ref.read(shoppingListsProvider.notifier).addItemToList(
             listId: widget.listId,
-            ingId: _mode == _ItemEntryMode.catalogue
-                ? _selectedIngredient!.ingId
-                : null,
+            ingId:
+                _mode == _ItemEntryMode.catalogue ? selectedIngredientId : null,
             name: _mode == _ItemEntryMode.custom ? customName : null,
             quantity: quantityText,
             // The provider currently calls this category for legacy reasons,
@@ -497,11 +620,13 @@ class _CatalogueResults extends StatelessWidget {
             ),
           ),
           subtitle: Text(
-            ingredient.category,
+            ingredient.category ??
+                '${ingredient.sourceApi ?? 'External'} result',
             style: AppTextStyles.bodySmall.copyWith(
               color: AppColors.textMuted,
             ),
           ),
+          //external results imported before being selected
           onTap: () => onSelected(ingredient),
         );
       }).toList(),
