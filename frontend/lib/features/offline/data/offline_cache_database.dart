@@ -16,6 +16,8 @@ class UtcDateTimeConverter extends TypeConverter<DateTime, String> {
   String toSql(DateTime value) => value.toUtc().toIso8601String();
 }
 
+// Drift reads these declarations during code generation. Their column getters deliberately throw if invoked directly at runtime, so they are not unit-test coverage targets; the generated schema is exercised through the database.
+// coverage:ignore-start
 class CachedVaultRows extends Table {
   IntColumn get viewerUserId => integer()();
   IntColumn get vaultId => integer()();
@@ -180,6 +182,7 @@ class CachedShoppingListItemRows extends Table {
   @override
   Set<Column<Object>> get primaryKey => {viewerUserId, listId, itemKey};
 }
+// coverage:ignore-end
 
 @DriftDatabase(
   tables: [
