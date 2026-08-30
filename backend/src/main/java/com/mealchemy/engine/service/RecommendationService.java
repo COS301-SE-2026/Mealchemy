@@ -94,4 +94,11 @@ public class RecommendationService {
             null
         )).toList();
     }
+
+    private List<String> buildDietaryTags(Recipe recipe)
+    {
+        List<RecipeTags> recipeTags = recipeTagsRepository.findByRecipeRecipeId(recipe.getRecipeId());
+
+        return recipeTags.stream().map(RecipeTags::getTag).filter(Tags::getIsDietary).map(Tags::getTagName).toList();
+    }
 }
