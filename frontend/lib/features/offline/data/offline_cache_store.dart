@@ -119,7 +119,7 @@ class OfflineCacheStore {
               .toList(),
         );
       });
-      await _writeSyncMetadata(
+      await writeSyncMetadata(
         viewerUserId: viewerUserId,
         collection: CacheCollection.vaults,
         scopeId: CacheScope.all,
@@ -203,7 +203,7 @@ class OfflineCacheStore {
               .toList(),
         );
       });
-      await _writeSyncMetadata(
+      await writeSyncMetadata(
         viewerUserId: viewerUserId,
         collection: CacheCollection.folders,
         scopeId: vaultId.toString(),
@@ -267,7 +267,7 @@ class OfflineCacheStore {
               .toList(),
         );
       });
-      await _writeSyncMetadata(
+      await writeSyncMetadata(
         viewerUserId: viewerUserId,
         collection: CacheCollection.folderRecipes,
         scopeId: folderId.toString(),
@@ -408,7 +408,7 @@ class OfflineCacheStore {
               ),
             );
       }
-      await _writeSyncMetadata(
+      await writeSyncMetadata(
         viewerUserId: viewerUserId,
         collection: CacheCollection.recipes,
         scopeId: CacheScope.all,
@@ -486,7 +486,7 @@ class OfflineCacheStore {
           ],
         );
       });
-      await _writeSyncMetadata(
+      await writeSyncMetadata(
         viewerUserId: viewerUserId,
         collection: CacheCollection.recipe,
         scopeId: recipe.recipeId.toString(),
@@ -510,7 +510,7 @@ class OfflineCacheStore {
         .getSingleOrNull();
   }
 
-  Future<void> _writeSyncMetadata({
+  Future<void> writeSyncMetadata({
     required int viewerUserId,
     required String collection,
     required String scopeId,
@@ -579,6 +579,9 @@ abstract final class CacheCollection {
   static const folderRecipes = 'folderRecipes';
   static const recipes = 'recipes';
   static const recipe = 'recipe';
+  static const pantry = 'pantry';
+  static const shoppingLists = 'shoppingLists';
+  static const shoppingList = 'shoppingList';
 }
 
 abstract final class CacheScope {
