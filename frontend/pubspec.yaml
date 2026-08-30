@@ -22,19 +22,18 @@ dependencies:
   #Fonts
   google_fonts: ^6.2.1
   # Models (paired with freezed/json_serializable in dev_dependencies)
-  freezed_annotation: ^2.4.4
-  json_annotation: ^4.9.0
   cached_network_image: ^3.4.1
   connectivity_plus: ^7.3.1
+  drift: ^2.34.3
+  drift_flutter: ^0.3.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   build_runner: ^2.4.13
-  freezed: ^2.5.7
-  json_serializable: ^6.8.0
   flutter_launcher_icons: ^0.14.1
+  drift_dev: ^2.34.0
 
 flutter:
   uses-material-design: true
