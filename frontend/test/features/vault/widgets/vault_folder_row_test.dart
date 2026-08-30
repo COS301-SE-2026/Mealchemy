@@ -33,7 +33,6 @@ void main() {
     Recipe(recipeId: 8, title: 'Omelette'),
   ];
 
-  
   Widget host({List<Recipe> folderRecipes = recipes}) {
     return ProviderScope(
       overrides: [
@@ -77,6 +76,14 @@ void main() {
     // "2 recipes · Created 5 Jan 2026"
     expect(find.textContaining('2 recipes'), findsOneWidget);
     expect(find.textContaining('5 Jan 2026'), findsOneWidget);
+  });
+
+  testWidgets('uses the singular recipe label for one cached recipe',
+      (tester) async {
+    await tester.pumpWidget(host(folderRecipes: [recipes.first]));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('1 recipe ·'), findsOneWidget);
   });
 
   testWidgets('expanding reveals the recipe rows and the open folder icon',

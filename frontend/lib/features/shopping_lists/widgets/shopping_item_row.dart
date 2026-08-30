@@ -9,12 +9,12 @@ class ShoppingItemRow extends StatelessWidget {
   const ShoppingItemRow({
     super.key,
     required this.item,
-    required this.onChanged,
+    this.onChanged,
     this.onEdit,
   });
 
   final ShoppingListItem item;
-  final ValueChanged<bool?> onChanged;
+  final ValueChanged<bool?>? onChanged;
   final VoidCallback? onEdit;
 
   @override

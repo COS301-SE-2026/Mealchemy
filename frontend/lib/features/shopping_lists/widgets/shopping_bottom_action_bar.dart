@@ -99,19 +99,19 @@ class _MainAddButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.primary,
+      color: onTap == null ? AppColors.surfaceMuted : AppColors.primary,
       shape: const CircleBorder(),
-      elevation: 8,
+      elevation: onTap == null ? 0 : 8,
       shadowColor: AppColors.primary.withValues(alpha: 0.28),
       child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),
-        child: const SizedBox(
+        child: SizedBox(
           width: 70,
           height: 70,
           child: Icon(
             Icons.add,
-            color: AppColors.textDark,
+            color: onTap == null ? AppColors.textMuted : AppColors.textDark,
             size: 34,
           ),
         ),

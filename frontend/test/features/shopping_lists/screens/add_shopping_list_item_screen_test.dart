@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/features/pantry/models/ingredient_catalogue_item.dart';
 import 'package:mealchemy/features/pantry/providers/pantry_provider.dart';
 import 'package:mealchemy/features/pantry/repositories/ingredient_catalogue_repository.dart';
@@ -169,6 +170,7 @@ void main() {
     bool catalogueReturnsExternal = false,
     bool catalogueRequiresCategory = false,
     bool shoppingShouldFail = false,
+    bool isOffline = false,
   }) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 1;
@@ -210,6 +212,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          offlineReadOnlyProvider.overrideWithValue(isOffline),
           shoppingListRepositoryProvider.overrideWithValue(
             shoppingRepository,
           ),
@@ -302,6 +305,17 @@ void main() {
     expect(find.text('Quantity'), findsNWidgets(2));
     expect(find.text('Unit'), findsOneWidget);
     expect(find.text('Add Item'), findsOneWidget);
+  });
+
+  testWidgets('blocks direct offline entry', (tester) async {
+    await pumpEntryScreen(tester, isOffline: true);
+
+    expect(find.text('Changes are unavailable offline'), findsOneWidget);
+    expect(
+      find.text('Your shopping lists are still available to view.'),
+      findsOneWidget,
+    );
+    expect(find.text('Add Item'), findsNothing);
   });
 
   testWidgets('validates missing catalogue item quantity and unit', (

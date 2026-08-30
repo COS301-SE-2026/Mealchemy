@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/features/pantry/models/ingredient_catalogue_item.dart';
 import 'package:mealchemy/features/pantry/models/pantry_ingredient.dart';
 import 'package:mealchemy/features/pantry/models/pantry_summary.dart';
@@ -179,6 +180,7 @@ void main() {
   Future<_RecordingPantryRepository> pumpAddIngredientScreen(
     WidgetTester tester, {
     _FakeIngredientCatalogueRepository? ingredientRepository,
+    bool isOffline = false,
   }) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 1;
@@ -208,6 +210,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          offlineReadOnlyProvider.overrideWithValue(isOffline),
           pantryRepositoryProvider.overrideWithValue(pantryRepository),
           if (ingredientRepository != null)
             ingredientCatalogueRepositoryProvider
@@ -242,6 +245,17 @@ void main() {
     expect(find.text('Ingredient Name'), findsOneWidget);
     expect(find.text('Unit'), findsOneWidget);
     expect(find.text('Save Ingredient'), findsOneWidget);
+  });
+
+  testWidgets('AddIngredientScreen blocks direct offline entry', (
+    tester,
+  ) async {
+    await pumpAddIngredientScreen(tester, isOffline: true);
+
+    expect(find.text('Changes are unavailable offline'), findsOneWidget);
+    expect(
+        find.text('Your pantry is still available to view.'), findsOneWidget);
+    expect(find.text('Save Ingredient'), findsNothing);
   });
 
   testWidgets('AddIngredientScreen validates required fields on save', (

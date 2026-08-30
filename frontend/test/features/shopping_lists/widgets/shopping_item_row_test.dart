@@ -60,6 +60,28 @@ void main() {
     expect(tapped, isTrue);
   });
 
+  testWidgets('ShoppingItemRow disables its checkbox without a callback', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: ShoppingItemRow(
+            item: ShoppingListItem(
+              id: 'baby-arugula',
+              name: 'Baby Arugula',
+              quantity: '142 g',
+              category: 'PRODUCE',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final checkbox = tester.widget<Checkbox>(find.byType(Checkbox));
+    expect(checkbox.onChanged, isNull);
+  });
+
   testWidgets('ShoppingItemRow renders checked item', (tester) async {
     await tester.pumpWidget(
       MaterialApp(

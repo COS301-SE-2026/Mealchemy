@@ -10,6 +10,9 @@ import '../repositories/pantry_repository.dart';
 import '../widgets/pantry_item_card.dart';
 import '../../../core/providers/api_service_provider.dart';
 import '../repositories/ingredient_catalogue_repository.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../offline/providers/offline_cache_provider.dart';
+import '../../offline/repositories/cached_pantry_repository.dart';
 
 //selects mock/API repo
 final pantryRepositoryProvider = Provider<PantryRepository>((ref) {
@@ -17,7 +20,14 @@ final pantryRepositoryProvider = Provider<PantryRepository>((ref) {
     return MockPantryRepository();
   }
 
-  return ApiPantryRepository(ref.read(dioProvider));
+  final remote = ApiPantryRepository(ref.read(dioProvider));
+  final viewerUserId = ref.watch(activeIdentityProvider);
+  if (viewerUserId == null) return remote;
+  return CachedPantryRepository(
+    remote: remote,
+    cache: ref.watch(pantryCacheStoreProvider),
+    viewerUserId: viewerUserId,
+  );
 });
 
 //gives screens access to ingredient catalogue search
