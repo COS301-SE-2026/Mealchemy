@@ -15,6 +15,8 @@ import '../widgets/recipe_nutrition_tab.dart';
 import '../widgets/recipe_stat_card.dart';
 import '../widgets/recipe_step_row.dart';
 import '../widgets/recipe_tab_bar.dart';
+import '../../offline/data/offline_cache_store.dart';
+import '../../offline/widgets/cache_freshness_label.dart';
 
 //tabs need controller with animation support
 class RecipeDetailScreen extends ConsumerStatefulWidget {
@@ -91,6 +93,13 @@ class _RecipeDetailContent extends StatelessWidget {
       body: Column(
         children: [
           RecipeHero(recipe: recipe),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
+            child: CacheFreshnessLabel(
+              collection: CacheCollection.recipe,
+              scopeId: recipe.recipeId.toString(),
+            ),
+          ),
           RecipeTabBar(controller: tabController),
           Expanded(
             child: TabBarView(

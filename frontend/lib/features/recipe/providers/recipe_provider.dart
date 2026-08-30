@@ -4,6 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_config.dart';
 import '../../../core/providers/api_service_provider.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../offline/data/offline_cache_policy.dart';
+import '../../offline/providers/offline_cache_provider.dart';
+import '../../offline/repositories/cached_recipe_repository.dart';
 import '../../vault/providers/vault_repository_provider.dart';
 import '../../vault/repositories/vault_repository.dart';
 import '../../vault/models/vault.dart';
@@ -15,13 +19,26 @@ import '../repositories/api_recipe_repository.dart';
 import '../repositories/mock_recipe_repository.dart';
 import '../repositories/recipe_repository.dart';
 
-//selects mock/API repo
-final recipeRepositoryProvider = Provider<RecipeRepository>((ref) {
-  if (AppConfig.mockRecipe) {
-    return MockRecipeRepository();
-  }
-
+final remoteRecipeRepositoryProvider = Provider<RecipeRepository>((ref) {
   return ApiRecipeRepository(ref.read(dioProvider));
+});
+
+final mockRecipeEnabledProvider = Provider<bool>((ref) {
+  return AppConfig.mockRecipe;
+});
+
+// Selects mock data or the cache-decorated API repository.
+final recipeRepositoryProvider = Provider<RecipeRepository>((ref) {
+  if (ref.watch(mockRecipeEnabledProvider)) return MockRecipeRepository();
+  final remote = ref.watch(remoteRecipeRepositoryProvider);
+  final viewerUserId = ref.watch(activeIdentityProvider);
+  if (viewerUserId == null) return remote;
+
+  return CachedRecipeRepository(
+    remote: remote,
+    cache: ref.watch(offlineCacheStoreProvider),
+    viewerUserId: viewerUserId,
+  );
 });
 
 //list of recipes (for list / vault views)
@@ -40,16 +57,49 @@ final recipeByIdProvider = FutureProvider.family<Recipe, int>((ref, id) {
 //full recipe for the with metadata  ingredients  steps
 final recipeDetailProvider =
     FutureProvider.family<Recipe, int>((ref, id) async {
-  final repository = ref.watch(recipeRepositoryProvider);
-  final results = await Future.wait([
-    repository.getRecipeById(id),
-    repository.getRecipeIngredients(id),
-    repository.getRecipeSteps(id),
-  ]);
-  final recipe = results[0] as Recipe;
-  final ingredients = results[1] as List<RecipeIngredient>;
-  final steps = results[2] as List<RecipeStep>;
-  return recipe.copyWith(ingredients: ingredients, steps: steps);
+  if (ref.watch(mockRecipeEnabledProvider)) {
+    final repository = ref.watch(recipeRepositoryProvider);
+    final results = await Future.wait([
+      repository.getRecipeById(id),
+      repository.getRecipeIngredients(id),
+      repository.getRecipeSteps(id),
+    ]);
+    return (results[0] as Recipe).copyWith(
+      ingredients: results[1] as List<RecipeIngredient>,
+      steps: results[2] as List<RecipeStep>,
+    );
+  }
+
+  final repository = ref.watch(remoteRecipeRepositoryProvider);
+  final viewerUserId = ref.watch(activeIdentityProvider);
+  final cache = ref.watch(offlineCacheStoreProvider);
+  try {
+    final results = await Future.wait([
+      repository.getRecipeById(id),
+      repository.getRecipeIngredients(id),
+      repository.getRecipeSteps(id),
+    ]);
+    final completeRecipe = (results[0] as Recipe).copyWith(
+      ingredients: results[1] as List<RecipeIngredient>,
+      steps: results[2] as List<RecipeStep>,
+    );
+    if (viewerUserId != null) {
+      await cache.storeCompleteRecipe(
+        viewerUserId: viewerUserId,
+        recipe: completeRecipe,
+        syncedAt: DateTime.now().toUtc(),
+      );
+    }
+    return completeRecipe;
+  } catch (error) {
+    if (!isOfflineTransportFailure(error) || viewerUserId == null) rethrow;
+    final cached = await cache.readCompleteRecipe(
+      viewerUserId: viewerUserId,
+      recipeId: id,
+    );
+    if (cached == null) rethrow;
+    return cached;
+  }
 });
 
 //cuisine_type_enum values (used by add-recipe selector)

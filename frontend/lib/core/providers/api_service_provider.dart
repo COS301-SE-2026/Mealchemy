@@ -1,20 +1,11 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../connectivity/backend_config.dart';
+import '../connectivity/network_status_provider.dart';
+import '../connectivity/offline_mutation_interceptor.dart';
 import '../services/auth_interceptor.dart';
-
-
-const String _productionBaseUrl = String.fromEnvironment('BACKEND_URL', defaultValue: '');
-
-String get _baseUrl {
-  if (_productionBaseUrl.isNotEmpty) return _productionBaseUrl;
-  // 10.0.2.2 is the Android emulator's alias for the host machine's localhost.
-  //if no real backend adress, use local dev
-  return Platform.isAndroid ? 'http://10.0.2.2:8080' : 'http://localhost:8080';
-}
 
 final authInterceptorProvider = Provider<AuthInterceptor>((ref) {
   return AuthInterceptor();
@@ -22,10 +13,11 @@ final authInterceptorProvider = Provider<AuthInterceptor>((ref) {
 
 final dioProvider = Provider<Dio>((ref) {
   final interceptor = ref.read(authInterceptorProvider);
+  final networkStatus = ref.read(networkStatusProvider.notifier);
 
   final dio = Dio(
     BaseOptions(
-      baseUrl: _baseUrl,
+      baseUrl: backendBaseUrl,
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
       headers: {
@@ -44,6 +36,10 @@ final dioProvider = Provider<Dio>((ref) {
     ));
   }
 
+  dio.interceptors.add(
+    OfflineMutationInterceptor(() => ref.read(networkStatusProvider)),
+  );
+  dio.interceptors.add(NetworkStatusInterceptor(networkStatus));
   dio.interceptors.add(interceptor);
 
   return dio;

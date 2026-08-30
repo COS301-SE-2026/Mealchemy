@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/connectivity/network_status_provider.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/shared_widgets/Organisms/app_navbar.dart';
 import '../../../core/theme/app_colours.dart';
@@ -10,6 +11,8 @@ import '../models/shopping_list.dart';
 import '../providers/shopping_list_provider.dart';
 import '../widgets/shopping_list_row.dart';
 import '../widgets/shopping_section_header.dart';
+import '../../offline/data/offline_cache_store.dart';
+import '../../offline/widgets/cache_freshness_label.dart';
 
 //main overview screen
 class ShoppingListsScreen extends ConsumerWidget {
@@ -18,12 +21,14 @@ class ShoppingListsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final shoppingLists = ref.watch(shoppingListsProvider);
+    final isReadOnly = ref.watch(offlineReadOnlyProvider);
 
     return Scaffold(
       backgroundColor: AppColors.bgLight,
       body: shoppingLists.when(
         data: (state) => _ShoppingListsContent(
           state: state,
+          isReadOnly: isReadOnly,
           onSearchChanged: (query) {
             ref.read(shoppingListsProvider.notifier).updateSearchQuery(query);
           },
@@ -64,15 +69,18 @@ class ShoppingListsScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showCreateListDialog(
-          context,
-          (name) async {
-            await ref.read(shoppingListsProvider.notifier).createShoppingList(
-                  name: name,
-                );
-          },
-        ),
-        backgroundColor: AppColors.primary,
+        onPressed: isReadOnly
+            ? null
+            : () => _showCreateListDialog(
+                  context,
+                  (name) async {
+                    await ref
+                        .read(shoppingListsProvider.notifier)
+                        .createShoppingList(name: name);
+                  },
+                ),
+        backgroundColor:
+            isReadOnly ? AppColors.surfaceMuted : AppColors.primary,
         foregroundColor: AppColors.textDark,
         elevation: 8,
         child: const Icon(Icons.add),
@@ -89,6 +97,7 @@ class ShoppingListsScreen extends ConsumerWidget {
 class _ShoppingListsContent extends StatelessWidget {
   const _ShoppingListsContent({
     required this.state,
+    required this.isReadOnly,
     required this.onSearchChanged,
     required this.onCreateList,
     required this.onUpdateListName,
@@ -96,6 +105,7 @@ class _ShoppingListsContent extends StatelessWidget {
   });
 
   final ShoppingListsState state;
+  final bool isReadOnly;
   final ValueChanged<String> onSearchChanged;
   final Future<void> Function(String name) onCreateList;
   final Future<void> Function({
@@ -112,6 +122,7 @@ class _ShoppingListsContent extends StatelessWidget {
         : _buildSections(
             context: context,
             groupedLists: groupedLists,
+            isReadOnly: isReadOnly,
             onUpdateListName: onUpdateListName,
             onDeleteList: onDeleteList,
           );
@@ -124,10 +135,15 @@ class _ShoppingListsContent extends StatelessWidget {
           _ShoppingListsTopBar(
             searchQuery: state.searchQuery,
             onSearchChanged: onSearchChanged,
-            onCreateList: onCreateList,
+            onCreateList: isReadOnly ? null : onCreateList,
           ),
           const SizedBox(height: 26),
           const _ShoppingListsTitle(),
+          const SizedBox(height: 6),
+          const CacheFreshnessLabel(
+            collection: CacheCollection.shoppingLists,
+            scopeId: CacheScope.all,
+          ),
           const SizedBox(height: 30),
           ShoppingSectionHeader(
             title: 'Lists',
@@ -144,6 +160,7 @@ class _ShoppingListsContent extends StatelessWidget {
   List<Widget> _buildSections({
     required BuildContext context,
     required Map<String, List<ShoppingList>> groupedLists,
+    required bool isReadOnly,
     required Future<void> Function({
       required String listId,
       required String name,
@@ -171,6 +188,7 @@ class _ShoppingListsContent extends StatelessWidget {
         widgets.add(
           ShoppingListRow(
             list: list,
+            mutationsEnabled: !isReadOnly,
             onTap: () {
               context.go('/shopping-lists/${list.id}');
             },
@@ -205,7 +223,7 @@ class _ShoppingListsTopBar extends StatefulWidget {
 
   final String searchQuery;
   final ValueChanged<String> onSearchChanged;
-  final Future<void> Function(String name) onCreateList;
+  final Future<void> Function(String name)? onCreateList;
 
   @override
   State<_ShoppingListsTopBar> createState() => _ShoppingListsTopBarState();
@@ -312,19 +330,27 @@ class _ShoppingListsTopBarState extends State<_ShoppingListsTopBar> {
         Column(
           children: [
             IconButton(
-              onPressed: () =>
-                  _showCreateListDialog(context, widget.onCreateList),
-              icon: const Icon(
+              onPressed: widget.onCreateList == null
+                  ? null
+                  : () => _showCreateListDialog(
+                        context,
+                        widget.onCreateList!,
+                      ),
+              icon: Icon(
                 Icons.add,
-                color: AppColors.textLight,
+                color: widget.onCreateList == null
+                    ? AppColors.textMuted
+                    : AppColors.textLight,
                 size: 32,
               ),
             ),
             IconButton(
-              onPressed: () {},
-              icon: const Icon(
+              onPressed: widget.onCreateList == null ? null : () {},
+              icon: Icon(
                 Icons.add_a_photo_outlined,
-                color: AppColors.textLight,
+                color: widget.onCreateList == null
+                    ? AppColors.textMuted
+                    : AppColors.textLight,
                 size: 26,
               ),
             ),

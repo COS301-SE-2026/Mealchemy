@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -427,6 +428,53 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
         );
       }
     });
+
+    final isReadOnly = ref.watch(offlineReadOnlyProvider);
+    if (isReadOnly) {
+      return Scaffold(
+        backgroundColor: AppColors.bgLight,
+        appBar: AppBar(
+          backgroundColor: AppColors.bgLight,
+          elevation: 0,
+          leading: IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+            tooltip: 'Back',
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.cloud_off_outlined,
+                  size: 40,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Changes are unavailable offline',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.heading2.copyWith(
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Your saved recipes are still available to view.',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     final cuisinesState = ref.watch(cuisineTypesProvider);
     final unitsState = ref.watch(unitsProvider);
