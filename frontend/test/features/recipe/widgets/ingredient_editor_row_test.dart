@@ -279,6 +279,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Choose a category'), findsOneWidget);
+    expect(find.byType(Scrollbar), findsOneWidget);
     expect(repository.categoryRequestCount, 1);
 
     final categoryDialog = find.widgetWithText(
