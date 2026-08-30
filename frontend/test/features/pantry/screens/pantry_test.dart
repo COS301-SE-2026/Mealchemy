@@ -671,6 +671,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Choose a category'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.widgetWithText(AlertDialog, 'Choose a category'),
+          matching: find.byType(Scrollbar),
+        ),
+        findsOneWidget,
+      );
 
       final categoryDialog = find.widgetWithText(
         AlertDialog,

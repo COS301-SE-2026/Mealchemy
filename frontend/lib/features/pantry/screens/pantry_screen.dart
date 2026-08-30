@@ -361,18 +361,22 @@ Future<void> _showEditPantryIngredientDialog({
                     title: const Text('Choose a category'),
                     content: SizedBox(
                       width: double.maxFinite,
-                      child: ListView(
-                        shrinkWrap: true,
-                        children: categories
-                            .map(
-                              (category) => ListTile(
-                                title: Text(category.name),
-                                onTap: () => Navigator.of(
-                                  categoryDialogContext,
-                                ).pop(category.categoryId),
-                              ),
-                            )
-                            .toList(),
+                      height: 300,
+                      child: Scrollbar(
+                        thumbVisibility: true,
+                        child: ListView(
+                          primary: true,
+                          children: categories
+                              .map(
+                                (category) => ListTile(
+                                  title: Text(category.name),
+                                  onTap: () => Navigator.of(
+                                    categoryDialogContext,
+                                  ).pop(category.categoryId),
+                                ),
+                              )
+                              .toList(),
+                        ),
                       ),
                     ),
                     actions: [
