@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../connectivity/backend_config.dart';
 import '../connectivity/network_status_provider.dart';
+import '../connectivity/offline_mutation_interceptor.dart';
 import '../services/auth_interceptor.dart';
 
 final authInterceptorProvider = Provider<AuthInterceptor>((ref) {
@@ -35,6 +36,9 @@ final dioProvider = Provider<Dio>((ref) {
     ));
   }
 
+  dio.interceptors.add(
+    OfflineMutationInterceptor(() => ref.read(networkStatusProvider)),
+  );
   dio.interceptors.add(NetworkStatusInterceptor(networkStatus));
   dio.interceptors.add(interceptor);
 

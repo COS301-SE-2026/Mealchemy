@@ -23,6 +23,10 @@ final networkStatusProvider =
   );
 });
 
+final offlineReadOnlyProvider = Provider<bool>((ref) {
+  return ref.watch(networkStatusProvider) == NetworkStatus.offline;
+});
+
 class NetworkStatusNotifier extends StateNotifier<NetworkStatus> {
   NetworkStatusNotifier({
     required NetworkInterfaceSource interfaceSource,

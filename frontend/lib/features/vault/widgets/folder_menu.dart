@@ -5,6 +5,7 @@ import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_confirm_dialog.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_input_dialog.dart';
 import 'package:mealchemy/features/auth/providers/auth_provider.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import '../providers/vault_repository_provider.dart';
 import '../models/vault.dart';
 import '../models/vault_folder.dart';
@@ -26,6 +27,7 @@ class FolderMenuButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUserId = ref.watch(authProvider).userId;
     final isOwner = vault.ownerId == currentUserId;
+    final isReadOnly = ref.watch(offlineReadOnlyProvider);
 
     return PopupMenuButton<_FolderAction>(
       icon: Icon(
@@ -36,7 +38,8 @@ class FolderMenuButton extends ConsumerWidget {
       elevation: 4,
       offset: const Offset(0, 40),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      enabled: isOwner,
+      enabled: isOwner && !isReadOnly,
+      tooltip: isReadOnly ? 'Unavailable offline' : 'Folder actions',
       onSelected: (action) => _handle(context, ref, action),
       itemBuilder: (context) {
         if (!isOwner) {

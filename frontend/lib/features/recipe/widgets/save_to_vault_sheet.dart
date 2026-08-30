@@ -10,6 +10,7 @@ import '../../vault/models/vault.dart';
 import '../../vault/models/vault_folder.dart';
 import '../../vault/providers/vault_provider.dart';
 import '../../vault/providers/vault_repository_provider.dart';
+import '../../../core/connectivity/network_status_provider.dart';
 
 // You pick a vault, then a folder in it, then save the recipe into that folder.
 Future<void> showSaveToVaultSheet({
@@ -45,6 +46,7 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
   @override
   Widget build(BuildContext context) {
     final vaultsAsync = ref.watch(vaultsProvider);
+    final isReadOnly = ref.watch(offlineReadOnlyProvider);
 
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -87,7 +89,8 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
             isFullWidth: true,
             isRounded: true,
             isLoading: _saving,
-            onPressed: (_folderId == null || _saving) ? null : _save,
+            onPressed:
+                (_folderId == null || _saving || isReadOnly) ? null : _save,
           ),
         ],
       ),
@@ -130,6 +133,7 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
 
   Widget _folderPicker(int vaultId) {
     final foldersAsync = ref.watch(vaultFoldersProvider(vaultId));
+    final isReadOnly = ref.watch(offlineReadOnlyProvider);
     return foldersAsync.when(
       loading: () => const LinearProgressIndicator(),
       error: (_, __) => Text('Could not load folders.',
@@ -166,7 +170,7 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
             const SizedBox(height: 12),
             AppButton.dashed(
               label: 'CREATE A FOLDER',
-              onPressed: _createFolder,
+              onPressed: isReadOnly ? null : _createFolder,
               leftIcon: Icons.create_new_folder_outlined,
               isFullWidth: true,
             ),

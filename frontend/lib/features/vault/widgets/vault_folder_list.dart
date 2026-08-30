@@ -9,7 +9,8 @@ import '../models/vault_folder.dart';
 import 'vault_menu.dart';
 import 'vault_folder_row.dart';
 import '../providers/vault_repository_provider.dart';   
-import '../providers/vault_provider.dart';               
+import '../providers/vault_provider.dart';   
+import '../../../core/connectivity/network_status_provider.dart';            
 
 //folder section vault name label plus one row per folder
 class VaultFolderList extends ConsumerWidget {
@@ -38,6 +39,7 @@ class VaultFolderList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isReadOnly = ref.watch(offlineReadOnlyProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -74,7 +76,7 @@ class VaultFolderList extends ConsumerWidget {
           const SizedBox(height: 16),
           AppButton.dashed(
             label: 'ADD MORE FOLDERS',
-            onPressed: () => _createFolder(context, ref),
+            onPressed: isReadOnly ? null : () => _createFolder(context, ref),
             leftIcon: Icons.add,
             isFullWidth: true,
           ),

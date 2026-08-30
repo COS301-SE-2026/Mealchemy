@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colours.dart';
@@ -37,6 +38,7 @@ class _VaultFolderRowState extends ConsumerState<VaultFolderRow> {
 
   @override
   Widget build(BuildContext context) {
+    final isReadOnly = ref.watch(offlineReadOnlyProvider);
     final recipesAsync =
         ref.watch(folderRecipeDisplayProvider(widget.folder.folderId));
 
@@ -146,6 +148,7 @@ class _VaultFolderRowState extends ConsumerState<VaultFolderRow> {
                         for (final recipe in recipes)
                           FolderRecipeRow(
                             recipe: recipe,
+                            mutationsEnabled: !isReadOnly,
                             onEditTap: () =>
                                 context.push('/edit-recipe/${recipe.recipeId}'),
                             onDeleteConfirmed: () async {

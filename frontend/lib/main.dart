@@ -6,6 +6,7 @@ import 'core/connectivity/network_status_provider.dart';
 import 'core/routes/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/shared_widgets/atoms/app_toast_host.dart';
+import 'core/shared_widgets/offline_status_frame.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,7 +51,9 @@ class MealchemyApp extends StatelessWidget {
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
       routerConfig: appRouter,
-      builder: (context, child) => AppToastHost(child: child),
+      builder: (context, child) => OfflineStatusFrame(
+        child: AppToastHost(child: child),
+      ),
     );
   }
 }
