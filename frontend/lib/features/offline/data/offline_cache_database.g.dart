@@ -3042,6 +3042,1837 @@ class CacheSyncMetadataRowsCompanion
   }
 }
 
+class $CachedPantryIngredientRowsTable extends CachedPantryIngredientRows
+    with
+        TableInfo<$CachedPantryIngredientRowsTable, CachedPantryIngredientRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedPantryIngredientRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _viewerUserIdMeta =
+      const VerificationMeta('viewerUserId');
+  @override
+  late final GeneratedColumn<int> viewerUserId = GeneratedColumn<int>(
+      'viewer_user_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _rowKeyMeta = const VerificationMeta('rowKey');
+  @override
+  late final GeneratedColumn<String> rowKey = GeneratedColumn<String>(
+      'row_key', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _pantryIngredientIdMeta =
+      const VerificationMeta('pantryIngredientId');
+  @override
+  late final GeneratedColumn<int> pantryIngredientId = GeneratedColumn<int>(
+      'pantry_ingredient_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _ingIdMeta = const VerificationMeta('ingId');
+  @override
+  late final GeneratedColumn<int> ingId = GeneratedColumn<int>(
+      'ing_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _detailsMeta =
+      const VerificationMeta('details');
+  @override
+  late final GeneratedColumn<String> details = GeneratedColumn<String>(
+      'details', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _categoryMeta =
+      const VerificationMeta('category');
+  @override
+  late final GeneratedColumn<String> category = GeneratedColumn<String>(
+      'category', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+      'status', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _quantityMeta =
+      const VerificationMeta('quantity');
+  @override
+  late final GeneratedColumn<String> quantity = GeneratedColumn<String>(
+      'quantity', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _unitMeta = const VerificationMeta('unit');
+  @override
+  late final GeneratedColumn<String> unit = GeneratedColumn<String>(
+      'unit', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        viewerUserId,
+        rowKey,
+        pantryIngredientId,
+        ingId,
+        name,
+        details,
+        category,
+        status,
+        quantity,
+        unit
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_pantry_ingredient_rows';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<CachedPantryIngredientRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('viewer_user_id')) {
+      context.handle(
+          _viewerUserIdMeta,
+          viewerUserId.isAcceptableOrUnknown(
+              data['viewer_user_id']!, _viewerUserIdMeta));
+    } else if (isInserting) {
+      context.missing(_viewerUserIdMeta);
+    }
+    if (data.containsKey('row_key')) {
+      context.handle(_rowKeyMeta,
+          rowKey.isAcceptableOrUnknown(data['row_key']!, _rowKeyMeta));
+    } else if (isInserting) {
+      context.missing(_rowKeyMeta);
+    }
+    if (data.containsKey('pantry_ingredient_id')) {
+      context.handle(
+          _pantryIngredientIdMeta,
+          pantryIngredientId.isAcceptableOrUnknown(
+              data['pantry_ingredient_id']!, _pantryIngredientIdMeta));
+    }
+    if (data.containsKey('ing_id')) {
+      context.handle(
+          _ingIdMeta, ingId.isAcceptableOrUnknown(data['ing_id']!, _ingIdMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('details')) {
+      context.handle(_detailsMeta,
+          details.isAcceptableOrUnknown(data['details']!, _detailsMeta));
+    } else if (isInserting) {
+      context.missing(_detailsMeta);
+    }
+    if (data.containsKey('category')) {
+      context.handle(_categoryMeta,
+          category.isAcceptableOrUnknown(data['category']!, _categoryMeta));
+    } else if (isInserting) {
+      context.missing(_categoryMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(_statusMeta,
+          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('quantity')) {
+      context.handle(_quantityMeta,
+          quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta));
+    }
+    if (data.containsKey('unit')) {
+      context.handle(
+          _unitMeta, unit.isAcceptableOrUnknown(data['unit']!, _unitMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {viewerUserId, rowKey};
+  @override
+  CachedPantryIngredientRow map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedPantryIngredientRow(
+      viewerUserId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}viewer_user_id'])!,
+      rowKey: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}row_key'])!,
+      pantryIngredientId: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}pantry_ingredient_id']),
+      ingId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}ing_id']),
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      details: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}details'])!,
+      category: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}category'])!,
+      status: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
+      quantity: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}quantity']),
+      unit: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}unit']),
+    );
+  }
+
+  @override
+  $CachedPantryIngredientRowsTable createAlias(String alias) {
+    return $CachedPantryIngredientRowsTable(attachedDatabase, alias);
+  }
+}
+
+class CachedPantryIngredientRow extends DataClass
+    implements Insertable<CachedPantryIngredientRow> {
+  final int viewerUserId;
+  final String rowKey;
+  final int? pantryIngredientId;
+  final int? ingId;
+  final String name;
+  final String details;
+  final String category;
+  final String status;
+  final String? quantity;
+  final String? unit;
+  const CachedPantryIngredientRow(
+      {required this.viewerUserId,
+      required this.rowKey,
+      this.pantryIngredientId,
+      this.ingId,
+      required this.name,
+      required this.details,
+      required this.category,
+      required this.status,
+      this.quantity,
+      this.unit});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['viewer_user_id'] = Variable<int>(viewerUserId);
+    map['row_key'] = Variable<String>(rowKey);
+    if (!nullToAbsent || pantryIngredientId != null) {
+      map['pantry_ingredient_id'] = Variable<int>(pantryIngredientId);
+    }
+    if (!nullToAbsent || ingId != null) {
+      map['ing_id'] = Variable<int>(ingId);
+    }
+    map['name'] = Variable<String>(name);
+    map['details'] = Variable<String>(details);
+    map['category'] = Variable<String>(category);
+    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || quantity != null) {
+      map['quantity'] = Variable<String>(quantity);
+    }
+    if (!nullToAbsent || unit != null) {
+      map['unit'] = Variable<String>(unit);
+    }
+    return map;
+  }
+
+  CachedPantryIngredientRowsCompanion toCompanion(bool nullToAbsent) {
+    return CachedPantryIngredientRowsCompanion(
+      viewerUserId: Value(viewerUserId),
+      rowKey: Value(rowKey),
+      pantryIngredientId: pantryIngredientId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pantryIngredientId),
+      ingId:
+          ingId == null && nullToAbsent ? const Value.absent() : Value(ingId),
+      name: Value(name),
+      details: Value(details),
+      category: Value(category),
+      status: Value(status),
+      quantity: quantity == null && nullToAbsent
+          ? const Value.absent()
+          : Value(quantity),
+      unit: unit == null && nullToAbsent ? const Value.absent() : Value(unit),
+    );
+  }
+
+  factory CachedPantryIngredientRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedPantryIngredientRow(
+      viewerUserId: serializer.fromJson<int>(json['viewerUserId']),
+      rowKey: serializer.fromJson<String>(json['rowKey']),
+      pantryIngredientId: serializer.fromJson<int?>(json['pantryIngredientId']),
+      ingId: serializer.fromJson<int?>(json['ingId']),
+      name: serializer.fromJson<String>(json['name']),
+      details: serializer.fromJson<String>(json['details']),
+      category: serializer.fromJson<String>(json['category']),
+      status: serializer.fromJson<String>(json['status']),
+      quantity: serializer.fromJson<String?>(json['quantity']),
+      unit: serializer.fromJson<String?>(json['unit']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'viewerUserId': serializer.toJson<int>(viewerUserId),
+      'rowKey': serializer.toJson<String>(rowKey),
+      'pantryIngredientId': serializer.toJson<int?>(pantryIngredientId),
+      'ingId': serializer.toJson<int?>(ingId),
+      'name': serializer.toJson<String>(name),
+      'details': serializer.toJson<String>(details),
+      'category': serializer.toJson<String>(category),
+      'status': serializer.toJson<String>(status),
+      'quantity': serializer.toJson<String?>(quantity),
+      'unit': serializer.toJson<String?>(unit),
+    };
+  }
+
+  CachedPantryIngredientRow copyWith(
+          {int? viewerUserId,
+          String? rowKey,
+          Value<int?> pantryIngredientId = const Value.absent(),
+          Value<int?> ingId = const Value.absent(),
+          String? name,
+          String? details,
+          String? category,
+          String? status,
+          Value<String?> quantity = const Value.absent(),
+          Value<String?> unit = const Value.absent()}) =>
+      CachedPantryIngredientRow(
+        viewerUserId: viewerUserId ?? this.viewerUserId,
+        rowKey: rowKey ?? this.rowKey,
+        pantryIngredientId: pantryIngredientId.present
+            ? pantryIngredientId.value
+            : this.pantryIngredientId,
+        ingId: ingId.present ? ingId.value : this.ingId,
+        name: name ?? this.name,
+        details: details ?? this.details,
+        category: category ?? this.category,
+        status: status ?? this.status,
+        quantity: quantity.present ? quantity.value : this.quantity,
+        unit: unit.present ? unit.value : this.unit,
+      );
+  CachedPantryIngredientRow copyWithCompanion(
+      CachedPantryIngredientRowsCompanion data) {
+    return CachedPantryIngredientRow(
+      viewerUserId: data.viewerUserId.present
+          ? data.viewerUserId.value
+          : this.viewerUserId,
+      rowKey: data.rowKey.present ? data.rowKey.value : this.rowKey,
+      pantryIngredientId: data.pantryIngredientId.present
+          ? data.pantryIngredientId.value
+          : this.pantryIngredientId,
+      ingId: data.ingId.present ? data.ingId.value : this.ingId,
+      name: data.name.present ? data.name.value : this.name,
+      details: data.details.present ? data.details.value : this.details,
+      category: data.category.present ? data.category.value : this.category,
+      status: data.status.present ? data.status.value : this.status,
+      quantity: data.quantity.present ? data.quantity.value : this.quantity,
+      unit: data.unit.present ? data.unit.value : this.unit,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedPantryIngredientRow(')
+          ..write('viewerUserId: $viewerUserId, ')
+          ..write('rowKey: $rowKey, ')
+          ..write('pantryIngredientId: $pantryIngredientId, ')
+          ..write('ingId: $ingId, ')
+          ..write('name: $name, ')
+          ..write('details: $details, ')
+          ..write('category: $category, ')
+          ..write('status: $status, ')
+          ..write('quantity: $quantity, ')
+          ..write('unit: $unit')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(viewerUserId, rowKey, pantryIngredientId,
+      ingId, name, details, category, status, quantity, unit);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedPantryIngredientRow &&
+          other.viewerUserId == this.viewerUserId &&
+          other.rowKey == this.rowKey &&
+          other.pantryIngredientId == this.pantryIngredientId &&
+          other.ingId == this.ingId &&
+          other.name == this.name &&
+          other.details == this.details &&
+          other.category == this.category &&
+          other.status == this.status &&
+          other.quantity == this.quantity &&
+          other.unit == this.unit);
+}
+
+class CachedPantryIngredientRowsCompanion
+    extends UpdateCompanion<CachedPantryIngredientRow> {
+  final Value<int> viewerUserId;
+  final Value<String> rowKey;
+  final Value<int?> pantryIngredientId;
+  final Value<int?> ingId;
+  final Value<String> name;
+  final Value<String> details;
+  final Value<String> category;
+  final Value<String> status;
+  final Value<String?> quantity;
+  final Value<String?> unit;
+  final Value<int> rowid;
+  const CachedPantryIngredientRowsCompanion({
+    this.viewerUserId = const Value.absent(),
+    this.rowKey = const Value.absent(),
+    this.pantryIngredientId = const Value.absent(),
+    this.ingId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.details = const Value.absent(),
+    this.category = const Value.absent(),
+    this.status = const Value.absent(),
+    this.quantity = const Value.absent(),
+    this.unit = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CachedPantryIngredientRowsCompanion.insert({
+    required int viewerUserId,
+    required String rowKey,
+    this.pantryIngredientId = const Value.absent(),
+    this.ingId = const Value.absent(),
+    required String name,
+    required String details,
+    required String category,
+    required String status,
+    this.quantity = const Value.absent(),
+    this.unit = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : viewerUserId = Value(viewerUserId),
+        rowKey = Value(rowKey),
+        name = Value(name),
+        details = Value(details),
+        category = Value(category),
+        status = Value(status);
+  static Insertable<CachedPantryIngredientRow> custom({
+    Expression<int>? viewerUserId,
+    Expression<String>? rowKey,
+    Expression<int>? pantryIngredientId,
+    Expression<int>? ingId,
+    Expression<String>? name,
+    Expression<String>? details,
+    Expression<String>? category,
+    Expression<String>? status,
+    Expression<String>? quantity,
+    Expression<String>? unit,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (viewerUserId != null) 'viewer_user_id': viewerUserId,
+      if (rowKey != null) 'row_key': rowKey,
+      if (pantryIngredientId != null)
+        'pantry_ingredient_id': pantryIngredientId,
+      if (ingId != null) 'ing_id': ingId,
+      if (name != null) 'name': name,
+      if (details != null) 'details': details,
+      if (category != null) 'category': category,
+      if (status != null) 'status': status,
+      if (quantity != null) 'quantity': quantity,
+      if (unit != null) 'unit': unit,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CachedPantryIngredientRowsCompanion copyWith(
+      {Value<int>? viewerUserId,
+      Value<String>? rowKey,
+      Value<int?>? pantryIngredientId,
+      Value<int?>? ingId,
+      Value<String>? name,
+      Value<String>? details,
+      Value<String>? category,
+      Value<String>? status,
+      Value<String?>? quantity,
+      Value<String?>? unit,
+      Value<int>? rowid}) {
+    return CachedPantryIngredientRowsCompanion(
+      viewerUserId: viewerUserId ?? this.viewerUserId,
+      rowKey: rowKey ?? this.rowKey,
+      pantryIngredientId: pantryIngredientId ?? this.pantryIngredientId,
+      ingId: ingId ?? this.ingId,
+      name: name ?? this.name,
+      details: details ?? this.details,
+      category: category ?? this.category,
+      status: status ?? this.status,
+      quantity: quantity ?? this.quantity,
+      unit: unit ?? this.unit,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (viewerUserId.present) {
+      map['viewer_user_id'] = Variable<int>(viewerUserId.value);
+    }
+    if (rowKey.present) {
+      map['row_key'] = Variable<String>(rowKey.value);
+    }
+    if (pantryIngredientId.present) {
+      map['pantry_ingredient_id'] = Variable<int>(pantryIngredientId.value);
+    }
+    if (ingId.present) {
+      map['ing_id'] = Variable<int>(ingId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (details.present) {
+      map['details'] = Variable<String>(details.value);
+    }
+    if (category.present) {
+      map['category'] = Variable<String>(category.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (quantity.present) {
+      map['quantity'] = Variable<String>(quantity.value);
+    }
+    if (unit.present) {
+      map['unit'] = Variable<String>(unit.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedPantryIngredientRowsCompanion(')
+          ..write('viewerUserId: $viewerUserId, ')
+          ..write('rowKey: $rowKey, ')
+          ..write('pantryIngredientId: $pantryIngredientId, ')
+          ..write('ingId: $ingId, ')
+          ..write('name: $name, ')
+          ..write('details: $details, ')
+          ..write('category: $category, ')
+          ..write('status: $status, ')
+          ..write('quantity: $quantity, ')
+          ..write('unit: $unit, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CachedShoppingListRowsTable extends CachedShoppingListRows
+    with TableInfo<$CachedShoppingListRowsTable, CachedShoppingListRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedShoppingListRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _viewerUserIdMeta =
+      const VerificationMeta('viewerUserId');
+  @override
+  late final GeneratedColumn<int> viewerUserId = GeneratedColumn<int>(
+      'viewer_user_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _listIdMeta = const VerificationMeta('listId');
+  @override
+  late final GeneratedColumn<String> listId = GeneratedColumn<String>(
+      'list_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _shoppingListIdMeta =
+      const VerificationMeta('shoppingListId');
+  @override
+  late final GeneratedColumn<int> shoppingListId = GeneratedColumn<int>(
+      'shopping_list_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _serverUserIdMeta =
+      const VerificationMeta('serverUserId');
+  @override
+  late final GeneratedColumn<int> serverUserId = GeneratedColumn<int>(
+      'server_user_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _numItemsMeta =
+      const VerificationMeta('numItems');
+  @override
+  late final GeneratedColumn<int> numItems = GeneratedColumn<int>(
+      'num_items', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+      'title', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _subtitleMeta =
+      const VerificationMeta('subtitle');
+  @override
+  late final GeneratedColumn<String> subtitle = GeneratedColumn<String>(
+      'subtitle', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _sectionMeta =
+      const VerificationMeta('section');
+  @override
+  late final GeneratedColumn<String> section = GeneratedColumn<String>(
+      'section', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _iconTypeMeta =
+      const VerificationMeta('iconType');
+  @override
+  late final GeneratedColumn<String> iconType = GeneratedColumn<String>(
+      'icon_type', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+      'status', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  late final GeneratedColumnWithTypeConverter<DateTime?, String> createdAt =
+      GeneratedColumn<String>('created_at', aliasedName, true,
+              type: DriftSqlType.string, requiredDuringInsert: false)
+          .withConverter<DateTime?>(
+              $CachedShoppingListRowsTable.$convertercreatedAtn);
+  static const VerificationMeta _imageUrlMeta =
+      const VerificationMeta('imageUrl');
+  @override
+  late final GeneratedColumn<String> imageUrl = GeneratedColumn<String>(
+      'image_url', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _favouriteMeta =
+      const VerificationMeta('favourite');
+  @override
+  late final GeneratedColumn<bool> favourite = GeneratedColumn<bool>(
+      'favourite', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("favourite" IN (0, 1))'));
+  static const VerificationMeta _isCompleteMeta =
+      const VerificationMeta('isComplete');
+  @override
+  late final GeneratedColumn<bool> isComplete = GeneratedColumn<bool>(
+      'is_complete', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_complete" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  @override
+  List<GeneratedColumn> get $columns => [
+        viewerUserId,
+        listId,
+        shoppingListId,
+        serverUserId,
+        numItems,
+        title,
+        subtitle,
+        section,
+        iconType,
+        status,
+        createdAt,
+        imageUrl,
+        favourite,
+        isComplete
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_shopping_list_rows';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<CachedShoppingListRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('viewer_user_id')) {
+      context.handle(
+          _viewerUserIdMeta,
+          viewerUserId.isAcceptableOrUnknown(
+              data['viewer_user_id']!, _viewerUserIdMeta));
+    } else if (isInserting) {
+      context.missing(_viewerUserIdMeta);
+    }
+    if (data.containsKey('list_id')) {
+      context.handle(_listIdMeta,
+          listId.isAcceptableOrUnknown(data['list_id']!, _listIdMeta));
+    } else if (isInserting) {
+      context.missing(_listIdMeta);
+    }
+    if (data.containsKey('shopping_list_id')) {
+      context.handle(
+          _shoppingListIdMeta,
+          shoppingListId.isAcceptableOrUnknown(
+              data['shopping_list_id']!, _shoppingListIdMeta));
+    }
+    if (data.containsKey('server_user_id')) {
+      context.handle(
+          _serverUserIdMeta,
+          serverUserId.isAcceptableOrUnknown(
+              data['server_user_id']!, _serverUserIdMeta));
+    }
+    if (data.containsKey('num_items')) {
+      context.handle(_numItemsMeta,
+          numItems.isAcceptableOrUnknown(data['num_items']!, _numItemsMeta));
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+          _titleMeta, title.isAcceptableOrUnknown(data['title']!, _titleMeta));
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('subtitle')) {
+      context.handle(_subtitleMeta,
+          subtitle.isAcceptableOrUnknown(data['subtitle']!, _subtitleMeta));
+    } else if (isInserting) {
+      context.missing(_subtitleMeta);
+    }
+    if (data.containsKey('section')) {
+      context.handle(_sectionMeta,
+          section.isAcceptableOrUnknown(data['section']!, _sectionMeta));
+    } else if (isInserting) {
+      context.missing(_sectionMeta);
+    }
+    if (data.containsKey('icon_type')) {
+      context.handle(_iconTypeMeta,
+          iconType.isAcceptableOrUnknown(data['icon_type']!, _iconTypeMeta));
+    } else if (isInserting) {
+      context.missing(_iconTypeMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(_statusMeta,
+          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+    }
+    if (data.containsKey('image_url')) {
+      context.handle(_imageUrlMeta,
+          imageUrl.isAcceptableOrUnknown(data['image_url']!, _imageUrlMeta));
+    }
+    if (data.containsKey('favourite')) {
+      context.handle(_favouriteMeta,
+          favourite.isAcceptableOrUnknown(data['favourite']!, _favouriteMeta));
+    } else if (isInserting) {
+      context.missing(_favouriteMeta);
+    }
+    if (data.containsKey('is_complete')) {
+      context.handle(
+          _isCompleteMeta,
+          isComplete.isAcceptableOrUnknown(
+              data['is_complete']!, _isCompleteMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {viewerUserId, listId};
+  @override
+  CachedShoppingListRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedShoppingListRow(
+      viewerUserId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}viewer_user_id'])!,
+      listId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}list_id'])!,
+      shoppingListId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}shopping_list_id']),
+      serverUserId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}server_user_id']),
+      numItems: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}num_items']),
+      title: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}title'])!,
+      subtitle: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}subtitle'])!,
+      section: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}section'])!,
+      iconType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}icon_type'])!,
+      status: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}status']),
+      createdAt: $CachedShoppingListRowsTable.$convertercreatedAtn.fromSql(
+          attachedDatabase.typeMapping
+              .read(DriftSqlType.string, data['${effectivePrefix}created_at'])),
+      imageUrl: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}image_url']),
+      favourite: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}favourite'])!,
+      isComplete: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_complete'])!,
+    );
+  }
+
+  @override
+  $CachedShoppingListRowsTable createAlias(String alias) {
+    return $CachedShoppingListRowsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<DateTime, String> $convertercreatedAt =
+      const UtcDateTimeConverter();
+  static TypeConverter<DateTime?, String?> $convertercreatedAtn =
+      NullAwareTypeConverter.wrap($convertercreatedAt);
+}
+
+class CachedShoppingListRow extends DataClass
+    implements Insertable<CachedShoppingListRow> {
+  final int viewerUserId;
+  final String listId;
+  final int? shoppingListId;
+  final int? serverUserId;
+  final int? numItems;
+  final String title;
+  final String subtitle;
+  final String section;
+  final String iconType;
+  final String? status;
+  final DateTime? createdAt;
+  final String? imageUrl;
+  final bool favourite;
+  final bool isComplete;
+  const CachedShoppingListRow(
+      {required this.viewerUserId,
+      required this.listId,
+      this.shoppingListId,
+      this.serverUserId,
+      this.numItems,
+      required this.title,
+      required this.subtitle,
+      required this.section,
+      required this.iconType,
+      this.status,
+      this.createdAt,
+      this.imageUrl,
+      required this.favourite,
+      required this.isComplete});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['viewer_user_id'] = Variable<int>(viewerUserId);
+    map['list_id'] = Variable<String>(listId);
+    if (!nullToAbsent || shoppingListId != null) {
+      map['shopping_list_id'] = Variable<int>(shoppingListId);
+    }
+    if (!nullToAbsent || serverUserId != null) {
+      map['server_user_id'] = Variable<int>(serverUserId);
+    }
+    if (!nullToAbsent || numItems != null) {
+      map['num_items'] = Variable<int>(numItems);
+    }
+    map['title'] = Variable<String>(title);
+    map['subtitle'] = Variable<String>(subtitle);
+    map['section'] = Variable<String>(section);
+    map['icon_type'] = Variable<String>(iconType);
+    if (!nullToAbsent || status != null) {
+      map['status'] = Variable<String>(status);
+    }
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<String>(
+          $CachedShoppingListRowsTable.$convertercreatedAtn.toSql(createdAt));
+    }
+    if (!nullToAbsent || imageUrl != null) {
+      map['image_url'] = Variable<String>(imageUrl);
+    }
+    map['favourite'] = Variable<bool>(favourite);
+    map['is_complete'] = Variable<bool>(isComplete);
+    return map;
+  }
+
+  CachedShoppingListRowsCompanion toCompanion(bool nullToAbsent) {
+    return CachedShoppingListRowsCompanion(
+      viewerUserId: Value(viewerUserId),
+      listId: Value(listId),
+      shoppingListId: shoppingListId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(shoppingListId),
+      serverUserId: serverUserId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serverUserId),
+      numItems: numItems == null && nullToAbsent
+          ? const Value.absent()
+          : Value(numItems),
+      title: Value(title),
+      subtitle: Value(subtitle),
+      section: Value(section),
+      iconType: Value(iconType),
+      status:
+          status == null && nullToAbsent ? const Value.absent() : Value(status),
+      createdAt: createdAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAt),
+      imageUrl: imageUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imageUrl),
+      favourite: Value(favourite),
+      isComplete: Value(isComplete),
+    );
+  }
+
+  factory CachedShoppingListRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedShoppingListRow(
+      viewerUserId: serializer.fromJson<int>(json['viewerUserId']),
+      listId: serializer.fromJson<String>(json['listId']),
+      shoppingListId: serializer.fromJson<int?>(json['shoppingListId']),
+      serverUserId: serializer.fromJson<int?>(json['serverUserId']),
+      numItems: serializer.fromJson<int?>(json['numItems']),
+      title: serializer.fromJson<String>(json['title']),
+      subtitle: serializer.fromJson<String>(json['subtitle']),
+      section: serializer.fromJson<String>(json['section']),
+      iconType: serializer.fromJson<String>(json['iconType']),
+      status: serializer.fromJson<String?>(json['status']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+      imageUrl: serializer.fromJson<String?>(json['imageUrl']),
+      favourite: serializer.fromJson<bool>(json['favourite']),
+      isComplete: serializer.fromJson<bool>(json['isComplete']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'viewerUserId': serializer.toJson<int>(viewerUserId),
+      'listId': serializer.toJson<String>(listId),
+      'shoppingListId': serializer.toJson<int?>(shoppingListId),
+      'serverUserId': serializer.toJson<int?>(serverUserId),
+      'numItems': serializer.toJson<int?>(numItems),
+      'title': serializer.toJson<String>(title),
+      'subtitle': serializer.toJson<String>(subtitle),
+      'section': serializer.toJson<String>(section),
+      'iconType': serializer.toJson<String>(iconType),
+      'status': serializer.toJson<String?>(status),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
+      'imageUrl': serializer.toJson<String?>(imageUrl),
+      'favourite': serializer.toJson<bool>(favourite),
+      'isComplete': serializer.toJson<bool>(isComplete),
+    };
+  }
+
+  CachedShoppingListRow copyWith(
+          {int? viewerUserId,
+          String? listId,
+          Value<int?> shoppingListId = const Value.absent(),
+          Value<int?> serverUserId = const Value.absent(),
+          Value<int?> numItems = const Value.absent(),
+          String? title,
+          String? subtitle,
+          String? section,
+          String? iconType,
+          Value<String?> status = const Value.absent(),
+          Value<DateTime?> createdAt = const Value.absent(),
+          Value<String?> imageUrl = const Value.absent(),
+          bool? favourite,
+          bool? isComplete}) =>
+      CachedShoppingListRow(
+        viewerUserId: viewerUserId ?? this.viewerUserId,
+        listId: listId ?? this.listId,
+        shoppingListId:
+            shoppingListId.present ? shoppingListId.value : this.shoppingListId,
+        serverUserId:
+            serverUserId.present ? serverUserId.value : this.serverUserId,
+        numItems: numItems.present ? numItems.value : this.numItems,
+        title: title ?? this.title,
+        subtitle: subtitle ?? this.subtitle,
+        section: section ?? this.section,
+        iconType: iconType ?? this.iconType,
+        status: status.present ? status.value : this.status,
+        createdAt: createdAt.present ? createdAt.value : this.createdAt,
+        imageUrl: imageUrl.present ? imageUrl.value : this.imageUrl,
+        favourite: favourite ?? this.favourite,
+        isComplete: isComplete ?? this.isComplete,
+      );
+  CachedShoppingListRow copyWithCompanion(
+      CachedShoppingListRowsCompanion data) {
+    return CachedShoppingListRow(
+      viewerUserId: data.viewerUserId.present
+          ? data.viewerUserId.value
+          : this.viewerUserId,
+      listId: data.listId.present ? data.listId.value : this.listId,
+      shoppingListId: data.shoppingListId.present
+          ? data.shoppingListId.value
+          : this.shoppingListId,
+      serverUserId: data.serverUserId.present
+          ? data.serverUserId.value
+          : this.serverUserId,
+      numItems: data.numItems.present ? data.numItems.value : this.numItems,
+      title: data.title.present ? data.title.value : this.title,
+      subtitle: data.subtitle.present ? data.subtitle.value : this.subtitle,
+      section: data.section.present ? data.section.value : this.section,
+      iconType: data.iconType.present ? data.iconType.value : this.iconType,
+      status: data.status.present ? data.status.value : this.status,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      imageUrl: data.imageUrl.present ? data.imageUrl.value : this.imageUrl,
+      favourite: data.favourite.present ? data.favourite.value : this.favourite,
+      isComplete:
+          data.isComplete.present ? data.isComplete.value : this.isComplete,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedShoppingListRow(')
+          ..write('viewerUserId: $viewerUserId, ')
+          ..write('listId: $listId, ')
+          ..write('shoppingListId: $shoppingListId, ')
+          ..write('serverUserId: $serverUserId, ')
+          ..write('numItems: $numItems, ')
+          ..write('title: $title, ')
+          ..write('subtitle: $subtitle, ')
+          ..write('section: $section, ')
+          ..write('iconType: $iconType, ')
+          ..write('status: $status, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('imageUrl: $imageUrl, ')
+          ..write('favourite: $favourite, ')
+          ..write('isComplete: $isComplete')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      viewerUserId,
+      listId,
+      shoppingListId,
+      serverUserId,
+      numItems,
+      title,
+      subtitle,
+      section,
+      iconType,
+      status,
+      createdAt,
+      imageUrl,
+      favourite,
+      isComplete);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedShoppingListRow &&
+          other.viewerUserId == this.viewerUserId &&
+          other.listId == this.listId &&
+          other.shoppingListId == this.shoppingListId &&
+          other.serverUserId == this.serverUserId &&
+          other.numItems == this.numItems &&
+          other.title == this.title &&
+          other.subtitle == this.subtitle &&
+          other.section == this.section &&
+          other.iconType == this.iconType &&
+          other.status == this.status &&
+          other.createdAt == this.createdAt &&
+          other.imageUrl == this.imageUrl &&
+          other.favourite == this.favourite &&
+          other.isComplete == this.isComplete);
+}
+
+class CachedShoppingListRowsCompanion
+    extends UpdateCompanion<CachedShoppingListRow> {
+  final Value<int> viewerUserId;
+  final Value<String> listId;
+  final Value<int?> shoppingListId;
+  final Value<int?> serverUserId;
+  final Value<int?> numItems;
+  final Value<String> title;
+  final Value<String> subtitle;
+  final Value<String> section;
+  final Value<String> iconType;
+  final Value<String?> status;
+  final Value<DateTime?> createdAt;
+  final Value<String?> imageUrl;
+  final Value<bool> favourite;
+  final Value<bool> isComplete;
+  final Value<int> rowid;
+  const CachedShoppingListRowsCompanion({
+    this.viewerUserId = const Value.absent(),
+    this.listId = const Value.absent(),
+    this.shoppingListId = const Value.absent(),
+    this.serverUserId = const Value.absent(),
+    this.numItems = const Value.absent(),
+    this.title = const Value.absent(),
+    this.subtitle = const Value.absent(),
+    this.section = const Value.absent(),
+    this.iconType = const Value.absent(),
+    this.status = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.imageUrl = const Value.absent(),
+    this.favourite = const Value.absent(),
+    this.isComplete = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CachedShoppingListRowsCompanion.insert({
+    required int viewerUserId,
+    required String listId,
+    this.shoppingListId = const Value.absent(),
+    this.serverUserId = const Value.absent(),
+    this.numItems = const Value.absent(),
+    required String title,
+    required String subtitle,
+    required String section,
+    required String iconType,
+    this.status = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.imageUrl = const Value.absent(),
+    required bool favourite,
+    this.isComplete = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : viewerUserId = Value(viewerUserId),
+        listId = Value(listId),
+        title = Value(title),
+        subtitle = Value(subtitle),
+        section = Value(section),
+        iconType = Value(iconType),
+        favourite = Value(favourite);
+  static Insertable<CachedShoppingListRow> custom({
+    Expression<int>? viewerUserId,
+    Expression<String>? listId,
+    Expression<int>? shoppingListId,
+    Expression<int>? serverUserId,
+    Expression<int>? numItems,
+    Expression<String>? title,
+    Expression<String>? subtitle,
+    Expression<String>? section,
+    Expression<String>? iconType,
+    Expression<String>? status,
+    Expression<String>? createdAt,
+    Expression<String>? imageUrl,
+    Expression<bool>? favourite,
+    Expression<bool>? isComplete,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (viewerUserId != null) 'viewer_user_id': viewerUserId,
+      if (listId != null) 'list_id': listId,
+      if (shoppingListId != null) 'shopping_list_id': shoppingListId,
+      if (serverUserId != null) 'server_user_id': serverUserId,
+      if (numItems != null) 'num_items': numItems,
+      if (title != null) 'title': title,
+      if (subtitle != null) 'subtitle': subtitle,
+      if (section != null) 'section': section,
+      if (iconType != null) 'icon_type': iconType,
+      if (status != null) 'status': status,
+      if (createdAt != null) 'created_at': createdAt,
+      if (imageUrl != null) 'image_url': imageUrl,
+      if (favourite != null) 'favourite': favourite,
+      if (isComplete != null) 'is_complete': isComplete,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CachedShoppingListRowsCompanion copyWith(
+      {Value<int>? viewerUserId,
+      Value<String>? listId,
+      Value<int?>? shoppingListId,
+      Value<int?>? serverUserId,
+      Value<int?>? numItems,
+      Value<String>? title,
+      Value<String>? subtitle,
+      Value<String>? section,
+      Value<String>? iconType,
+      Value<String?>? status,
+      Value<DateTime?>? createdAt,
+      Value<String?>? imageUrl,
+      Value<bool>? favourite,
+      Value<bool>? isComplete,
+      Value<int>? rowid}) {
+    return CachedShoppingListRowsCompanion(
+      viewerUserId: viewerUserId ?? this.viewerUserId,
+      listId: listId ?? this.listId,
+      shoppingListId: shoppingListId ?? this.shoppingListId,
+      serverUserId: serverUserId ?? this.serverUserId,
+      numItems: numItems ?? this.numItems,
+      title: title ?? this.title,
+      subtitle: subtitle ?? this.subtitle,
+      section: section ?? this.section,
+      iconType: iconType ?? this.iconType,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      imageUrl: imageUrl ?? this.imageUrl,
+      favourite: favourite ?? this.favourite,
+      isComplete: isComplete ?? this.isComplete,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (viewerUserId.present) {
+      map['viewer_user_id'] = Variable<int>(viewerUserId.value);
+    }
+    if (listId.present) {
+      map['list_id'] = Variable<String>(listId.value);
+    }
+    if (shoppingListId.present) {
+      map['shopping_list_id'] = Variable<int>(shoppingListId.value);
+    }
+    if (serverUserId.present) {
+      map['server_user_id'] = Variable<int>(serverUserId.value);
+    }
+    if (numItems.present) {
+      map['num_items'] = Variable<int>(numItems.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (subtitle.present) {
+      map['subtitle'] = Variable<String>(subtitle.value);
+    }
+    if (section.present) {
+      map['section'] = Variable<String>(section.value);
+    }
+    if (iconType.present) {
+      map['icon_type'] = Variable<String>(iconType.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>($CachedShoppingListRowsTable
+          .$convertercreatedAtn
+          .toSql(createdAt.value));
+    }
+    if (imageUrl.present) {
+      map['image_url'] = Variable<String>(imageUrl.value);
+    }
+    if (favourite.present) {
+      map['favourite'] = Variable<bool>(favourite.value);
+    }
+    if (isComplete.present) {
+      map['is_complete'] = Variable<bool>(isComplete.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedShoppingListRowsCompanion(')
+          ..write('viewerUserId: $viewerUserId, ')
+          ..write('listId: $listId, ')
+          ..write('shoppingListId: $shoppingListId, ')
+          ..write('serverUserId: $serverUserId, ')
+          ..write('numItems: $numItems, ')
+          ..write('title: $title, ')
+          ..write('subtitle: $subtitle, ')
+          ..write('section: $section, ')
+          ..write('iconType: $iconType, ')
+          ..write('status: $status, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('imageUrl: $imageUrl, ')
+          ..write('favourite: $favourite, ')
+          ..write('isComplete: $isComplete, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CachedShoppingListItemRowsTable extends CachedShoppingListItemRows
+    with
+        TableInfo<$CachedShoppingListItemRowsTable, CachedShoppingListItemRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedShoppingListItemRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _viewerUserIdMeta =
+      const VerificationMeta('viewerUserId');
+  @override
+  late final GeneratedColumn<int> viewerUserId = GeneratedColumn<int>(
+      'viewer_user_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _listIdMeta = const VerificationMeta('listId');
+  @override
+  late final GeneratedColumn<String> listId = GeneratedColumn<String>(
+      'list_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _itemKeyMeta =
+      const VerificationMeta('itemKey');
+  @override
+  late final GeneratedColumn<String> itemKey = GeneratedColumn<String>(
+      'item_key', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _itemIdMeta = const VerificationMeta('itemId');
+  @override
+  late final GeneratedColumn<int> itemId = GeneratedColumn<int>(
+      'item_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _shoppingListIdMeta =
+      const VerificationMeta('shoppingListId');
+  @override
+  late final GeneratedColumn<int> shoppingListId = GeneratedColumn<int>(
+      'shopping_list_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _ingIdMeta = const VerificationMeta('ingId');
+  @override
+  late final GeneratedColumn<int> ingId = GeneratedColumn<int>(
+      'ing_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _quantityMeta =
+      const VerificationMeta('quantity');
+  @override
+  late final GeneratedColumn<String> quantity = GeneratedColumn<String>(
+      'quantity', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _categoryMeta =
+      const VerificationMeta('category');
+  @override
+  late final GeneratedColumn<String> category = GeneratedColumn<String>(
+      'category', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _unitMeta = const VerificationMeta('unit');
+  @override
+  late final GeneratedColumn<String> unit = GeneratedColumn<String>(
+      'unit', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _checkedMeta =
+      const VerificationMeta('checked');
+  @override
+  late final GeneratedColumn<bool> checked = GeneratedColumn<bool>(
+      'checked', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("checked" IN (0, 1))'));
+  static const VerificationMeta _lineIndexMeta =
+      const VerificationMeta('lineIndex');
+  @override
+  late final GeneratedColumn<int> lineIndex = GeneratedColumn<int>(
+      'line_index', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        viewerUserId,
+        listId,
+        itemKey,
+        itemId,
+        shoppingListId,
+        ingId,
+        name,
+        quantity,
+        category,
+        unit,
+        checked,
+        lineIndex
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_shopping_list_item_rows';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<CachedShoppingListItemRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('viewer_user_id')) {
+      context.handle(
+          _viewerUserIdMeta,
+          viewerUserId.isAcceptableOrUnknown(
+              data['viewer_user_id']!, _viewerUserIdMeta));
+    } else if (isInserting) {
+      context.missing(_viewerUserIdMeta);
+    }
+    if (data.containsKey('list_id')) {
+      context.handle(_listIdMeta,
+          listId.isAcceptableOrUnknown(data['list_id']!, _listIdMeta));
+    } else if (isInserting) {
+      context.missing(_listIdMeta);
+    }
+    if (data.containsKey('item_key')) {
+      context.handle(_itemKeyMeta,
+          itemKey.isAcceptableOrUnknown(data['item_key']!, _itemKeyMeta));
+    } else if (isInserting) {
+      context.missing(_itemKeyMeta);
+    }
+    if (data.containsKey('item_id')) {
+      context.handle(_itemIdMeta,
+          itemId.isAcceptableOrUnknown(data['item_id']!, _itemIdMeta));
+    }
+    if (data.containsKey('shopping_list_id')) {
+      context.handle(
+          _shoppingListIdMeta,
+          shoppingListId.isAcceptableOrUnknown(
+              data['shopping_list_id']!, _shoppingListIdMeta));
+    }
+    if (data.containsKey('ing_id')) {
+      context.handle(
+          _ingIdMeta, ingId.isAcceptableOrUnknown(data['ing_id']!, _ingIdMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('quantity')) {
+      context.handle(_quantityMeta,
+          quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta));
+    } else if (isInserting) {
+      context.missing(_quantityMeta);
+    }
+    if (data.containsKey('category')) {
+      context.handle(_categoryMeta,
+          category.isAcceptableOrUnknown(data['category']!, _categoryMeta));
+    } else if (isInserting) {
+      context.missing(_categoryMeta);
+    }
+    if (data.containsKey('unit')) {
+      context.handle(
+          _unitMeta, unit.isAcceptableOrUnknown(data['unit']!, _unitMeta));
+    }
+    if (data.containsKey('checked')) {
+      context.handle(_checkedMeta,
+          checked.isAcceptableOrUnknown(data['checked']!, _checkedMeta));
+    } else if (isInserting) {
+      context.missing(_checkedMeta);
+    }
+    if (data.containsKey('line_index')) {
+      context.handle(_lineIndexMeta,
+          lineIndex.isAcceptableOrUnknown(data['line_index']!, _lineIndexMeta));
+    } else if (isInserting) {
+      context.missing(_lineIndexMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {viewerUserId, listId, itemKey};
+  @override
+  CachedShoppingListItemRow map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedShoppingListItemRow(
+      viewerUserId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}viewer_user_id'])!,
+      listId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}list_id'])!,
+      itemKey: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}item_key'])!,
+      itemId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}item_id']),
+      shoppingListId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}shopping_list_id']),
+      ingId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}ing_id']),
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      quantity: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}quantity'])!,
+      category: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}category'])!,
+      unit: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}unit']),
+      checked: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}checked'])!,
+      lineIndex: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}line_index'])!,
+    );
+  }
+
+  @override
+  $CachedShoppingListItemRowsTable createAlias(String alias) {
+    return $CachedShoppingListItemRowsTable(attachedDatabase, alias);
+  }
+}
+
+class CachedShoppingListItemRow extends DataClass
+    implements Insertable<CachedShoppingListItemRow> {
+  final int viewerUserId;
+  final String listId;
+  final String itemKey;
+  final int? itemId;
+  final int? shoppingListId;
+  final int? ingId;
+  final String name;
+  final String quantity;
+  final String category;
+  final String? unit;
+  final bool checked;
+  final int lineIndex;
+  const CachedShoppingListItemRow(
+      {required this.viewerUserId,
+      required this.listId,
+      required this.itemKey,
+      this.itemId,
+      this.shoppingListId,
+      this.ingId,
+      required this.name,
+      required this.quantity,
+      required this.category,
+      this.unit,
+      required this.checked,
+      required this.lineIndex});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['viewer_user_id'] = Variable<int>(viewerUserId);
+    map['list_id'] = Variable<String>(listId);
+    map['item_key'] = Variable<String>(itemKey);
+    if (!nullToAbsent || itemId != null) {
+      map['item_id'] = Variable<int>(itemId);
+    }
+    if (!nullToAbsent || shoppingListId != null) {
+      map['shopping_list_id'] = Variable<int>(shoppingListId);
+    }
+    if (!nullToAbsent || ingId != null) {
+      map['ing_id'] = Variable<int>(ingId);
+    }
+    map['name'] = Variable<String>(name);
+    map['quantity'] = Variable<String>(quantity);
+    map['category'] = Variable<String>(category);
+    if (!nullToAbsent || unit != null) {
+      map['unit'] = Variable<String>(unit);
+    }
+    map['checked'] = Variable<bool>(checked);
+    map['line_index'] = Variable<int>(lineIndex);
+    return map;
+  }
+
+  CachedShoppingListItemRowsCompanion toCompanion(bool nullToAbsent) {
+    return CachedShoppingListItemRowsCompanion(
+      viewerUserId: Value(viewerUserId),
+      listId: Value(listId),
+      itemKey: Value(itemKey),
+      itemId:
+          itemId == null && nullToAbsent ? const Value.absent() : Value(itemId),
+      shoppingListId: shoppingListId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(shoppingListId),
+      ingId:
+          ingId == null && nullToAbsent ? const Value.absent() : Value(ingId),
+      name: Value(name),
+      quantity: Value(quantity),
+      category: Value(category),
+      unit: unit == null && nullToAbsent ? const Value.absent() : Value(unit),
+      checked: Value(checked),
+      lineIndex: Value(lineIndex),
+    );
+  }
+
+  factory CachedShoppingListItemRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedShoppingListItemRow(
+      viewerUserId: serializer.fromJson<int>(json['viewerUserId']),
+      listId: serializer.fromJson<String>(json['listId']),
+      itemKey: serializer.fromJson<String>(json['itemKey']),
+      itemId: serializer.fromJson<int?>(json['itemId']),
+      shoppingListId: serializer.fromJson<int?>(json['shoppingListId']),
+      ingId: serializer.fromJson<int?>(json['ingId']),
+      name: serializer.fromJson<String>(json['name']),
+      quantity: serializer.fromJson<String>(json['quantity']),
+      category: serializer.fromJson<String>(json['category']),
+      unit: serializer.fromJson<String?>(json['unit']),
+      checked: serializer.fromJson<bool>(json['checked']),
+      lineIndex: serializer.fromJson<int>(json['lineIndex']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'viewerUserId': serializer.toJson<int>(viewerUserId),
+      'listId': serializer.toJson<String>(listId),
+      'itemKey': serializer.toJson<String>(itemKey),
+      'itemId': serializer.toJson<int?>(itemId),
+      'shoppingListId': serializer.toJson<int?>(shoppingListId),
+      'ingId': serializer.toJson<int?>(ingId),
+      'name': serializer.toJson<String>(name),
+      'quantity': serializer.toJson<String>(quantity),
+      'category': serializer.toJson<String>(category),
+      'unit': serializer.toJson<String?>(unit),
+      'checked': serializer.toJson<bool>(checked),
+      'lineIndex': serializer.toJson<int>(lineIndex),
+    };
+  }
+
+  CachedShoppingListItemRow copyWith(
+          {int? viewerUserId,
+          String? listId,
+          String? itemKey,
+          Value<int?> itemId = const Value.absent(),
+          Value<int?> shoppingListId = const Value.absent(),
+          Value<int?> ingId = const Value.absent(),
+          String? name,
+          String? quantity,
+          String? category,
+          Value<String?> unit = const Value.absent(),
+          bool? checked,
+          int? lineIndex}) =>
+      CachedShoppingListItemRow(
+        viewerUserId: viewerUserId ?? this.viewerUserId,
+        listId: listId ?? this.listId,
+        itemKey: itemKey ?? this.itemKey,
+        itemId: itemId.present ? itemId.value : this.itemId,
+        shoppingListId:
+            shoppingListId.present ? shoppingListId.value : this.shoppingListId,
+        ingId: ingId.present ? ingId.value : this.ingId,
+        name: name ?? this.name,
+        quantity: quantity ?? this.quantity,
+        category: category ?? this.category,
+        unit: unit.present ? unit.value : this.unit,
+        checked: checked ?? this.checked,
+        lineIndex: lineIndex ?? this.lineIndex,
+      );
+  CachedShoppingListItemRow copyWithCompanion(
+      CachedShoppingListItemRowsCompanion data) {
+    return CachedShoppingListItemRow(
+      viewerUserId: data.viewerUserId.present
+          ? data.viewerUserId.value
+          : this.viewerUserId,
+      listId: data.listId.present ? data.listId.value : this.listId,
+      itemKey: data.itemKey.present ? data.itemKey.value : this.itemKey,
+      itemId: data.itemId.present ? data.itemId.value : this.itemId,
+      shoppingListId: data.shoppingListId.present
+          ? data.shoppingListId.value
+          : this.shoppingListId,
+      ingId: data.ingId.present ? data.ingId.value : this.ingId,
+      name: data.name.present ? data.name.value : this.name,
+      quantity: data.quantity.present ? data.quantity.value : this.quantity,
+      category: data.category.present ? data.category.value : this.category,
+      unit: data.unit.present ? data.unit.value : this.unit,
+      checked: data.checked.present ? data.checked.value : this.checked,
+      lineIndex: data.lineIndex.present ? data.lineIndex.value : this.lineIndex,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedShoppingListItemRow(')
+          ..write('viewerUserId: $viewerUserId, ')
+          ..write('listId: $listId, ')
+          ..write('itemKey: $itemKey, ')
+          ..write('itemId: $itemId, ')
+          ..write('shoppingListId: $shoppingListId, ')
+          ..write('ingId: $ingId, ')
+          ..write('name: $name, ')
+          ..write('quantity: $quantity, ')
+          ..write('category: $category, ')
+          ..write('unit: $unit, ')
+          ..write('checked: $checked, ')
+          ..write('lineIndex: $lineIndex')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      viewerUserId,
+      listId,
+      itemKey,
+      itemId,
+      shoppingListId,
+      ingId,
+      name,
+      quantity,
+      category,
+      unit,
+      checked,
+      lineIndex);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedShoppingListItemRow &&
+          other.viewerUserId == this.viewerUserId &&
+          other.listId == this.listId &&
+          other.itemKey == this.itemKey &&
+          other.itemId == this.itemId &&
+          other.shoppingListId == this.shoppingListId &&
+          other.ingId == this.ingId &&
+          other.name == this.name &&
+          other.quantity == this.quantity &&
+          other.category == this.category &&
+          other.unit == this.unit &&
+          other.checked == this.checked &&
+          other.lineIndex == this.lineIndex);
+}
+
+class CachedShoppingListItemRowsCompanion
+    extends UpdateCompanion<CachedShoppingListItemRow> {
+  final Value<int> viewerUserId;
+  final Value<String> listId;
+  final Value<String> itemKey;
+  final Value<int?> itemId;
+  final Value<int?> shoppingListId;
+  final Value<int?> ingId;
+  final Value<String> name;
+  final Value<String> quantity;
+  final Value<String> category;
+  final Value<String?> unit;
+  final Value<bool> checked;
+  final Value<int> lineIndex;
+  final Value<int> rowid;
+  const CachedShoppingListItemRowsCompanion({
+    this.viewerUserId = const Value.absent(),
+    this.listId = const Value.absent(),
+    this.itemKey = const Value.absent(),
+    this.itemId = const Value.absent(),
+    this.shoppingListId = const Value.absent(),
+    this.ingId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.quantity = const Value.absent(),
+    this.category = const Value.absent(),
+    this.unit = const Value.absent(),
+    this.checked = const Value.absent(),
+    this.lineIndex = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CachedShoppingListItemRowsCompanion.insert({
+    required int viewerUserId,
+    required String listId,
+    required String itemKey,
+    this.itemId = const Value.absent(),
+    this.shoppingListId = const Value.absent(),
+    this.ingId = const Value.absent(),
+    required String name,
+    required String quantity,
+    required String category,
+    this.unit = const Value.absent(),
+    required bool checked,
+    required int lineIndex,
+    this.rowid = const Value.absent(),
+  })  : viewerUserId = Value(viewerUserId),
+        listId = Value(listId),
+        itemKey = Value(itemKey),
+        name = Value(name),
+        quantity = Value(quantity),
+        category = Value(category),
+        checked = Value(checked),
+        lineIndex = Value(lineIndex);
+  static Insertable<CachedShoppingListItemRow> custom({
+    Expression<int>? viewerUserId,
+    Expression<String>? listId,
+    Expression<String>? itemKey,
+    Expression<int>? itemId,
+    Expression<int>? shoppingListId,
+    Expression<int>? ingId,
+    Expression<String>? name,
+    Expression<String>? quantity,
+    Expression<String>? category,
+    Expression<String>? unit,
+    Expression<bool>? checked,
+    Expression<int>? lineIndex,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (viewerUserId != null) 'viewer_user_id': viewerUserId,
+      if (listId != null) 'list_id': listId,
+      if (itemKey != null) 'item_key': itemKey,
+      if (itemId != null) 'item_id': itemId,
+      if (shoppingListId != null) 'shopping_list_id': shoppingListId,
+      if (ingId != null) 'ing_id': ingId,
+      if (name != null) 'name': name,
+      if (quantity != null) 'quantity': quantity,
+      if (category != null) 'category': category,
+      if (unit != null) 'unit': unit,
+      if (checked != null) 'checked': checked,
+      if (lineIndex != null) 'line_index': lineIndex,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CachedShoppingListItemRowsCompanion copyWith(
+      {Value<int>? viewerUserId,
+      Value<String>? listId,
+      Value<String>? itemKey,
+      Value<int?>? itemId,
+      Value<int?>? shoppingListId,
+      Value<int?>? ingId,
+      Value<String>? name,
+      Value<String>? quantity,
+      Value<String>? category,
+      Value<String?>? unit,
+      Value<bool>? checked,
+      Value<int>? lineIndex,
+      Value<int>? rowid}) {
+    return CachedShoppingListItemRowsCompanion(
+      viewerUserId: viewerUserId ?? this.viewerUserId,
+      listId: listId ?? this.listId,
+      itemKey: itemKey ?? this.itemKey,
+      itemId: itemId ?? this.itemId,
+      shoppingListId: shoppingListId ?? this.shoppingListId,
+      ingId: ingId ?? this.ingId,
+      name: name ?? this.name,
+      quantity: quantity ?? this.quantity,
+      category: category ?? this.category,
+      unit: unit ?? this.unit,
+      checked: checked ?? this.checked,
+      lineIndex: lineIndex ?? this.lineIndex,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (viewerUserId.present) {
+      map['viewer_user_id'] = Variable<int>(viewerUserId.value);
+    }
+    if (listId.present) {
+      map['list_id'] = Variable<String>(listId.value);
+    }
+    if (itemKey.present) {
+      map['item_key'] = Variable<String>(itemKey.value);
+    }
+    if (itemId.present) {
+      map['item_id'] = Variable<int>(itemId.value);
+    }
+    if (shoppingListId.present) {
+      map['shopping_list_id'] = Variable<int>(shoppingListId.value);
+    }
+    if (ingId.present) {
+      map['ing_id'] = Variable<int>(ingId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (quantity.present) {
+      map['quantity'] = Variable<String>(quantity.value);
+    }
+    if (category.present) {
+      map['category'] = Variable<String>(category.value);
+    }
+    if (unit.present) {
+      map['unit'] = Variable<String>(unit.value);
+    }
+    if (checked.present) {
+      map['checked'] = Variable<bool>(checked.value);
+    }
+    if (lineIndex.present) {
+      map['line_index'] = Variable<int>(lineIndex.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedShoppingListItemRowsCompanion(')
+          ..write('viewerUserId: $viewerUserId, ')
+          ..write('listId: $listId, ')
+          ..write('itemKey: $itemKey, ')
+          ..write('itemId: $itemId, ')
+          ..write('shoppingListId: $shoppingListId, ')
+          ..write('ingId: $ingId, ')
+          ..write('name: $name, ')
+          ..write('quantity: $quantity, ')
+          ..write('category: $category, ')
+          ..write('unit: $unit, ')
+          ..write('checked: $checked, ')
+          ..write('lineIndex: $lineIndex, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$OfflineCacheDatabase extends GeneratedDatabase {
   _$OfflineCacheDatabase(QueryExecutor e) : super(e);
   $OfflineCacheDatabaseManager get managers =>
@@ -3060,6 +4891,12 @@ abstract class _$OfflineCacheDatabase extends GeneratedDatabase {
       $CachedRecipeStepRowsTable(this);
   late final $CacheSyncMetadataRowsTable cacheSyncMetadataRows =
       $CacheSyncMetadataRowsTable(this);
+  late final $CachedPantryIngredientRowsTable cachedPantryIngredientRows =
+      $CachedPantryIngredientRowsTable(this);
+  late final $CachedShoppingListRowsTable cachedShoppingListRows =
+      $CachedShoppingListRowsTable(this);
+  late final $CachedShoppingListItemRowsTable cachedShoppingListItemRows =
+      $CachedShoppingListItemRowsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3071,7 +4908,10 @@ abstract class _$OfflineCacheDatabase extends GeneratedDatabase {
         cachedRecipeRows,
         cachedRecipeIngredientRows,
         cachedRecipeStepRows,
-        cacheSyncMetadataRows
+        cacheSyncMetadataRows,
+        cachedPantryIngredientRows,
+        cachedShoppingListRows,
+        cachedShoppingListItemRows
       ];
 }
 
@@ -4630,6 +6470,873 @@ typedef $$CacheSyncMetadataRowsTableProcessedTableManager
         ),
         CacheSyncMetadataRow,
         PrefetchHooks Function()>;
+typedef $$CachedPantryIngredientRowsTableCreateCompanionBuilder
+    = CachedPantryIngredientRowsCompanion Function({
+  required int viewerUserId,
+  required String rowKey,
+  Value<int?> pantryIngredientId,
+  Value<int?> ingId,
+  required String name,
+  required String details,
+  required String category,
+  required String status,
+  Value<String?> quantity,
+  Value<String?> unit,
+  Value<int> rowid,
+});
+typedef $$CachedPantryIngredientRowsTableUpdateCompanionBuilder
+    = CachedPantryIngredientRowsCompanion Function({
+  Value<int> viewerUserId,
+  Value<String> rowKey,
+  Value<int?> pantryIngredientId,
+  Value<int?> ingId,
+  Value<String> name,
+  Value<String> details,
+  Value<String> category,
+  Value<String> status,
+  Value<String?> quantity,
+  Value<String?> unit,
+  Value<int> rowid,
+});
+
+class $$CachedPantryIngredientRowsTableFilterComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedPantryIngredientRowsTable> {
+  $$CachedPantryIngredientRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get rowKey => $composableBuilder(
+      column: $table.rowKey, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get pantryIngredientId => $composableBuilder(
+      column: $table.pantryIngredientId,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get ingId => $composableBuilder(
+      column: $table.ingId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get details => $composableBuilder(
+      column: $table.details, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get quantity => $composableBuilder(
+      column: $table.quantity, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get unit => $composableBuilder(
+      column: $table.unit, builder: (column) => ColumnFilters(column));
+}
+
+class $$CachedPantryIngredientRowsTableOrderingComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedPantryIngredientRowsTable> {
+  $$CachedPantryIngredientRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get rowKey => $composableBuilder(
+      column: $table.rowKey, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get pantryIngredientId => $composableBuilder(
+      column: $table.pantryIngredientId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get ingId => $composableBuilder(
+      column: $table.ingId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get details => $composableBuilder(
+      column: $table.details, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get quantity => $composableBuilder(
+      column: $table.quantity, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get unit => $composableBuilder(
+      column: $table.unit, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CachedPantryIngredientRowsTableAnnotationComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedPantryIngredientRowsTable> {
+  $$CachedPantryIngredientRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId, builder: (column) => column);
+
+  GeneratedColumn<String> get rowKey =>
+      $composableBuilder(column: $table.rowKey, builder: (column) => column);
+
+  GeneratedColumn<int> get pantryIngredientId => $composableBuilder(
+      column: $table.pantryIngredientId, builder: (column) => column);
+
+  GeneratedColumn<int> get ingId =>
+      $composableBuilder(column: $table.ingId, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get details =>
+      $composableBuilder(column: $table.details, builder: (column) => column);
+
+  GeneratedColumn<String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get quantity =>
+      $composableBuilder(column: $table.quantity, builder: (column) => column);
+
+  GeneratedColumn<String> get unit =>
+      $composableBuilder(column: $table.unit, builder: (column) => column);
+}
+
+class $$CachedPantryIngredientRowsTableTableManager extends RootTableManager<
+    _$OfflineCacheDatabase,
+    $CachedPantryIngredientRowsTable,
+    CachedPantryIngredientRow,
+    $$CachedPantryIngredientRowsTableFilterComposer,
+    $$CachedPantryIngredientRowsTableOrderingComposer,
+    $$CachedPantryIngredientRowsTableAnnotationComposer,
+    $$CachedPantryIngredientRowsTableCreateCompanionBuilder,
+    $$CachedPantryIngredientRowsTableUpdateCompanionBuilder,
+    (
+      CachedPantryIngredientRow,
+      BaseReferences<_$OfflineCacheDatabase, $CachedPantryIngredientRowsTable,
+          CachedPantryIngredientRow>
+    ),
+    CachedPantryIngredientRow,
+    PrefetchHooks Function()> {
+  $$CachedPantryIngredientRowsTableTableManager(
+      _$OfflineCacheDatabase db, $CachedPantryIngredientRowsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedPantryIngredientRowsTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedPantryIngredientRowsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedPantryIngredientRowsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> viewerUserId = const Value.absent(),
+            Value<String> rowKey = const Value.absent(),
+            Value<int?> pantryIngredientId = const Value.absent(),
+            Value<int?> ingId = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<String> details = const Value.absent(),
+            Value<String> category = const Value.absent(),
+            Value<String> status = const Value.absent(),
+            Value<String?> quantity = const Value.absent(),
+            Value<String?> unit = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CachedPantryIngredientRowsCompanion(
+            viewerUserId: viewerUserId,
+            rowKey: rowKey,
+            pantryIngredientId: pantryIngredientId,
+            ingId: ingId,
+            name: name,
+            details: details,
+            category: category,
+            status: status,
+            quantity: quantity,
+            unit: unit,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required int viewerUserId,
+            required String rowKey,
+            Value<int?> pantryIngredientId = const Value.absent(),
+            Value<int?> ingId = const Value.absent(),
+            required String name,
+            required String details,
+            required String category,
+            required String status,
+            Value<String?> quantity = const Value.absent(),
+            Value<String?> unit = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CachedPantryIngredientRowsCompanion.insert(
+            viewerUserId: viewerUserId,
+            rowKey: rowKey,
+            pantryIngredientId: pantryIngredientId,
+            ingId: ingId,
+            name: name,
+            details: details,
+            category: category,
+            status: status,
+            quantity: quantity,
+            unit: unit,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CachedPantryIngredientRowsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$OfflineCacheDatabase,
+        $CachedPantryIngredientRowsTable,
+        CachedPantryIngredientRow,
+        $$CachedPantryIngredientRowsTableFilterComposer,
+        $$CachedPantryIngredientRowsTableOrderingComposer,
+        $$CachedPantryIngredientRowsTableAnnotationComposer,
+        $$CachedPantryIngredientRowsTableCreateCompanionBuilder,
+        $$CachedPantryIngredientRowsTableUpdateCompanionBuilder,
+        (
+          CachedPantryIngredientRow,
+          BaseReferences<_$OfflineCacheDatabase,
+              $CachedPantryIngredientRowsTable, CachedPantryIngredientRow>
+        ),
+        CachedPantryIngredientRow,
+        PrefetchHooks Function()>;
+typedef $$CachedShoppingListRowsTableCreateCompanionBuilder
+    = CachedShoppingListRowsCompanion Function({
+  required int viewerUserId,
+  required String listId,
+  Value<int?> shoppingListId,
+  Value<int?> serverUserId,
+  Value<int?> numItems,
+  required String title,
+  required String subtitle,
+  required String section,
+  required String iconType,
+  Value<String?> status,
+  Value<DateTime?> createdAt,
+  Value<String?> imageUrl,
+  required bool favourite,
+  Value<bool> isComplete,
+  Value<int> rowid,
+});
+typedef $$CachedShoppingListRowsTableUpdateCompanionBuilder
+    = CachedShoppingListRowsCompanion Function({
+  Value<int> viewerUserId,
+  Value<String> listId,
+  Value<int?> shoppingListId,
+  Value<int?> serverUserId,
+  Value<int?> numItems,
+  Value<String> title,
+  Value<String> subtitle,
+  Value<String> section,
+  Value<String> iconType,
+  Value<String?> status,
+  Value<DateTime?> createdAt,
+  Value<String?> imageUrl,
+  Value<bool> favourite,
+  Value<bool> isComplete,
+  Value<int> rowid,
+});
+
+class $$CachedShoppingListRowsTableFilterComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedShoppingListRowsTable> {
+  $$CachedShoppingListRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get listId => $composableBuilder(
+      column: $table.listId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get shoppingListId => $composableBuilder(
+      column: $table.shoppingListId,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get serverUserId => $composableBuilder(
+      column: $table.serverUserId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get numItems => $composableBuilder(
+      column: $table.numItems, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get title => $composableBuilder(
+      column: $table.title, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get subtitle => $composableBuilder(
+      column: $table.subtitle, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get section => $composableBuilder(
+      column: $table.section, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get iconType => $composableBuilder(
+      column: $table.iconType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnFilters(column));
+
+  ColumnWithTypeConverterFilters<DateTime?, DateTime, String> get createdAt =>
+      $composableBuilder(
+          column: $table.createdAt,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnFilters<String> get imageUrl => $composableBuilder(
+      column: $table.imageUrl, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get favourite => $composableBuilder(
+      column: $table.favourite, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isComplete => $composableBuilder(
+      column: $table.isComplete, builder: (column) => ColumnFilters(column));
+}
+
+class $$CachedShoppingListRowsTableOrderingComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedShoppingListRowsTable> {
+  $$CachedShoppingListRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get listId => $composableBuilder(
+      column: $table.listId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get shoppingListId => $composableBuilder(
+      column: $table.shoppingListId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get serverUserId => $composableBuilder(
+      column: $table.serverUserId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get numItems => $composableBuilder(
+      column: $table.numItems, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get title => $composableBuilder(
+      column: $table.title, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get subtitle => $composableBuilder(
+      column: $table.subtitle, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get section => $composableBuilder(
+      column: $table.section, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get iconType => $composableBuilder(
+      column: $table.iconType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get imageUrl => $composableBuilder(
+      column: $table.imageUrl, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get favourite => $composableBuilder(
+      column: $table.favourite, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isComplete => $composableBuilder(
+      column: $table.isComplete, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CachedShoppingListRowsTableAnnotationComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedShoppingListRowsTable> {
+  $$CachedShoppingListRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId, builder: (column) => column);
+
+  GeneratedColumn<String> get listId =>
+      $composableBuilder(column: $table.listId, builder: (column) => column);
+
+  GeneratedColumn<int> get shoppingListId => $composableBuilder(
+      column: $table.shoppingListId, builder: (column) => column);
+
+  GeneratedColumn<int> get serverUserId => $composableBuilder(
+      column: $table.serverUserId, builder: (column) => column);
+
+  GeneratedColumn<int> get numItems =>
+      $composableBuilder(column: $table.numItems, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get subtitle =>
+      $composableBuilder(column: $table.subtitle, builder: (column) => column);
+
+  GeneratedColumn<String> get section =>
+      $composableBuilder(column: $table.section, builder: (column) => column);
+
+  GeneratedColumn<String> get iconType =>
+      $composableBuilder(column: $table.iconType, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<DateTime?, String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get imageUrl =>
+      $composableBuilder(column: $table.imageUrl, builder: (column) => column);
+
+  GeneratedColumn<bool> get favourite =>
+      $composableBuilder(column: $table.favourite, builder: (column) => column);
+
+  GeneratedColumn<bool> get isComplete => $composableBuilder(
+      column: $table.isComplete, builder: (column) => column);
+}
+
+class $$CachedShoppingListRowsTableTableManager extends RootTableManager<
+    _$OfflineCacheDatabase,
+    $CachedShoppingListRowsTable,
+    CachedShoppingListRow,
+    $$CachedShoppingListRowsTableFilterComposer,
+    $$CachedShoppingListRowsTableOrderingComposer,
+    $$CachedShoppingListRowsTableAnnotationComposer,
+    $$CachedShoppingListRowsTableCreateCompanionBuilder,
+    $$CachedShoppingListRowsTableUpdateCompanionBuilder,
+    (
+      CachedShoppingListRow,
+      BaseReferences<_$OfflineCacheDatabase, $CachedShoppingListRowsTable,
+          CachedShoppingListRow>
+    ),
+    CachedShoppingListRow,
+    PrefetchHooks Function()> {
+  $$CachedShoppingListRowsTableTableManager(
+      _$OfflineCacheDatabase db, $CachedShoppingListRowsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedShoppingListRowsTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedShoppingListRowsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedShoppingListRowsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> viewerUserId = const Value.absent(),
+            Value<String> listId = const Value.absent(),
+            Value<int?> shoppingListId = const Value.absent(),
+            Value<int?> serverUserId = const Value.absent(),
+            Value<int?> numItems = const Value.absent(),
+            Value<String> title = const Value.absent(),
+            Value<String> subtitle = const Value.absent(),
+            Value<String> section = const Value.absent(),
+            Value<String> iconType = const Value.absent(),
+            Value<String?> status = const Value.absent(),
+            Value<DateTime?> createdAt = const Value.absent(),
+            Value<String?> imageUrl = const Value.absent(),
+            Value<bool> favourite = const Value.absent(),
+            Value<bool> isComplete = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CachedShoppingListRowsCompanion(
+            viewerUserId: viewerUserId,
+            listId: listId,
+            shoppingListId: shoppingListId,
+            serverUserId: serverUserId,
+            numItems: numItems,
+            title: title,
+            subtitle: subtitle,
+            section: section,
+            iconType: iconType,
+            status: status,
+            createdAt: createdAt,
+            imageUrl: imageUrl,
+            favourite: favourite,
+            isComplete: isComplete,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required int viewerUserId,
+            required String listId,
+            Value<int?> shoppingListId = const Value.absent(),
+            Value<int?> serverUserId = const Value.absent(),
+            Value<int?> numItems = const Value.absent(),
+            required String title,
+            required String subtitle,
+            required String section,
+            required String iconType,
+            Value<String?> status = const Value.absent(),
+            Value<DateTime?> createdAt = const Value.absent(),
+            Value<String?> imageUrl = const Value.absent(),
+            required bool favourite,
+            Value<bool> isComplete = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CachedShoppingListRowsCompanion.insert(
+            viewerUserId: viewerUserId,
+            listId: listId,
+            shoppingListId: shoppingListId,
+            serverUserId: serverUserId,
+            numItems: numItems,
+            title: title,
+            subtitle: subtitle,
+            section: section,
+            iconType: iconType,
+            status: status,
+            createdAt: createdAt,
+            imageUrl: imageUrl,
+            favourite: favourite,
+            isComplete: isComplete,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CachedShoppingListRowsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$OfflineCacheDatabase,
+        $CachedShoppingListRowsTable,
+        CachedShoppingListRow,
+        $$CachedShoppingListRowsTableFilterComposer,
+        $$CachedShoppingListRowsTableOrderingComposer,
+        $$CachedShoppingListRowsTableAnnotationComposer,
+        $$CachedShoppingListRowsTableCreateCompanionBuilder,
+        $$CachedShoppingListRowsTableUpdateCompanionBuilder,
+        (
+          CachedShoppingListRow,
+          BaseReferences<_$OfflineCacheDatabase, $CachedShoppingListRowsTable,
+              CachedShoppingListRow>
+        ),
+        CachedShoppingListRow,
+        PrefetchHooks Function()>;
+typedef $$CachedShoppingListItemRowsTableCreateCompanionBuilder
+    = CachedShoppingListItemRowsCompanion Function({
+  required int viewerUserId,
+  required String listId,
+  required String itemKey,
+  Value<int?> itemId,
+  Value<int?> shoppingListId,
+  Value<int?> ingId,
+  required String name,
+  required String quantity,
+  required String category,
+  Value<String?> unit,
+  required bool checked,
+  required int lineIndex,
+  Value<int> rowid,
+});
+typedef $$CachedShoppingListItemRowsTableUpdateCompanionBuilder
+    = CachedShoppingListItemRowsCompanion Function({
+  Value<int> viewerUserId,
+  Value<String> listId,
+  Value<String> itemKey,
+  Value<int?> itemId,
+  Value<int?> shoppingListId,
+  Value<int?> ingId,
+  Value<String> name,
+  Value<String> quantity,
+  Value<String> category,
+  Value<String?> unit,
+  Value<bool> checked,
+  Value<int> lineIndex,
+  Value<int> rowid,
+});
+
+class $$CachedShoppingListItemRowsTableFilterComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedShoppingListItemRowsTable> {
+  $$CachedShoppingListItemRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get listId => $composableBuilder(
+      column: $table.listId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get itemKey => $composableBuilder(
+      column: $table.itemKey, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get itemId => $composableBuilder(
+      column: $table.itemId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get shoppingListId => $composableBuilder(
+      column: $table.shoppingListId,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get ingId => $composableBuilder(
+      column: $table.ingId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get quantity => $composableBuilder(
+      column: $table.quantity, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get unit => $composableBuilder(
+      column: $table.unit, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get checked => $composableBuilder(
+      column: $table.checked, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get lineIndex => $composableBuilder(
+      column: $table.lineIndex, builder: (column) => ColumnFilters(column));
+}
+
+class $$CachedShoppingListItemRowsTableOrderingComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedShoppingListItemRowsTable> {
+  $$CachedShoppingListItemRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get listId => $composableBuilder(
+      column: $table.listId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get itemKey => $composableBuilder(
+      column: $table.itemKey, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get itemId => $composableBuilder(
+      column: $table.itemId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get shoppingListId => $composableBuilder(
+      column: $table.shoppingListId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get ingId => $composableBuilder(
+      column: $table.ingId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get quantity => $composableBuilder(
+      column: $table.quantity, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get unit => $composableBuilder(
+      column: $table.unit, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get checked => $composableBuilder(
+      column: $table.checked, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get lineIndex => $composableBuilder(
+      column: $table.lineIndex, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CachedShoppingListItemRowsTableAnnotationComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedShoppingListItemRowsTable> {
+  $$CachedShoppingListItemRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId, builder: (column) => column);
+
+  GeneratedColumn<String> get listId =>
+      $composableBuilder(column: $table.listId, builder: (column) => column);
+
+  GeneratedColumn<String> get itemKey =>
+      $composableBuilder(column: $table.itemKey, builder: (column) => column);
+
+  GeneratedColumn<int> get itemId =>
+      $composableBuilder(column: $table.itemId, builder: (column) => column);
+
+  GeneratedColumn<int> get shoppingListId => $composableBuilder(
+      column: $table.shoppingListId, builder: (column) => column);
+
+  GeneratedColumn<int> get ingId =>
+      $composableBuilder(column: $table.ingId, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get quantity =>
+      $composableBuilder(column: $table.quantity, builder: (column) => column);
+
+  GeneratedColumn<String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumn<String> get unit =>
+      $composableBuilder(column: $table.unit, builder: (column) => column);
+
+  GeneratedColumn<bool> get checked =>
+      $composableBuilder(column: $table.checked, builder: (column) => column);
+
+  GeneratedColumn<int> get lineIndex =>
+      $composableBuilder(column: $table.lineIndex, builder: (column) => column);
+}
+
+class $$CachedShoppingListItemRowsTableTableManager extends RootTableManager<
+    _$OfflineCacheDatabase,
+    $CachedShoppingListItemRowsTable,
+    CachedShoppingListItemRow,
+    $$CachedShoppingListItemRowsTableFilterComposer,
+    $$CachedShoppingListItemRowsTableOrderingComposer,
+    $$CachedShoppingListItemRowsTableAnnotationComposer,
+    $$CachedShoppingListItemRowsTableCreateCompanionBuilder,
+    $$CachedShoppingListItemRowsTableUpdateCompanionBuilder,
+    (
+      CachedShoppingListItemRow,
+      BaseReferences<_$OfflineCacheDatabase, $CachedShoppingListItemRowsTable,
+          CachedShoppingListItemRow>
+    ),
+    CachedShoppingListItemRow,
+    PrefetchHooks Function()> {
+  $$CachedShoppingListItemRowsTableTableManager(
+      _$OfflineCacheDatabase db, $CachedShoppingListItemRowsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedShoppingListItemRowsTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedShoppingListItemRowsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedShoppingListItemRowsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> viewerUserId = const Value.absent(),
+            Value<String> listId = const Value.absent(),
+            Value<String> itemKey = const Value.absent(),
+            Value<int?> itemId = const Value.absent(),
+            Value<int?> shoppingListId = const Value.absent(),
+            Value<int?> ingId = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<String> quantity = const Value.absent(),
+            Value<String> category = const Value.absent(),
+            Value<String?> unit = const Value.absent(),
+            Value<bool> checked = const Value.absent(),
+            Value<int> lineIndex = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CachedShoppingListItemRowsCompanion(
+            viewerUserId: viewerUserId,
+            listId: listId,
+            itemKey: itemKey,
+            itemId: itemId,
+            shoppingListId: shoppingListId,
+            ingId: ingId,
+            name: name,
+            quantity: quantity,
+            category: category,
+            unit: unit,
+            checked: checked,
+            lineIndex: lineIndex,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required int viewerUserId,
+            required String listId,
+            required String itemKey,
+            Value<int?> itemId = const Value.absent(),
+            Value<int?> shoppingListId = const Value.absent(),
+            Value<int?> ingId = const Value.absent(),
+            required String name,
+            required String quantity,
+            required String category,
+            Value<String?> unit = const Value.absent(),
+            required bool checked,
+            required int lineIndex,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CachedShoppingListItemRowsCompanion.insert(
+            viewerUserId: viewerUserId,
+            listId: listId,
+            itemKey: itemKey,
+            itemId: itemId,
+            shoppingListId: shoppingListId,
+            ingId: ingId,
+            name: name,
+            quantity: quantity,
+            category: category,
+            unit: unit,
+            checked: checked,
+            lineIndex: lineIndex,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CachedShoppingListItemRowsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$OfflineCacheDatabase,
+        $CachedShoppingListItemRowsTable,
+        CachedShoppingListItemRow,
+        $$CachedShoppingListItemRowsTableFilterComposer,
+        $$CachedShoppingListItemRowsTableOrderingComposer,
+        $$CachedShoppingListItemRowsTableAnnotationComposer,
+        $$CachedShoppingListItemRowsTableCreateCompanionBuilder,
+        $$CachedShoppingListItemRowsTableUpdateCompanionBuilder,
+        (
+          CachedShoppingListItemRow,
+          BaseReferences<_$OfflineCacheDatabase,
+              $CachedShoppingListItemRowsTable, CachedShoppingListItemRow>
+        ),
+        CachedShoppingListItemRow,
+        PrefetchHooks Function()>;
 
 class $OfflineCacheDatabaseManager {
   final _$OfflineCacheDatabase _db;
@@ -4652,4 +7359,15 @@ class $OfflineCacheDatabaseManager {
       $$CachedRecipeStepRowsTableTableManager(_db, _db.cachedRecipeStepRows);
   $$CacheSyncMetadataRowsTableTableManager get cacheSyncMetadataRows =>
       $$CacheSyncMetadataRowsTableTableManager(_db, _db.cacheSyncMetadataRows);
+  $$CachedPantryIngredientRowsTableTableManager
+      get cachedPantryIngredientRows =>
+          $$CachedPantryIngredientRowsTableTableManager(
+              _db, _db.cachedPantryIngredientRows);
+  $$CachedShoppingListRowsTableTableManager get cachedShoppingListRows =>
+      $$CachedShoppingListRowsTableTableManager(
+          _db, _db.cachedShoppingListRows);
+  $$CachedShoppingListItemRowsTableTableManager
+      get cachedShoppingListItemRows =>
+          $$CachedShoppingListItemRowsTableTableManager(
+              _db, _db.cachedShoppingListItemRows);
 }
