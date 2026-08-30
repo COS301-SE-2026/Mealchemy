@@ -67,6 +67,32 @@ void main() {
     expect(tapped, isTrue);
   });
 
+  testWidgets('ShoppingListRow keeps navigation when mutations are disabled', (
+    tester,
+  ) async {
+    var tapped = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ShoppingListRow(
+            list: list,
+            mutationsEnabled: false,
+            onTap: () => tapped = true,
+          ),
+        ),
+      ),
+    );
+
+    final menu = tester.widget<PopupMenuButton<String>>(
+      find.byType(PopupMenuButton<String>),
+    );
+    expect(menu.enabled, isFalse);
+
+    await tester.tap(find.text('General List'));
+    expect(tapped, isTrue);
+  });
+
   testWidgets('ShoppingListRow renders favorite star icon', (tester) async {
     final favouriteList = list.copyWith(
       iconType: 'star',

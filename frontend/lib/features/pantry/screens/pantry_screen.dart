@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/connectivity/network_status_provider.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/shared_widgets/Molecules/app_search_bar.dart';
 import '../../../core/shared_widgets/Molecules/app_section_header.dart';
@@ -37,6 +38,7 @@ class PantryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pantryState = ref.watch(pantryStateProvider);
+    final isReadOnly = ref.watch(offlineReadOnlyProvider);
 
     return Scaffold(
       backgroundColor: AppColors.bgLight,
@@ -44,7 +46,7 @@ class PantryScreen extends ConsumerWidget {
         title: const Text('Pantry'),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: isReadOnly ? null : () {},
             icon: const Icon(Icons.qr_code_scanner_outlined),
             tooltip: 'Scan ingredient',
           ),
@@ -61,8 +63,10 @@ class PantryScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         tooltip: 'Add Pantry Ingredient',
-        onPressed: () => context.push(AppRoutes.addIngredient),
-        backgroundColor: AppColors.primary,
+        onPressed:
+            isReadOnly ? null : () => context.push(AppRoutes.addIngredient),
+        backgroundColor:
+            isReadOnly ? AppColors.surfaceMuted : AppColors.primary,
         foregroundColor: AppColors.textDark,
         child: const Icon(Icons.add),
       ),
@@ -70,7 +74,10 @@ class PantryScreen extends ConsumerWidget {
         child: pantryState.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stackTrace) => _PantryError(message: '$error'),
-          data: (state) => _PantryContent(pantryState: state),
+          data: (state) => _PantryContent(
+            pantryState: state,
+            isReadOnly: isReadOnly,
+          ),
         ),
       ),
     );
@@ -78,9 +85,13 @@ class PantryScreen extends ConsumerWidget {
 }
 
 class _PantryContent extends ConsumerWidget {
-  const _PantryContent({required this.pantryState});
+  const _PantryContent({
+    required this.pantryState,
+    required this.isReadOnly,
+  });
 
   final PantryState pantryState;
+  final bool isReadOnly;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -155,7 +166,8 @@ class _PantryContent extends ConsumerWidget {
                     name: ingredient.name,
                     details: ingredient.details,
                     status: ingredient.status,
-                    onEdit: ingredient.pIngredientId == null ||
+                    onEdit: isReadOnly ||
+                            ingredient.pIngredientId == null ||
                             ingredient.ingId == null
                         ? null
                         : () => _showEditPantryIngredientDialog(
@@ -163,7 +175,7 @@ class _PantryContent extends ConsumerWidget {
                               ref: ref,
                               ingredient: ingredient,
                             ),
-                    onDelete: ingredient.pIngredientId == null
+                    onDelete: isReadOnly || ingredient.pIngredientId == null
                         ? null
                         : () => pantryNotifier.removeIngredient(
                               ingredient.pIngredientId!,
