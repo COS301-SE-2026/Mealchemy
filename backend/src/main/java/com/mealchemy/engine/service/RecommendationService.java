@@ -150,4 +150,28 @@ public class RecommendationService {
             buildPantryEntries(userId)
         );
     }
+
+    public RecommendationResponse getRecommendations(Integer userId, Integer batchSize, List<Integer> excludeRecipeIds, Integer seed)
+    {
+        UserStateRequest userState = buildUserState(userId);
+
+        List<CandidatePoolRequest> candidatePool = buildCandidatePool();
+
+        RecommendationRequest request = new RecommendationRequest(
+            userState, 
+            candidatePool, 
+            batchSize, 
+            excludeRecipeIds, 
+            seed
+        );
+
+        try
+        {
+            return engineClient.getRecommendations(request);
+        }
+        catch(EmptyPoolException e)
+        {
+            return RecommendationResponse.from(List.of(), 0, true);
+        }
+    }
 }
