@@ -366,7 +366,8 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     return [
       for (int i = 0; i < valid.length; i++)
         RecipeIngredient(
-          ingId: valid[i].item!.ingId,
+          //isValid guarantees external item has been imported
+          ingId: valid[i].item!.ingId!,
           quantity: double.tryParse(valid[i].quantity.text),
           unit: valid[i].unit!,
           sortOrder: i,
@@ -717,7 +718,9 @@ class _IngredientRowData {
       item != null || quantity.text.isNotEmpty || unit != null;
 
   bool get isValid =>
-      item != null && double.tryParse(quantity.text) != null && unit != null;
+      item?.ingId != null &&
+      double.tryParse(quantity.text) != null &&
+      unit != null;
 
   void dispose() => quantity.dispose();
 }
