@@ -30,6 +30,27 @@ class OfflineCacheStore {
         .toList();
   }
 
+  Future<Vault?> readVault({
+    required int viewerUserId,
+    required int vaultId,
+  }) async {
+    final row = await (_database.select(_database.cachedVaultRows)
+          ..where(
+            (row) =>
+                row.viewerUserId.equals(viewerUserId) &
+                row.vaultId.equals(vaultId),
+          ))
+        .getSingleOrNull();
+    if (row == null) return null;
+    return Vault(
+      vaultId: row.vaultId,
+      ownerId: row.ownerId,
+      vaultType: row.vaultType,
+      name: row.name,
+      createdAt: row.createdAt,
+    );
+  }
+
   Future<void> replaceVaultsFromCompleteFetch({
     required int viewerUserId,
     required List<Vault> vaults,
@@ -114,8 +135,7 @@ class OfflineCacheStore {
     final query = _database.select(_database.cachedVaultFolderRows)
       ..where(
         (row) =>
-            row.viewerUserId.equals(viewerUserId) &
-            row.vaultId.equals(vaultId),
+            row.viewerUserId.equals(viewerUserId) & row.vaultId.equals(vaultId),
       );
     final rows = await query.get();
     return rows
@@ -137,14 +157,13 @@ class OfflineCacheStore {
     required DateTime syncedAt,
   }) {
     return _database.transaction(() async {
-      final previous =
-          await (_database.select(_database.cachedVaultFolderRows)
-                ..where(
-                  (row) =>
-                      row.viewerUserId.equals(viewerUserId) &
-                      row.vaultId.equals(vaultId),
-                ))
-              .get();
+      final previous = await (_database.select(_database.cachedVaultFolderRows)
+            ..where(
+              (row) =>
+                  row.viewerUserId.equals(viewerUserId) &
+                  row.vaultId.equals(vaultId),
+            ))
+          .get();
       final incomingIds = folders.map((folder) => folder.folderId).toSet();
       final removedIds = previous
           .map((folder) => folder.folderId)
@@ -261,15 +280,14 @@ class OfflineCacheStore {
     required int viewerUserId,
     required int recipeId,
   }) async {
-    final recipeRow =
-        await (_database.select(_database.cachedRecipeRows)
-              ..where(
-                (row) =>
-                    row.viewerUserId.equals(viewerUserId) &
-                    row.recipeId.equals(recipeId) &
-                    row.isComplete.equals(true),
-              ))
-            .getSingleOrNull();
+    final recipeRow = await (_database.select(_database.cachedRecipeRows)
+          ..where(
+            (row) =>
+                row.viewerUserId.equals(viewerUserId) &
+                row.recipeId.equals(recipeId) &
+                row.isComplete.equals(true),
+          ))
+        .getSingleOrNull();
     if (recipeRow == null) return null;
 
     final ingredientRows =
@@ -331,6 +349,74 @@ class OfflineCacheStore {
     );
   }
 
+  Future<List<Recipe>> readRecipes({required int viewerUserId}) async {
+    final query = _database.select(_database.cachedRecipeRows)
+      ..where((row) => row.viewerUserId.equals(viewerUserId))
+      ..orderBy([(row) => OrderingTerm.desc(row.updatedAt)]);
+    final rows = await query.get();
+    return rows.map(_recipeSummaryFromRow).toList();
+  }
+
+  Future<void> replaceRecipeSummariesFromCompleteFetch({
+    required int viewerUserId,
+    required List<Recipe> recipes,
+    required DateTime syncedAt,
+  }) {
+    return _database.transaction(() async {
+      final previous = await (_database.select(_database.cachedRecipeRows)
+            ..where((row) => row.viewerUserId.equals(viewerUserId)))
+          .get();
+      final incomingIds = recipes.map((recipe) => recipe.recipeId).toSet();
+      final removedIds = previous
+          .map((recipe) => recipe.recipeId)
+          .where((id) => !incomingIds.contains(id))
+          .toSet();
+
+      if (removedIds.isNotEmpty) {
+        await (_database.delete(_database.cachedRecipeIngredientRows)
+              ..where(
+                (row) =>
+                    row.viewerUserId.equals(viewerUserId) &
+                    row.recipeId.isIn(removedIds),
+              ))
+            .go();
+        await (_database.delete(_database.cachedRecipeStepRows)
+              ..where(
+                (row) =>
+                    row.viewerUserId.equals(viewerUserId) &
+                    row.recipeId.isIn(removedIds),
+              ))
+            .go();
+        await (_database.delete(_database.cachedRecipeRows)
+              ..where(
+                (row) =>
+                    row.viewerUserId.equals(viewerUserId) &
+                    row.recipeId.isIn(removedIds),
+              ))
+            .go();
+      }
+
+      for (final recipe in recipes) {
+        final existing = previous
+            .where((row) => row.recipeId == recipe.recipeId)
+            .firstOrNull;
+        await _database.into(_database.cachedRecipeRows).insertOnConflictUpdate(
+              _recipeCompanion(
+                viewerUserId: viewerUserId,
+                recipe: recipe,
+                isComplete: existing?.isComplete ?? false,
+              ),
+            );
+      }
+      await _writeSyncMetadata(
+        viewerUserId: viewerUserId,
+        collection: CacheCollection.recipes,
+        scopeId: CacheScope.all,
+        syncedAt: syncedAt,
+      );
+    });
+  }
+
   Future<void> storeCompleteRecipe({
     required int viewerUserId,
     required Recipe recipe,
@@ -346,23 +432,10 @@ class OfflineCacheStore {
 
     await _database.transaction(() async {
       await _database.into(_database.cachedRecipeRows).insertOnConflictUpdate(
-            CachedRecipeRowsCompanion.insert(
+            _recipeCompanion(
               viewerUserId: viewerUserId,
-              recipeId: recipe.recipeId,
-              ownerId: Value(recipe.ownerId),
-              title: recipe.title,
-              description: Value(recipe.description),
-              cuisineType: Value(recipe.cuisineType),
-              prepTimeMins: Value(recipe.prepTimeMins),
-              cookingTimeMins: Value(recipe.cookingTimeMins),
-              servingSize: Value(recipe.servingSize),
-              photoUrl: Value(recipe.photoUrl),
-              videoUrl: Value(recipe.videoUrl),
-              externalUrl: Value(recipe.externalUrl),
-              isCommunityPublished: recipe.isCommunityPublished,
-              createdAt: Value(recipe.createdAt),
-              updatedAt: Value(recipe.updatedAt),
-              isComplete: const Value(true),
+              recipe: recipe,
+              isComplete: true,
             ),
           );
       await (_database.delete(_database.cachedRecipeIngredientRows)
@@ -443,7 +516,9 @@ class OfflineCacheStore {
     required String scopeId,
     required DateTime syncedAt,
   }) {
-    return _database.into(_database.cacheSyncMetadataRows).insertOnConflictUpdate(
+    return _database
+        .into(_database.cacheSyncMetadataRows)
+        .insertOnConflictUpdate(
           CacheSyncMetadataRowsCompanion.insert(
             viewerUserId: viewerUserId,
             collection: collection,
@@ -452,12 +527,57 @@ class OfflineCacheStore {
           ),
         );
   }
+
+  CachedRecipeRowsCompanion _recipeCompanion({
+    required int viewerUserId,
+    required Recipe recipe,
+    required bool isComplete,
+  }) {
+    return CachedRecipeRowsCompanion.insert(
+      viewerUserId: viewerUserId,
+      recipeId: recipe.recipeId,
+      ownerId: Value(recipe.ownerId),
+      title: recipe.title,
+      description: Value(recipe.description),
+      cuisineType: Value(recipe.cuisineType),
+      prepTimeMins: Value(recipe.prepTimeMins),
+      cookingTimeMins: Value(recipe.cookingTimeMins),
+      servingSize: Value(recipe.servingSize),
+      photoUrl: Value(recipe.photoUrl),
+      videoUrl: Value(recipe.videoUrl),
+      externalUrl: Value(recipe.externalUrl),
+      isCommunityPublished: recipe.isCommunityPublished,
+      createdAt: Value(recipe.createdAt),
+      updatedAt: Value(recipe.updatedAt),
+      isComplete: Value(isComplete),
+    );
+  }
+
+  Recipe _recipeSummaryFromRow(CachedRecipeRow row) {
+    return Recipe(
+      recipeId: row.recipeId,
+      ownerId: row.ownerId,
+      title: row.title,
+      description: row.description,
+      cuisineType: row.cuisineType,
+      prepTimeMins: row.prepTimeMins,
+      cookingTimeMins: row.cookingTimeMins,
+      servingSize: row.servingSize,
+      photoUrl: row.photoUrl,
+      videoUrl: row.videoUrl,
+      externalUrl: row.externalUrl,
+      isCommunityPublished: row.isCommunityPublished,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    );
+  }
 }
 
 abstract final class CacheCollection {
   static const vaults = 'vaults';
   static const folders = 'folders';
   static const folderRecipes = 'folderRecipes';
+  static const recipes = 'recipes';
   static const recipe = 'recipe';
 }
 

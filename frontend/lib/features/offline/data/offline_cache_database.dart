@@ -142,6 +142,8 @@ class OfflineCacheDatabase extends _$OfflineCacheDatabase {
   int get schemaVersion => 1;
 
   static QueryExecutor _openConnection() {
-    return driftDatabase(name: 'mealchemy_offline_cache');
+    return LazyDatabase(
+      () async => driftDatabase(name: 'mealchemy_offline_cache'),
+    );
   }
 }
