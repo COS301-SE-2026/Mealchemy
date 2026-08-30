@@ -84,7 +84,7 @@ class _EquipmentPicker extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final optionsAsync = ref.watch(equipmentOptionsProvider);
+    final optionsAsync = ref.watch(equipmentProvider);
     final notifier = ref.read(profileProvider.notifier);
 
     return optionsAsync.when(

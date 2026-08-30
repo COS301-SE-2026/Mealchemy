@@ -57,7 +57,7 @@ class _PreferencesBody extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         _CatalogMultiSelect(
-          optionsProvider: dietaryOptionsProvider,
+          optionsProvider: dietaryProvider,
           selected: prefs.dietaryRestrictions,
           onToggle: notifier.toggleDietary,
           addLabel: 'Add restriction',
@@ -71,7 +71,7 @@ class _PreferencesBody extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         _CatalogMultiSelect(
-          optionsProvider: allergyOptionsProvider,
+          optionsProvider: allergyProvider,
           selected: prefs.allergies,
           onToggle: notifier.toggleAllergy,
           addLabel: 'Add allergy',
@@ -98,7 +98,7 @@ class _PreferencesBody extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         _CatalogMultiSelect(
-          optionsProvider: flavourOptionsProvider,
+          optionsProvider: flavourProvider,
           selected: prefs.flavourProfile,
           onToggle: notifier.toggleFlavour,
           addLabel: 'Add cuisine',
@@ -112,7 +112,7 @@ class _PreferencesBody extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         _CatalogMultiSelect(
-          optionsProvider: goalOptionsProvider,
+          optionsProvider: goalProvider,
           selected: prefs.nutritionalGoals,
           onToggle: notifier.toggleGoal,
           addLabel: 'Add goal',

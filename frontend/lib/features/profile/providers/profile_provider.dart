@@ -10,29 +10,29 @@ import '../repositories/mock_profile_repository.dart';
 import '../repositories/profile_repository.dart';
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
-  if (AppConfig.mockProfile) {
+  if (AppConfig.useMockData) {
     return MockProfileRepository();
   }
   return ApiProfileRepository(ref.read(dioProvider));
 });
 
-final dietaryOptionsProvider = FutureProvider<List<PreferenceOption>>((ref) {
+final dietaryProvider = FutureProvider<List<PreferenceOption>>((ref) {
   return ref.watch(profileRepositoryProvider).getDietaryOptions();
 });
 
-final allergyOptionsProvider = FutureProvider<List<PreferenceOption>>((ref) {
+final allergyProvider = FutureProvider<List<PreferenceOption>>((ref) {
   return ref.watch(profileRepositoryProvider).getAllergyOptions();
 });
 
-final goalOptionsProvider = FutureProvider<List<PreferenceOption>>((ref) {
+final goalProvider = FutureProvider<List<PreferenceOption>>((ref) {
   return ref.watch(profileRepositoryProvider).getNutritionalGoalOptions();
 });
 
-final flavourOptionsProvider = FutureProvider<List<PreferenceOption>>((ref) {
+final flavourProvider = FutureProvider<List<PreferenceOption>>((ref) {
   return ref.watch(profileRepositoryProvider).getFlavourProfileOptions();
 });
 
-final equipmentOptionsProvider = FutureProvider<List<PreferenceOption>>((ref) {
+final equipmentProvider = FutureProvider<List<PreferenceOption>>((ref) {
   return ref.watch(profileRepositoryProvider).getEquipmentOptions();
 });
 
