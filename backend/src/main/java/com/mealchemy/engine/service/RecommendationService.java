@@ -17,6 +17,7 @@ import com.mealchemy.pantry.repository.PantryIngredientRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.category.model.IngredientCategoryRepository;
 import com.mealchemy.engine.dto.PantryEntryRequest; 
+import com.mealchemy.engine.dto.CandidatePoolEntryRequest;
 
 @Service
 public class RecommendationService {
@@ -78,5 +79,19 @@ public class RecommendationService {
             return pantryLife.intValue();
         }
         return null;
+    }
+
+    private List<CandidatePoolEntryRequest> buildCandidatePool()
+    {
+        List<Recipe> recipes = recipeRepository.findByIsCommunityPublishes();
+
+        return recipes.stream().map(recipe -> new CandidatePoolEntryRequest(
+            recipe.getRecipeId(),
+            recipe.getTitle(),
+            recipe.getCuisineType(),
+            buildDietaryTags(recipe),
+            buildIngredients(recipe),
+            null
+        )).toList();
     }
 }
