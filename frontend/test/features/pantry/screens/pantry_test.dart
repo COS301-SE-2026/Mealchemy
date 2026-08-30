@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/features/pantry/models/pantry_ingredient.dart';
 import 'package:mealchemy/features/pantry/providers/pantry_provider.dart';
 import 'package:mealchemy/features/pantry/repositories/mock_pantry_repository.dart';
@@ -84,10 +85,12 @@ void main() {
   Future<void> pumpPantryScreen(
     WidgetTester tester, {
     MockPantryRepository? pantryRepository,
+    bool isOffline = false,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          offlineReadOnlyProvider.overrideWithValue(isOffline),
           pantryRepositoryProvider.overrideWithValue(
             pantryRepository ?? MockPantryRepository(),
           ),
@@ -109,6 +112,33 @@ void main() {
     expect(find.text('Meal Optimization'), findsOneWidget);
     expect(find.text('Proteins'), findsOneWidget);
     expect(find.text('Chicken Breast'), findsOneWidget);
+  });
+
+  testWidgets('PantryScreen keeps cached reads and disables writes offline', (
+    tester,
+  ) async {
+    await pumpPantryScreen(tester, isOffline: true);
+
+    expect(find.text('Chicken Breast'), findsOneWidget);
+
+    final chickenCard = tester.widget<PantryItemCard>(
+      find.ancestor(
+        of: find.text('Chicken Breast'),
+        matching: find.byType(PantryItemCard),
+      ),
+    );
+    expect(chickenCard.onEdit, isNull);
+    expect(chickenCard.onDelete, isNull);
+
+    final addButton = tester.widget<FloatingActionButton>(
+      find.byType(FloatingActionButton),
+    );
+    expect(addButton.onPressed, isNull);
+
+    await tester.enterText(find.byType(TextField), 'milk');
+    await tester.pumpAndSettle();
+    expect(find.text('Full Cream Milk'), findsOneWidget);
+    expect(find.text('Chicken Breast'), findsNothing);
   });
 
   testWidgets('PantryScreen filters pantry items by search query',
