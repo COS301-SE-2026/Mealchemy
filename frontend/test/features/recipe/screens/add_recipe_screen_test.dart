@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
@@ -297,6 +298,26 @@ void main() {
       await tester.pump();
     }
   }
+
+  testWidgets('shows the read-only explanation when opened offline', (
+    tester,
+  ) async {
+    await pumpAddRecipe(
+      tester,
+      recipeRepo: _RecordingRepo(),
+      extraOverrides: [
+        offlineReadOnlyProvider.overrideWithValue(true),
+      ],
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Changes are unavailable offline'), findsOneWidget);
+    expect(
+      find.text('Your saved recipes are still available to view.'),
+      findsOneWidget,
+    );
+    expect(find.text('Create Recipe'), findsNothing);
+  });
 
   Future<void> tapSaveChanges(WidgetTester tester) async {
     final cta = find.text('Save Changes');
