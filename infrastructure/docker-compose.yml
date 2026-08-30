@@ -70,6 +70,7 @@ services:
       # Swagger UI is off for  deployed services to no publish API surface.
       # Local development turns it on
       SPRINGDOC_ENABLED: "true"
+      USDA_API_KEY: ${USDA_API_KEY}
     ports:
       - "8080:8080"
     # Only start after postgres is healthy, not just started

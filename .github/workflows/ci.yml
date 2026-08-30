@@ -150,6 +150,7 @@ jobs:
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           JWT_EXPIRATION_MS: ${{ secrets.JWT_EXPIRATION_MS }}
+          USDA_API_KEY: ${{ secrets.USDA_API_KEY}}
         run: ./mvnw verify --no-transfer-progress -DfailIfNoTests=true
 
       #sha is v7.0.0

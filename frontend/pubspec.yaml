@@ -15,6 +15,8 @@ dependencies:
   dio: ^5.7.0
   jwt_decoder: ^2.0.1
   flutter_secure_storage: ^10.2.0
+  #images
+  image_picker: ^1.2.3
   # Navigation
   go_router: ^17.2.3
   #Fonts
@@ -22,6 +24,7 @@ dependencies:
   # Models (paired with freezed/json_serializable in dev_dependencies)
   freezed_annotation: ^2.4.4
   json_annotation: ^4.9.0
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:
@@ -47,4 +50,3 @@ flutter_launcher_icons:
   # min_sdk_android 21 skips adaptive icons so the whole logo-mark shows at full size
   min_sdk_android: 21
   remove_alpha_ios: true
-

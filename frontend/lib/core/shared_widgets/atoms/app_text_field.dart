@@ -9,6 +9,7 @@ class AppTextField extends StatefulWidget {
   final String hint;
   final String? label;
   final String? errorText;
+  final bool hasError;
   final bool isPrivate;
   final bool enabled;
   final IconData? prefixIcon;
@@ -26,6 +27,7 @@ class AppTextField extends StatefulWidget {
     required this.hint,
     this.label,
     this.errorText,
+    this.hasError = false,
     this.isPrivate = false,
     this.enabled = true,
     this.prefixIcon,
@@ -45,8 +47,9 @@ class AppTextField extends StatefulWidget {
     required this.hint,
     this.label,
     this.errorText,
+    this.hasError = false,
     this.enabled = true,
-    this.prefixIcon,       
+    this.prefixIcon,
     this.suffixIcon,
     this.controller,
     this.onChanged,
@@ -63,17 +66,18 @@ class AppTextField extends StatefulWidget {
     required this.hint,
     this.label,
     this.errorText,
+    this.hasError = false,
     this.enabled = true,
     this.controller,
     this.onChanged,
     this.onSubmitted,
-  }) : isPrivate = true,
-       keyboardType = TextInputType.visiblePassword,
-       maxLines = 1,
-       prefixIcon = null,
-       suffixIcon = null,
-       customColor = null,
-       customFillColor = null;
+  })  : isPrivate = true,
+        keyboardType = TextInputType.visiblePassword,
+        maxLines = 1,
+        prefixIcon = null,
+        suffixIcon = null,
+        customColor = null,
+        customFillColor = null;
 
   @override
   State<AppTextField> createState() => _AppTextFieldState();
@@ -85,6 +89,9 @@ class _AppTextFieldState extends State<AppTextField> {
 
   //Controls focus state for border colour change
   bool _isFocused = false;
+
+  // True when either a field message or the border-only flag is set
+  bool get _hasError => widget.errorText != null || widget.hasError;
 
   // Uses customColor if provided otherwise defaults to primary
   Color get _focusColor => widget.customColor ?? AppColors.primary;
@@ -107,7 +114,7 @@ class _AppTextFieldState extends State<AppTextField> {
   // Border when field has an error
   OutlineInputBorder get _errorBorder => OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+        borderSide: BorderSide(color: AppColors.errorBorder, width: 1.5),
       );
 
   // Border when field is disabled
@@ -125,14 +132,15 @@ class _AppTextFieldState extends State<AppTextField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-
         //Label above the field
         if (widget.label != null) ...[
           Text(
             widget.label!,
             style: AppTextStyles.bodySmall.copyWith(
               fontWeight: FontWeight.w500,
-              color: _isFocused ? _focusColor : AppColors.textLight,
+              color: _hasError
+                  ? AppColors.error
+                  : (_isFocused ? _focusColor : AppColors.textLight),
             ),
           ),
           const SizedBox(height: 6),
@@ -149,9 +157,7 @@ class _AppTextFieldState extends State<AppTextField> {
             keyboardType: widget.keyboardType,
             maxLines: widget.isPrivate ? 1 : widget.maxLines,
             style: AppTextStyles.body.copyWith(
-              color: widget.enabled
-                  ? AppColors.textLight
-                  : AppColors.textMuted,
+              color: widget.enabled ? AppColors.textLight : AppColors.textMuted,
             ),
             decoration: InputDecoration(
               hintText: widget.hint,
@@ -162,16 +168,12 @@ class _AppTextFieldState extends State<AppTextField> {
               fillColor: widget.enabled
                   ? (widget.customFillColor ?? AppColors.surfaceMuted)
                   : AppColors.surfaceLight,
-              border: _defaultBorder,
-              enabledBorder: _defaultBorder,
-              focusedBorder: _focusedBorder,
+              border: _hasError ? _errorBorder : _defaultBorder,
+              enabledBorder: _hasError ? _errorBorder : _defaultBorder,
+              focusedBorder: _hasError ? _errorBorder : _focusedBorder,
               errorBorder: _errorBorder,
               focusedErrorBorder: _errorBorder,
               disabledBorder: _disabledBorder,
-              errorText: widget.errorText,
-              errorStyle: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.error,
-              ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 14,
@@ -181,16 +183,13 @@ class _AppTextFieldState extends State<AppTextField> {
                   ? Icon(
                       widget.prefixIcon,
                       size: 18,
-                      color: _isFocused
-                          ? _focusColor
-                          : AppColors.textMuted,
+                      color: _isFocused ? _focusColor : AppColors.textMuted,
                     )
                   : null,
               //Toggle icon for private fields only
               suffixIcon: widget.isPrivate
                   ? GestureDetector(
-                      onTap: () =>
-                          setState(() => _obscureText = !_obscureText),
+                      onTap: () => setState(() => _obscureText = !_obscureText),
                       child: Icon(
                         _obscureText
                             ? Icons.visibility_outlined
@@ -203,6 +202,18 @@ class _AppTextFieldState extends State<AppTextField> {
             ),
           ),
         ),
+
+        //Error message, aligned to the field's left edge with breathing room
+        if (widget.errorText != null) ...[
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Text(
+              widget.errorText!,
+              style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+            ),
+          ),
+        ],
       ],
     );
   }

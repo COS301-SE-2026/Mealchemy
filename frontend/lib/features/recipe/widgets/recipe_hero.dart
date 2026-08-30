@@ -6,7 +6,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/providers/feedback_provider.dart';
+import '../../../core/shared_widgets/atoms/app_toast.dart';
 import '../models/recipe.dart';
+import 'recipe_network_image.dart';
 import 'save_to_vault_sheet.dart';
 import '../../shopping_lists/providers/shopping_list_provider.dart';
 
@@ -90,24 +93,25 @@ class RecipeHero extends ConsumerWidget {
   }
 
   //generates a shopping list from this recipe's missing pantry items
-  Future<void> _generateShoppingList(BuildContext context, WidgetRef ref) async {
-    final messenger = ScaffoldMessenger.of(context);
+  Future<void> _generateShoppingList(
+      BuildContext context, WidgetRef ref) async {
+    final feedback = ref.read(feedbackProvider.notifier);
     try {
       await ref.read(shoppingListsProvider.notifier).generateFromRecipe(
             recipeId: recipe.recipeId,
             recipeName: recipe.title,
           );
       ref.invalidate(shoppingListsProvider);
-      if (!context.mounted) return;
-      messenger.showSnackBar(
-        SnackBar(content: Text('Shopping list created for ${recipe.title}')),
+      feedback.showShort(
+        'Shopping list created for ${recipe.title}',
+        kind: ToastKind.success,
+        icon: Icons.shopping_cart_checkout,
       );
-    } catch (e) {
-      if (!context.mounted) return;
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Could not create shopping list. Try again.'),
-        ),
+    } catch (_) {
+      feedback.showShort(
+        'Could not create shopping list. Try again.',
+        kind: ToastKind.error,
+        icon: Icons.error_outline,
       );
     }
   }
@@ -120,14 +124,10 @@ class _HeroImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (photoUrl != null) {
-      return Image.network(
-        photoUrl!,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const _HeroPlaceholder(),
-      );
-    }
-    return const _HeroPlaceholder();
+    return RecipeNetworkImage(
+      photoUrl: photoUrl,
+      placeholder: const _HeroPlaceholder(),
+    );
   }
 }
 

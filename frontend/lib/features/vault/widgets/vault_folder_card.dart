@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
+import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
 import '../models/vault_folder.dart';
 import '../providers/vault_provider.dart';
 
@@ -285,33 +286,32 @@ class _FolderRecipeRow extends StatelessWidget {
           child: Row(
             children: [
               // Thumbnail
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  gradient: const LinearGradient(
-                    colors: [
-                      AppColors.primary,
-                      AppColors.primaryGradientLight,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  image: recipe.photoUrl != null
-                      ? DecorationImage(
-                          image: NetworkImage(recipe.photoUrl!),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                ),
-                child: recipe.photoUrl == null
-                    ? const Icon(
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: RecipeNetworkImage(
+                    photoUrl: recipe.photoUrl,
+                    placeholder: const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primary,
+                            AppColors.primaryGradientLight,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: Icon(
                         Icons.restaurant_rounded,
                         color: AppColors.textDark,
                         size: 20,
-                      )
-                    : null,
+                      ),
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               // Recipe info

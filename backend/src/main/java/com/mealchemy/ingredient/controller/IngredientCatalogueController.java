@@ -8,7 +8,9 @@ import com.mealchemy.ingredient.service.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.util.List;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -31,8 +33,19 @@ public class IngredientCatalogueController {
 
     // user searching for ingredient by name
     @GetMapping("/search")
-    public ResponseEntity<List<IngredientCatalogueResponse>> searchIngredientCatalogueByName(@AuthenticationPrincipal String userId, @RequestParam("q") String query) {
+    public ResponseEntity<List<IngredientSearchResponse>> searchIngredientCatalogueByName(@AuthenticationPrincipal String userId, @RequestParam("q") String query) {
         return ResponseEntity.ok(ingredientCatalogueService.getIngredientByName(query));
     }
 
+    @PostMapping("/add-external")
+    public ResponseEntity<?> addExternalIngredient(@AuthenticationPrincipal String userId, @RequestBody AddExternalIngredientToCatalogueRequest request) {
+        try {
+            IngredientCatalogueResponse saved = ingredientCatalogueService.saveExternalIngredientToCatalogue(request.sourceId(), request.categoryId());
+            return ResponseEntity.ok(saved);
+        }
+        catch (CategoryRequiredException e) {
+            IngredientPendingResponse pending = new IngredientPendingResponse(e.getSourceId(), e.getName());
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(pending);
+        }
+    }
 }
