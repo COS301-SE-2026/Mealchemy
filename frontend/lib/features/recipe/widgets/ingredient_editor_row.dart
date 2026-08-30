@@ -6,6 +6,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../ingredients/models/ingredient_catalogue_item.dart';
 import '../models/unit_of_measurement.dart';
 import '../../ingredients/providers/ingredient_catalogue_provider.dart';
+import '../../ingredients/repositories/ingredient_catalogue_repository.dart';
 
 class IngredientEditorRow extends ConsumerStatefulWidget {
   const IngredientEditorRow({
@@ -204,6 +205,121 @@ class _CatalogueSearchSheet extends ConsumerStatefulWidget {
 
 class _CatalogueSearchSheetState extends ConsumerState<_CatalogueSearchSheet> {
   String _query = '';
+  bool _isImporting = false;
+  String? _importError;
+
+  Future<void> _chooseCategoryAndRetry({
+    required String sourceId,
+    required String ingredientName,
+  }) async {
+    try {
+      final repository = ref.read(ingredientCatalogueRepositoryProvider);
+      final categories = await repository.getCategories();
+
+      if (!mounted) return;
+
+      setState(() => _isImporting = false);
+
+      final selectedCategoryId = await showDialog<int>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Choose a category'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView(
+                shrinkWrap: true,
+                children: categories
+                    .map(
+                      (category) => ListTile(
+                        title: Text(category.name),
+                        onTap: () => Navigator.of(dialogContext).pop(
+                          category.categoryId,
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (!mounted || selectedCategoryId == null) return;
+
+      setState(() {
+        _isImporting = true;
+        _importError = null;
+      });
+
+      final importedIngredient = await repository.importExternalIngredient(
+        sourceId: sourceId,
+        categoryId: selectedCategoryId,
+      );
+
+      if (!mounted) return;
+
+      Navigator.pop(context, importedIngredient);
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isImporting = false;
+        _importError = 'Could not import $ingredientName. Try again.';
+      });
+    }
+  }
+
+  Future<void> _selectItem(IngredientCatalogueItem item) async {
+    if (!item.requiresImport) {
+      Navigator.pop(context, item);
+      return;
+    }
+
+    final sourceId = item.sourceId;
+
+    if (sourceId == null || sourceId.isEmpty) {
+      setState(() {
+        _importError = 'This external ingredient cannot be imported.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isImporting = true;
+      _importError = null;
+    });
+
+    try {
+      final importedIngredient = await ref
+          .read(ingredientCatalogueRepositoryProvider)
+          .importExternalIngredient(sourceId: sourceId);
+
+      if (!mounted) return;
+
+      Navigator.pop(context, importedIngredient);
+    } on ExternalIngredientCategoryRequiredException catch (error) {
+      if (!mounted) return;
+
+      await _chooseCategoryAndRetry(
+        sourceId: error.ingredient.sourceId,
+        ingredientName: error.ingredient.name,
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isImporting = false;
+        _importError = 'Could not import this ingredient. Try again.';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -239,6 +355,21 @@ class _CatalogueSearchSheetState extends ConsumerState<_CatalogueSearchSheet> {
             ),
           ),
           const SizedBox(height: 12),
+          if (_isImporting)
+            const LinearProgressIndicator(
+              color: AppColors.primary,
+            ),
+          if (_importError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                _importError!,
+                style: AppTextStyles.body.copyWith(
+                  color: AppColors.error,
+                ),
+              ),
+            ),
+          const SizedBox(height: 8),
           SizedBox(
             height: 320,
             child: resultsAsync.when(
@@ -259,12 +390,15 @@ class _CatalogueSearchSheetState extends ConsumerState<_CatalogueSearchSheet> {
                           title: Text(item.name,
                               style: AppTextStyles.title
                                   .copyWith(color: AppColors.textLight)),
-                          subtitle: item.category == null
-                              ? null
-                              : Text(item.category!,
-                                  style: AppTextStyles.caption
-                                      .copyWith(color: AppColors.textMuted)),
-                          onTap: () => Navigator.pop(context, item),
+                          subtitle: Text(
+                            item.category ??
+                                '${item.sourceApi ?? 'External'} result',
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                          //external items are imported before leaving the sheet
+                          onTap: _isImporting ? null : () => _selectItem(item),
                         );
                       },
                     ),
