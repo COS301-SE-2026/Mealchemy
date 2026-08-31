@@ -39,6 +39,7 @@ def novelty_score(recipe_id: int, swipe_history: list[SwipeHistoryEntry]) -> flo
 
     return NEUTRAL_SIGNAL_VALUE
 
+# Although not used in the main pipeline this isn't dead code and is left in for unit testing
 def pantry_coverage_score(recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]) -> float:
     if not recipe_ingredients:
         return 0.0
