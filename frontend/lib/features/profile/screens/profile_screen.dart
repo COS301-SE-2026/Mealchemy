@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/providers/feedback_provider.dart';
-import '../../../core/routes/app_routes.dart';
-import '../../../core/shared_widgets/Organisms/app_navbar.dart';
 import '../../../core/shared_widgets/atoms/app_button.dart';
 import '../../../core/shared_widgets/atoms/app_toast.dart';
 import '../../../core/theme/app_colours.dart';
@@ -18,37 +15,17 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      backgroundColor: AppColors.bgLight,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: () => context.push(AppRoutes.help),
-            icon: const Icon(Icons.help_outline),
-            tooltip: 'Help',
-          ),
-        ],
-      ),
-      bottomNavigationBar: AppNavbar(
-        currentRoute: AppRoutes.profile,
-        onRouteSelected: (route) => context.go(route),
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
-          children: const [
-            _Intro(),
-            SizedBox(height: 30),
-            InformationSection(),
-            SizedBox(height: 40),
-            PreferencesSection(),
-            SizedBox(height: 32),
-            _SaveBar(),
-          ],
-        ),
-      ),
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+      children: const [
+        _Intro(),
+        SizedBox(height: 30),
+        InformationSection(),
+        SizedBox(height: 40),
+        PreferencesSection(),
+        SizedBox(height: 32),
+        _SaveBar(),
+      ],
     );
   }
 }
