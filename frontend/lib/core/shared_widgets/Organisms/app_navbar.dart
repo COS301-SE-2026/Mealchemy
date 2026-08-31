@@ -53,7 +53,7 @@ class AppNavbar extends StatelessWidget {
     AppNavItem(
       label: 'Profile',
         icon: Icons.person_outline,
-      route: AppRoutes.preference,
+      route: AppRoutes.profile,
     ),
   ];
 

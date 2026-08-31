@@ -1,5 +1,6 @@
 //maps each route string to its screen widget
 import 'app_routes.dart';
+import 'app_shell.dart';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -28,33 +29,14 @@ final appRouter = GoRouter(
   // Sets the first screen shown when the app launches.
   // During development: change this to your screen (e.g. AppRoutes.pantry)
   // Before committing: ALWAYS reset this back to AppRoutes.login
-  // Sets the first screen shown when the app launches.
-  // During development: change this to your screen (e.g. AppRoutes.pantry)
-  // Before committing: ALWAYS reset this back to AppRoutes.login
   routes: [
-    GoRoute(
+        GoRoute(
       path: AppRoutes.login,
       builder: (context, state) => const LoginScreen(),
     ),
     GoRoute(
-      path: AppRoutes.dashboard,
-      builder: (context, state) => const DashboardScreen(),
-    ),
-    GoRoute(
-      path: AppRoutes.guidedDiscovery,
-      builder: (context, state) => const GuidedDiscoveryScreen(),
-    ),
-    GoRoute(
-      path: AppRoutes.pantry,
-      builder: (context, state) => const PantryScreen(),
-    ),
-    GoRoute(
-      path: AppRoutes.preference,
-      builder: (context, state) => const ProfileScreen(),
-    ),
-    GoRoute(
-      path: AppRoutes.vault,
-      builder: (context, state) => const VaultScreen(),
+      path: AppRoutes.signup,
+      builder: (context, state) => const SignupScreen(),
     ),
     GoRoute(
       //translucent overlay: opaque false keeps the previous screen
@@ -80,19 +62,31 @@ final appRouter = GoRouter(
       ),
     ),
     GoRoute(
-      path: AppRoutes.signup,
-      builder: (context, state) => const SignupScreen(),
-    ),
-    GoRoute(
       path: AppRoutes.addRecipe,
       builder: (context, state) => const AddRecipeScreen(),
     ),
-    //recipe edit route
     GoRoute(
       path: AppRoutes.recipeEdit,
       builder: (context, state) {
         final id = int.parse(state.pathParameters['id']!);
         return AddRecipeScreen(editRecipeId: id);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.editRecipe,
+      builder: (context, state) {
+        final id = int.parse(state.pathParameters['id']!);
+        final recipe = state.extra as Recipe?;
+        return AddRecipeScreen(editRecipeId: id, initialRecipe: recipe);
+      },
+    ),
+    GoRoute(
+      //note this has a parameter. to see screen: initialLocation: '/recipe/1',
+      //only string literal wont work
+      path: AppRoutes.recipeDetail,
+      builder: (context, state) {
+        final id = int.parse(state.pathParameters['id']!);
+        return RecipeDetailScreen(recipeId: id);
       },
     ),
     GoRoute(
@@ -114,29 +108,39 @@ final appRouter = GoRouter(
       },
     ),
     GoRoute(
-      //note this has a parameter. to see screen: initialLocation: '/recipe/1',
-      //only string literal wont work
-      path: AppRoutes.recipeDetail,
-      builder: (context, state) {
-        final id = int.parse(state.pathParameters['id']!);
-        return RecipeDetailScreen(recipeId: id);
-      },
-    ),
-    GoRoute(
-      path: AppRoutes.discovery,
-      builder: (context, state) => const DiscoveryScreen(),
+      path: AppRoutes.guidedDiscovery,
+      builder: (context, state) => const GuidedDiscoveryScreen(),
     ),
     GoRoute(
       path: AppRoutes.help,
       builder: (context, state) => const HelpScreen(),
-    ),GoRoute(
-      path: AppRoutes.editRecipe,
-      builder: (context, state) {
-        final id = int.parse(state.pathParameters['id']!);
-        final recipe = state.extra as Recipe?;
-        return AddRecipeScreen(editRecipeId: id, initialRecipe: recipe);
-      },
     ),
-    
+
+    // main destinations header + bottom nav supplied once by AppShell.
+    ShellRoute(
+      builder: (context, state, child) => AppShell(child: child),
+      routes: [
+        GoRoute(
+          path: AppRoutes.dashboard,
+          builder: (context, state) => const DashboardScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.vault,
+          builder: (context, state) => const VaultScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.discovery,
+          builder: (context, state) => const DiscoveryScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.pantry,
+          builder: (context, state) => const PantryScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.profile,
+          builder: (context, state) => const ProfileScreen(),
+        ),
+      ],
+    ),
   ],
 );

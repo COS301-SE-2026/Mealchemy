@@ -510,3 +510,12 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     unit: parts.sublist(1).join(' '),
   );
 }
+
+//shopping list count for the header cart badge
+final shoppingListCountProvider = Provider<int>((ref) {
+  final listsAsync = ref.watch(shoppingListsProvider);
+  return listsAsync.maybeWhen(
+    data: (state) => state.lists.length,
+    orElse: () => 0,
+  );
+});
