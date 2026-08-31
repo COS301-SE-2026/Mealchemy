@@ -57,3 +57,22 @@ def allocate_slots(cuisine_groups: list[CuisineGroup], batch_size: int) -> dict[
             leftover -= extra
 
     return allocation
+
+def fill_wildcard(cuisine_groups: list[CuisineGroup], allocation: dict[str, int]) -> RecommendationItem | None:
+    already_selected_ids = {
+        item.recipe_id
+        for group in cuisine_groups
+        for item in sorted(group.items, key = lambda i: i.score, reverse = True)[:allocation.get(group.cuisine, 0)]
+    }
+
+    all_items_by_score = sorted(
+        (item for group in cuisine_groups for item in group.items),
+        key = lambda i: i.score,
+        reverse = True
+    )
+
+    for item in all_items_by_score:
+        if item.recipe_id not in already_selected_ids:
+            return item
+
+    return None
