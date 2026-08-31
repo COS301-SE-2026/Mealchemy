@@ -1,12 +1,20 @@
 package com.mealchemy.pantry;
 
+// model
 import com.mealchemy.auth.model.User;
-import com.mealchemy.auth.repository.UserRepository;
+import com.mealchemy.profile.model.UserProfile;
 import com.mealchemy.ingredient.model.IngredientCatalogue;
-import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.pantry.model.PantryIngredient;
+// repository
+import com.mealchemy.auth.repository.UserRepository;
+import com.mealchemy.profile.repository.UserProfileRepository;
+import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.pantry.repository.PantryIngredientRepository;
+// dto
 import com.mealchemy.pantry.dto.PantryIngredientRequest;
+// enums
+import com.mealchemy.shared.enums.PreferredUnit;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.util.List;
@@ -50,6 +58,9 @@ public class PantryControllerIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private UserProfileRepository userProfileRepository;
+
     //stores seeded ingredient during testing
     private IngredientCatalogue testIngredient;
     private Integer testUserId; 
@@ -83,6 +94,11 @@ public class PantryControllerIntegrationTest {
         pantryIngredient.setUnit("kg");
 
         pantryIngredientRepository.save(pantryIngredient);
+
+        UserProfile profile = new UserProfile();
+        profile.setUserId(testUserId);
+        profile.setPreferredUnit(PreferredUnit.METRIC);
+        userProfileRepository.save(profile);
     }
 
     @Test

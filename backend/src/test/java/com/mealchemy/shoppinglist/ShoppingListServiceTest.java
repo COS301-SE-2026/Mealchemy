@@ -436,7 +436,7 @@ public class ShoppingListServiceTest {
         assertEquals(2, actualItem.ingId());
         assertEquals("Hummus", actualItem.name());
         assertEquals("Legumes and Legume Products", actualItem.category());
-        assertEquals(new BigDecimal("250"), actualItem.quantity());
+        assertEquals(0, BigDecimal.valueOf(250).compareTo(actualItem.quantity()));
         assertEquals("g", actualItem.unit());
         assertEquals(false, actualItem.purchased());
 
@@ -539,7 +539,7 @@ public class ShoppingListServiceTest {
         assertEquals(2, response.ingId());
         assertEquals("Hummus", response.name());
         assertEquals("Legumes and Legume Products", response.category());
-        assertEquals(new BigDecimal("250"), response.quantity());
+        assertEquals(0, BigDecimal.valueOf(250).compareTo(response.quantity()));
     }
 
     @Test
@@ -572,7 +572,7 @@ public class ShoppingListServiceTest {
         assertEquals(null, response.ingId()); //ing_id
         assertEquals("Tomatoes", response.name());
         assertEquals(null, response.category()); 
-        assertEquals(new BigDecimal("150"), response.quantity());
+        assertEquals(0, BigDecimal.valueOf(150).compareTo(response.quantity()));
         assertEquals("g", response.unit()); 
         assertEquals(false, response.purchased());
     }
@@ -670,7 +670,7 @@ public class ShoppingListServiceTest {
         assertEquals(2, response.ingId());
         assertEquals("Hummus", response.name());
         assertEquals("Legumes and Legume Products", response.category());
-        assertEquals(new BigDecimal("150"), response.quantity());
+        assertEquals(0, BigDecimal.valueOf(150).compareTo(response.quantity()));
         assertEquals("g", response.unit());
         assertEquals(false, response.purchased());
     }
@@ -766,7 +766,7 @@ public class ShoppingListServiceTest {
         
         // Assert
         assertEquals(2, response.ingId());
-        assertEquals(new BigDecimal("250"), response.quantity());
+        assertEquals(0, BigDecimal.valueOf(250).compareTo(response.quantity()));
         assertEquals("g", response.unit());
         assertEquals(true, response.purchased());
     }
@@ -1604,7 +1604,7 @@ public class ShoppingListServiceTest {
         shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, requestWithPantryComparison);
 
         // Assert
-        assertEquals(new BigDecimal("60"), captor.getValue().getQuantity());
+        assertEquals(0, BigDecimal.valueOf(60).compareTo(captor.getValue().getQuantity()));
         assertEquals(2, captor.getValue().getIngId());
         verify(shoppingListItemRepository, times(1)).save(any(ShoppingListItem.class));
     }
@@ -1642,7 +1642,7 @@ public class ShoppingListServiceTest {
         shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, requestWithPantryComparison);
 
         // Assert
-        assertEquals(new BigDecimal("100"), captor.getValue().getQuantity());
+        assertEquals(0, BigDecimal.valueOf(100).compareTo(captor.getValue().getQuantity()));
         verify(shoppingListItemRepository, times(1)).save(any(ShoppingListItem.class));
     }
 
@@ -1682,7 +1682,7 @@ public class ShoppingListServiceTest {
         shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, requestWithPantryComparison);
 
         // Assert
-        assertEquals(new BigDecimal("150"), existingMatch.getQuantity());
+        assertEquals(0, BigDecimal.valueOf(150).compareTo(existingMatch.getQuantity()));
         verify(shoppingListItemRepository, times(1)).save(existingMatch);
         verify(shoppingListItemRepository, times(1)).save(any(ShoppingListItem.class));
     }

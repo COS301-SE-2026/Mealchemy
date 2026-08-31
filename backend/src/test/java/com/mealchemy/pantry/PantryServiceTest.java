@@ -133,7 +133,7 @@ public class PantryServiceTest {
         assertEquals(2, response.ingId());
         assertEquals("Hummus", response.name());
         assertEquals("Legumes and Legume Products", response.category());
-        assertEquals(new BigDecimal("250"), response.quantity());
+        assertEquals(0, BigDecimal.valueOf(250).compareTo(response.quantity()));
         assertEquals("g", response.unit());
     }
 
