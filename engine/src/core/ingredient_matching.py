@@ -26,3 +26,9 @@ def allergen_check(recipe_ingredients: list[Ingredient], allergies: list[str]) -
                 return False
 
     return True
+
+# returns list of ingredients needed for the recipe
+def get_missing_ingredients(recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]) -> list[str]:
+    _, missing_ids = pantry_ingredient_match(recipe_ingredients, pantry)
+
+    return [ing.name for ing in recipe_ingredients if ing.ing_id in missing_ids]
