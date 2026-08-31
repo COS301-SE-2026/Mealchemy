@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field, model_validator, field_validator
 from datetime import datetime
 from typing import Optional, Literal
-from src.core.shared import SwipeAction
 
 SwipeAction = Literal["LIKED", "DISLIKED", "SKIPPED"]
 
@@ -43,7 +42,7 @@ class UserState(BaseModel):
     pantry: list[PantryEntry]
     swipe_history: list[SwipeHistoryEntry] = Field(default_factory = list)
 
-    @field_validator(mode = "cuisine_affinities")
+    @field_validator("cuisine_affinities")
     @classmethod
     def affinities_in_range(cls, value: dict[str, float]) -> dict[str, float]:
         for cuisine, score in value.items():
