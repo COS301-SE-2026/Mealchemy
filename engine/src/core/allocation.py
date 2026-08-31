@@ -24,3 +24,36 @@ def rank_cuisines(scored_items: list[RecommendationItem]) -> list[CuisineGroup]:
     groups.sort(key = lambda g: g.aggregate_score, reverse = True)
     return groups
 
+def allocate_slots(cuisine_groups: list[CuisineGroup], batch_size: int) -> dict[str, int]:
+    if not cuisine_groups:
+        return {}
+    
+    available = batch_size - WILDCARD_SLOTS
+    total_score = sum(g.aggregate_score for g in cuisine_groups)
+
+    allocation: dict[str, int] = {}
+    leftover = 0
+
+    if total_score == 0:
+        even_share = available // len(cuisine_groups)
+        for group in cuisine_groups:
+            actual = min(even_share, len(group.items))
+            allocation[group.cuisine] = actual
+            leftover += even_share - actual
+    else:
+        for group in cuisine_groups:
+            proportional = round((group.aggregate_score / total_score) * available)
+            actual = min(proportional, len(group.items))
+            allocation[group.cuisine] = actual
+            leftover += proportional - actual
+
+    for group in cuisine_groups:
+        if leftover <= 0:
+            break
+        remaining_capacity = len(group.items) - allocation[group.cuisine]
+        if remaining_capacity > 0:
+            extra = min(leftover, remaining_capacity)
+            allocation[group.cuisine] += extra
+            leftover -= extra
+
+    return allocation
