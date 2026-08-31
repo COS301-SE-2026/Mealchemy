@@ -82,7 +82,8 @@ def build_final_list(cuisine_groups: list[CuisineGroup], allocation: dict[str, i
 
     for group in sorted(cuisine_groups, key = lambda g: g.aggregate_score, reverse = True):
         slot_count = allocation.get(group.cuisine, 0)
-        final_list.extend(group.items[:slot_count])
+        top_items = sorted(group.items, key = lambda i: i.score, reverse = True)[:slot_count]
+        final_list.extend(top_items)
 
     if wildcard is not None and wildcard not in final_list:
         final_list.append(wildcard)
