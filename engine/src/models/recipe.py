@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 
 class Ingredient(BaseModel):
@@ -21,3 +21,11 @@ class CandidatePoolEntry(BaseModel):
     dietary_tags: list[str]
     ingredients: list[Ingredient] = Field(min_length = 1)
     nutrition: Optional[Nutrition] = None
+
+    @field_validator("ingredients")
+    @classmethod
+    def no_duplicate_ingredients(cls, value: list[Ingredient]) -> list[Ingredient]:
+        ing_ids = [ing.ing_id for ing in value]
+        if len(ing_ids) != len(set(ing_ids)):
+            raise ValueError("Recipe ingredients must not contain duplicate ing_id values.")
+        return value

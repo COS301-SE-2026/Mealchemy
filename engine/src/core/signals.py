@@ -1,5 +1,8 @@
 from datetime import datetime, timezone
 from src.models.user_state import SwipeHistoryEntry
+from src.core.ingredient_matching import pantry_ingredient_match
+from src.models.recipe import Ingredient
+from src.models.user_state import PantryEntry
 from src.config import (
     NOVELTY_LIKED_RECENT_DAYS,
     NOVELTY_LIKED_ACCEPTABLE_DAYS,
@@ -35,3 +38,10 @@ def novelty_score(recipe_id: int, swipe_history: list[SwipeHistoryEntry]) -> flo
         return NOVELTY_SCORE_SKIPPED_OLD
 
     return NEUTRAL_SIGNAL_VALUE
+
+def pantry_coverage_score(recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]) -> float:
+    if not recipe_ingredients:
+        return 0.0
+
+    owned_ids, _ = pantry_ingredient_match(recipe_ingredients, pantry)
+    return len(owned_ids) / len(recipe_ingredients)
