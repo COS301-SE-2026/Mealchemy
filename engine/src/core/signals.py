@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
 from src.models.user_state import SwipeHistoryEntry
 from src.core.ingredient_matching import pantry_ingredient_match
-from src.models.recipe import Ingredient
-from src.models.user_state import PantryEntry
+from src.models.recipe import Ingredient, CandidatePoolEntry
+from src.models.user_state import PantryEntry, UserState
 from src.config import (
     NOVELTY_LIKED_RECENT_DAYS,
     NOVELTY_LIKED_ACCEPTABLE_DAYS,
@@ -45,3 +45,6 @@ def pantry_coverage_score(recipe_ingredients: list[Ingredient], pantry: list[Pan
 
     owned_ids, _ = pantry_ingredient_match(recipe_ingredients, pantry)
     return len(owned_ids) / len(recipe_ingredients)
+
+def cuisine_affinity_score(cuisine: str, cuisine_affinities: dict[str, float]) -> float:
+    return cuisine_affinities.get(cuisine, NEUTRAL_SIGNAL_VALUE)
