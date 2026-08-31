@@ -3,7 +3,7 @@ from typing import Optional
 
 class Ingredient(BaseModel):
     ing_id: int = Field(gt = 0)
-    categoty_id: int = Field(gt = 0)
+    category_id: int = Field(gt = 0)
     name: str = Field(min_length = 1)
     quantity: float = Field(gt = 0)
     unit: str = Field(min_length = 1)

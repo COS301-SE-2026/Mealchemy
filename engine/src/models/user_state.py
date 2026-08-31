@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, field_validator
 from datetime import datetime
 from typing import Optional, Literal
 
@@ -10,7 +10,7 @@ class PreferenceWeights(BaseModel):
     novelty: float = Field(ge = 0, le = 1)
 
     @model_validator(mode = "after")
-    def weights_some_to_one(self) -> "PreferenceWeights":
+    def weights_sum_to_one(self) -> "PreferenceWeights":
         total = self.pantry_match + self.cuisine + self.nutrition + self.freshness + self.novelty
         if abs(total - 1.0) > 1e-6:
             raise ValueError(f"Preference weights must sum to 1.0, but got {total}")
@@ -25,7 +25,7 @@ class PantryEntry(BaseModel):
     shelf_life_days: Optional[int] = Field(default = None, gt = 0, le = 1825)
     storage_location: Literal["PANTRY", "FRIDGE", "FREEZER"]
 
-class SwipeHistory(BaseModel):
+class SwipeHistoryEntry(BaseModel):
     recipe_id: int = Field(gt = 0)
     action: Literal["LIKED", "DISLIKED", "SKIPPED"]
     swiped_at: datetime
@@ -38,9 +38,9 @@ class UserState(BaseModel):
     preference_weights: PreferenceWeights
     cuisine_affinities: dict[str, float] = Field(default_factory = dict)
     pantry: list[PantryEntry]
-    swipe_history: list[SwipeHistory] = Field(default_factory = list)
+    swipe_history: list[SwipeHistoryEntry] = Field(default_factory = list)
 
-    @model_validator(mode = "after")
+    @field_validator(mode = "cuisine_affinities")
     @classmethod
     def affinities_in_range(cls, value: dict[str, float]) -> dict[str, float]:
         for cuisine, score in value.items():
