@@ -23,3 +23,7 @@ def post_recommendations(request: RecommendationRequest) -> Response:
         return JSONResponse(status_code = 422, content = error.model_dump())
 
     return JSONResponse(status_code = 200, content = result.model_dump())
+
+@router.get("health")
+def get_health() -> dict[str, str]:
+    return {"status", "UP"}
