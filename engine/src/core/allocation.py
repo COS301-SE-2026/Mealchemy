@@ -76,3 +76,15 @@ def fill_wildcard(cuisine_groups: list[CuisineGroup], allocation: dict[str, int]
             return item
 
     return None
+
+def build_final_list(cuisine_groups: list[CuisineGroup], allocation: dict[str, int], wildcard: RecommendationItem | None) -> list[RecommendationItem]:
+    final_list: list[RecommendationItem] = []
+
+    for group in sorted(cuisine_groups, key = lambda g: g.aggregate_score, reverse = True):
+        slot_count = allocation.get(group.cuisine, 0)
+        final_list.extend(group.items[:slot_count])
+
+    if wildcard is not None and wildcard not in final_list:
+        final_list.append(wildcard)
+
+    return final_list
