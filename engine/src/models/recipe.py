@@ -13,3 +13,11 @@ class Nutrition(BaseModel):
     protein_g: Optional[float] = Field(default = None, ge = 0)
     carbs_g: Optional[float] = Field(default = None, ge = 0)
     fat_g: Optional[float] = Field(default = None, ge = 0)
+
+class CandidatePoolEntry(BaseModel):
+    recipe_id: int = Field(gt = 0)
+    title: str = Field(min_length = 1)
+    cuisine: str = Field(min_length = 1)
+    dietary_tags: list[str]
+    ingredients: list[Ingredient] = Field(min_length = 1)
+    nutrition: Optional[Nutrition] = None
