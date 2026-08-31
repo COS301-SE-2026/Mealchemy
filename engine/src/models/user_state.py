@@ -1,6 +1,9 @@
 from pydantic import BaseModel, Field, model_validator, field_validator
 from datetime import datetime
 from typing import Optional, Literal
+from src.core.shared import SwipeAction
+
+SwipeAction = Literal["LIKED", "DISLIKED", "SKIPPED"]
 
 class PreferenceWeights(BaseModel):
     pantry_match: float = Field(ge = 0, le = 1)
@@ -27,7 +30,7 @@ class PantryEntry(BaseModel):
 
 class SwipeHistoryEntry(BaseModel):
     recipe_id: int = Field(gt = 0)
-    action: Literal["LIKED", "DISLIKED", "SKIPPED"]
+    action: SwipeAction
     swiped_at: datetime
 class UserState(BaseModel):
     user_id: int = Field(gt = 0)

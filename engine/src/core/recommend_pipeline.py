@@ -32,8 +32,8 @@ def recommend(candidate_pool: list[CandidatePoolEntry], user_state: UserState, b
     final_list = build_final_list(cuisine_groups, allocation, wildcard)
 
     return RecommendationResult(
-        recommendation = final_list,
-        cuisine_affinities = allocation,
+        recommendations = final_list,
+        cuisine_allocation = allocation,
         total_candidates_after_filter = total_candidates_after_filter,
         total_recipes_considered = total_recipes_considered
     )
