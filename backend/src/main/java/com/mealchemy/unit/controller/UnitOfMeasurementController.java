@@ -25,7 +25,7 @@ public class UnitOfMeasurementController {
     // get mapping - get all units of measurement for frontend to display
 
     @GetMapping("")
-    public ResponseEntity<List<UnitOfMeasurementResponse>> getAllUnitOfMeasurements() {
-        return ResponseEntity.ok(unitOfMeasurementService.getAllUnits());
+    public ResponseEntity<List<UnitOfMeasurementResponse>> getAllUnitsOfMeasurementForUser(@AuthenticationPrincipal String userId) {
+        return ResponseEntity.ok(unitOfMeasurementService.getUnitsForUser(Integer.parseInt(userId)));
     }
 }

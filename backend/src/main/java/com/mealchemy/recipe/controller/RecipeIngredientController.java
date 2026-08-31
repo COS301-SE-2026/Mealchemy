@@ -29,9 +29,9 @@ public class RecipeIngredientController
 
     // Get
     @GetMapping("/recipe/{recipeId}")
-    public List<RecipeIngredientResponse> getAllIngredientsByRecipeId(@PathVariable Integer recipeId)
+    public List<RecipeIngredientResponse> getAllIngredientsByRecipeId(@PathVariable Integer recipeId, @AuthenticationPrincipal String userId)
     {
-        return recipeIngredientService.getAllIngredientsByRecipeId(recipeId);
+        return recipeIngredientService.getAllIngredientsByRecipeId(recipeId, Integer.parseInt(userId));
     }
 
     // Post
