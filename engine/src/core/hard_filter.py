@@ -16,9 +16,9 @@ def passes_dislike_time_check(recipe_id: int, swipe_history: list[SwipeHistoryEn
         if swipe.action != "DISLIKED":
             continue
 
-    days_since = (now - swipe.swiped_at).days
-    if days_since < DISLIKE_EXPIRY_DAYS:
-        return False
+        days_since = (now - swipe.swiped_at).days
+        if days_since < DISLIKE_EXPIRY_DAYS:
+            return False
 
     return True
 
@@ -27,5 +27,5 @@ def hard_filter(candidate_pool: list[CandidatePoolEntry], user_state: UserState)
         recipe for recipe in candidate_pool
         if allergen_check(recipe.ingredients, user_state.allergies)
         and passes_dietary_restrictions(recipe.dietary_tags, user_state.dietary_restrictions)
-        and passes_dislike_time_check(recipe.recipe_id, UserState.swipe_history)
+        and passes_dislike_time_check(recipe.recipe_id, user_state.swipe_history)
     ]
