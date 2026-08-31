@@ -48,3 +48,9 @@ def pantry_coverage_score(recipe_ingredients: list[Ingredient], pantry: list[Pan
 
 def cuisine_affinity_score(cuisine: str, cuisine_affinities: dict[str, float]) -> float:
     return cuisine_affinities.get(cuisine, NEUTRAL_SIGNAL_VALUE)
+
+def nutrition_score(recipe: CandidatePoolEntry, user_state: UserState) -> float:
+    return NEUTRAL_SIGNAL_VALUE
+
+def freshness_score(recipe: CandidatePoolEntry, pantry: list[PantryEntry]) -> float:
+    return NEUTRAL_SIGNAL_VALUE
