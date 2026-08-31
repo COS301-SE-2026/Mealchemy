@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/pantry/screens/pantry_screen.dart';
-import '../../features/preference/screens/preference_screen.dart';
+import '../../features/profile/screens/profile_screen.dart';
 import '../../features/vault/screens/vault_screen.dart';
 import '../../features/pantry/screens/add_ingredient_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
@@ -50,7 +50,7 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: AppRoutes.preference,
-      builder: (context, state) => const PreferenceScreen(),
+      builder: (context, state) => const ProfileScreen(),
     ),
     GoRoute(
       path: AppRoutes.vault,

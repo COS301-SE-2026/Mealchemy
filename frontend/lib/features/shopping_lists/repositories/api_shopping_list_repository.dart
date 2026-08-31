@@ -258,4 +258,19 @@ class ApiShoppingListRepository implements ShoppingListRepository {
     );
     return ShoppingList.fromJson(response.data ?? {});
   }
+
+  @override
+  Future<ShoppingList> addRecipeToExistingList({
+    required String listId,
+    required int recipeId,
+    required bool includeAvailablePantryItems,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/api/shopping-lists/add-from-recipe/$listId/$recipeId',
+      data: {
+        'include_available_pantry_items': includeAvailablePantryItems,
+      },
+    );
+    return ShoppingList.fromJson(response.data ?? {});
+  }
 }

@@ -156,4 +156,16 @@ class CachedShoppingListRepository implements ShoppingListRepository {
         name: name,
         includeAvailablePantryItems: includeAvailablePantryItems,
       );
+
+  @override
+  Future<ShoppingList> addRecipeToExistingList({
+    required String listId,
+    required int recipeId,
+    required bool includeAvailablePantryItems,
+  }) =>
+      _remote.addRecipeToExistingList(
+        listId: listId,
+        recipeId: recipeId,
+        includeAvailablePantryItems: includeAvailablePantryItems,
+      );
 }

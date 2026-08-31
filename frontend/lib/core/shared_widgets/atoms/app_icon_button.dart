@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 
-enum IconButtonVariant { primary, secondary, outlined, ghost }
+enum IconButtonVariant { primary, secondary, outlined, ghost, gradientIcon }
 //primary - solid background, white text
 //secondary - solid accent background, white text
 //outlined - transparent background, colored border and text ( can customize border and text colour )
 //ghost - transparent background, transparent border, colored text (can customize text colour)
+//gradientIcon - Primary colour gradient rounded-square tile with a white
 
 class AppIconButton extends StatelessWidget {
   final IconData icon;
@@ -67,6 +68,16 @@ class AppIconButton extends StatelessWidget {
   })  : variant = IconButtonVariant.ghost,
         customBorderColor = null;
 
+  const AppIconButton.gradientIcon({
+    super.key,
+    required this.icon,
+    this.onPressed,
+    this.customColor,
+    this.size = 46,
+    this.isLoading = false,
+  })  : variant = IconButtonVariant.gradientIcon,
+        customBorderColor = null;
+
   //Variant config
   Color get _backgroundColor {
     switch (variant) {
@@ -78,6 +89,8 @@ class AppIconButton extends StatelessWidget {
         return Colors.transparent;
       case IconButtonVariant.ghost:
         return Colors.transparent;
+      case IconButtonVariant.gradientIcon:
+        return AppColors.primary;
     }
   }
 
@@ -91,6 +104,8 @@ class AppIconButton extends StatelessWidget {
         return customColor ?? AppColors.primary;
       case IconButtonVariant.ghost:
         return customColor ?? AppColors.primary;
+      case IconButtonVariant.gradientIcon:
+        return customColor ?? AppColors.surfaceWhite;
     }
   }
 
@@ -110,12 +125,19 @@ class AppIconButton extends StatelessWidget {
     if (variant == IconButtonVariant.primary && onPressed != null) {
       return AppColors.brand;
     }
+    if (variant == IconButtonVariant.gradientIcon) {
+      return AppColors.brand;
+    }
     return null;
   }
 
   // Build
   @override
   Widget build(BuildContext context) {
+    if (variant == IconButtonVariant.gradientIcon) {
+      return _buildTile();
+    }
+
     return GestureDetector(
       onTap: isLoading ? null : onPressed,
       child: Container(
@@ -144,6 +166,25 @@ class AppIconButton extends StatelessWidget {
                 ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTile() {
+    final tile = Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        gradient: _gradient,
+        borderRadius: BorderRadius.circular(size * 0.28),
+      ),
+      alignment: Alignment.center,
+      child: Icon(icon, color: _iconColor, size: size * 0.48),
+    );
+
+    if (onPressed == null) return tile;
+    return GestureDetector(
+      onTap: isLoading ? null : onPressed,
+      child: tile,
     );
   }
 }

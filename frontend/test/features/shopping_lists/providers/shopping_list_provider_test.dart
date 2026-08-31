@@ -149,12 +149,44 @@ class _ApiShapedShoppingListRepository implements ShoppingListRepository {
   }
 
   @override
+    @override
   Future<ShoppingList> generateFromRecipe({
     required int recipeId,
     required String name,
     required bool includeAvailablePantryItems,
   }) async {
-    throw UnimplementedError();
+    return ShoppingList(
+      id: 'gen-1',
+      shoppingListId: 500,
+      title: name,
+      subtitle: '0 items',
+      section: 'FROM YOUR RECIPES',
+      iconType: 'list',
+      items: const [],
+    );
+  }
+
+  @override
+  Future<ShoppingList> addRecipeToExistingList({
+    required String listId,
+    required int recipeId,
+    required bool includeAvailablePantryItems,
+  }) async {
+    final list = await getShoppingListById(listId);
+    return list!.copyWith(
+      items: [
+        ...list.items,
+        ShoppingListItem(
+          id: '99',
+          itemId: 99,
+          shoppingListId: int.parse(listId),
+          name: 'Recipe Ingredient',
+          quantity: '200 g',
+          unit: 'g',
+          category: 'RECIPE',
+        ),
+      ],
+    );
   }
 }
 
@@ -467,5 +499,58 @@ void main() {
 
     //items stay loaded because update endpoint only returns list
     expect(list.items, isNotEmpty);
+  });
+  test('shoppingListsProvider generates a new list from a recipe', () async {
+    final container = ProviderContainer(
+      overrides: [
+        shoppingListRepositoryProvider.overrideWithValue(
+          _ApiShapedShoppingListRepository(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(shoppingListsProvider.future);
+    final notifier = container.read(shoppingListsProvider.notifier);
+
+    final created = await notifier.generateFromRecipe(
+      recipeId: 42,
+      recipeName: 'Test Pasta',
+      includeMissingOnly: true,
+    );
+
+    final state = container.read(shoppingListsProvider).value!;
+
+    expect(created, isNotNull);
+    expect(state.lists.any((list) => list.id == created!.id), isTrue);
+  });
+
+  test('shoppingListsProvider adds a recipe into an existing list', () async {
+    final container = ProviderContainer(
+      overrides: [
+        shoppingListRepositoryProvider.overrideWithValue(
+          _ApiShapedShoppingListRepository(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(shoppingListsProvider.future);
+    final notifier = container.read(shoppingListsProvider.notifier);
+
+    final before =
+        container.read(shoppingListsProvider).value!.getListById('1')!;
+    final beforeCount = before.items.length;
+
+    await notifier.addToExistingList(
+      listId: '1',
+      recipeId: 42,
+      includeMissingOnly: true,
+    );
+
+    final list = container.read(shoppingListsProvider).value!.getListById('1')!;
+
+    expect(list.items, hasLength(beforeCount + 1));
+    expect(list.items.any((item) => item.name == 'Recipe Ingredient'), isTrue);
   });
 }

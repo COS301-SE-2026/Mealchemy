@@ -396,4 +396,23 @@ class MockShoppingListRepository implements ShoppingListRepository {
       items: const [],
     );
   }
+  
+    @override
+  Future<ShoppingList> addRecipeToExistingList({
+    required String listId,
+    required int recipeId,
+    required bool includeAvailablePantryItems,
+  }) async {
+    final existing = await getShoppingListById(listId);
+    return existing ??
+        const ShoppingList(
+          id: 'mock-list',
+          title: 'Shopping List',
+          subtitle: '0 items',
+          section: 'FROM YOUR RECIPES',
+          iconType: 'list',
+          items: [],
+        );
+  }
+  
 }
