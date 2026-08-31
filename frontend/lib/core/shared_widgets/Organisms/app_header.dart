@@ -1,37 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../features/auth/providers/auth_provider.dart';
-import '../../../features/shopping_lists/providers/shopping_list_provider.dart';
-import '../../routes/app_routes.dart';
 import '../atoms/app_dropdown.dart';
 import '../atoms/app_icon_button.dart';
 import '../../theme/app_colours.dart';
 import '../../theme/app_typography.dart';
 
-//  Shared top bar added per screen.
-// Left avatar placeholder for now  profile image or icon goes here later.
-// Centre Mealchemy title opening the account dropdown profile, log ou.
-// Right  cart icon wth a shopping list count badge.
+// a configurable left/right header slot an icon, its tap action, and an
+// optional count badge 
+class HeaderAction {
+  const HeaderAction({
+    required this.icon,
+    required this.onTap,
+    this.badgeCount = 0,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final int badgeCount;
+}
+
+// Shared top bar, added per screen like AppNavbar.
+// the layout is driven by data. Pass (lef / right) actions (or leave them null for an empty slot), and titleItems to make the
+// centred Mealchemy title a dropdown 
 class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
   const AppHeader({
     super.key,
-    this.onAvatarTap,
-    required this.onCartTap,
+    this.left,
+    this.right,
+    this.titleItems,
   });
 
-  final VoidCallback? onAvatarTap;
-  final VoidCallback onCartTap;
+  final HeaderAction? left;
+  final HeaderAction? right;
+  final List<AppDropdownItem>? titleItems;
+
+  bool get _titleIsDropdown => titleItems != null && titleItems!.isNotEmpty;
 
   @override
   Size get preferredSize => const Size.fromHeight(64);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final count = ref.watch(shoppingListCountProvider);
-
-    //Colour sits outside the  SafeArea so it fills the status bar
+   //Colour sits outside the  SafeArea so it fills the status bar
     return DecoratedBox(
       decoration: BoxDecoration(
         color: AppColors.bgLight,
@@ -50,30 +61,12 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              AppDropdown(
-                trigger: const _TitleTrigger(),
-                items: [
-                  AppDropdownItem(
-                    label: 'Profile',
-                    icon: Icons.person_outline,
-                    onTap: () => context.go(AppRoutes.profile),
-                  ),
-                  AppDropdownItem(
-                    label: 'Log out',
-                    icon: Icons.logout,
-                    destructive: true,
-                    onTap: () async {
-                      await ref.read(authProvider.notifier).logout();
-                      if (context.mounted) context.go(AppRoutes.login);
-                    },
-                  ),
-                ],
-              ),
+              _title(),
               Row(
                 children: [
-                  _Avatar(onTap: onAvatarTap),
+                  _slot(left),
                   const Spacer(),
-                  _CartButton(count: count, onTap: onCartTap),
+                  _slot(right),
                 ],
               ),
             ],
@@ -82,75 +75,60 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
       ),
     );
   }
-}
 
-class _TitleTrigger extends StatelessWidget {
-  const _TitleTrigger();
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          'Mealchemy',
-          style: AppTextStyles.title.copyWith(color: AppColors.primary),
-        ),
-        const SizedBox(width: 2),
-        Icon(
-          Icons.keyboard_arrow_down_rounded,
-          size: 22,
-          color: AppColors.primary,
-        ),
-      ],
-    );
-  }
-}
+  Widget _title() {
+    const title = 'Mealchemy';
 
-class _Avatar extends StatelessWidget {
-  const _Avatar({this.onTap});
+    if (!_titleIsDropdown) {
+      return Text(
+        title,
+        style: AppTextStyles.title.copyWith(color: AppColors.primary),
+      );
+    }
 
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: AppColors.tertiaryMuted.withValues(alpha: 0.35),
-          border: Border.all(
-            color: AppColors.inputBorder,
-            width: 1.5,
+    return AppDropdown(
+      trigger: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            title,
+            style: AppTextStyles.title.copyWith(color: AppColors.primary),
           ),
-        ),
+          const SizedBox(width: 2),
+          Icon(
+            Icons.keyboard_arrow_down_rounded,
+            size: 22,
+            color: AppColors.primary,
+          ),
+        ],
       ),
+      items: titleItems!,
     );
+  }
+
+  Widget _slot(HeaderAction? action) {
+    if (action == null) return const SizedBox(width: 44);
+    return _ActionButton(action: action);
   }
 }
 
-class _CartButton extends StatelessWidget {
-  const _CartButton({
-    required this.count,
-    required this.onTap,
-  });
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({required this.action});
 
-  final int count;
-  final VoidCallback onTap;
+  final HeaderAction action;
+
   @override
   Widget build(BuildContext context) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
         AppIconButton.ghost(
-          icon: Icons.shopping_cart_outlined,
-          onPressed: onTap,
+          icon: action.icon,
+          onPressed: action.onTap,
           customColor: AppColors.primary,
           size: 44,
         ),
-        if (count > 0)
+        if (action.badgeCount > 0)
           Positioned(
             top: 2,
             right: 2,
@@ -163,7 +141,7 @@ class _CartButton extends StatelessWidget {
                 border: Border.all(color: AppColors.bgLight, width: 1.5),
               ),
               child: Text(
-                count > 99 ? '99+' : '$count',
+                action.badgeCount > 99 ? '99+' : '${action.badgeCount}',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.label.copyWith(
                   color: AppColors.textLight,
