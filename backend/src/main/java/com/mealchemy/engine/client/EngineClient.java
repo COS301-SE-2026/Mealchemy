@@ -31,4 +31,19 @@ public class EngineClient {
             })
             .body(RecommendationResponse.class);
     }
+
+    public LearningUpdateResponse updateLearning(LearningUpdateRequest request)
+    {
+        return engineRestClient.post()
+            .uri("/learning/update")
+            .body(request)
+            .retrieve()
+            .onStatus(status -> status.value() == 409, (req, res) -> {
+                throw new StaleStateException("state_version mismatch on learning update.");
+            })
+            .onStatus(status -> status.value() == 400, (req, res) -> {
+                throw new InvalidSwipeException("Engine rejected one or more swipes in the batch.");
+            })
+            .body(LearningUpdateResponse.class);
+    }
 }
