@@ -363,4 +363,22 @@ void main() {
     );
     expect(find.text('Nutritional Information'), findsOneWidget);
   });
+
+  testWidgets('RecipeNutritionTab displays USDA nutrition disclaimer', (
+    tester,
+  ) async {
+    await pumpNutritionTab(tester);
+
+    const disclaimer =
+        'Nutritional information is an estimate and may not be completely '
+        'accurate. Values are based on data provided by USDA FoodData Central.';
+
+    await tester.drag(
+      find.byType(ListView),
+      const Offset(0, -2000),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(disclaimer), findsOneWidget);
+  });
 }
