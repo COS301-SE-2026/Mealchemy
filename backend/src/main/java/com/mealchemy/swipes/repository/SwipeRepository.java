@@ -11,4 +11,6 @@ import java.util.*;
 @Repository
 public interface SwipeRepository extends JpaRepository<Swipe, Integer> {
     List<Swipe> findByUserId(Integer UserId);
+    List<Swipe> findByUserIdAndFlushedFalse(Integer userId);
+    long countByUserIdAndFlushedFalse(Integer userId);
 }
