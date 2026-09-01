@@ -72,3 +72,18 @@ class TestAllergenCheck:
         recipe_ingredients = [ingredient_factory(1, category_id = 4), ingredient_factory(2, category_id = 11)]
 
         assert allergen_check(recipe_ingredients, ["TREE NUTS"]) is False
+
+class TestGetMissingIngredients:
+    def test_returns_names_of_missing_ingredients_only(self, ingredient_factory, pantry_entry_factory):
+        recipe_ingredients = [ingredient_factory(1, name = "Owned Thing"), ingredient_factory(2, name = "Missing Thing")]
+        pantry = [pantry_entry_factory(1)]
+
+        missing = get_missing_ingredients(recipe_ingredients, pantry)
+
+        assert missing == ["Missing Thing"]
+
+    def test_returns_empty_list_when_fully_stocked(self, ingredient_factory, pantry_entry_factory):
+        recipe_ingredients = [ingredient_factory(1)]
+        pantry = [pantry_entry_factory(1)]
+
+        assert get_missing_ingredients(recipe_ingredients, pantry) == []
