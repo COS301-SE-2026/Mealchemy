@@ -63,3 +63,35 @@ class TestScoreRecipe:
         result = score_recipe(breakdown, weights)
 
         assert 0.0 <= result <= 1.0
+
+class TestBuildRecommendationItem:
+    def test_pantry_gap_count_matches_missing_ingredients_length(self, recipe_factory, ingredient_factory, pantry_entry_factory, user_state_factory):
+        recipe = recipe_factory(
+            recipe_id=1,
+            cuisine="ITALIAN",
+            ingredients=[ingredient_factory(1, name="Owned"), ingredient_factory(2, name="Missing")],
+        )
+        user_state = user_state_factory(pantry=[pantry_entry_factory(1)])
+ 
+        item = build_recommendation_item(recipe, user_state)
+ 
+        assert item.pantry_gap_count == len(item.missing_ingredients) == 1
+        assert item.missing_ingredients == ["Missing"]
+ 
+    def test_item_carries_correct_recipe_identity(self, recipe_factory, user_state_factory):
+        recipe = recipe_factory(recipe_id=42, cuisine="MEXICAN")
+        user_state = user_state_factory()
+ 
+        item = build_recommendation_item(recipe, user_state)
+ 
+        assert item.recipe_id == 42
+        assert item.cuisine_type == "MEXICAN"
+ 
+    def test_score_matches_score_breakdown_weighted_sum(self, recipe_factory, user_state_factory):
+        recipe = recipe_factory()
+        user_state = user_state_factory()
+ 
+        item = build_recommendation_item(recipe, user_state)
+        expected_score = score_recipe(item.score_breakdown, user_state.preference_weights)
+ 
+        assert item.score == expected_score
