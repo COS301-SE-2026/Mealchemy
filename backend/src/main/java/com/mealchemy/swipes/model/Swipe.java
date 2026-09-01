@@ -44,6 +44,9 @@ public class Swipe {
     @Column(name = "flushed", nullable = false)
     private Boolean flushed = false;
 
+    @Column(name = "cuisine_value")
+    private String cuisineValue;
+
     /* Getters */
     public Integer getSwipeId()
     {
@@ -75,9 +78,14 @@ public class Swipe {
         return weightsSnapshot;
     }
 
-    public Boolean getFlushed() 
+    public Boolean getFlushed()
     {
         return flushed; 
+    }
+
+    public String getCuisineValue()
+    {
+        return cuisineValue;
     }
 
     /* Setters */
@@ -105,5 +113,10 @@ public class Swipe {
     public void setFlushed(Boolean flushedIn)
     { 
         this.flushed = flushedIn; 
+    }
+
+    public void setCuisineValue(String cuisineValueIn)
+    {
+        this.cuisineValue = cuisineValueIn;
     }
 }
