@@ -29,11 +29,22 @@ public class ExternalLink {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
+    // constructors for testing
+    public ExternalLink() {
+
+    }
+
+    public ExternalLink(Integer linkId, Integer userId, String name, String url) {
+        this.linkId = linkId;
+        this.userId = userId;
+        this.name = name;
+        this.url = url;
+    }
+
     // Getters and setters
     public Integer getLinkId() { 
         return linkId; 
     }
-
 
     public Integer getUserId() { 
         return userId; 
