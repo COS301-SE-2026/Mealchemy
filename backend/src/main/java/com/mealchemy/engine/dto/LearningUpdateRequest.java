@@ -5,6 +5,8 @@ package com.mealchemy.engine.dto;
 /* Import libraries */
 import jakarta.validation.constraints.*;
 import java.time.OffsetDateTime;
+import java.util.*;
+import java.math.BigDecimal;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record LearningUpdateRequest(

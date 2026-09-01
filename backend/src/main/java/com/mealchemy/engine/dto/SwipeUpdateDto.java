@@ -1,6 +1,7 @@
 package com.mealchemy.engine.dto;
 
 /* Import classes */
+import com.mealchemy.shared.enums.SwipeAction;
 
 /* Import libraries */
 import jakarta.validation.constraints.*;

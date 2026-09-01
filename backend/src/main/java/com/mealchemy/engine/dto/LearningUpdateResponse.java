@@ -6,6 +6,8 @@ package com.mealchemy.engine.dto;
 import jakarta.validation.constraints.*;
 import java.time.OffsetDateTime;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.*;
+import java.math.BigDecimal;
 
 public record LearningUpdateResponse(
     @JsonProperty("preference_weights") PreferenceWeightsRequest preferenceWeights,
