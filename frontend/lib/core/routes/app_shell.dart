@@ -16,13 +16,13 @@ import 'app_routes.dart';
 
 class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.child});
-
+ 
   final Widget child;
-
+ 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final location = GoRouterState.of(context).uri.path;
-
+ 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(
         statusBarColor: Colors.transparent,
@@ -40,14 +40,21 @@ class AppShell extends ConsumerWidget {
       ),
     );
   }
-
-  AppHeader _headerFor(BuildContext context, WidgetRef ref, String location) {
+ 
+  PreferredSizeWidget? _headerFor(
+    BuildContext context,
+    WidgetRef ref,
+    String location,
+  ) {
     Future<void> logout() async {
       await ref.read(authProvider.notifier).logout();
       if (context.mounted) context.go(AppRoutes.login);
     }
-
+ 
     switch (location) {
+      case AppRoutes.vault:
+        return null;
+ 
       case AppRoutes.profile:
         return AppHeader(
           left: HeaderAction(icon: Icons.logout, onTap: logout),
@@ -56,7 +63,7 @@ class AppShell extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.help),
           ),
         );
-
+ 
       default:
         return AppHeader(
           left: HeaderAction(

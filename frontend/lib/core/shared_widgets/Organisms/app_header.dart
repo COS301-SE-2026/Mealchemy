@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import '../atoms/app_badge.dart';
 import '../atoms/app_dropdown.dart';
 import '../atoms/app_icon_button.dart';
 import '../../theme/app_colours.dart';
 import '../../theme/app_typography.dart';
 
 // a configurable left/right header slot an icon, its tap action, and an
-// optional count badge 
+// optional count badge
 class HeaderAction {
   const HeaderAction({
     required this.icon,
@@ -22,7 +22,7 @@ class HeaderAction {
 
 // Shared top bar, added per screen like AppNavbar.
 // the layout is driven by data. Pass (lef / right) actions (or leave them null for an empty slot), and titleItems to make the
-// centred Mealchemy title a dropdown 
+// centred Mealchemy title a dropdown
 class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
   const AppHeader({
     super.key,
@@ -42,7 +42,7 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-   //Colour sits outside the  SafeArea so it fills the status bar
+    //Colour sits outside the  SafeArea so it fills the status bar
     return DecoratedBox(
       decoration: BoxDecoration(
         color: AppColors.bgLight,
@@ -132,24 +132,7 @@ class _ActionButton extends StatelessWidget {
           Positioned(
             top: 2,
             right: 2,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              constraints: const BoxConstraints(minWidth: 18),
-              decoration: BoxDecoration(
-                color: AppColors.accent,
-                borderRadius: BorderRadius.circular(9),
-                border: Border.all(color: AppColors.bgLight, width: 1.5),
-              ),
-              child: Text(
-                action.badgeCount > 99 ? '99+' : '${action.badgeCount}',
-                textAlign: TextAlign.center,
-                style: AppTextStyles.label.copyWith(
-                  color: AppColors.textLight,
-                  fontSize: 9,
-                  letterSpacing: 0,
-                ),
-              ),
-            ),
+            child: AppBadge(count: action.badgeCount),
           ),
       ],
     );
