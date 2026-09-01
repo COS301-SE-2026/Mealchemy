@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 from src.models.recommendation import ScoreBreakdown
 from src.models.user_state import PreferenceWeights, SwipeAction
@@ -16,6 +16,14 @@ class LearningUpdateRequest(BaseModel):
     swipes: list[SwipeUpdate]
     alpha: float = Field(default = 0.15, gt = 0, le = 1)
     state_version: int
+
+    @field_validator("cuisine_affinities")
+    @classmethod
+    def affinities_in_range(cls, value: dict[str, float]) -> dict[str, float]:
+        for cuisine, score in value.items():
+            if not (0.0 <= score <= 1.0):
+                raise ValueError(f"Cuisine affinities ['{cuisine}'] must be in the range [0.0 - 1.0], but got {score}")
+        return value
 
 class LearningUpdateResponse(BaseModel):
     preference_weights: PreferenceWeights
