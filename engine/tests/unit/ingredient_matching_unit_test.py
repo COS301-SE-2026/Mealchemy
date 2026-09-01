@@ -47,3 +47,28 @@ class TestPantryIngredientMatch:
 
         assert owned == set()
         assert missing == {1}
+
+class TestAllergenCheck:
+    def test_no_allergies_always_passes(self, ingredient_factory):
+        recipe_ingredients = [ingredient_factory(1, category_id = 11)]
+
+        assert allergen_check(recipe_ingredients, []) is True
+
+    def test_mapped_allergen_blocks_matching_category(self, ingredient_factory):
+        recipe_ingredients = [ingredient_factory(1, category_id = 11)]
+
+        assert allergen_check(recipe_ingredients, ["PEANUTS"]) is False
+
+    def test_mapped_allergen_passes_when_category_absent(self, ingredient_factory):
+        recipe_ingredients = [ingredient_factory(1, category_id = 4)]
+        assert allergen_check(recipe_ingredients, ["PEANUTS"]) is False
+
+    def test_unmapped_allergen_fails_closed(self, ingredient_factory):
+        recipe_ingredients = [ingredient_factory(1, category_id = 4)]
+
+        assert allergen_check(recipe_ingredients, ["SESAME"]) is False
+
+    def test_multiple_allergens_any_matcch_blocks(self, ingredient_factory):
+        recipe_ingredients = [ingredient_factory(1, category_id = 4), ingredient_factory(2, category_id = 11)]
+
+        assert allergen_check(recipe_ingredients, ["TREE NUTS"]) is False
