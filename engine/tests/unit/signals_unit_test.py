@@ -68,3 +68,13 @@ class TestPantryCoverageScore:
 
     def test_empty_ingredients_scores_zero_not_divide_by_zero(self):
         assert pantry_coverage_score([], []) == 0.0
+
+class TestCuisineAffinityScore:
+    def test_known_cuisine_returns_stored_value(self):
+        assert cuisine_affinity_score("ITALIAN", {"ITALIAN": 0.9}) == 0.9
+
+    def test_unkown_cuisine_returns_neutral_default(self):
+        assert cuisine_affinity_score("MEXICAN", {"ITALIAN: 0.9"}) == NEUTRAL_SIGNAL_VALUE
+
+    def test_empty_affinities_returns_neutral(self):
+        assert cuisine_affinity_score("ITALIAN", {}) == NEUTRAL_SIGNAL_VALUE
