@@ -8,16 +8,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record RecommendationResponse(
     List<RecommendationDto> recommendations,
-    @JsonProperty("pool_size_used") Integer poolSizeUsed,
-    @JsonProperty("pool_exhausted") boolean poolExhausted
+    @JsonProperty("cuisine_allocation") Map<String, Integer> cuisineAllocation,
+    @JsonProperty("total_candidates_after_filter") Integer totalCandidatesAfterFilter,
+    @JsonProperty("total_recipes_considered") Integer totalRecipesConsidered
 )
 {
-    public static RecommendationResponse from (List<RecommendationDto> recommendationsIn, Integer poolSizeIn, boolean poolExhaustedIn)
+    public static RecommendationResponse from (List<RecommendationDto> recommendationsIn, Map<String, Integer> cuisineAllocationIn, 
+        Integer totalCandidatesAfterFilterIn, Integer totalRecipesConsideredIn)
     {
         return new RecommendationResponse(
             recommendationsIn,
-            poolSizeIn,
-            poolExhaustedIn
+            cuisineAllocationIn,
+            totalCandidatesAfterFilterIn,
+            totalRecipesConsideredIn
         );
     }
 }
