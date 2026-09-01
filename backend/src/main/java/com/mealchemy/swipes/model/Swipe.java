@@ -10,6 +10,7 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "discovery_swipes")
@@ -27,6 +28,8 @@ public class Swipe {
     @Column(name = "recipe_id")
     private Integer recipeId;
 
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "action")
     private SwipeAction action;
 
@@ -34,7 +37,8 @@ public class Swipe {
     @Column(name = "swiped_at")
     private OffsetDateTime swipedAt;
     
-    @Column(name = "weights_snapshot")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "weights_snapshot", columnDefinition = "jsonb")
     private SignalScoresResponse weightsSnapshot;
 
     /* Getters */
