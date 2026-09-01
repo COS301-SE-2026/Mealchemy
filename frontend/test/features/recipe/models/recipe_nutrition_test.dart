@@ -34,7 +34,6 @@ void main() {
           'fat_g': 3,
           'fibre_g': 0,
           'sodium_mg': 210,
-          'percent_of_recipe_calories': 26,
         },
       ],
     });
@@ -70,7 +69,10 @@ void main() {
     expect(ingredient.values.fatG, 3);
     expect(ingredient.values.fibreG, 0);
     expect(ingredient.values.sodiumMg, 210);
-    expect(ingredient.percentOfRecipeCalories, 26);
+    expect(
+      ingredient.percentOfRecipeCalories,
+      closeTo(25.96, 0.01),
+    );
   });
 
   test('RecipeNutrition safely maps numeric strings and empty ingredients', () {
@@ -101,5 +103,48 @@ void main() {
     expect(nutrition.totals.caloriesKcal, 500.5);
     expect(nutrition.perServing.caloriesKcal, 250.25);
     expect(nutrition.ingredients, isEmpty);
+  });
+
+  test('RecipeNutrition uses zero contribution when total calories are zero',
+      () {
+    final nutrition = RecipeNutrition.fromJson({
+      'recipe_id': 8,
+      'servings': 1,
+      'totals': {
+        'calories_kcal': 0,
+        'protein_g': 0,
+        'carbs_g': 0,
+        'fat_g': 0,
+        'fibre_g': 0,
+        'sodium_mg': 0,
+      },
+      'per_serving': {
+        'calories_kcal': 0,
+        'protein_g': 0,
+        'carbs_g': 0,
+        'fat_g': 0,
+        'fibre_g': 0,
+        'sodium_mg': 0,
+      },
+      'ingredients': [
+        {
+          'ing_id': 101,
+          'name': 'Water',
+          'quantity': 100,
+          'unit': 'ml',
+          'calories_kcal': 0,
+          'protein_g': 0,
+          'carbs_g': 0,
+          'fat_g': 0,
+          'fibre_g': 0,
+          'sodium_mg': 0,
+        },
+      ],
+    });
+
+    expect(
+      nutrition.ingredients.single.percentOfRecipeCalories,
+      0,
+    );
   });
 }
