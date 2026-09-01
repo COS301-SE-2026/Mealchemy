@@ -1,8 +1,7 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from src.models.recipe import CandidatePoolEntry
 from src.models.recommendation import ScoreBreakdown
-from src.models.user_state import UserState, PreferenceWeights, SwipeAction
+from src.models.user_state import PreferenceWeights, SwipeAction
 from src.config import LIKE_REINFORCE_THRESHOLD, SKIPPED_LEARNING_RATE_MULTIPLIER, NEUTRAL_SIGNAL_VALUE, DEFAULT_PREFERENCE_WEIGHTS
 
 # models
@@ -49,9 +48,9 @@ def update_weights_from_swipe(current_weights: dict[str, float], action: SwipeAc
 
     return new_weights
 
-def update_cuisine_affinity_from_swipe(current_affinities: dict[str, float], recipe: CandidatePoolEntry, action: SwipeAction, alpha: float) -> dict[str, float]:
+def update_cuisine_affinity_from_swipe(current_affinities: dict[str, float], cuisine: str, action: SwipeAction, alpha: float) -> dict[str, float]:
     new_affinities = dict(current_affinities)
-    cuisine = recipe.cuisine if recipe.cuisine else None
+    cuisine = cuisine if cuisine else None
 
     if not cuisine:
         return new_affinities
@@ -71,9 +70,35 @@ def ema_update(old: float, target: float, alpha: float) -> float:
     return alpha * target + (1 - alpha) * old
 
 def renormalise(weights: dict[str, float]) -> dict[str, float]:
-    total = sum(weights.values)
+    total = sum(weights.values())
 
     if total == 0:
         return dict(DEFAULT_PREFERENCE_WEIGHTS)
 
     return {k: v / total for k, v in weights.items()}
+
+def process_swipes(request: LearningUpdateRequest) -> LearningUpdateResponse:
+    weights = dict(request.preference_weights.model_dump())
+    affinities = dict(request.cuisine_affinities)
+
+    for swipe in request.swipes:
+        weights = update_weights_from_swipe(
+            current_weights = weights,
+            action = swipe.action,
+            signal_scores = swipe.signal_scores,
+            alpha = request.alpha
+        )
+        affinities = update_cuisine_affinity_from_swipe(
+            current_affinities = affinities,
+            cuisine = swipe.cuisine,
+            action = swipe.action,
+            alpha = request.alpha
+        )
+
+    weights = renormalise(weights)
+
+    return LearningUpdateResponse(
+        preference_weights = PreferenceWeights(**weights),
+        cuisine_affinities = affinities,
+        state_version = request.state_version
+    )
