@@ -18,7 +18,22 @@ LIKE_REINFORCE_THRESHOLD = 0.7
 DISLIKE_EXPIRY_DAYS = 30
 
 # Allergen category match table
-# Needs discussion
+ALLERGEN_CATEGORY_MAP: dict[str, set[int]] = {
+    "PEANUTS":   {11},
+    "TREE_NUTS": {11},
+    "SESAME":    {11, 6},
+    "GLUTEN":    {4, 1},
+    "DAIRY":     {5},
+    "EGGS":      {5},
+    "SOY":       {10},
+    "SHELLFISH": {7},
+    "FISH":      {7},
+    "MOLLUSCS":  {7},
+    "MUSTARD":   {17},
+    "CELERY":    {19, 17},
+    "SULPHITES": {3, 8},
+    "LUPIN":     {1, 10},
+}
 
 # Sampling
 TOURNAMENT_SAMPLE_SIZE = 100
