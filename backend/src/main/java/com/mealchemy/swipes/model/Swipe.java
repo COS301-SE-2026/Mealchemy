@@ -41,6 +41,9 @@ public class Swipe {
     @Column(name = "weights_snapshot", columnDefinition = "jsonb")
     private SignalScoresResponse weightsSnapshot;
 
+    @Column(name = "flushed", nullable = false)
+    private Boolean flushed = false;
+
     /* Getters */
     public Integer getSwipeId()
     {
@@ -72,6 +75,11 @@ public class Swipe {
         return weightsSnapshot;
     }
 
+    public Boolean getFlushed() 
+    {
+        return flushed; 
+    }
+
     /* Setters */
 
     public void setUserId(Integer userIdIn)
@@ -92,5 +100,10 @@ public class Swipe {
     public void setWeightsSnapshot(SignalScoresResponse weightsSnapshotIn)
     {
         this.weightsSnapshot = weightsSnapshotIn;
+    }
+
+    public void setFlushed(Boolean flushedIn)
+    { 
+        this.flushed = flushedIn; 
     }
 }
