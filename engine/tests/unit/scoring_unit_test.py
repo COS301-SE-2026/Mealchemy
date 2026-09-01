@@ -40,3 +40,26 @@ class TestComputeScoreBreakdown:
         owned_count = len(recipe.ingredients) - len(missing_ids)
         assert breakdown.pantry_match == owned_count / len(recipe.ingredients)
         assert missing_ids == {2}
+
+class TestScoreRecipe:
+    def test_dot_product_matches_manual_calculation(self, preference_weights_factory):
+        breakdown = ScoreBreakdown(pantry_match = 0.8, cuisine = 0.6, nutrition = 0.5, novelty = 1.0, freshness = 0.2)
+        weights = preference_weights_factory(pantry_match = 0.40, cuisine = 0.25, nutrition = 0.15, novelty = 0.10, freshness = 0.10)
+
+        expected = (0.8 * 0.40) + (0.6 * 0.25) + (0.5 * 0.15) + (1.0 * 0.10) + (0.2 * 0.10)
+
+        assert score_recipe(breakdown, weights) == expected
+
+    def test_all_neutral_signals_with_default_weights_scores_neutral(self, preference_weights_factory):
+        breakdown = ScoreBreakdown(pantry_match = 0.5, cuisine = 0.5, nutrition = 0.5, novelty = 0.5, freshness = 0.5)
+        weights = preference_weights_factory()
+
+        assert score_recipe(breakdown, weights) == 0.5
+
+    def test_result_is_within_bounds(self, preference_weights_factory):
+        breakdown = ScoreBreakdown(pantry_match = 1.0, cuisine = 1.0, nutrition = 1.0, novelty = 1.0, freshness = 1.0)
+        weights = preference_weights_factory()
+
+        result = score_recipe(breakdown, weights)
+
+        assert 0.0 <= result <= 1.0
