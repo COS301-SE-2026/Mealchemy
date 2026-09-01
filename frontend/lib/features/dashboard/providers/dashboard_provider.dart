@@ -9,7 +9,7 @@ import 'package:mealchemy/features/dashboard/repositories/mock_dashboard_reposit
 
 // Switch back to normal provider pattern used 
 final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
-  if (AppConfig.useMockData) {
+  if (AppConfig.mockDashboard) {
     return MockDashboardRepository();
   }
   return ApiDashboardRepository();

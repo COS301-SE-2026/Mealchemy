@@ -6,6 +6,8 @@ import 'package:mealchemy/features/dashboard/widgets/dashboard_welcome_bar.dart'
 import 'package:mealchemy/features/dashboard/widgets/dashboard_cards_row.dart';
 import 'package:mealchemy/features/dashboard/widgets/recommended_recipes_section.dart';
 import 'package:mealchemy/features/dashboard/widgets/trending_recipes_section.dart';
+import 'package:mealchemy/features/pantry/providers/pantry_provider.dart';
+import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -18,10 +20,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    //Load dashboard data when screen first mounts
-    Future.microtask(
-      () => ref.read(dashboardProvider.notifier).loadDashboard(),
-    );
+    //Load dashboard data and warm the pantry and shopping-list providers
+    Future.microtask(() {
+      ref.read(dashboardProvider.notifier).loadDashboard();
+      ref.read(pantryStateProvider);
+      ref.read(shoppingListsProvider);
+    });
   }
 
   @override
