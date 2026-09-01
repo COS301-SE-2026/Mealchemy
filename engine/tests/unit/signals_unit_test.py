@@ -3,7 +3,11 @@
 from datetime import datetime, timedelta, timezone
 from src.config import NEUTRAL_SIGNAL_VALUE
 from src.core.signals import (
-    cuisine_affinity_score, freshness_score, novelty_score, pantry_coverage_score
+    cuisine_affinity_score, 
+    freshness_score, 
+    novelty_score, 
+    pantry_coverage_score, 
+    nutrition_score
 )
 
 class TestNoveltyScore:
@@ -78,3 +82,16 @@ class TestCuisineAffinityScore:
 
     def test_empty_affinities_returns_neutral(self):
         assert cuisine_affinity_score("ITALIAN", {}) == NEUTRAL_SIGNAL_VALUE
+
+class TestStubsReturnNeutral:
+    def test_nutrition_score_is_always_neutral(self, recipe_factory, user_state_factory):
+        recipe = recipe_factory()
+        user_state = user_state_factory(nutritional_goals = ["HIGH_PROTEIN"])
+
+        assert nutrition_score(recipe, user_state) == NEUTRAL_SIGNAL_VALUE
+
+    def test_freshness_score_is_always_neutral(self, ingredient_factory, pantry_entry_factory):
+        ingredients = [ingredient_factory(1)]
+        pantry = [pantry_entry_factory(1, shelf_life_days = 1)]
+
+        assert freshness_score(ingredients, pantry) == NEUTRAL_SIGNAL_VALUE
