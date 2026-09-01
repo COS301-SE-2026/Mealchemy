@@ -1,7 +1,31 @@
+from pydantic import BaseModel, Field
+from datetime import datetime
 from src.models.recipe import CandidatePoolEntry
 from src.models.recommendation import ScoreBreakdown
 from src.models.user_state import UserState, PreferenceWeights, SwipeAction
-from src.config import LIKE_REINFORCE_THRESHOLD, SKIPPED_LEARNING_RATE_MULTIPLIER, NEUTRAL_SIGNAL_VALUE
+from src.config import LIKE_REINFORCE_THRESHOLD, SKIPPED_LEARNING_RATE_MULTIPLIER, NEUTRAL_SIGNAL_VALUE, DEFAULT_PREFERENCE_WEIGHTS
+
+# models
+class SwipeUpdate(BaseModel):
+    recipe_id: int = Field(gt = 0)
+    cuisine: str
+    action: SwipeAction
+    signal_scores: ScoreBreakdown
+    swiped_at: datetime
+
+class LearningUpdateRequest(BaseModel):
+    preference_weights: PreferenceWeights
+    cuisine_affinities: dict[str, float]
+    swipes: list[SwipeUpdate]
+    alpha: float = Field(default = 0.15, gt = 0, le = 1)
+    state_version: int
+
+class LearningUpdateResponse(BaseModel):
+    preference_weights: PreferenceWeights
+    cuisine_affinities: dict[str, float]
+    state_version: int
+
+# functions
 
 def update_weights_from_swipe(current_weights: dict[str, float], action: SwipeAction, signal_scores: ScoreBreakdown, alpha: float) -> dict[str, float]:
     new_weights = dict(current_weights)
@@ -45,3 +69,11 @@ def update_cuisine_affinity_from_swipe(current_affinities: dict[str, float], rec
 
 def ema_update(old: float, target: float, alpha: float) -> float:
     return alpha * target + (1 - alpha) * old
+
+def renormalise(weights: dict[str, float]) -> dict[str, float]:
+    total = sum(weights.values)
+
+    if total == 0:
+        return dict(DEFAULT_PREFERENCE_WEIGHTS)
+
+    return {k: v / total for k, v in weights.items()}
