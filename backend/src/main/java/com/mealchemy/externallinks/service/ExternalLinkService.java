@@ -56,14 +56,15 @@ public class ExternalLinkService {
         newLink.setUserId(userId);
         newLink.setName(request.name());
         newLink.setUrl(request.url());
-        externalLinkRepository.save(newLink);
+        
+        ExternalLink savedLink = externalLinkRepository.save(newLink);
         
         return new ExternalLinkResponse(
-                newLink.getLinkId(),
-                newLink.getName(),
-                newLink.getUrl(),
-                newLink.getCreatedAt(),
-                newLink.getUpdatedAt()
+                savedLink.getLinkId(),
+                savedLink.getName(),
+                savedLink.getUrl(),
+                savedLink.getCreatedAt(),
+                savedLink.getUpdatedAt()
         );
     }
 
@@ -76,14 +77,15 @@ public class ExternalLinkService {
         linkToUpdate.setName(request.name());
         linkToUpdate.setUrl(request.url());
         linkToUpdate.setUpdatedAt(OffsetDateTime.now());
-        externalLinkRepository.save(linkToUpdate);
+        
+        ExternalLink savedLink = externalLinkRepository.save(linkToUpdate);
         
         return new ExternalLinkResponse(
-                linkToUpdate.getLinkId(),
-                linkToUpdate.getName(),
-                linkToUpdate.getUrl(),
-                linkToUpdate.getCreatedAt(),
-                linkToUpdate.getUpdatedAt()
+                savedLink.getLinkId(),
+                savedLink.getName(),
+                savedLink.getUrl(),
+                savedLink.getCreatedAt(),
+                savedLink.getUpdatedAt()
         );
     }
 

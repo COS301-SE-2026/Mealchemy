@@ -96,7 +96,7 @@ public class ExternalLinkControllerTest {
                 .andExpect(jsonPath("$[0].name").value("Recipe Link"))
                 .andExpect(jsonPath("$[0].url").value("https://www.link.com"))
                 .andExpect(jsonPath("$[0].created_at").value("2026-08-31T23:00:00Z"))
-                .andExpect(jsonPath("$[0].updated_at").exists());
+                .andExpect(jsonPath("$[0].updated_at").doesNotExist());
     }
 
 
