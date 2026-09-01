@@ -15,6 +15,31 @@ void main() {
       InterceptorsWrapper(
         onRequest: (options, handler) {
           lastRequest = options;
+          final statusCode = switch (options.path) {
+            '/api/nutritional-calculator/400' => 400,
+            '/api/nutritional-calculator/404' => 404,
+            '/api/nutritional-calculator/500' => 500,
+            _ => null,
+          };
+
+          if (statusCode != null) {
+            handler.reject(
+              DioException(
+                requestOptions: options,
+                response: Response(
+                  requestOptions: options,
+                  statusCode: statusCode,
+                  data: {
+                    'message': statusCode == 404
+                        ? 'Recipe not found or not accessible'
+                        : 'Unable to calculate nutrition',
+                  },
+                ),
+                type: DioExceptionType.badResponse,
+              ),
+            );
+            return;
+          }
 
           handler.resolve(
             Response(
@@ -63,6 +88,18 @@ void main() {
     repository = ApiRecipeNutritionRepository(dio);
   });
 
+  Future<void> expectApiStatus({
+    required int recipeId,
+    required int expectedStatus,
+  }) async {
+    try {
+      await repository.getRecipeNutrition(recipeId);
+      fail('Expected DioException.');
+    } on DioException catch (error) {
+      expect(error.response?.statusCode, expectedStatus);
+    }
+  }
+
   test('getRecipeNutrition requests and maps calculator response', () async {
     final nutrition = await repository.getRecipeNutrition(42);
 
@@ -89,6 +126,42 @@ void main() {
     expect(
       ingredient.percentOfRecipeCalories,
       closeTo(25.96, 0.01),
+    );
+  });
+  test('getRecipeNutrition preserves 400 response', () async {
+    await expectApiStatus(
+      recipeId: 400,
+      expectedStatus: 400,
+    );
+
+    expect(
+      lastRequest?.path,
+      '/api/nutritional-calculator/400',
+    );
+  });
+
+  test('getRecipeNutrition preserves inaccessible recipe 404 response',
+      () async {
+    await expectApiStatus(
+      recipeId: 404,
+      expectedStatus: 404,
+    );
+
+    expect(
+      lastRequest?.path,
+      '/api/nutritional-calculator/404',
+    );
+  });
+
+  test('getRecipeNutrition preserves general API failure', () async {
+    await expectApiStatus(
+      recipeId: 500,
+      expectedStatus: 500,
+    );
+
+    expect(
+      lastRequest?.path,
+      '/api/nutritional-calculator/500',
     );
   });
 }
