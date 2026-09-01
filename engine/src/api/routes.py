@@ -5,6 +5,9 @@ from src.api.schemas import RecommendationRequest
 from src.core.exceptions import EmptyPoolError
 from src.core.recommend_pipeline import recommend
 from src.models.recommendation import RecommendationResult
+from src.core.learning import LearningUpdateRequest, LearningUpdateResponse, process_swipes
+from src.models.learning import LearningUpdateRequest, LearningUpdateResponse
+
 
 router = APIRouter()
 
@@ -24,6 +27,11 @@ def post_recommendations(request: RecommendationRequest) -> Response:
 
     return JSONResponse(status_code = 200, content = result.model_dump())
 
-@router.get("health")
+@router.get("/health")
 def get_health() -> dict[str, str]:
-    return {"status", "UP"}
+    return {"status": "UP"}
+
+@router.post("/learning/update", response_model = LearningUpdateResponse)
+def post_learning_update(request: LearningUpdateRequest) -> Response:
+    result = process_swipes(request)
+    return JSONResponse(status_code = 200, content = result.model_dump())
