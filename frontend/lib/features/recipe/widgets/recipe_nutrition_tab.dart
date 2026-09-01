@@ -526,7 +526,7 @@ class _IngredientNutritionTile extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                '${_formatNumber(ingredient.percentOfRecipeCalories)}% '
+                '${ingredient.percentOfRecipeCalories.round()}% '
                 'of recipe calories',
                 style: AppTextStyles.caption.copyWith(
                   color: AppColors.accentMuted,

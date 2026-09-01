@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -65,6 +66,73 @@ class _EmptyNutritionRepository implements RecipeNutritionRepository {
   }
 }
 
+class _ApiShapedNutritionRepository implements RecipeNutritionRepository {
+  @override
+  Future<RecipeNutrition> getRecipeNutrition(int recipeId) async {
+    return RecipeNutrition.fromJson({
+      'recipe_id': recipeId,
+      'servings': 4,
+      'totals': {
+        'calories_kcal': 1167.00,
+        'protein_g': 33.50,
+        'carbs_g': 110.30,
+        'fat_g': 69.10,
+        'fibre_g': 2.00,
+        'sodium_mg': 1804.00,
+      },
+      'per_serving': {
+        'calories_kcal': 291.75,
+        'protein_g': 8.38,
+        'carbs_g': 27.58,
+        'fat_g': 17.28,
+        'fibre_g': 0.50,
+        'sodium_mg': 451.00,
+      },
+      'ingredients': [
+        {
+          'ing_id': 101,
+          'name': 'Chicken Breast Fillet',
+          'quantity': 300,
+          'unit': 'g',
+          'calories_kcal': 303.00,
+          'protein_g': 69.00,
+          'carbs_g': 0.00,
+          'fat_g': 3.00,
+          'fibre_g': 0.00,
+          'sodium_mg': 210.00,
+        },
+      ],
+    });
+  }
+}
+
+class _ControlledNutritionRepository implements RecipeNutritionRepository {
+  final Completer<RecipeNutrition> completer = Completer<RecipeNutrition>();
+
+  int requestCount = 0;
+
+  @override
+  Future<RecipeNutrition> getRecipeNutrition(int recipeId) {
+    requestCount++;
+    return completer.future;
+  }
+}
+
+class _RetryNutritionRepository implements RecipeNutritionRepository {
+  int requestCount = 0;
+
+  @override
+  Future<RecipeNutrition> getRecipeNutrition(int recipeId) async {
+    requestCount++;
+
+    if (requestCount == 1) {
+      throw Exception('Temporary API failure');
+    }
+
+    return MockRecipeNutritionRepository().getRecipeNutrition(recipeId);
+  }
+}
+
 void main() {
   setUpAll(() {
     GoogleFonts.config.allowRuntimeFetching = false;
@@ -73,6 +141,7 @@ void main() {
   Future<void> pumpNutritionTab(
     WidgetTester tester, {
     RecipeNutritionRepository? repository,
+    bool settle = true,
   }) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 1;
@@ -99,7 +168,11 @@ void main() {
       ),
     );
 
-    await tester.pumpAndSettle();
+    if (settle) {
+      await tester.pumpAndSettle();
+    } else {
+      await tester.pump();
+    }
   }
 
   testWidgets('RecipeNutritionTab displays whole recipe nutrition', (
@@ -205,5 +278,89 @@ void main() {
       find.text('Unable to load nutritional information.'),
       findsNothing,
     );
+  });
+
+  testWidgets('RecipeNutritionTab shows loading state while API request runs', (
+    tester,
+  ) async {
+    final repository = _ControlledNutritionRepository();
+
+    await pumpNutritionTab(
+      tester,
+      repository: repository,
+      settle: false,
+    );
+
+    expect(repository.requestCount, 1);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    final nutrition =
+        await MockRecipeNutritionRepository().getRecipeNutrition(42);
+
+    repository.completer.complete(nutrition);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.text('Nutritional Information'), findsOneWidget);
+  });
+
+  testWidgets('RecipeNutritionTab renders API-shaped calculator response', (
+    tester,
+  ) async {
+    await pumpNutritionTab(
+      tester,
+      repository: _ApiShapedNutritionRepository(),
+    );
+
+    expect(find.text('4 servings per recipe'), findsOneWidget);
+    expect(find.text('1167'), findsOneWidget);
+    expect(find.text('33.5g'), findsOneWidget);
+    expect(find.text('110.3g'), findsOneWidget);
+    expect(find.text('69.1g'), findsOneWidget);
+
+    await tester.tap(find.text('Per Serving'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('291.8'), findsOneWidget);
+    expect(find.text('8.4g'), findsOneWidget);
+    expect(find.text('27.6g'), findsOneWidget);
+    expect(find.text('17.3g'), findsOneWidget);
+
+    final ingredientName = find.text('Chicken Breast Fillet');
+
+    await tester.ensureVisible(ingredientName);
+    await tester.pumpAndSettle();
+
+    await tester.tap(ingredientName);
+    await tester.pumpAndSettle();
+
+    expect(find.text('26% of recipe calories'), findsOneWidget);
+  });
+  testWidgets('RecipeNutritionTab retries nutritional API request', (
+    tester,
+  ) async {
+    final repository = _RetryNutritionRepository();
+
+    await pumpNutritionTab(
+      tester,
+      repository: repository,
+    );
+
+    expect(repository.requestCount, 1);
+    expect(
+      find.text('Unable to load nutritional information.'),
+      findsOneWidget,
+    );
+    expect(find.text('Try again'), findsOneWidget);
+
+    await tester.tap(find.text('Try again'));
+    await tester.pumpAndSettle();
+
+    expect(repository.requestCount, 2);
+    expect(
+      find.text('Unable to load nutritional information.'),
+      findsNothing,
+    );
+    expect(find.text('Nutritional Information'), findsOneWidget);
   });
 }
