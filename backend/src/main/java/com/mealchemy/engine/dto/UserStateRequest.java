@@ -16,6 +16,7 @@ public record UserStateRequest(
     @JsonProperty("nutritional_goals") @NotNull List<String> nutritionalGoals,
     @JsonProperty("preference_weights") @NotNull PreferenceWeightsRequest preferenceWeights,
     @JsonProperty("cuisine_affinities") @NotNull Map<String, BigDecimal> cuisineAffinities,
-    @NotNull List<PantryEntryRequest> pantry
+    @NotNull List<PantryEntryRequest> pantry,
+    @JsonProperty("swipe_history") @NotNull List<SwipeHistoryEntryRequest> swipeHistory
 )
 {}
