@@ -47,3 +47,24 @@ class TestNoveltyScore:
         other_recipe_swipe = swipe_factory(2, "LIKED", datetime.now(timezone.utc) - timedelta(days = 1))
 
         assert novelty_score(1, [other_recipe_swipe]) == 1.0
+
+class TestPantryCoverageScore:
+    def test_full_coverage_scores_one(self, ingredient_factory, pantry_entry_factory):
+        ingredients = [ingredient_factory(1), ingredient_factory(2)]
+        pantry = [pantry_entry_factory(1), pantry_entry_factory(2)]
+
+        assert pantry_coverage_score(ingredients, pantry) == 1.0
+
+    def test_partial_coverage_scores_the_ratio(self, ingredient_factory, pantry_entry_factory):
+        ingredients = [ingredient_factory(1), ingredient_factory(2), ingredient_factory(3), ingredient_factory(4)]
+        pantry = [pantry_entry_factory(1)]
+
+        assert pantry_coverage_score(ingredients, pantry) == 0.25
+
+    def test_no_coverage_scores_zero(self, ingredient_factory):
+        ingredients = [ingredient_factory(1)]
+
+        assert pantry_coverage_score(ingredients, []) == 0.0
+
+    def test_empty_ingredients_scores_zero_not_divide_by_zero(self):
+        assert pantry_coverage_score([], []) == 0.0
