@@ -69,4 +69,24 @@ public class Swipe {
     }
 
     /* Setters */
+
+    public void setUserId(Integer userIdIn)
+    {
+        this.userId = userIdIn;
+    }
+
+    public void setRecipeId(Integer recipeIdIn)
+    {
+        this.recipeId = recipeIdIn;
+    }
+
+    public void setAction(SwipeAction actionIn)
+    {
+        this.action = actionIn;
+    }
+
+    public void setWeightsSnapshot(SignalScoresResponse weightsSnapshotIn)
+    {
+        this.weightsSnapshot = weightsSnapshotIn;
+    }
 }
