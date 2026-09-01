@@ -56,16 +56,6 @@ public class GlobalExceptionHandler {
                 .body(Map.of("message", "Invalid request"));
     }
 
-    //catches anything unexpected - returns generic message
-    //prevents stack traces and sensitive information leaking to Flutter
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> handleGeneric(Exception ex) {
-        ex.printStackTrace();
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("message", "An unexpected error occurred"));
-    }
-
     //handles engine-originated exceptions surfaced from EngineClient
     @ExceptionHandler(EmptyPoolException.class)
     public ResponseEntity<Map<String, String>> handleEmptyPool(EmptyPoolException ex) {
@@ -87,4 +77,15 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("message", ex.getMessage()));
     }
+    
+    //catches anything unexpected - returns generic message
+    //prevents stack traces and sensitive information leaking to Flutter
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleGeneric(Exception ex) {
+        ex.printStackTrace();
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", "An unexpected error occurred"));
+    }
+
 }
