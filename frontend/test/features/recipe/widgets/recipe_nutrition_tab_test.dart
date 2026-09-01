@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dio/dio.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import 'package:mealchemy/features/recipe/providers/recipe_nutrition_provider.dart';
 import 'package:mealchemy/features/recipe/repositories/mock_recipe_nutrition_repository.dart';
 import 'package:mealchemy/features/recipe/widgets/recipe_nutrition_tab.dart';
@@ -12,6 +14,27 @@ class _FailingNutritionRepository implements RecipeNutritionRepository {
   @override
   Future<RecipeNutrition> getRecipeNutrition(int recipeId) async {
     throw Exception('Nutrition unavailable.');
+  }
+}
+
+class _NotFoundNutritionRepository implements RecipeNutritionRepository {
+  @override
+  Future<RecipeNutrition> getRecipeNutrition(int recipeId) async {
+    final requestOptions = RequestOptions(
+      path: '/api/nutritional-calculator/$recipeId',
+    );
+
+    throw DioException(
+      requestOptions: requestOptions,
+      response: Response(
+        requestOptions: requestOptions,
+        statusCode: 404,
+        data: {
+          'message': 'Recipe not found or not accessible',
+        },
+      ),
+      type: DioExceptionType.badResponse,
+    );
   }
 }
 
@@ -162,5 +185,25 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Try again'), findsOneWidget);
+  });
+  testWidgets('RecipeNutritionTab displays unavailable state for 404', (
+    tester,
+  ) async {
+    await pumpNutritionTab(
+      tester,
+      repository: _NotFoundNutritionRepository(),
+    );
+
+    expect(
+      find.text(
+        'Nutritional information is not available for this recipe.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Try again'), findsOneWidget);
+    expect(
+      find.text('Unable to load nutritional information.'),
+      findsNothing,
+    );
   });
 }
