@@ -41,6 +41,9 @@ public class UserPreferenceWeights {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
+    @Column(name = "state_version", nullable = false)
+    private Integer stateVersion;
+
     /* Getters */
     
     public Integer getWeightId()
@@ -83,6 +86,11 @@ public class UserPreferenceWeights {
         return updatedAt;
     }
 
+    public Integer getStateVersion()
+    {
+        return stateVersion;
+    }
+
     /* Setters */
 
     public void setUserId(Integer userIdIn)
@@ -113,5 +121,10 @@ public class UserPreferenceWeights {
     public void setNovelty(BigDecimal noveltyIn)
     {
         this.novelty = noveltyIn;
+    }
+
+    public void setStateVersion(Integer stateVersionIn)
+    {
+        this.stateVersion = stateVersionIn;
     }
 }
