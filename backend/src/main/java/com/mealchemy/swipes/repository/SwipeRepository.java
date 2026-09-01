@@ -10,5 +10,5 @@ import java.util.*;
 
 @Repository
 public interface SwipeRepository extends JpaRepository<Swipe, Integer> {
-    List<RecipeTags> findByUserId(Integer UserId);
+    List<Swipe> findByUserId(Integer UserId);
 }
