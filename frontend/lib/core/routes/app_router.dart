@@ -30,7 +30,7 @@ final appRouter = GoRouter(
   // During development: change this to your screen (e.g. AppRoutes.pantry)
   // Before committing: ALWAYS reset this back to AppRoutes.login
   routes: [
-        GoRoute(
+    GoRoute(
       path: AppRoutes.login,
       builder: (context, state) => const LoginScreen(),
     ),
@@ -90,10 +90,6 @@ final appRouter = GoRouter(
       },
     ),
     GoRoute(
-      path: AppRoutes.shoppingLists,
-      builder: (context, state) => const ShoppingListsScreen(),
-    ),
-    GoRoute(
       path: AppRoutes.shoppingListDetail,
       builder: (context, state) {
         final id = state.pathParameters['id']!;
@@ -107,10 +103,7 @@ final appRouter = GoRouter(
         return AddShoppingListItemScreen(listId: id);
       },
     ),
-    GoRoute(
-      path: AppRoutes.guidedDiscovery,
-      builder: (context, state) => const GuidedDiscoveryScreen(),
-    ),
+
     GoRoute(
       path: AppRoutes.help,
       builder: (context, state) => const HelpScreen(),
@@ -139,6 +132,14 @@ final appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.profile,
           builder: (context, state) => const ProfileScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.shoppingLists,
+          builder: (context, state) => const ShoppingListsScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.guidedDiscovery,
+          builder: (context, state) => const GuidedDiscoveryScreen(),
         ),
       ],
     ),

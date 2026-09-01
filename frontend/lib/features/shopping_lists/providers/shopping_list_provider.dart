@@ -519,3 +519,6 @@ final shoppingListCountProvider = Provider<int>((ref) {
     orElse: () => 0,
   );
 });
+
+//whether the inline search field is open
+final searchOpenProvider = StateProvider<bool>((ref) => false);

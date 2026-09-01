@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../core/routes/app_routes.dart';
-import '../../../core/shared_widgets/Organisms/app_navbar.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../providers/guided_discovery_provider.dart';
@@ -29,140 +26,112 @@ class GuidedDiscoveryScreen extends ConsumerWidget {
     final discoveryState = ref.watch(guidedDiscoveryProvider);
     final notifier = ref.read(guidedDiscoveryProvider.notifier);
 
-    return Scaffold(
-      backgroundColor: AppColors.surfaceWhite,
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 460),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(34),
-            child: Container(
-              color: AppColors.bgLight,
-              child: SafeArea(
-                top: true,
-                bottom: false,
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: discoveryState.when(
-                        loading: () => const Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                        error: (error, stackTrace) => Center(
-                          child: Text(error.toString()),
-                        ),
-                        data: (state) {
-                          return Column(
-                            children: [
-                              DiscoveryHeader(
-                                selectedFilter: state.selectedFilter,
-                                filters: _filters,
-                                onFilterSelected: notifier.selectFilter,
-                              ),
-                              Expanded(
-                                child: state.isComplete
-                                    ? DiscoveryCompleteState(
-                                        likedCount: state.likedRecipeIds.length,
-                                        dislikedCount:
-                                            state.dislikedRecipeIds.length,
-                                        tasteSignals: state.topTasteSignals,
-                                        recommendedRecipe:
-                                            state.recommendedRecipe,
-                                        onReset: notifier.resetDiscovery,
-                                      )
-                                    : Column(
-                                        children: [
-                                          Expanded(
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 30,
-                                              ),
-                                              child: Center(
-                                                child: _SwipeableRecipeCard(
-                                                  onSwipeLeft: notifier
-                                                      .dislikeCurrentRecipe,
-                                                  onSwipeRight: notifier
-                                                      .likeCurrentRecipe,
-                                                  child: DiscoveryRecipeCard(
-                                                    recipe:
-                                                        state.currentRecipe!,
-                                                    currentIndex:
-                                                        state.currentIndex,
-                                                    totalRecipes:
-                                                        state.totalRecipes,
-                                                    onViewRecipe: () =>
-                                                        _showRecipePreview(
-                                                      context,
-                                                      state.currentRecipe!,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.fromLTRB(
-                                              54,
-                                              12,
-                                              54,
-                                              18,
-                                            ),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                SwipeActionButton(
-                                                  icon: Icons.close,
-                                                  foregroundColor:
-                                                      AppColors.accentMuted,
-                                                  backgroundColor:
-                                                      AppColors.surfaceWhite,
-                                                  borderColor: AppColors.accent,
-                                                  size: 62,
-                                                  onTap: notifier
-                                                      .dislikeCurrentRecipe,
-                                                ),
-                                                SwipeActionButton(
-                                                  icon: Icons.restaurant,
-                                                  foregroundColor:
-                                                      AppColors.textDark,
-                                                  backgroundColor:
-                                                      AppColors.primary,
-                                                  size: 78,
-                                                  onTap: () {},
-                                                ),
-                                                SwipeActionButton(
-                                                  icon: Icons.favorite,
-                                                  foregroundColor:
-                                                      AppColors.error,
-                                                  backgroundColor:
-                                                      AppColors.surfaceWhite,
-                                                  size: 62,
-                                                  onTap: notifier
-                                                      .likeCurrentRecipe,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                    AppNavbar(
-                      currentRoute: AppRoutes.guidedDiscovery,
-                      onRouteSelected: (route) {
-                        if (route == AppRoutes.guidedDiscovery) return;
-                        context.go(route);
-                      },
-                    ),
-                  ],
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(34),
+          child: Container(
+            color: AppColors.bgLight,
+            child: SafeArea(
+              top: true,
+              bottom: false,
+              child: discoveryState.when(
+                loading: () => const Center(
+                  child: CircularProgressIndicator(),
                 ),
+                error: (error, stackTrace) => Center(
+                  child: Text(error.toString()),
+                ),
+                data: (state) {
+                  return Column(
+                    children: [
+                      DiscoveryHeader(
+                        selectedFilter: state.selectedFilter,
+                        filters: _filters,
+                        onFilterSelected: notifier.selectFilter,
+                      ),
+                      Expanded(
+                        child: state.isComplete
+                            ? DiscoveryCompleteState(
+                                likedCount: state.likedRecipeIds.length,
+                                dislikedCount: state.dislikedRecipeIds.length,
+                                tasteSignals: state.topTasteSignals,
+                                recommendedRecipe: state.recommendedRecipe,
+                                onReset: notifier.resetDiscovery,
+                              )
+                            : Column(
+                                children: [
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 30,
+                                      ),
+                                      child: Center(
+                                        child: _SwipeableRecipeCard(
+                                          onSwipeLeft:
+                                              notifier.dislikeCurrentRecipe,
+                                          onSwipeRight:
+                                              notifier.likeCurrentRecipe,
+                                          child: DiscoveryRecipeCard(
+                                            recipe: state.currentRecipe!,
+                                            currentIndex: state.currentIndex,
+                                            totalRecipes: state.totalRecipes,
+                                            onViewRecipe: () =>
+                                                _showRecipePreview(
+                                              context,
+                                              state.currentRecipe!,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      54,
+                                      12,
+                                      54,
+                                      18,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        SwipeActionButton(
+                                          icon: Icons.close,
+                                          foregroundColor:
+                                              AppColors.accentMuted,
+                                          backgroundColor:
+                                              AppColors.surfaceWhite,
+                                          borderColor: AppColors.accent,
+                                          size: 62,
+                                          onTap: notifier.dislikeCurrentRecipe,
+                                        ),
+                                        SwipeActionButton(
+                                          icon: Icons.restaurant,
+                                          foregroundColor: AppColors.textDark,
+                                          backgroundColor: AppColors.primary,
+                                          size: 78,
+                                          onTap: () {},
+                                        ),
+                                        SwipeActionButton(
+                                          icon: Icons.favorite,
+                                          foregroundColor: AppColors.error,
+                                          backgroundColor:
+                                              AppColors.surfaceWhite,
+                                          size: 62,
+                                          onTap: notifier.likeCurrentRecipe,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ),
