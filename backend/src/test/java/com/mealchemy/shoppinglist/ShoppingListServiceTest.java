@@ -27,7 +27,7 @@ import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.recipe.model.RecipeIngredient; // can get recipeId from recipe ingredients table
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.model.VaultFolderRecipe;
-
+import com.mealchemy.profile.model.UserProfile;
 
 //repositories
 import com.mealchemy.shoppinglist.repository.ShoppingListRepository;
@@ -39,9 +39,12 @@ import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.recipe.repository.RecipeIngredientRepository;
 import com.mealchemy.vault.repository.VaultFolderRecipeRepository;
 import com.mealchemy.vault.repository.VaultMemberRepository;
+import com.mealchemy.profile.repository.UserProfileRepository;
 
 // import service
 import com.mealchemy.shoppinglist.service.ShoppingListService;
+
+import com.mealchemy.shared.enums.PreferredUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,6 +63,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -73,7 +77,8 @@ public class ShoppingListServiceTest {
     @Mock private RecipeRepository recipeRepository;
     @Mock private RecipeIngredientRepository recipeIngredientRepository;
     @Mock private VaultFolderRecipeRepository vaultFolderRecipeRepository;
-    @Mock private VaultMemberRepository vaultMemberRepository; 
+    @Mock private VaultMemberRepository vaultMemberRepository;
+    @Mock private UserProfileRepository userProfileRepository; 
     
     // @InjectMocks creates the real PantryService and injects the mocks above into it - actually testing ShoppingListService
     @InjectMocks
@@ -85,6 +90,7 @@ public class ShoppingListServiceTest {
     private IngredientCategory categoryInstance;
     private Recipe existingRecipe;
     private PantryIngredient existingPantryIngredient;
+    private UserProfile userProfile;
 
     // requests that have bodies that need to be mocked
     private CreateShoppingListRequest createShoppingListRequest;
@@ -98,6 +104,10 @@ public class ShoppingListServiceTest {
 
     @BeforeEach
     void setUp() {
+
+        userProfile = new UserProfile();
+        userProfile.setPreferredUnit(PreferredUnit.METRIC);
+
         // simulates what db returns for existing shopping list owned by user 1
         existingShoppingList = new ShoppingList();
         existingShoppingList.setUserId(1);
@@ -184,6 +194,8 @@ public class ShoppingListServiceTest {
             false // add all items, don't compare pantry
         );
 
+        // so call doesn't have to change in every test
+        lenient().when(userProfileRepository.findByUserId(anyInt())).thenReturn(Optional.of(userProfile));
     }
 
 
@@ -424,7 +436,7 @@ public class ShoppingListServiceTest {
         assertEquals(2, actualItem.ingId());
         assertEquals("Hummus", actualItem.name());
         assertEquals("Legumes and Legume Products", actualItem.category());
-        assertEquals(new BigDecimal("250"), actualItem.quantity());
+        assertEquals(0, BigDecimal.valueOf(250).compareTo(actualItem.quantity()));
         assertEquals("g", actualItem.unit());
         assertEquals(false, actualItem.purchased());
 
@@ -527,7 +539,7 @@ public class ShoppingListServiceTest {
         assertEquals(2, response.ingId());
         assertEquals("Hummus", response.name());
         assertEquals("Legumes and Legume Products", response.category());
-        assertEquals(new BigDecimal("250"), response.quantity());
+        assertEquals(0, BigDecimal.valueOf(250).compareTo(response.quantity()));
     }
 
     @Test
@@ -560,7 +572,7 @@ public class ShoppingListServiceTest {
         assertEquals(null, response.ingId()); //ing_id
         assertEquals("Tomatoes", response.name());
         assertEquals(null, response.category()); 
-        assertEquals(new BigDecimal("150"), response.quantity());
+        assertEquals(0, BigDecimal.valueOf(150).compareTo(response.quantity()));
         assertEquals("g", response.unit()); 
         assertEquals(false, response.purchased());
     }
@@ -658,7 +670,7 @@ public class ShoppingListServiceTest {
         assertEquals(2, response.ingId());
         assertEquals("Hummus", response.name());
         assertEquals("Legumes and Legume Products", response.category());
-        assertEquals(new BigDecimal("150"), response.quantity());
+        assertEquals(0, BigDecimal.valueOf(150).compareTo(response.quantity()));
         assertEquals("g", response.unit());
         assertEquals(false, response.purchased());
     }
@@ -754,7 +766,7 @@ public class ShoppingListServiceTest {
         
         // Assert
         assertEquals(2, response.ingId());
-        assertEquals(new BigDecimal("250"), response.quantity());
+        assertEquals(0, BigDecimal.valueOf(250).compareTo(response.quantity()));
         assertEquals("g", response.unit());
         assertEquals(true, response.purchased());
     }
@@ -1592,7 +1604,7 @@ public class ShoppingListServiceTest {
         shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, requestWithPantryComparison);
 
         // Assert
-        assertEquals(new BigDecimal("60"), captor.getValue().getQuantity());
+        assertEquals(0, BigDecimal.valueOf(60).compareTo(captor.getValue().getQuantity()));
         assertEquals(2, captor.getValue().getIngId());
         verify(shoppingListItemRepository, times(1)).save(any(ShoppingListItem.class));
     }
@@ -1630,7 +1642,7 @@ public class ShoppingListServiceTest {
         shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, requestWithPantryComparison);
 
         // Assert
-        assertEquals(new BigDecimal("100"), captor.getValue().getQuantity());
+        assertEquals(0, BigDecimal.valueOf(100).compareTo(captor.getValue().getQuantity()));
         verify(shoppingListItemRepository, times(1)).save(any(ShoppingListItem.class));
     }
 
@@ -1670,7 +1682,7 @@ public class ShoppingListServiceTest {
         shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, requestWithPantryComparison);
 
         // Assert
-        assertEquals(new BigDecimal("150"), existingMatch.getQuantity());
+        assertEquals(0, BigDecimal.valueOf(150).compareTo(existingMatch.getQuantity()));
         verify(shoppingListItemRepository, times(1)).save(existingMatch);
         verify(shoppingListItemRepository, times(1)).save(any(ShoppingListItem.class));
     }

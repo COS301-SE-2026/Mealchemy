@@ -9,6 +9,7 @@ import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.recipe.model.RecipeIngredient; // can get recipeId from recipe ingredients table
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.model.VaultFolderRecipe;
+import com.mealchemy.profile.model.UserProfile;
 
 //repositories
 import com.mealchemy.shoppinglist.repository.ShoppingListRepository;
@@ -20,6 +21,7 @@ import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.recipe.repository.RecipeIngredientRepository;
 import com.mealchemy.vault.repository.VaultFolderRecipeRepository;
 import com.mealchemy.vault.repository.VaultMemberRepository;
+import com.mealchemy.profile.repository.UserProfileRepository;
 
 import org.springframework.transaction.annotation.Transactional; //need to annotate any function that makes an update to the database
 
@@ -39,6 +41,8 @@ import com.mealchemy.shoppinglist.dto.CompleteShopResponse;
 
 //enum for shopping list status
 import com.mealchemy.shared.enums.ShoppingListStatus;
+import com.mealchemy.shared.enums.PreferredUnit;
+import com.mealchemy.shared.unitconverter.UnitConverter;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -67,9 +71,12 @@ public class ShoppingListService {
     private final VaultFolderRecipeRepository vaultFolderRecipeRepository;
     private final VaultMemberRepository vaultMemberRepository; 
 
+    private final UserProfileRepository userProfileRepository;
+
 
     // constructor
-    public ShoppingListService(ShoppingListRepository shoppingListRepository, ShoppingListItemRepository shoppingListItemRepository, IngredientCatalogueRepository ingredientCatalogueRepository, IngredientCategoryRepository ingredientCategoryRepository, PantryIngredientRepository pantryIngredientRepository, RecipeRepository recipeRepository, RecipeIngredientRepository recipeIngredientRepository, VaultFolderRecipeRepository vaultFolderRecipeRepository, VaultMemberRepository vaultMemberRepository) {
+    public ShoppingListService(ShoppingListRepository shoppingListRepository, ShoppingListItemRepository shoppingListItemRepository, IngredientCatalogueRepository ingredientCatalogueRepository, IngredientCategoryRepository ingredientCategoryRepository, PantryIngredientRepository pantryIngredientRepository, 
+                               RecipeRepository recipeRepository, RecipeIngredientRepository recipeIngredientRepository, VaultFolderRecipeRepository vaultFolderRecipeRepository, VaultMemberRepository vaultMemberRepository,UserProfileRepository userProfileRepository) {
         this.shoppingListRepository = shoppingListRepository;
         this.shoppingListItemRepository = shoppingListItemRepository;
 
@@ -83,6 +90,8 @@ public class ShoppingListService {
 
         this.vaultFolderRecipeRepository = vaultFolderRecipeRepository;
         this.vaultMemberRepository = vaultMemberRepository;
+
+        this.userProfileRepository = userProfileRepository;
     }
 
     // ========== Shopping List Level ==========
@@ -185,7 +194,8 @@ public class ShoppingListService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
         }
 
-        List<ShoppingListItemResponse> items = shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId);
+        PreferredUnit preferredUnit = getPreferredUnit(userId);
+        List<ShoppingListItemResponse> items = convertItemResponses(shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId), preferredUnit);
 
         return new ShoppingListWithItemsResponse(
             list.getShoppingListId(),
@@ -218,6 +228,9 @@ public class ShoppingListService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You should have a name or ingredient id"); //CHECK
         }
 
+        // normalise quantity and unit to canonical
+        UnitConverter.NormalisedQuantity normalised = UnitConverter.normaliseIngredient(request.quantity(), request.unit());
+
         // creating the new item
         ShoppingListItem newItem = new ShoppingListItem();
         newItem.setShoppingListId(id);
@@ -231,20 +244,24 @@ public class ShoppingListService {
             newItem.setName(request.name());
         }
         
-        newItem.setQuantity(request.quantity());
-        newItem.setUnit(request.unit());
+        newItem.setQuantity(normalised.quantity());
+        newItem.setUnit(normalised.unit());
         newItem.setPurchased(false);
 
         ShoppingListItem saved = shoppingListItemRepository.save(newItem);
         
+        // convert to users preferred unit
+        PreferredUnit preferredUnit = getPreferredUnit(userId);
+        UnitConverter.NormalisedQuantity display = UnitConverter.convertToUsersPreferredUnit(saved.getQuantity(), saved.getUnit(), preferredUnit);
+
         return new ShoppingListItemResponse(
             saved.getItemId(),
             saved.getShoppingListId(),
             saved.getIngId(),
             getItemName(saved.getIngId(), saved.getName()),
             getCategoryName(saved.getIngId()),
-            saved.getQuantity(),
-            saved.getUnit(),
+            display.quantity(),
+            display.unit(),
             saved.getPurchased()
         );
     }
@@ -317,21 +334,29 @@ public class ShoppingListService {
         if(request.name() != null) {
             selectedItem.setName(request.name());
         }
+
+
+        // normalise quantity and unit to canonical
+        UnitConverter.NormalisedQuantity normalised = UnitConverter.normaliseIngredient(request.quantity(), request.unit());
         
-        selectedItem.setQuantity(request.quantity());
-        selectedItem.setUnit(request.unit());
+        selectedItem.setQuantity(normalised.quantity());
+        selectedItem.setUnit(normalised.unit());
         selectedItem.setPurchased(request.purchased());
 
         ShoppingListItem saved = shoppingListItemRepository.save(selectedItem);
-        
+
+        // convert to users preferred unit
+        PreferredUnit preferredUnit = getPreferredUnit(userId);
+        UnitConverter.NormalisedQuantity display = UnitConverter.convertToUsersPreferredUnit(saved.getQuantity(), saved.getUnit(), preferredUnit);
+
         return new ShoppingListItemResponse(
             saved.getItemId(),
             saved.getShoppingListId(),
             saved.getIngId(),
             getItemName(saved.getIngId(), saved.getName()),
             getCategoryName(saved.getIngId()),
-            saved.getQuantity(),
-            saved.getUnit(),
+            display.quantity(),
+            display.unit(),
             saved.getPurchased()
         );
 
@@ -363,6 +388,10 @@ public class ShoppingListService {
         selectedItem.setPurchased(request.purchased());
 
         ShoppingListItem saved = shoppingListItemRepository.save(selectedItem);
+
+        // convert to users preferred unit
+        PreferredUnit preferredUnit = getPreferredUnit(userId);
+        UnitConverter.NormalisedQuantity display = UnitConverter.convertToUsersPreferredUnit(saved.getQuantity(), saved.getUnit(), preferredUnit);
         
         return new ShoppingListItemResponse(
             saved.getItemId(),
@@ -370,8 +399,8 @@ public class ShoppingListService {
             saved.getIngId(),
             getItemName(saved.getIngId(), saved.getName()),
             getCategoryName(saved.getIngId()),
-            saved.getQuantity(),
-            saved.getUnit(),
+            display.quantity(),
+            display.unit(),
             saved.getPurchased()
         );
     }
@@ -586,8 +615,10 @@ public class ShoppingListService {
                 ShoppingListItem saved = shoppingListItemRepository.save(newItem);
                 existingListItems.add(saved);
             }    
-        }        
-        List<ShoppingListItemResponse> items = shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId);
+        }   
+        
+        PreferredUnit preferredUnit = getPreferredUnit(userId);
+        List<ShoppingListItemResponse> items = convertItemResponses(shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId), preferredUnit);
 
         // return Shopping List Response
         return new ShoppingListWithItemsResponse(
@@ -642,7 +673,8 @@ public class ShoppingListService {
             shoppingListItemRepository.save(item);
         }
 
-        List<ShoppingListItemResponse> itemsToSave = shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId);
+        PreferredUnit preferredUnit = getPreferredUnit(userId);
+        List<ShoppingListItemResponse> itemsToSave = convertItemResponses(shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId), preferredUnit);
 
         return new ShoppingListWithItemsResponse(
             selectedList.getShoppingListId(),
@@ -673,7 +705,8 @@ public class ShoppingListService {
             shoppingListItemRepository.save(item);
         }
 
-        List<ShoppingListItemResponse> itemsToSave = shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId);
+        PreferredUnit preferredUnit = getPreferredUnit(userId);
+        List<ShoppingListItemResponse> itemsToSave = convertItemResponses(shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId), preferredUnit);
 
         return new ShoppingListWithItemsResponse(
             selectedList.getShoppingListId(),
@@ -737,5 +770,36 @@ public class ShoppingListService {
             skippedManualItemNames,
             canDeleteShoppingList
         );
+    }
+
+
+    // ========== Helper for unit conversion ==========
+
+     private PreferredUnit getPreferredUnit(Integer userId) {
+        // finding users preferred unit of measurement
+        return userProfileRepository.findByUserId(userId).map(UserProfile::getPreferredUnit)
+                                                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User profile not found"));
+    }
+
+    // converting to users preferred unit for a singular shopping list item
+    private ShoppingListItemResponse convertItemResponseToPreferredUnit(ShoppingListItemResponse response, PreferredUnit preferredUnit) {
+        UnitConverter.NormalisedQuantity display = UnitConverter.convertToUsersPreferredUnit(response.quantity(), response.unit(), preferredUnit);
+
+        return new ShoppingListItemResponse(
+            response.itemId(),
+            response.shoppingListId(),
+            response.ingId(),
+            response.name(),
+            response.category(),
+            display.quantity(),
+            display.unit(),
+            response.purchased()
+        );
+    }
+
+    // converting to users preferred unit for a listof items
+    private List<ShoppingListItemResponse> convertItemResponses(List<ShoppingListItemResponse> responses, PreferredUnit preferredUnit) {
+       return responses.stream().map(response -> convertItemResponseToPreferredUnit(response, preferredUnit))
+                                .toList();
     }
 }
