@@ -38,6 +38,35 @@ public class Swipe {
     private SignalScoresResponse weightsSnapshot;
 
     /* Getters */
+    public Integer getSwipeId()
+    {
+        return swipeId;
+    }
+
+    public Integer getUserId()
+    {
+        return userId;
+    }
+
+    public Integer getRecipeId()
+    {
+        return recipeId;
+    }
+
+    public SwipeAction getAction()
+    {
+        return action;
+    }
+
+    public OffsetDateTime getSwipedAt()
+    {
+        return swipedAt;
+    }
+
+    public SignalScoresResponse getWeightsSnapshot()
+    {
+        return weightsSnapshot;
+    }
 
     /* Setters */
 }
