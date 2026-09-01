@@ -8,7 +8,7 @@ void main() {
       expect(AppRoutes.dashboard.startsWith('/'), isTrue);
       expect(AppRoutes.pantry.startsWith('/'), isTrue);
       expect(AppRoutes.vault.startsWith('/'), isTrue);
-      expect(AppRoutes.preference.startsWith('/'), isTrue);
+      expect(AppRoutes.guidedDiscovery.startsWith('/'), isTrue);
     });
 
     test('all routes are unique', () {
@@ -17,7 +17,7 @@ void main() {
         AppRoutes.dashboard,
         AppRoutes.pantry,
         AppRoutes.vault,
-        AppRoutes.preference,
+        AppRoutes.guidedDiscovery,
       ];
       expect(routes.toSet().length, routes.length);
     });
