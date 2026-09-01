@@ -9,6 +9,9 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.ErrorResponse;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import com.mealchemy.engine.client.EmptyPoolException;
+import com.mealchemy.engine.client.StaleStateException;
+import com.mealchemy.engine.client.InvalidSwipeException;
 
 import java.util.Map;
 
@@ -61,5 +64,27 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("message", "An unexpected error occurred"));
+    }
+
+    //handles engine-originated exceptions surfaced from EngineClient
+    @ExceptionHandler(EmptyPoolException.class)
+    public ResponseEntity<Map<String, String>> handleEmptyPool(EmptyPoolException ex) {
+        return ResponseEntity
+                .status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(Map.of("message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(StaleStateException.class)
+    public ResponseEntity<Map<String, String>> handleStaleState(StaleStateException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(Map.of("message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidSwipeException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidSwipe(InvalidSwipeException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", ex.getMessage()));
     }
 }
