@@ -8,8 +8,7 @@ import 'package:mealchemy/features/guided_discovery/repositories/guided_discover
 import 'package:mealchemy/features/guided_discovery/screens/guided_discovery_screen.dart';
 
 //mock repo with predictable recipe data
-class _TestGuidedDiscoveryRepository
-    implements GuidedDiscoveryRepository {
+class _TestGuidedDiscoveryRepository implements GuidedDiscoveryRepository {
   @override
   Future<List<DiscoveryRecipe>> getDiscoveryRecipes() async {
     return [
@@ -63,25 +62,24 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
+  Widget host(GuidedDiscoveryRepository repository) {
+    return ProviderScope(
+      overrides: [
+        guidedDiscoveryRepositoryProvider.overrideWithValue(repository),
+      ],
+      child: const MaterialApp(
+        home: Scaffold(body: GuidedDiscoveryScreen()),
+      ),
+    );
+  }
+
   testWidgets('GuidedDiscoveryScreen renders discovery recipe', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(500, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          guidedDiscoveryRepositoryProvider.overrideWithValue(
-            _TestGuidedDiscoveryRepository(),
-          ),
-        ],
-        child: const MaterialApp(
-          home: GuidedDiscoveryScreen(),
-        ),
-      ),
-    );
-
+    await tester.pumpWidget(host(_TestGuidedDiscoveryRepository()));
     await tester.pumpAndSettle();
 
     expect(find.text('Discover'), findsOneWidget);
@@ -99,19 +97,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(500, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          guidedDiscoveryRepositoryProvider.overrideWithValue(
-            _TestGuidedDiscoveryRepository(),
-          ),
-        ],
-        child: const MaterialApp(
-          home: GuidedDiscoveryScreen(),
-        ),
-      ),
-    );
-
+    await tester.pumpWidget(host(_TestGuidedDiscoveryRepository()));
     await tester.pumpAndSettle();
 
     expect(find.text('Test Pasta'), findsOneWidget);
@@ -129,19 +115,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(500, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          guidedDiscoveryRepositoryProvider.overrideWithValue(
-            _TestGuidedDiscoveryRepository(),
-          ),
-        ],
-        child: const MaterialApp(
-          home: GuidedDiscoveryScreen(),
-        ),
-      ),
-    );
-
+    await tester.pumpWidget(host(_TestGuidedDiscoveryRepository()));
     await tester.pumpAndSettle();
 
     expect(find.text('Test Pasta'), findsOneWidget);
@@ -154,43 +128,19 @@ void main() {
   });
 
   testWidgets('GuidedDiscoveryScreen renders error state', (tester) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          guidedDiscoveryRepositoryProvider.overrideWithValue(
-            _FailingGuidedDiscoveryRepository(),
-          ),
-        ],
-        child: const MaterialApp(
-          home: GuidedDiscoveryScreen(),
-        ),
-      ),
-    );
-
+    await tester.pumpWidget(host(_FailingGuidedDiscoveryRepository()));
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Discovery failure'), findsOneWidget);
   });
 
-    testWidgets('GuidedDiscoveryScreen likes recipe when swiped right', (
+  testWidgets('GuidedDiscoveryScreen likes recipe when swiped right', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(500, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          guidedDiscoveryRepositoryProvider.overrideWithValue(
-            _TestGuidedDiscoveryRepository(),
-          ),
-        ],
-        child: const MaterialApp(
-          home: GuidedDiscoveryScreen(),
-        ),
-      ),
-    );
-
+    await tester.pumpWidget(host(_TestGuidedDiscoveryRepository()));
     await tester.pumpAndSettle();
 
     expect(find.text('Test Pasta'), findsOneWidget);

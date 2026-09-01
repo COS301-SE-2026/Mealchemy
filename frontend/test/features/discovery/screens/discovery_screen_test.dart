@@ -48,7 +48,7 @@ void main() {
       routes: [
         GoRoute(
           path: '/discovery',
-          builder: (_, __) => const DiscoveryScreen(),
+          builder: (_, __) => const Scaffold(body: DiscoveryScreen()),
         ),
         GoRoute(
           path: '/dashboard',
