@@ -29,4 +29,11 @@ class TestPantryIngredientMatch:
 
         assert owned == set()
         assert missing == {1}
-    
+
+    def test_empty_pantry(serlf, ingredient_factory):
+        recipe_ingredients = [ingredient_factory(1), ingredient_factory(2)]
+
+        owned, missing = pantry_ingredient_match(recipe_ingredients, [])
+
+        assert owned == set()
+        assert missing == {1, 2}
