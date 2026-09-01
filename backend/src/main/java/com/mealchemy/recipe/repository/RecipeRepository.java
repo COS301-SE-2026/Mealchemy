@@ -15,6 +15,8 @@ import com.mealchemy.recipe.model.Recipe;
 @Repository
 public interface RecipeRepository extends JpaRepository<Recipe, Integer>
 {
+    Recipe findByRecipeId(Integer recipeId);
+
     List<Recipe> findByIsCommunityPublishedTrue();
 
     @Query("""

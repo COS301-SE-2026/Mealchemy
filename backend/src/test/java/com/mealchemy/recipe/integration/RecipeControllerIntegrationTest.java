@@ -1,5 +1,4 @@
 package com.mealchemy.recipe.integration;
-
 import com.mealchemy.auth.model.User;
 import com.mealchemy.auth.repository.UserRepository;
 import com.mealchemy.recipe.dto.RecipeRequest;
@@ -17,7 +16,10 @@ import com.mealchemy.vault.repository.VaultFolderRepository;
 import com.mealchemy.vault.repository.VaultFolderRecipeRepository;
 import com.mealchemy.vault.repository.VaultMemberRepository;
 import com.mealchemy.vault.repository.VaultRepository;
+import com.mealchemy.profile.model.UserProfile;
+import com.mealchemy.profile.repository.UserProfileRepository;
 import com.mealchemy.shared.enums.VaultType;
+import com.mealchemy.shared.enums.PreferredUnit;
 import com.mealchemy.cuisinetype.repository.FlavourProfileOptionsRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.google.cloud.storage.BlobId;
@@ -86,6 +88,9 @@ public class RecipeControllerIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private UserProfileRepository userProfileRepository;
+
     // mock cloud storage to limit usage costs
     @MockitoBean
     private Storage storage;
@@ -132,6 +137,16 @@ public class RecipeControllerIntegrationTest {
                 .stream().findFirst()
                 .orElseThrow(() -> new IllegalStateException("No rows seeded in ingredient_catalogue"))
                 .getIngId();
+
+        UserProfile ownerProfile = new UserProfile();
+        ownerProfile.setUserId(owner.getUserId());
+        ownerProfile.setPreferredUnit(PreferredUnit.METRIC);
+        userProfileRepository.save(ownerProfile);
+
+        UserProfile otherProfile = new UserProfile();
+        otherProfile.setUserId(otherUser.getUserId());
+        otherProfile.setPreferredUnit(PreferredUnit.METRIC);
+        userProfileRepository.save(otherProfile);
     }
 
     // Helpers
