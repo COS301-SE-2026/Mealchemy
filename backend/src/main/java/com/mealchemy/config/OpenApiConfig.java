@@ -29,6 +29,7 @@ public class OpenApiConfig {
                 new SecurityScheme()
                     .type(SecurityScheme.Type.HTTP)
                     .scheme("bearer")
-                    .bearerFormat("JWT")));
+                    .bearerFormat("JWT")
+                    .description("Paste the JWT returned from /auth/login or auth/register")));
     }
 }

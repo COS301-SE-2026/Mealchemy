@@ -211,7 +211,7 @@ public class VaultMemberControllerIntegrationTest {
     }
 
     @Test
-    void removeVaultMember_returns200_andDeletesRow() throws Exception {
+    void removeVaultMember_returns204_andDeletesRow() throws Exception {
         addMemberRow(sharedVault, member);
 
         VaultMemberRequest request = new VaultMemberRequest(member.getEmail());
@@ -221,7 +221,7 @@ public class VaultMemberControllerIntegrationTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         org.junit.jupiter.api.Assertions.assertTrue(
                 vaultMemberRepository.findByVault_VaultIdAndUser_UserId(sharedVault.getVaultId(), member.getUserId()).isEmpty()

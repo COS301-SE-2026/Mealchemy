@@ -346,13 +346,13 @@ public class RecipeIngredientControllerIntegrationTest {
     // DELETE /ingredients/recipe/{recipeId}/ingredient/{id}/delete
 
     @Test
-    void deleteIngredient_returns200_andRemovesRow_whenOwner() throws Exception {
+    void deleteIngredient_returns204_andRemovesRow_whenOwner() throws Exception {
         RecipeIngredient row = saveIngredientRow(recipe, ingId, "cups", 1);
 
         mockMvc.perform(delete("/ingredients/recipe/{recipeId}/ingredient/{id}/delete", recipe.getRecipeId(), row.getIngredientId())
                         .with(authentication(authAs(owner.getUserId())))
                         .with(csrf()))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         org.junit.jupiter.api.Assertions.assertTrue(
                 recipeIngredientRepository.findById(row.getIngredientId()).isEmpty()

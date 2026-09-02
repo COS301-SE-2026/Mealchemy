@@ -411,7 +411,7 @@ public class VaultFolderRecipeControllerIntegrationTest {
         mockMvc.perform(delete("/recipefolders/{id}", vaultFolderRecipe.getId())
                         .with(authentication(authAs(owner)))
                         .with(csrf()))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         org.junit.jupiter.api.Assertions.assertFalse(
                 vaultFolderRecipeRepository.findById(vaultFolderRecipe.getId()).isPresent()
@@ -423,7 +423,7 @@ public class VaultFolderRecipeControllerIntegrationTest {
         mockMvc.perform(delete("/recipefolders/{id}", vaultFolderRecipe.getId())
                         .with(authentication(authAs(memberUser)))
                         .with(csrf()))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         org.junit.jupiter.api.Assertions.assertFalse(
                 vaultFolderRecipeRepository.findById(vaultFolderRecipe.getId()).isPresent()

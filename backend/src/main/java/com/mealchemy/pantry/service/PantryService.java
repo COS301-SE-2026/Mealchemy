@@ -102,13 +102,8 @@ public class PantryService {
     // PUT - manual update of a pantry ingredient when it has been selected
     @Transactional
     public Optional<PantryIngredientResponse> updateIngredientManually(Integer userId, Integer pIngredientId, PantryIngredientRequest request) {
-        PantryIngredient selectedPantryIngredient = pantryIngredientRepository.findById(pIngredientId)
+        PantryIngredient selectedPantryIngredient = pantryIngredientRepository.findByPIngredientIdAndUserId(pIngredientId, userId)
                                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found in pantry"));
-
-        // check if selected belongs to logged in user
-        if (!selectedPantryIngredient.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this ingredient");
-        }
 
         if (request.quantity().compareTo(BigDecimal.ZERO) <= 0) {
             pantryIngredientRepository.delete(selectedPantryIngredient);
@@ -157,13 +152,8 @@ public class PantryService {
     @Transactional
     public void removePantryIngredient(Integer userId, Integer pIngredientId) {
         // check if row exists
-        PantryIngredient selectedPantryIngredient = pantryIngredientRepository.findById(pIngredientId)
+        PantryIngredient selectedPantryIngredient = pantryIngredientRepository.findByPIngredientIdAndUserId(pIngredientId, userId)
                                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found in pantry"));
-
-        // check if selected belongs to logged in user
-        if (!selectedPantryIngredient.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this ingredient");
-        }
 
         pantryIngredientRepository.delete(selectedPantryIngredient);
 
