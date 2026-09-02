@@ -52,7 +52,7 @@ public class RecipeStepControllerIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private static final String VALID_CUISINE = "italian";
+    private static final String VALID_CUISINE = "ITALIAN";
 
     private User owner;
     private User otherUser;

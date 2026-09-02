@@ -1,6 +1,7 @@
 import { check, sleep } from 'k6';
 import execution from 'k6/execution';
 import http from 'k6/http';
+import { Rate, Trend } from 'k6/metrics';
 import { createSafeSummary } from '../config/safe-summary.js';
 
 // ------------- main read only k6 LOAD TEST -------------
@@ -8,8 +9,9 @@ import { createSafeSummary } from '../config/safe-summary.js';
 
 // logs in once during k6 setup, starts configured number of virtual users, rotates through 4 authenticated endpoints.
 // checks each response is HTTP 200, marks measured requests separately from login/setup traffic
-// measure p95 latency, failure rate, request rate, throughput.
-// enforces p95 below 2s and errors below 1%
+// Measures p95 latency, failure rate, request rate, throughput.
+// Performance mode enforces p95 below 2s and errors below 1%
+// Resilience mode enforces successful responses while reporting degraded latency.
 // ----------------------------------------------------------
 
 //imports vaildated url, environment name, login function, environment validator
@@ -26,6 +28,11 @@ import {
 const virtualUsers = positiveInteger('NFR_VUS', 10);
 const duration = __ENV.NFR_DURATION || '30s';
 const pacingSeconds = positiveNumber('NFR_PACING_SECONDS', 1);
+const testProfile = __ENV.NFR_TEST_PROFILE || 'performance';
+
+if (testProfile !== 'performance' && testProfile !== 'resilience') {
+  throw new Error('NFR_TEST_PROFILE must be performance or resilience.');
+}
 
 const readEndpoints = [
   { name: 'vaults', path: '/vaults/owner/vaults' },
@@ -33,6 +40,25 @@ const readEndpoints = [
   { name: 'shopping-lists', path: '/api/shopping-lists' },
   { name: 'recipes', path: '/recipes/all' },
 ];
+
+const endpointMetrics = {
+  vaults: {
+    duration: new Trend('endpoint_vaults_duration', true),
+    failures: new Rate('endpoint_vaults_failed'),
+  },
+  pantry: {
+    duration: new Trend('endpoint_pantry_duration', true),
+    failures: new Rate('endpoint_pantry_failed'),
+  },
+  'shopping-lists': {
+    duration: new Trend('endpoint_shopping_lists_duration', true),
+    failures: new Rate('endpoint_shopping_lists_failed'),
+  },
+  recipes: {
+    duration: new Trend('endpoint_recipes_duration', true),
+    failures: new Rate('endpoint_recipes_failed'),
+  },
+};
 
 export const options = {
   scenarios: {
@@ -44,21 +70,7 @@ export const options = {
     },
   },
 
-  // begin pass/fail thresholds
-  // requires more than 99% of all checks to pass
-  // requires the 95th percentile of measured request durations to remain below 2000ms
-  // requires measured request failure to stay below 1% , if threshold fails after 30s, k6 aborts the run to avoid wasting resources.
-  thresholds: {
-    checks: ['rate>0.99'],
-    'http_req_duration{measured:true}': ['p(95)<2000'],
-    'http_req_failed{measured:true}': [
-      {
-        threshold: 'rate<0.01',
-        abortOnFail: true,
-        delayAbortEval: '30s',
-      },
-    ],
-  },
+  thresholds: buildThresholds(testProfile),
 };
 
 // runs once before virtual users start
@@ -67,7 +79,8 @@ export function setup() {
   const token = login();
 
   console.log(
-    `Starting ${environment} read load with ${virtualUsers} VUs for ${duration}.`,
+    `Starting ${environment} ${testProfile} read load with ` +
+      `${virtualUsers} VUs for ${duration}.`,
   );
 
   return { token };
@@ -86,6 +99,10 @@ export default function runReadLoad(data) {
     tags: { endpoint: endpoint.name, measured: 'true' },
   });
 
+  const metrics = endpointMetrics[endpoint.name];
+  metrics.duration.add(response.timings.duration);
+  metrics.failures.add(response.status !== 200);
+
   check(response, {
     [`${endpoint.name} returns HTTP 200`]: (result) => result.status === 200,
   });
@@ -94,7 +111,32 @@ export default function runReadLoad(data) {
 }
 
 export function handleSummary(data) {
-  return createSafeSummary(data);
+  return createSafeSummary(data, {
+    environment,
+    testProfile,
+    virtualUsers,
+    duration,
+    pacingSeconds,
+  });
+}
+
+function buildThresholds(profile) {
+  const thresholds = {
+    checks: ['rate>0.99'],
+    'http_req_failed{measured:true}': [
+      {
+        threshold: 'rate<0.01',
+        abortOnFail: true,
+        delayAbortEval: '30s',
+      },
+    ],
+  };
+
+  if (profile === 'performance') {
+    thresholds['http_req_duration{measured:true}'] = ['p(95)<2000'];
+  }
+
+  return thresholds;
 }
 
 // helper for positive whole-number settings

@@ -1,0 +1,162 @@
+{
+    "candidate_pool": [
+        {
+            "recipe_id": 101,
+            "title": "Caprese Pasta Salad",
+            "cuisine": "ITALIAN",
+            "dietary_tags": [
+                "VEGETARIAN"
+            ],
+            "ingredients": [
+                {
+                    "ing_id": 1001,
+                    "category_id": 4,
+                    "name": "Pasta",
+                    "quantity": 200.0,
+                    "unit": "g"
+                },
+                {
+                    "ing_id": 1002,
+                    "category_id": 5,
+                    "name": "Mozzarella",
+                    "quantity": 100.0,
+                    "unit": "g"
+                },
+                {
+                    "ing_id": 1003,
+                    "category_id": 8,
+                    "name": "Tomato",
+                    "quantity": 2.0,
+                    "unit": "unit"
+                }
+            ],
+            "nutrition": null
+        },
+        {
+            "recipe_id": 102,
+            "title": "Margherita Flatbread",
+            "cuisine": "ITALIAN",
+            "dietary_tags": [
+                "VEGETARIAN"
+            ],
+            "ingredients": [
+                {
+                    "ing_id": 1004,
+                    "category_id": 4,
+                    "name": "Flatbread",
+                    "quantity": 1.0,
+                    "unit": "unit"
+                },
+                {
+                    "ing_id": 1002,
+                    "category_id": 5,
+                    "name": "Mozzarella",
+                    "quantity": 80.0,
+                    "unit": "g"
+                },
+                {
+                    "ing_id": 1005,
+                    "category_id": 17,
+                    "name": "Basil",
+                    "quantity": 5.0,
+                    "unit": "g"
+                }
+            ],
+            "nutrition": null
+        },
+        {
+            "recipe_id": 103,
+            "title": "Chicken Katsu Curry",
+            "cuisine": "ASIAN",
+            "dietary_tags": [],
+            "ingredients": [
+                {
+                    "ing_id": 1006,
+                    "category_id": 13,
+                    "name": "Chicken Breast",
+                    "quantity": 250.0,
+                    "unit": "g"
+                },
+                {
+                    "ing_id": 1007,
+                    "category_id": 4,
+                    "name": "Rice",
+                    "quantity": 150.0,
+                    "unit": "g"
+                },
+                {
+                    "ing_id": 1008,
+                    "category_id": 17,
+                    "name": "Curry Powder",
+                    "quantity": 10.0,
+                    "unit": "g"
+                }
+            ],
+            "nutrition": null
+        },
+        {
+            "recipe_id": 104,
+            "title": "Black Bean and Corn Burrito Bowls",
+            "cuisine": "MEXICAN",
+            "dietary_tags": [
+                "VEGETARIAN"
+            ],
+            "ingredients": [
+                {
+                    "ing_id": 1009,
+                    "category_id": 10,
+                    "name": "Black Beans",
+                    "quantity": 200.0,
+                    "unit": "g"
+                },
+                {
+                    "ing_id": 1007,
+                    "category_id": 4,
+                    "name": "Rice",
+                    "quantity": 150.0,
+                    "unit": "g"
+                },
+                {
+                    "ing_id": 1010,
+                    "category_id": 19,
+                    "name": "Corn",
+                    "quantity": 100.0,
+                    "unit": "g"
+                }
+            ],
+            "nutrition": null
+        },
+        {
+            "recipe_id": 105,
+            "title": "Lemon Herb Salmon",
+            "cuisine": "MEDITERRANEAN",
+            "dietary_tags": [
+                "PESCATARIAN"
+            ],
+            "ingredients": [
+                {
+                    "ing_id": 1011,
+                    "category_id": 7,
+                    "name": "Salmon Fillet",
+                    "quantity": 200.0,
+                    "unit": "g"
+                },
+                {
+                    "ing_id": 1012,
+                    "category_id": 8,
+                    "name": "Lemon",
+                    "quantity": 1.0,
+                    "unit": "unit"
+                },
+                {
+                    "ing_id": 1005,
+                    "category_id": 17,
+                    "name": "Basil",
+                    "quantity": 5.0,
+                    "unit": "g"
+                }
+            ],
+            "nutrition": null
+        }
+    ]
+}
