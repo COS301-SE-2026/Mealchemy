@@ -231,3 +231,6 @@ final deleteRecipeProvider = Provider((ref) {
     ref.invalidate(recipesProvider);
   };
 });
+
+// Frontend only scaling ingredient amounts never touches the backend baseline.
+final servingsProvider = StateProvider.family<int, int>((ref, recipeId) => 0);

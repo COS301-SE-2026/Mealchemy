@@ -6,7 +6,7 @@ import 'package:mealchemy/core/shared_widgets/atoms/app_icon_button.dart';
 import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
-import 'package:mealchemy/features/dashboard/providers/dashboard_provider.dart';
+import 'package:mealchemy/features/pantry/providers/pantry_provider.dart';
 
 const _previewIcons = [
   Icons.cookie_outlined,
@@ -22,8 +22,11 @@ class DashboardPantryCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(dashboardProvider);
-    final remaining = state.pantryItemCount - _previewIcons.length;
+    final pantryCount = ref.watch(pantryStateProvider).maybeWhen(
+          data: (state) => state.summary.totalItems,
+          orElse: () => 0,
+        );
+    final remaining = pantryCount - _previewIcons.length;
 
     return AppCard.light(
       borderRadius: 20,
@@ -31,7 +34,6 @@ class DashboardPantryCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title label only
           Text(
             'IN YOUR PANTRY',
             style: AppTextStyles.label.copyWith(
@@ -43,26 +45,23 @@ class DashboardPantryCard extends ConsumerWidget {
 
           const SizedBox(height: 6),
 
-          // Count + Ingredients + button on same row
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // 42
               ShaderMask(
                 blendMode: BlendMode.srcIn,
                 shaderCallback: (bounds) =>
                     AppColors.brand.createShader(bounds),
                 child: Text(
-                  '${state.pantryItemCount}',
+                  '$pantryCount',
                   style: AppTextStyles.display.copyWith(
                     fontWeight: FontWeight.w900,
-                    color:AppColors.surfaceWhite,
+                    color: AppColors.surfaceWhite,
                   ),
                 ),
               ),
 
               const SizedBox(width: 6),
-              //Ingredients label small and primary coloured
               Text(
                 'Ingredients',
                 style: AppTextStyles.caption.copyWith(
@@ -72,7 +71,6 @@ class DashboardPantryCard extends ConsumerWidget {
               ),
 
               const Spacer(),
-              // add button
               AppIconButton.primary(
                 icon: Icons.add,
                 onPressed: () => context.push(AppRoutes.addIngredient),
@@ -82,7 +80,6 @@ class DashboardPantryCard extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
 
-          //OverLapping icon circls and the number of items
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [

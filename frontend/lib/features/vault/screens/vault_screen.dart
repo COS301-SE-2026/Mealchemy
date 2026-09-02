@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mealchemy/core/routes/app_routes.dart';
-import 'package:mealchemy/core/shared_widgets/Organisms/app_navbar.dart';
+import 'package:mealchemy/core/shared_widgets/Molecules/app_refresh.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/features/vault/models/vault.dart';
@@ -22,11 +22,7 @@ class VaultScreen extends ConsumerWidget {
     final vaultsAsync = ref.watch(vaultsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bgLight,
-      bottomNavigationBar: AppNavbar(
-        currentRoute: AppRoutes.vault,
-        onRouteSelected: (route) => context.go(route),
-      ),
+      backgroundColor: Colors.transparent,
       floatingActionButton: FloatingActionButton(
         tooltip: 'Add Recipe',
         onPressed: () => context.push(AppRoutes.addRecipe),
@@ -34,15 +30,24 @@ class VaultScreen extends ConsumerWidget {
         foregroundColor: AppColors.textDark,
         child: const Icon(Icons.add),
       ),
-      body: vaultsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => _VaultError(message: '$error'),
-        data: (vaults) {
-          if (vaults.isEmpty) {
-            return const _VaultError(message: 'No vault found.');
-          }
-          return const _VaultBody();
-        },
+      body: AppRefresh(
+        onRefresh: () => ref.refresh(vaultsProvider.future),
+        child: vaultsAsync.when(
+          loading: () => const _ScrollableCentre(
+            child: CircularProgressIndicator(),
+          ),
+          error: (error, _) => _ScrollableCentre(
+            child: _VaultError(message: '$error'),
+          ),
+          data: (vaults) {
+            if (vaults.isEmpty) {
+              return const _ScrollableCentre(
+                child: _VaultError(message: 'No vault found.'),
+              );
+            }
+            return const _VaultBody();
+          },
+        ),
       ),
     );
   }
@@ -58,13 +63,11 @@ class _VaultBody extends ConsumerWidget {
 
     return SafeArea(
       child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            VaultHero(
-              onSearch: () {},
-              onShoppingList: () => context.push(AppRoutes.shoppingLists),
-            ),
+            const VaultHero(),
             const Padding(
               padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
               child: CacheFreshnessLabel(
@@ -116,6 +119,29 @@ class _VaultFoldersLoader extends ConsumerWidget {
   }
 }
 
+// Wraps a centred widget in a scroll view so pull to refresh still triggers
+// on the loading, error, and empty states.
+class _ScrollableCentre extends StatelessWidget {
+  const _ScrollableCentre({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(child: child),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _VaultError extends StatelessWidget {
   const _VaultError({required this.message});
 
@@ -123,24 +149,22 @@ class _VaultError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Unable to load vault.',
-              style: AppTextStyles.body.copyWith(color: AppColors.error),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
-            ),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Unable to load vault.',
+            style: AppTextStyles.body.copyWith(color: AppColors.error),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+          ),
+        ],
       ),
     );
   }

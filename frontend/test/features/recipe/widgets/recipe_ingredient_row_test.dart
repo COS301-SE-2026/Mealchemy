@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
+import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
 import 'package:mealchemy/features/recipe/widgets/recipe_ingredient_row.dart';
 
 void main() {
@@ -9,7 +11,11 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  Widget host(Widget child) => MaterialApp(home: Scaffold(body: child));
+  // baseServings matches the recipe size and the provider is left unseeded,
+  // so the scale factor is 1.0 and amounts render unscaled.
+  Widget host(Widget child) => ProviderScope(
+        child: MaterialApp(home: Scaffold(body: child)),
+      );
 
   testWidgets('RecipeIngredientRow renders name, integer quantity and unit', (
     tester,
@@ -24,12 +30,13 @@ void main() {
             unit: 'g',
             sortOrder: 1,
           ),
+          recipeId: 1,
+          baseServings: 4,
         ),
       ),
     );
 
     expect(find.text('Arborio rice'), findsOneWidget);
-    //integer quantity strips trailing zeros
     expect(find.text('320 g'), findsOneWidget);
   });
 
@@ -45,12 +52,13 @@ void main() {
             quantity: 3,
             sortOrder: 2,
           ),
+          recipeId: 1,
+          baseServings: 4,
         ),
       ),
     );
 
     expect(find.text('Garlic cloves'), findsOneWidget);
-    //null unit drops the unit suffix
     expect(find.text('3'), findsOneWidget);
   });
 
@@ -63,12 +71,13 @@ void main() {
             name: 'Salt to taste',
             sortOrder: 3,
           ),
+          recipeId: 1,
+          baseServings: 4,
         ),
       ),
     );
 
     expect(find.text('Salt to taste'), findsOneWidget);
-    //regex for a string whose first character is a digit
     expect(find.textContaining(RegExp(r'^\d')), findsNothing);
   });
 
@@ -85,10 +94,42 @@ void main() {
             unit: 'cup',
             sortOrder: 4,
           ),
+          recipeId: 1,
+          baseServings: 4,
         ),
       ),
     );
 
     expect(find.text('0.5 cup'), findsOneWidget);
+  });
+
+  testWidgets('RecipeIngredientRow scales quantity with chosen servings', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          servingsProvider(1).overrideWith((ref) => 8),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(
+            body: RecipeIngredientRow(
+              ingredient: RecipeIngredient(
+                ingId: 5,
+                name: 'Arborio rice',
+                quantity: 320,
+                unit: 'g',
+                sortOrder: 1,
+              ),
+              recipeId: 1,
+              baseServings: 4,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // 8 servings from a base of 4 doubles the amount.
+    expect(find.text('640 g'), findsOneWidget);
   });
 }

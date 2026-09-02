@@ -6,12 +6,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mealchemy/features/dashboard/models/dashboard_recipe_card_data.dart';
 import 'package:mealchemy/features/dashboard/models/trending_recipe_data.dart';
 import 'package:mealchemy/features/dashboard/providers/dashboard_provider.dart';
+import 'package:mealchemy/features/dashboard/providers/shopping_list_provider.dart';
 import 'package:mealchemy/features/dashboard/repositories/dashboard_repository.dart';
-import 'package:mealchemy/features/dashboard/widgets/dashboard_welcome_bar.dart';
 import 'package:mealchemy/features/dashboard/widgets/smart_suggestion_card.dart';
 import 'package:mealchemy/features/dashboard/widgets/trending_recipes_section.dart';
 import 'package:mealchemy/features/dashboard/widgets/recommended_recipes_section.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
+import 'package:mealchemy/features/shopping_lists/models/shopping_list.dart';
 
 class _FakeDashboardRepo implements DashboardRepository {
   @override
@@ -41,6 +42,7 @@ class _FakeDashboardRepo implements DashboardRepository {
       ),
     ];
   }
+
   @override
   Future<List<TrendingRecipeData>> getTrendingRecipes() async {
     return const [
@@ -61,11 +63,24 @@ class _FakeDashboardRepo implements DashboardRepository {
   }
 }
 
+ShoppingList _list({required String title, required int count}) => ShoppingList(
+      id: 't',
+      title: title,
+      subtitle: '',
+      section: 'OTHER LISTS',
+      iconType: 'list',
+      numItems: count,
+      items: const [],
+    );
+
 void main() {
   setUpAll(() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
-  Widget host(Widget child, DashboardRepository repo) {
+
+  Widget host( Widget child, DashboardRepository repo, {
+    List<Override> extra = const [],
+  }) {
     final router = GoRouter(
       initialLocation: '/',
       routes: [
@@ -85,72 +100,69 @@ void main() {
     );
 
     return ProviderScope(
-      overrides: [dashboardRepositoryProvider.overrideWithValue(repo)],
+      overrides: [dashboardRepositoryProvider.overrideWithValue(repo), ...extra,],
       child: MaterialApp.router(routerConfig: router),
     );
   }
 
   Future<void> pump(
     WidgetTester tester,
-    Widget child,
-  ) async {
-    
+    Widget child, {
+    List<Override> extra = const [],
+  }) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 1.0;
 
     addTearDown(() {
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
-
     });
-    await tester.pumpWidget(host(child, _FakeDashboardRepo()));
+    await tester.pumpWidget(host(child, _FakeDashboardRepo(), extra: extra));
   }
-  group('DashboardWelcomeBar', () {
-
-    testWidgets('show empty name  before data  loads ', (tester) async {
-      await pump(tester, const DashboardWelcomeBar());
-      await tester.pump();
-      expect(find.text('?'), findsOneWidget);
-    });
-
-    testWidgets('shows display name  after data loads ', (tester) async {
-      await pump(tester,  const DashboardWelcomeBar());
-      final container =  ProviderScope.containerOf(
-         tester.element(find.byType(DashboardWelcomeBar)),
-      );
-      await container.read(dashboardProvider.notifier).loadDashboard();
-      await  tester.pump();
-
-      expect(find.text('Mutombo?'),  findsOneWidget);
-    });
-  });
-
 
   group('SmartSuggestionCard', () {
     testWidgets('renders SMART SUGGESTION label ', (tester) async {
-      await pump(tester,  const SmartSuggestionCard());
-      await  tester.pump();
+      await pump( tester, const SmartSuggestionCard(),
+        extra: [newListProvider.overrideWithValue(null)],
+      );
+      await tester.pump();
       expect(find.text('SMART SUGGESTION'), findsOneWidget);
 
     });
 
-    testWidgets('renders suggestion message with loaded values', (tester) async {
-      await pump(tester, const SmartSuggestionCard());
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(SmartSuggestionCard)),
-      ); 
-      
-      await container.read(dashboardProvider.notifier).loadDashboard();
+    testWidgets('renders the item-count message for the newest list',
+        (tester) async {
+      await pump(
+        tester,
+        const SmartSuggestionCard(),
+        extra: [
+          newListProvider.overrideWithValue(
+            _list(title: 'Weekend Cooking', count: 8),
+          ),
+        ],
+      );
       await tester.pump();
 
       expect(
-        find.text("You're 3 items away from making 10 new recipes."),
+        find.text("You've got 8 items to buy on Weekend Cooking."),
         findsOneWidget,
       );
     });
 
+    testWidgets('shows the create prompt when there are no lists',
+        (tester) async {
+      await pump(
+        tester,
+        const SmartSuggestionCard(),
+        extra: [newListProvider.overrideWithValue(null)],
+      );
+      await tester.pump();
+
+      expect(find.text('Create your first list'), findsOneWidget);
+    });
+
     testWidgets('renders lightbulb icon', (tester) async {
-      await pump(tester, const SmartSuggestionCard());
+      await pump( tester, const SmartSuggestionCard(), extra: [newListProvider.overrideWithValue(null)], );
       await tester.pump();
 
       expect(find.byIcon(Icons.lightbulb_outline), findsOneWidget);
