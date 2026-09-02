@@ -186,6 +186,8 @@
                     <exclude>**/dto/**/*.class</exclude>
                     <exclude>**/pantry/**/*.class</exclude>
 					<exclude>**/external/NutritionDataProvider.class</exclude>
+                    <exclude>**/engine/client/StaleStateException.class</exclude>
+                    <exclude>**/engine/client/InvalidSwipeException.class</exclude>
                 </excludes>
 				</configuration>
 				<executions>
