@@ -263,7 +263,7 @@ public class PantryServiceTest {
     @Test
     void removePantryIngredient_whenNotOwned_throwsNotFound() {
         // Arrange
-        when(pantryIngredientRepository.findByPIngredientIdAndUserId(1, 1)).thenReturn(Optional.of(existingPantryIngredient));
+        when(pantryIngredientRepository.findByPIngredientIdAndUserId(1, 1)).thenReturn(Optional.empty());
 
         // Act
         ResponseStatusException ex = assertThrows(
