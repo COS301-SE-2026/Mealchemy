@@ -8,6 +8,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mealchemy/core/theme/app_theme.dart';
 import 'package:mealchemy/features/auth/providers/auth_provider.dart';
 import 'package:mealchemy/features/auth/repositories/auth_repository.dart';
+import 'package:mealchemy/features/external_links/models/link.dart';
+import 'package:mealchemy/features/external_links/providers/link_provider.dart';
+import 'package:mealchemy/features/external_links/repositories/link_repository.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/vault/models/vault.dart';
 import 'package:mealchemy/features/vault/models/vault_folder.dart';
@@ -31,6 +34,14 @@ class _UnusedRepo implements AuthRepository {
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} not stubbed');
+}
+
+class _EmptyLinkRepository implements LinkRepository {
+  @override
+  Future<List<Link>> getLinks() async => const [];
+
+  @override
+  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 void main() {
@@ -59,7 +70,6 @@ void main() {
     ),
   ];
 
-  
   Widget host({
     required List<VaultFolder> folderList,
     bool sharedMode = false,
@@ -69,6 +79,7 @@ void main() {
         isSharedModeProvider.overrideWith((ref) => sharedMode),
         folderRecipeDisplayProvider.overrideWith((ref, int folderId) async => <Recipe>[]),
         authProvider.overrideWith((ref) => _FakeAuthNotifier(42, ref)),
+        linkRepositoryProvider.overrideWithValue(_EmptyLinkRepository()),
       ],
       child: MaterialApp.router(
         theme: AppTheme.light,
@@ -112,11 +123,17 @@ void main() {
       expect(find.text('No folders in this vault yet.'), findsOneWidget);
     });
 
-    testWidgets('shows one folder menu per folder and no vault-level menu',
+    testWidgets('renders the  My Links row on a private vault', (tester) async {
+      await tester.pumpWidget(host(folderList: folders));
+      await tester.pumpAndSettle();
+      expect(find.text('My Links'), findsOneWidget);
+    });
+
+    testWidgets('shows a menu per folder plu vault and My Links menus',
         (tester) async {
       await tester.pumpWidget(host(folderList: folders, sharedMode: false));
       await tester.pumpAndSettle();
-      expect(find.byIcon(Icons.more_vert), findsNWidgets(3));
+      expect(find.byIcon(Icons.more_vert), findsNWidgets(4));
     });
   });
 }
