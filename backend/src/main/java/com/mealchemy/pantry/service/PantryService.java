@@ -77,6 +77,7 @@ public class PantryService {
         newIngredient.setIngredientId(request.ingId());
         newIngredient.setQuantity(normalised.quantity());
         newIngredient.setUnit(normalised.unit());
+        newIngredient.setStorageLocation(request.storageLocation());
 
         PantryIngredient saved = pantryIngredientRepository.save(newIngredient);
 
@@ -90,6 +91,7 @@ public class PantryService {
                                             category.getCategoryName(), 
                                             display.quantity(),
                                             display.unit(),
+                                            saved.getStorageLocation(),
                                             saved.getCreatedAt(),
                                             saved.getUpdatedAt()
         );
@@ -114,6 +116,7 @@ public class PantryService {
         // assuming all 3 parameters are sent in everytime, even if only 1 changes - we don't set the id because it will change the ingredient
         selectedPantryIngredient.setQuantity(normalised.quantity());
         selectedPantryIngredient.setUnit(normalised.unit());
+        selectedPantryIngredient.setStorageLocation(request.storageLocation());
 
         PantryIngredient saved = pantryIngredientRepository.save(selectedPantryIngredient);
 
@@ -137,6 +140,7 @@ public class PantryService {
                                             category.getCategoryName(), 
                                             display.quantity(),
                                             display.unit(),
+                                            saved.getStorageLocation(),
                                             saved.getCreatedAt(),
                                             saved.getUpdatedAt()
         ));
@@ -183,6 +187,7 @@ public class PantryService {
                     response.category(), 
                     display.quantity(),
                     display.unit(),
+                    response.storageLocation(),
                     response.createdAt(),
                     response.updatedAt()
             );

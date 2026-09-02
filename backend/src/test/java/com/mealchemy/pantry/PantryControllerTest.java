@@ -9,6 +9,8 @@ import com.mealchemy.pantry.dto.PantryIngredientRequest;
 import com.mealchemy.pantry.dto.PantryIngredientResponse;
 // service
 import com.mealchemy.pantry.service.PantryService;
+//shared
+import com.mealchemy.shared.enums.StorageLocation;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,6 +85,7 @@ public class PantryControllerTest {
             "Legumes and Legume Products",
             new BigDecimal("250"),
             "g",
+            StorageLocation.FRIDGE,
             OffsetDateTime.parse("2026-07-17T14:00:00Z"),
             OffsetDateTime.parse("2026-07-17T14:00:00Z")
         );
@@ -124,7 +127,8 @@ public class PantryControllerTest {
         PantryIngredientRequest mockRequest = new PantryIngredientRequest(
             2,
             new BigDecimal("250"),
-            "g"
+            "g",
+            StorageLocation.FRIDGE
         );
 
         PantryIngredientResponse mockResponse = new PantryIngredientResponse(
@@ -134,6 +138,7 @@ public class PantryControllerTest {
             "Legumes and Legume Products",
             new BigDecimal("250"),
             "g",
+            StorageLocation.FRIDGE,
             OffsetDateTime.parse("2026-07-17T14:00:00Z"),
             OffsetDateTime.parse("2026-07-17T14:00:00Z")
         );
@@ -151,6 +156,7 @@ public class PantryControllerTest {
                 .andExpect(jsonPath("$.category").value("Legumes and Legume Products"))
                 .andExpect(jsonPath("$.quantity").value(250))
                 .andExpect(jsonPath("$.unit").value("g"))
+                .andExpect(jsonPath("$.storage_location").value("FRIDGE"))
                 .andExpect(jsonPath("$.created_at").value("2026-07-17T14:00:00Z"))
                 .andExpect(jsonPath("$.updated_at").value("2026-07-17T14:00:00Z"));
     }
@@ -161,7 +167,8 @@ public class PantryControllerTest {
         PantryIngredientRequest mockRequest = new PantryIngredientRequest(
             2,
             new BigDecimal("250"),
-            "g"
+            "g",
+            StorageLocation.FRIDGE
         );
 
         when(pantryService.addIngredientManually(anyInt(), any(PantryIngredientRequest.class))).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found in pantry in pantry"));
@@ -203,7 +210,8 @@ public class PantryControllerTest {
         PantryIngredientRequest mockRequest = new PantryIngredientRequest(
             2,
             new BigDecimal("100"),
-            "g"
+            "g",
+            StorageLocation.FRIDGE
         );
 
         PantryIngredientResponse mockResponse = new PantryIngredientResponse(
@@ -213,6 +221,7 @@ public class PantryControllerTest {
             "Legumes and Legume Products",
             new BigDecimal("100"),
             "g",
+            StorageLocation.FRIDGE,
             OffsetDateTime.parse("2026-07-17T14:00:00Z"),
             OffsetDateTime.parse("2026-07-17T14:00:00Z")
         );
@@ -234,13 +243,46 @@ public class PantryControllerTest {
                 .andExpect(jsonPath("$.updated_at").exists());
     }
 
+    @Test
+    void updatePantryIngredient_changesStorageLocation_returnsUpdatedValue() throws Exception {
+        // Arrange
+        PantryIngredientRequest mockRequest = new PantryIngredientRequest(
+            2,
+            new BigDecimal("100"),
+            "g",
+            StorageLocation.PANTRY
+        );
+
+        PantryIngredientResponse mockResponse = new PantryIngredientResponse(
+            3,
+            2,
+            "Hummus",
+            "Legumes and Legume Products",
+            new BigDecimal("100"),
+            "g",
+            StorageLocation.PANTRY,
+            OffsetDateTime.parse("2026-07-17T14:00:00Z"),
+            OffsetDateTime.parse("2026-07-17T14:00:00Z")
+        );
+
+        when(pantryService.updateIngredientManually(anyInt(), eq(3), any(PantryIngredientRequest.class))).thenReturn(Optional.of(mockResponse));
+
+        // Act and Assert
+        mockMvc.perform(put("/api/pantry/{id}", 3).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(mockRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.storage_location").value("PANTRY"));
+    }
+
     @Test 
     void updatePantryIngredient_quantityZero_return204() throws Exception {
         // Arrange
         PantryIngredientRequest mockRequest = new PantryIngredientRequest(
             2,
             new BigDecimal("100"),
-            "g"
+            "g",
+            StorageLocation.FRIDGE
         );
 
         when(pantryService.updateIngredientManually(anyInt(), anyInt(), any(PantryIngredientRequest.class))).thenReturn(Optional.empty());
@@ -260,7 +302,8 @@ public class PantryControllerTest {
         PantryIngredientRequest mockRequest = new PantryIngredientRequest(
             2,
             new BigDecimal("100"),
-            "g"
+            "g",
+            StorageLocation.FRIDGE
         );
 
         when(pantryService.updateIngredientManually(anyInt(), anyInt(), any(PantryIngredientRequest.class))).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found in pantry in pantry"));
@@ -280,7 +323,8 @@ public class PantryControllerTest {
         PantryIngredientRequest mockRequest = new PantryIngredientRequest(
             2,
             new BigDecimal("100"),
-            "g"
+            "g",
+            StorageLocation.FRIDGE
         );
 
         when(pantryService.updateIngredientManually(anyInt(), eq(3), any(PantryIngredientRequest.class))).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this ingredient"));
@@ -301,7 +345,8 @@ public class PantryControllerTest {
         PantryIngredientRequest mockRequest = new PantryIngredientRequest(
             2,
             new BigDecimal("100"),
-            "g"
+            "g",
+            StorageLocation.FRIDGE
         );
 
         mockMvc.perform(put("/api/pantry/{id}", "non-int").with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
@@ -342,7 +387,8 @@ public class PantryControllerTest {
         PantryIngredientRequest mockRequest = new PantryIngredientRequest(
             2,
             new BigDecimal("100"),
-            "g"
+            "g",
+            StorageLocation.FRIDGE
         );
 
         doThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this ingredient")).when(pantryService).removePantryIngredient(anyInt(), eq(3));
@@ -369,6 +415,7 @@ public class PantryControllerTest {
             "Legumes and Legume Products",
             new BigDecimal("100"),
             "g",
+            StorageLocation.FRIDGE,
             OffsetDateTime.parse("2026-07-17T14:00:00Z"),
             OffsetDateTime.parse("2026-07-17T14:00:00Z")
         );

@@ -14,6 +14,7 @@ import com.mealchemy.pantry.repository.PantryIngredientRepository;
 import com.mealchemy.pantry.dto.PantryIngredientRequest;
 // enums
 import com.mealchemy.shared.enums.PreferredUnit;
+import com.mealchemy.shared.enums.StorageLocation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
@@ -129,7 +130,8 @@ public class PantryControllerIntegrationTest {
         PantryIngredientRequest request = new PantryIngredientRequest(
                 testIngredient.getIngId(),
                 new BigDecimal("1750"),
-                "g"
+                "g",
+                StorageLocation.FRIDGE
         );
 
         //bbackend fills in name/category from the ingredient catalogue.
@@ -173,7 +175,8 @@ public class PantryControllerIntegrationTest {
         PantryIngredientRequest request = new PantryIngredientRequest(
                 testIngredient.getIngId(),
                 new BigDecimal("4.25"),
-                "g"
+                "g",
+                StorageLocation.FRIDGE
         );
 
         //updating keeps the same pantry row, changes the amount/unit

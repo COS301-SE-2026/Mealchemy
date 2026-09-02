@@ -22,6 +22,7 @@ import com.mealchemy.pantry.service.PantryService;
 
 // shared
 import com.mealchemy.shared.enums.PreferredUnit;
+import com.mealchemy.shared.enums.StorageLocation;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,6 +73,7 @@ public class PantryServiceTest {
         existingPantryIngredient.setIngredientId(2);
         existingPantryIngredient.setQuantity(new BigDecimal("250"));
         existingPantryIngredient.setUnit("g");
+        existingPantryIngredient.setStorageLocation(StorageLocation.PANTRY);
 
         catalogueInstance = new IngredientCatalogue();
         catalogueInstance.setName("Hummus");
@@ -84,7 +86,8 @@ public class PantryServiceTest {
         createRequest = new PantryIngredientRequest (
             2,
             new BigDecimal("150"),
-            "g"
+            "g",
+            StorageLocation.FRIDGE
         );
 
         // so call doesn't have to change in every test
@@ -118,6 +121,7 @@ public class PantryServiceTest {
             "Legumes and Legume Products",
             new BigDecimal("250"),
             "g",
+            StorageLocation.PANTRY,
             null,
             null
         );
@@ -169,6 +173,20 @@ public class PantryServiceTest {
         assertEquals("Hummus", response.name());
         assertEquals("Legumes and Legume Products", response.category());
         verify(pantryIngredientRepository).save(any(PantryIngredient.class));
+    }
+
+    @Test
+    void addIngredientManually_setsStorageLocationFromRequest() {
+        // Arrange
+        when(ingredientCatalogueRepository.findById(2)).thenReturn(Optional.of(catalogueInstance));
+        when(ingredientCategoryRepository.findById(5)).thenReturn(Optional.of(categoryInstance));
+        when(pantryIngredientRepository.save(any(PantryIngredient.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Act
+        PantryIngredientResponse response = pantryService.addIngredientManually(1, createRequest);
+
+        // Assert
+        assertEquals(StorageLocation.FRIDGE, response.storageLocation());
     }
 
 
@@ -228,7 +246,8 @@ public class PantryServiceTest {
         PantryIngredientRequest request = new PantryIngredientRequest (
             2,
             BigDecimal.ZERO,
-            "g"
+            "g",
+            StorageLocation.PANTRY
         );
 
         when(pantryIngredientRepository.findByPIngredientIdAndUserId(1, 1)).thenReturn(Optional.of(existingPantryIngredient));
@@ -242,6 +261,41 @@ public class PantryServiceTest {
         verify(pantryIngredientRepository, never()).save(any());
     }
 
+    @Test
+    void updateIngredientManually_changesStorageLocation_whenDifferentFromExisting() {
+        // Arrange
+        when(pantryIngredientRepository.findByPIngredientIdAndUserId(1, 1)).thenReturn(Optional.of(existingPantryIngredient));
+        when(pantryIngredientRepository.save(any(PantryIngredient.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(ingredientCatalogueRepository.findById(2)).thenReturn(Optional.of(catalogueInstance));
+        when(ingredientCategoryRepository.findById(5)).thenReturn(Optional.of(categoryInstance));
+
+        // Act
+        Optional<PantryIngredientResponse> response = pantryService.updateIngredientManually(1, 1, createRequest);
+
+        // Assert
+        assertTrue(response.isPresent());
+        assertEquals(StorageLocation.FRIDGE, response.get().storageLocation());
+    }
+
+    @Test
+    void updateIngredientManually_withZeroQuantity_deletesRegardlessOfStorageLocation() {
+        // Arrange
+        PantryIngredientRequest zeroQtyRequest = new PantryIngredientRequest(
+            2,
+            BigDecimal.ZERO,
+            "g",
+            StorageLocation.FRIDGE
+        );
+        when(pantryIngredientRepository.findByPIngredientIdAndUserId(1, 1)).thenReturn(Optional.of(existingPantryIngredient));
+
+        // Act
+        Optional<PantryIngredientResponse> response = pantryService.updateIngredientManually(1, 1, zeroQtyRequest);
+
+        // Assert
+        assertTrue(response.isEmpty());
+        verify(pantryIngredientRepository).delete(existingPantryIngredient);
+        verify(pantryIngredientRepository, never()).save(any());
+    }
 
     // ========== Deleting Ingredient Manually Testing ==========
 
@@ -299,6 +353,7 @@ public class PantryServiceTest {
             "Legumes and Legume Products",
             new BigDecimal("250"),
             "g",
+            StorageLocation.PANTRY,
             null,
             null
         );
