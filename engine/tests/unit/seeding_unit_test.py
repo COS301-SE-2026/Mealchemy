@@ -9,7 +9,9 @@ class TestDeriveSeed:
         assert derive_seed(None, "novelty") is None
 
     def test_same_seed_and_purpose_is_deterministic(self):
-        assert derive_seed(42, "sampling") == derive_seed(42, "sampling")
+        first_result = derive_seed(42, "sampling")
+        second_result = derive_seed(42, "sampling")
+        assert first_result == second_result
 
     def test_different_purposes_produce_different_derived_seeds(self):
         assert derive_seed(42, "sampling") != derive_seed(42, "novelty")
