@@ -161,6 +161,119 @@ class HelpScreen extends StatelessWidget {
                   ),
                 ],
               ),
+              const HelpRow(
+                icon: Icons.explore_outlined,
+                title: 'Guided Discovery',
+                body: [
+                  HelpBodyText(
+                    'Guided Discovery helps you find recipes that match your '
+                    'tastes and the ingredients you have available.',
+                  ),
+                  SizedBox(height: 8),
+                  HelpBodyText(
+                    'Browse the recommended recipes and respond to each one '
+                    'to help Mealchemy learn what you enjoy.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.favorite_border,
+                    text:
+                        'Like recipes that interest you to improve future recommendations.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.close_rounded,
+                    text:
+                        'Skip recipes that are not for you and continue discovering new options.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.tune_rounded,
+                    text:
+                        'Your pantry and saved food preferences help shape the recipes you see.',
+                  ),
+                ],
+              ),
+              const HelpRow(
+                icon: Icons.monitor_heart_outlined,
+                title: 'Understanding Nutrition',
+                body: [
+                  HelpBodyText(
+                    'Open the Nutrition tab on a recipe to view its estimated '
+                    'nutritional information.',
+                  ),
+                  SizedBox(height: 8),
+                  HelpIconBullet(
+                    icon: Icons.swap_horiz_rounded,
+                    text:
+                        'Switch between values for the full recipe and values per serving.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.pie_chart_outline_rounded,
+                    text:
+                        'View calories, protein, carbohydrates, fat, fibre, and sodium.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.expand_more_rounded,
+                    text:
+                        'Expand an ingredient to see how it contributes to the recipe totals.',
+                  ),
+                  SizedBox(height: 8),
+                  HelpBodyText(
+                    'Nutritional values are estimates based on data provided '
+                    'by USDA FoodData Central and may not be completely accurate.',
+                  ),
+                ],
+              ),
+              const HelpRow(
+                icon: Icons.link_rounded,
+                title: 'Saving External Recipe Links',
+                body: [
+                  HelpBodyText(
+                    'The External Links folder in your Vault keeps recipe '
+                    'links from outside Mealchemy together in one place.',
+                  ),
+                  SizedBox(height: 8),
+                  HelpIconBullet(
+                    icon: Icons.bookmark_add_outlined,
+                    text:
+                        'Save an external recipe link so you can easily return to it later.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.open_in_new_rounded,
+                    text:
+                        'Open a saved link to view the recipe on its original website.',
+                  ),
+                ],
+              ),
+              const HelpRow(
+                icon: Icons.cloud_off_outlined,
+                title: 'Using Mealchemy Offline',
+                body: [
+                  HelpBodyText(
+                    'When you lose your connection, Mealchemy can still show '
+                    'content that was previously saved to your device.',
+                  ),
+                  SizedBox(height: 8),
+                  HelpIconBullet(
+                    icon: Icons.visibility_outlined,
+                    text:
+                        'Browse cached recipes, Vaults, Discover, Pantry, and Shopping Lists while offline.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.info_outline_rounded,
+                    text:
+                        'The offline banner and freshness labels show when you are viewing cached information.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.edit_off_outlined,
+                    text:
+                        'Changes such as creating, editing, deleting, favouriting, checking items, and updating your pantry are unavailable offline.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.wifi_rounded,
+                    text:
+                        'Online controls become available again after Mealchemy reconnects to the backend.',
+                  ),
+                ],
+              ),
 
               const HelpRow(
                 icon: Icons.restaurant_menu_rounded,
