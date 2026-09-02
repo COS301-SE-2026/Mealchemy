@@ -7,7 +7,7 @@ import java.util.*;
 
 /* Import classes */
 import com.mealchemy.engine.service.RecommendationService;
-import com.mealchemy.engine.dto.RecommendationResponse;
+import com.mealchemy.engine.dto.EnrichedRecommendationResponse;
 
 @RestController
 @RequestMapping("/discovery")
@@ -23,7 +23,7 @@ public class RecommendationController {
 
     // Get
     @GetMapping("/recommendations")
-    public RecommendationResponse getRecommendations(@AuthenticationPrincipal String userId, 
+    public EnrichedRecommendationResponse getRecommendations(@AuthenticationPrincipal String userId, 
     @RequestParam(required = false) Integer batchSize,
     @RequestParam(required = false) List<Integer> excludeRecipeIds,
     @RequestParam(required = false) Integer seed)
