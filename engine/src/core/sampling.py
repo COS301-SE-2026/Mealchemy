@@ -1,4 +1,4 @@
-import random  # sonar-resolve [safe] python:S2245 "Deterministic seeding for reproducibility"  # noqa
+import random # NOSONAR(S2245) # noqa
 from src.config import TOURNAMENT_SAMPLE_SIZE
 from src.core.seeding import derive_seed
 from src.models.recipe import CandidatePoolEntry
