@@ -13,6 +13,7 @@ import '../widgets/recipe_hero.dart';
 import '../widgets/recipe_ingredient_row.dart';
 import '../widgets/recipe_nutrition_tab.dart';
 import '../widgets/recipe_stat_card.dart';
+import '../widgets/recipe_servings_section.dart';
 import '../widgets/recipe_step_row.dart';
 import '../widgets/recipe_tab_bar.dart';
 import '../../offline/data/offline_cache_store.dart';
@@ -107,7 +108,7 @@ class _RecipeDetailContent extends StatelessWidget {
               children: [
                 _OverviewTab(
                     recipe: recipe, ingredients: ingredients, steps: steps),
-                _IngredientsTab(ingredients: ingredients),
+                _IngredientsTab(recipe: recipe, ingredients: ingredients),
                 _StepsTab(steps: steps),
                 RecipeNutritionTab(
                   recipeId: recipe.recipeId,
@@ -150,10 +151,21 @@ class _OverviewTab extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
       children: [
         _StatRow(recipe: recipe),
+        const SizedBox(height: 12),
+        RecipeServingsSection(
+          recipeId: recipe.recipeId,
+          baseServings: recipe.servingSize ?? 1,
+        ),
         const SizedBox(height: 26),
         const _SectionTitle(title: 'Ingredients'),
         const SizedBox(height: 12),
-        ...ingredients.map((ing) => RecipeIngredientRow(ingredient: ing)),
+        ...ingredients.map(
+          (ing) => RecipeIngredientRow(
+            ingredient: ing,
+            recipeId: recipe.recipeId,
+            baseServings: recipe.servingSize ?? 1,
+          ),
+        ),
         const SizedBox(height: 28),
         const _SectionTitle(title: 'Preparation'),
         const SizedBox(height: 12),
@@ -165,8 +177,9 @@ class _OverviewTab extends StatelessWidget {
 }
 
 class _IngredientsTab extends StatelessWidget {
-  const _IngredientsTab({required this.ingredients});
+  const _IngredientsTab({required this.recipe, required this.ingredients});
 
+  final Recipe recipe;
   final List<RecipeIngredient> ingredients;
 
   @override
@@ -176,7 +189,13 @@ class _IngredientsTab extends StatelessWidget {
       children: [
         const _SectionTitle(title: 'Ingredients'),
         const SizedBox(height: 12),
-        ...ingredients.map((ing) => RecipeIngredientRow(ingredient: ing)),
+        ...ingredients.map(
+          (ing) => RecipeIngredientRow(
+            ingredient: ing,
+            recipeId: recipe.recipeId,
+            baseServings: recipe.servingSize ?? 1,
+          ),
+        ),
       ],
     );
   }

@@ -59,6 +59,22 @@ void main() {
     expect(find.text('Contact Support'), findsOneWidget);
   });
 
+  testWidgets('renders help topics for recently added features', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 4000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(host());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Guided Discovery'), findsOneWidget);
+    expect(find.text('Understanding Nutrition'), findsOneWidget);
+    expect(find.text('Saving External Recipe Links'), findsOneWidget);
+    expect(find.text('Using Mealchemy Offline'), findsOneWidget);
+  });
+
   testWidgets('a row expands to reveal its body when tapped', (tester) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 1.0;

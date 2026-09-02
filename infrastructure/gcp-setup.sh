@@ -265,7 +265,8 @@ for secret in \
   mealchemy-db-username-staging \
   mealchemy-db-password-prod \
   mealchemy-db-password-staging \
-  mealchemy-jwt-secret; do
+  mealchemy-jwt-secret \
+  mealchemy-usda-api-key; do
   if ! gcloud secrets describe "${secret}" --project="${PROJECT_ID}" &>/dev/null; then
     gcloud secrets create "${secret}" --replication-policy="automatic"
   fi
@@ -279,7 +280,8 @@ for secret in \
   mealchemy-db-username-staging \
   mealchemy-db-password-prod \
   mealchemy-db-password-staging \
-  mealchemy-jwt-secret; do
+  mealchemy-jwt-secret \
+  mealchemy-usda-api-key; do
   gcloud secrets add-iam-policy-binding "${secret}" \
     --project="${PROJECT_ID}" \
     --member="serviceAccount:${RUNTIME_SA_EMAIL}" \
@@ -321,6 +323,8 @@ echo "echo -n 'YOUR_NEON_PASSWORD_HERE' | gcloud secrets versions add mealchemy-
 echo ""
 echo "# Generate JWT secret with: openssl rand -base64 48"
 echo "echo -n 'YOUR_STRONG_JWT_SECRET_HERE' | gcloud secrets versions add mealchemy-jwt-secret --data-file=-"
+echo ""
+echo "echo -n 'YOUR_USDA_API_KEY_HERE' | gcloud secrets versions add mealchemy-usda-api-key --data-file=-"
 echo ""
 echo "# JWT_EXPIRATION_MS is not a secret - set as a plain env var in cd.yml"
 echo ""

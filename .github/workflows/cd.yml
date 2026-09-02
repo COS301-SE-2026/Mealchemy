@@ -88,6 +88,9 @@ on:
       - 'infrastructure/Dockerfile.backend'
       - 'infrastructure/Dockerfile.engine'
       - '.github/workflows/cd.yml'
+      - '!**/*.md'
+      - '!backend/src/test/**'
+      - '!engine/tests/**'
 
 #identifiers
 env:
@@ -356,7 +359,8 @@ jobs:
           SECRETS="SPRING_DATASOURCE_URL=mealchemy-db-url-${ENV}:latest,"
           SECRETS+="SPRING_DATASOURCE_USERNAME=mealchemy-db-username-${ENV}:latest,"
           SECRETS+="SPRING_DATASOURCE_PASSWORD=mealchemy-db-password-${ENV}:latest,"
-          SECRETS+="JWT_SECRET=mealchemy-jwt-secret:latest"
+          SECRETS+="JWT_SECRET=mealchemy-jwt-secret:latest,"
+          SECRETS+="USDA_API_KEY=mealchemy-usda-api-key:latest"
 
           SERVICE_EXISTS=false
           if gcloud run services describe "mealchemy-backend-${ENV}" \

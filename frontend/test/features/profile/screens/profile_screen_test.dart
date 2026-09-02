@@ -63,7 +63,7 @@ Widget _host(ProfileRepository repo) {
     routes: [
       GoRoute(
         path: AppRoutes.profile,
-        builder: (_, __) => const ProfileScreen(),
+        builder: (_, __) => const Scaffold(body: ProfileScreen()),
       ),
     ],
   );
