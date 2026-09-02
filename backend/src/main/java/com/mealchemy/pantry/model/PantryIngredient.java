@@ -37,6 +37,8 @@ public class PantryIngredient {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
+    @Column(name = "storage_location")
+    private String storageLocation;
 
     // Getters and setters
     public Integer getPIngredientId() {
@@ -81,6 +83,16 @@ public class PantryIngredient {
 
     public OffsetDateTime getUpdatedAt() { 
         return updatedAt; 
+    }
+
+    public String getStorageLocation()
+    {
+        return storageLocation;
+    }
+
+    public void setStorageLocation(String storageLocationIn)
+    {
+        this.storageLocation = storageLocationIn;
     }
 
 }
