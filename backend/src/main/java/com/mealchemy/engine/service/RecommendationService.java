@@ -180,7 +180,11 @@ public class RecommendationService {
     {
         List<RecipeTags> recipeTags = recipeTagsRepository.findByRecipeRecipeId(recipe.getRecipeId());
 
-        return recipeTags.stream().map(RecipeTags::getTag).filter(Tags::getIsDietary).map(Tags::getTagName).toList();
+        return recipeTags.stream()
+            .map(RecipeTags::getTag)
+            .filter(tag -> Boolean.TRUE.equals(tag.getIsDietary()))
+            .map(Tags::getTagName)
+            .toList();    
     }
 
     // Helper function to build ingredients object
