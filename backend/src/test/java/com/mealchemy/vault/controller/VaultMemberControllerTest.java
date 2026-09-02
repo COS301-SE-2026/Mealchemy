@@ -117,7 +117,7 @@ public class VaultMemberControllerTest {
     }
 
     @Test
-    void removeVaultMember_returns200() throws Exception
+    void removeVaultMember_returns204() throws Exception
     {
         doNothing().when(vaultMemberService).removeVaultMember(eq(1), any(VaultMemberRequest.class), eq(1));
 
@@ -125,7 +125,7 @@ public class VaultMemberControllerTest {
             .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk());
+            .andExpect(status().isNoContent());
     }
 
     @Test
