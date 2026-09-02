@@ -25,12 +25,13 @@ class PantryEntry(BaseModel):
     unit: str = Field(min_length = 1)
     added_at: datetime
     shelf_life_days: Optional[int] = Field(default = None, gt = 0, le = 1825)
-    storage_location: Literal["PANTRY", "FRIDGE", "FREEZER"]
+    storage_location: Literal["PANTRY", "FRIDGE"]
 
 class SwipeHistoryEntry(BaseModel):
     recipe_id: int = Field(gt = 0)
     action: SwipeAction
     swiped_at: datetime
+    
 class UserState(BaseModel):
     user_id: int = Field(gt = 0)
     allergies: list[str]
