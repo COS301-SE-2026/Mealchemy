@@ -116,7 +116,7 @@ class TestHardFilter:
         assert result == []
 
     def test_everything_filtered_returns_empty_list_not_error(slef, recipe_factory, ingredient_factory, user_state_factory):
-        recipe = recipe_factory(recipe_id = 1, ingredients = [ingredient_factory(1, ccategory_id = 11)])
+        recipe = recipe_factory(recipe_id = 1, ingredients = [ingredient_factory(1, category_id = 11)])
         user_state = user_state_factory(allergies = ["PEANUTS"])
 
         result = hard_filter([recipe], user_state)

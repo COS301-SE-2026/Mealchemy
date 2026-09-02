@@ -75,7 +75,7 @@ class TestRecommendEmptyPool:
     def test_allergy_blocking_every_recipe_raises_empty_pool_error(self, user_state_factory):
         candidate_pool = load_small_pool()
 
-        user_state = user_state_factory(allergies=["SESAME"])
+        user_state = user_state_factory(allergies=["GLUTEN", "FISH"])
 
         with pytest.raises(EmptyPoolError):
             recommend(candidate_pool, user_state, seed=1)

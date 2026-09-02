@@ -35,6 +35,6 @@ def hard_filter(candidate_pool: list[CandidatePoolEntry], user_state: UserState,
     ]
 
     if not survivors:
-        raise EmptyPoolError("No recipes remain after hard filtering.")
+        return []
 
     return survivors

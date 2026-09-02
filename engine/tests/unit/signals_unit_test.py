@@ -80,7 +80,7 @@ class TestCuisineAffinityScore:
         assert cuisine_affinity_score("ITALIAN", {"ITALIAN": 0.9}) == 0.9
 
     def test_unkown_cuisine_returns_neutral_default(self):
-        assert cuisine_affinity_score("MEXICAN", {"ITALIAN: 0.9"}) == NEUTRAL_SIGNAL_VALUE
+        assert cuisine_affinity_score("MEXICAN", {"ITALIAN": 0.9}) == NEUTRAL_SIGNAL_VALUE
 
     def test_empty_affinities_returns_neutral(self):
         assert cuisine_affinity_score("ITALIAN", {}) == NEUTRAL_SIGNAL_VALUE

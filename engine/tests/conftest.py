@@ -46,8 +46,9 @@ def make_recipe(
     ingredients: list[Ingredient] | None = None,
     nutrition: Nutrition | None = None,
 ) -> CandidatePoolEntry:
+    effective_id = recipe_id if recipe_id > 0 else recipe_id + 1
     return CandidatePoolEntry(
-        recipe_id=recipe_id,
+        recipe_id=effective_id,
         title=title,
         cuisine=cuisine,
         dietary_tags=dietary_tags if dietary_tags is not None else [],

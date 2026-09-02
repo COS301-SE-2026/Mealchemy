@@ -61,12 +61,12 @@ class TestAllergenCheck:
 
     def test_mapped_allergen_passes_when_category_absent(self, ingredient_factory):
         recipe_ingredients = [ingredient_factory(1, category_id = 4)]
-        assert allergen_check(recipe_ingredients, ["PEANUTS"]) is False
+        assert allergen_check(recipe_ingredients, ["PEANUTS"]) is True
 
     def test_unmapped_allergen_fails_closed(self, ingredient_factory):
         recipe_ingredients = [ingredient_factory(1, category_id = 4)]
 
-        assert allergen_check(recipe_ingredients, ["SESAME"]) is False
+        assert allergen_check(recipe_ingredients, ["UNKNOWN_ALLERGEN"]) is False
 
     def test_multiple_allergens_any_matcch_blocks(self, ingredient_factory):
         recipe_ingredients = [ingredient_factory(1, category_id = 4), ingredient_factory(2, category_id = 11)]

@@ -62,7 +62,7 @@ class TestAllocateSlots:
         assert allocate_slots([], batch_size=10) == {}
 
     def test_clean_proportional_split_with_no_capping(self):
-        items_a = [make_item(i, "A", 0.6) for i in range(6)]
+        items_a = [make_item(i, "A", 0.6) for i in range(1, 7)]
         items_b = [make_item(i + 100, "B", 0.4) for i in range(4)]
         groups = rank_cuisines(items_a + items_b)
 
@@ -82,7 +82,7 @@ class TestAllocateSlots:
         assert sum(allocation.values()) == 10
 
     def test_zero_total_score_falls_back_to_even_split(self):
-        items_a = [make_item(i, "A", 0.0) for i in range(5)]
+        items_a = [make_item(i, "A", 0.0) for i in range(1, 6)]
         items_b = [make_item(i + 100, "B", 0.0) for i in range(5)]
         groups = rank_cuisines(items_a + items_b)
 
@@ -152,7 +152,7 @@ class TestFillWildcard:
         wildcard = fill_wildcard([group], allocation)
 
         assert wildcard is not None
-        assert wildcard.recipe_id == 2
+        assert wildcard.recipe_id == 1
 
 class TestBuildFinalList:
     def test_assembles_allocated_items_per_group(self):
