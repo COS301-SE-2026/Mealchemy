@@ -26,7 +26,7 @@ async def handle_validation_error(request: Request, exc: RequestValidationError)
 # uvicorn launch
 def main() -> None:
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port) # nosonar - must be reachable from other containers
+    uvicorn.run(app, host="0.0.0.0", port=port) # sonar-resolve [safe] python:S8392 "Docker network routing" # noqa
 
 
 if __name__ == "__main__":

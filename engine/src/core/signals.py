@@ -18,6 +18,7 @@ from src.core.ingredient_matching import pantry_ingredient_match
 from src.models.recipe import CandidatePoolEntry, Ingredient, Nutrition
 from src.models.user_state import PantryEntry, SwipeHistoryEntry, UserState
 
+
 def novelty_score(recipe_id: int, swipe_history: list[SwipeHistoryEntry]) -> float:
     relevant_swipes = [s for s in swipe_history if s.recipe_id == recipe_id]
 

@@ -264,7 +264,7 @@ public class PantryServiceTest {
     @Test
     void updateIngredientManually_changesStorageLocation_whenDifferentFromExisting() {
         // Arrange
-        when(pantryIngredientRepository.findById(1)).thenReturn(Optional.of(existingPantryIngredient));
+        when(pantryIngredientRepository.findByPIngredientIdAndUserId(1, 1)).thenReturn(Optional.of(existingPantryIngredient));
         when(pantryIngredientRepository.save(any(PantryIngredient.class))).thenAnswer(inv -> inv.getArgument(0));
         when(ingredientCatalogueRepository.findById(2)).thenReturn(Optional.of(catalogueInstance));
         when(ingredientCategoryRepository.findById(5)).thenReturn(Optional.of(categoryInstance));
@@ -286,7 +286,7 @@ public class PantryServiceTest {
             "g",
             StorageLocation.FRIDGE
         );
-        when(pantryIngredientRepository.findById(1)).thenReturn(Optional.of(existingPantryIngredient));
+        when(pantryIngredientRepository.findByPIngredientIdAndUserId(1, 1)).thenReturn(Optional.of(existingPantryIngredient));
 
         // Act
         Optional<PantryIngredientResponse> response = pantryService.updateIngredientManually(1, 1, zeroQtyRequest);
