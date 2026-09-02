@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
+import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
 
 class VaultQuickStrip extends StatelessWidget {
   const VaultQuickStrip({
@@ -41,50 +42,51 @@ class _QuickRecipeThumbnail extends StatelessWidget {
       onTap: () => context.push('/recipe/${recipe.recipeId}'),
       child: Column(
         children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              colors: [AppColors.primary, AppColors.primaryGradientLight],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+          Container(
+            width: 64,
+            height: 64,
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [AppColors.primary, AppColors.primaryGradientLight],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
             ),
-            border: Border.all(
-              color: AppColors.accent,
-              width: 2,
+            foregroundDecoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.accent,
+                width: 2,
+              ),
             ),
-            image: recipe.photoUrl != null
-                ? DecorationImage(
-                    image: NetworkImage(recipe.photoUrl!),
-                    fit: BoxFit.cover,
-                  )
-                : null,
-          ),
-          child: recipe.photoUrl == null
-              ? const Icon(
+            child: RecipeNetworkImage(
+              photoUrl: recipe.photoUrl,
+              placeholder: const Center(
+                child: Icon(
                   Icons.restaurant_rounded,
                   color: AppColors.textDark,
                   size: 26,
-                )
-              : null,
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          width: 64,
-          child: Text(
-            recipe.title,
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.textLight,
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
           ),
-        ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: 64,
+            child: Text(
+              recipe.title,
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.textLight,
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+          ),
         ],
       ),
     );

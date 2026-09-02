@@ -11,9 +11,12 @@ import '../models/recipe_step.dart';
 import '../providers/recipe_provider.dart';
 import '../widgets/recipe_hero.dart';
 import '../widgets/recipe_ingredient_row.dart';
+import '../widgets/recipe_nutrition_tab.dart';
 import '../widgets/recipe_stat_card.dart';
 import '../widgets/recipe_step_row.dart';
 import '../widgets/recipe_tab_bar.dart';
+import '../../offline/data/offline_cache_store.dart';
+import '../../offline/widgets/cache_freshness_label.dart';
 
 //tabs need controller with animation support
 class RecipeDetailScreen extends ConsumerStatefulWidget {
@@ -34,6 +37,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
   }
+
 //4 tabs are overview, ingredients, steops and nutrition
   @override
   void dispose() {
@@ -74,7 +78,6 @@ class _RecipeDetailContent extends StatelessWidget {
     required this.tabController,
   });
 
-
   final Recipe recipe;
   final TabController tabController;
 
@@ -84,26 +87,35 @@ class _RecipeDetailContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final ingredients = _sortedIngredients(recipe.ingredients);
     final steps = _sortedSteps(recipe.steps);
-  //to make hero stay fixed at top, while scroll
+    //to make hero stay fixed at top, while scroll
     return Scaffold(
       backgroundColor: AppColors.bgLight,
       body: Column(
         children: [
           RecipeHero(recipe: recipe),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
+            child: CacheFreshnessLabel(
+              collection: CacheCollection.recipe,
+              scopeId: recipe.recipeId.toString(),
+            ),
+          ),
           RecipeTabBar(controller: tabController),
           Expanded(
             child: TabBarView(
               controller: tabController,
               children: [
-                _OverviewTab(recipe: recipe, ingredients: ingredients, steps: steps),
+                _OverviewTab(
+                    recipe: recipe, ingredients: ingredients, steps: steps),
                 _IngredientsTab(ingredients: ingredients),
                 _StepsTab(steps: steps),
-                const _NutritionTab(),
+                RecipeNutritionTab(
+                  recipeId: recipe.recipeId,
+                ),
               ],
             ),
           ),
         ],
-
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
@@ -119,9 +131,7 @@ class _RecipeDetailContent extends StatelessWidget {
       ),
     );
   }
-}//simulate to start cooking, to still be implemented
-
-
+} //simulate to start cooking, to still be implemented
 
 class _OverviewTab extends StatelessWidget {
   const _OverviewTab({
@@ -189,31 +199,6 @@ class _StepsTab extends StatelessWidget {
     );
   }
 }
-//nutrition to be mocked for now as well
-class _NutritionTab extends StatelessWidget {
-  const _NutritionTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.bar_chart_rounded, size: 48, color: AppColors.textMuted),
-            const SizedBox(height: 12),
-            Text(
-              'Nutrition data coming soon',
-              style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _StatRow extends StatelessWidget {
   const _StatRow({required this.recipe});
@@ -227,7 +212,9 @@ class _StatRow extends StatelessWidget {
         Expanded(
           child: RecipeStatCard(
             icon: Icons.local_fire_department_outlined,
-            value: recipe.cookingTimeMins != null ? '${recipe.cookingTimeMins}m' : '-',
+            value: recipe.cookingTimeMins != null
+                ? '${recipe.cookingTimeMins}m'
+                : '-',
             label: 'Cook time',
           ),
         ),
@@ -235,7 +222,8 @@ class _StatRow extends StatelessWidget {
         Expanded(
           child: RecipeStatCard(
             icon: Icons.access_time,
-            value: recipe.prepTimeMins != null ? '${recipe.prepTimeMins}m' : '-',
+            value:
+                recipe.prepTimeMins != null ? '${recipe.prepTimeMins}m' : '-',
             label: 'Prep time',
           ),
         ),

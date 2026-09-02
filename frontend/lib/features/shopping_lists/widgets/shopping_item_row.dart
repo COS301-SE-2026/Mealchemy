@@ -4,16 +4,18 @@ import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/shopping_list_item.dart';
 
-//single ingredient/item row on a shopping list detail page
+// Single ingredient/item row on a shopping-list detail page.
 class ShoppingItemRow extends StatelessWidget {
   const ShoppingItemRow({
     super.key,
     required this.item,
-    required this.onChanged,
+    this.onChanged,
+    this.onEdit,
   });
 
   final ShoppingListItem item;
-  final ValueChanged<bool?> onChanged;
+  final ValueChanged<bool?>? onChanged;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -49,8 +51,7 @@ class ShoppingItemRow extends StatelessWidget {
                     ? AppColors.tertiaryMuted
                     : AppColors.textLight,
                 fontSize: 16,
-                decoration:
-                    item.checked ? TextDecoration.lineThrough : null,
+                decoration: item.checked ? TextDecoration.lineThrough : null,
               ),
             ),
           ),
@@ -62,6 +63,19 @@ class ShoppingItemRow extends StatelessWidget {
               fontSize: 16,
             ),
           ),
+          if (onEdit != null) ...[
+            const SizedBox(width: 4),
+            IconButton(
+              onPressed: onEdit,
+              tooltip: 'Edit ${item.name}',
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(
+                Icons.edit_outlined,
+                color: AppColors.primary,
+                size: 20,
+              ),
+            ),
+          ],
         ],
       ),
     );

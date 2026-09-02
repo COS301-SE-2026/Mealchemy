@@ -12,6 +12,7 @@ class AppColors {
   static const Color accentLight = Color(0xFFFEF9F1);
   static const Color accentSoft = Color(0xFFC9A84C);
   static const Color tertiaryMuted = Color(0xFF7A5C5C);
+  static const Color brown = Color(0xFF584141);
   //Background
   static const Color bgLight = Color(0xFFFEF9F1);
   static const Color bgDark = Color(0xFF1D1C17);
@@ -33,6 +34,7 @@ class AppColors {
   //Semantic
   static const Color success = Color(0xFF4CAF50);
   static const Color error = Color(0xFFDC2626);
+  static Color get errorBorder => error.withValues(alpha: 0.3);
   static const Color warning = Color(0xFFF97316);
   static const Color divider = Color(0xFFE5E2E1);
 
@@ -62,9 +64,16 @@ static const heroScrim = LinearGradient(
   stops: [0.4, 1.0],
 );
 
-  static const LinearGradient warmBg = LinearGradient(
+static const LinearGradient warmBg = LinearGradient(
     colors: [AppColors.bgLight, AppColors.bgDark],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-  );
+);
+
+static const LinearGradient accentGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFD4AF37), AppColors.accentSoft, Color(0xFFD4AF37)],
+);
+
 }

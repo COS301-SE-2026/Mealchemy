@@ -9,6 +9,7 @@ import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.recipe.model.RecipeIngredient; // can get recipeId from recipe ingredients table
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.model.VaultFolderRecipe;
+import com.mealchemy.profile.model.UserProfile;
 
 //repositories
 import com.mealchemy.shoppinglist.repository.ShoppingListRepository;
@@ -20,6 +21,7 @@ import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.recipe.repository.RecipeIngredientRepository;
 import com.mealchemy.vault.repository.VaultFolderRecipeRepository;
 import com.mealchemy.vault.repository.VaultMemberRepository;
+import com.mealchemy.profile.repository.UserProfileRepository;
 
 import org.springframework.transaction.annotation.Transactional; //need to annotate any function that makes an update to the database
 
@@ -27,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional; //need to annot
 import com.mealchemy.shoppinglist.dto.CreateShoppingListItemRequest;
 import com.mealchemy.shoppinglist.dto.CreateShoppingListRequest;
 import com.mealchemy.shoppinglist.dto.PantryRecipeComparisonRequest;
+import com.mealchemy.shoppinglist.dto.AddRecipeToShoppingListRequest;
 import com.mealchemy.shoppinglist.dto.PurchasedUpdateRequest;
 import com.mealchemy.shoppinglist.dto.ShoppingListResponse;
 import com.mealchemy.shoppinglist.dto.ShoppingListItemResponse;
@@ -38,6 +41,8 @@ import com.mealchemy.shoppinglist.dto.CompleteShopResponse;
 
 //enum for shopping list status
 import com.mealchemy.shared.enums.ShoppingListStatus;
+import com.mealchemy.shared.enums.PreferredUnit;
+import com.mealchemy.shared.unitconverter.UnitConverter;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -66,9 +71,12 @@ public class ShoppingListService {
     private final VaultFolderRecipeRepository vaultFolderRecipeRepository;
     private final VaultMemberRepository vaultMemberRepository; 
 
+    private final UserProfileRepository userProfileRepository;
+
 
     // constructor
-    public ShoppingListService(ShoppingListRepository shoppingListRepository, ShoppingListItemRepository shoppingListItemRepository, IngredientCatalogueRepository ingredientCatalogueRepository, IngredientCategoryRepository ingredientCategoryRepository, PantryIngredientRepository pantryIngredientRepository, RecipeRepository recipeRepository, RecipeIngredientRepository recipeIngredientRepository, VaultFolderRecipeRepository vaultFolderRecipeRepository, VaultMemberRepository vaultMemberRepository) {
+    public ShoppingListService(ShoppingListRepository shoppingListRepository, ShoppingListItemRepository shoppingListItemRepository, IngredientCatalogueRepository ingredientCatalogueRepository, IngredientCategoryRepository ingredientCategoryRepository, PantryIngredientRepository pantryIngredientRepository, 
+                               RecipeRepository recipeRepository, RecipeIngredientRepository recipeIngredientRepository, VaultFolderRecipeRepository vaultFolderRecipeRepository, VaultMemberRepository vaultMemberRepository,UserProfileRepository userProfileRepository) {
         this.shoppingListRepository = shoppingListRepository;
         this.shoppingListItemRepository = shoppingListItemRepository;
 
@@ -82,6 +90,8 @@ public class ShoppingListService {
 
         this.vaultFolderRecipeRepository = vaultFolderRecipeRepository;
         this.vaultMemberRepository = vaultMemberRepository;
+
+        this.userProfileRepository = userProfileRepository;
     }
 
     // ========== Shopping List Level ==========
@@ -96,6 +106,7 @@ public class ShoppingListService {
                                 shoppingList.getShoppingListId(),
                                 shoppingList.getUserId(),
                                 shoppingList.getName(),
+                                shoppingListItemRepository.countByShoppingListId(shoppingList.getShoppingListId()),
                                 shoppingList.getStatus(),
                                 shoppingList.getCreatedAt()
                             ))
@@ -121,6 +132,7 @@ public class ShoppingListService {
         return new ShoppingListResponse(saved.getShoppingListId(),
                                         saved.getUserId(),
                                         saved.getName(),
+                                        0,
                                         saved.getStatus(),
                                         saved.getCreatedAt()
         );
@@ -147,6 +159,7 @@ public class ShoppingListService {
         return new ShoppingListResponse(saved.getShoppingListId(),
                                         saved.getUserId(),
                                         saved.getName(),
+                                        shoppingListItemRepository.countByShoppingListId(saved.getShoppingListId()),
                                         saved.getStatus(),
                                         saved.getCreatedAt()
         );
@@ -181,7 +194,8 @@ public class ShoppingListService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
         }
 
-        List<ShoppingListItemResponse> items = shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId);
+        PreferredUnit preferredUnit = getPreferredUnit(userId);
+        List<ShoppingListItemResponse> items = convertItemResponses(shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId), preferredUnit);
 
         return new ShoppingListWithItemsResponse(
             list.getShoppingListId(),
@@ -189,6 +203,7 @@ public class ShoppingListService {
             list.getName(),
             list.getStatus(),
             list.getCreatedAt(),
+            items.size(),
             items
         );
     }
@@ -213,6 +228,9 @@ public class ShoppingListService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You should have a name or ingredient id"); //CHECK
         }
 
+        // normalise quantity and unit to canonical
+        UnitConverter.NormalisedQuantity normalised = UnitConverter.normaliseIngredient(request.quantity(), request.unit());
+
         // creating the new item
         ShoppingListItem newItem = new ShoppingListItem();
         newItem.setShoppingListId(id);
@@ -226,20 +244,24 @@ public class ShoppingListService {
             newItem.setName(request.name());
         }
         
-        newItem.setQuantity(request.quantity());
-        newItem.setUnit(request.unit());
+        newItem.setQuantity(normalised.quantity());
+        newItem.setUnit(normalised.unit());
         newItem.setPurchased(false);
 
         ShoppingListItem saved = shoppingListItemRepository.save(newItem);
         
+        // convert to users preferred unit
+        PreferredUnit preferredUnit = getPreferredUnit(userId);
+        UnitConverter.NormalisedQuantity display = UnitConverter.convertToUsersPreferredUnit(saved.getQuantity(), saved.getUnit(), preferredUnit);
+
         return new ShoppingListItemResponse(
             saved.getItemId(),
             saved.getShoppingListId(),
             saved.getIngId(),
             getItemName(saved.getIngId(), saved.getName()),
             getCategoryName(saved.getIngId()),
-            saved.getQuantity(),
-            saved.getUnit(),
+            display.quantity(),
+            display.unit(),
             saved.getPurchased()
         );
     }
@@ -312,21 +334,29 @@ public class ShoppingListService {
         if(request.name() != null) {
             selectedItem.setName(request.name());
         }
+
+
+        // normalise quantity and unit to canonical
+        UnitConverter.NormalisedQuantity normalised = UnitConverter.normaliseIngredient(request.quantity(), request.unit());
         
-        selectedItem.setQuantity(request.quantity());
-        selectedItem.setUnit(request.unit());
+        selectedItem.setQuantity(normalised.quantity());
+        selectedItem.setUnit(normalised.unit());
         selectedItem.setPurchased(request.purchased());
 
         ShoppingListItem saved = shoppingListItemRepository.save(selectedItem);
-        
+
+        // convert to users preferred unit
+        PreferredUnit preferredUnit = getPreferredUnit(userId);
+        UnitConverter.NormalisedQuantity display = UnitConverter.convertToUsersPreferredUnit(saved.getQuantity(), saved.getUnit(), preferredUnit);
+
         return new ShoppingListItemResponse(
             saved.getItemId(),
             saved.getShoppingListId(),
             saved.getIngId(),
             getItemName(saved.getIngId(), saved.getName()),
             getCategoryName(saved.getIngId()),
-            saved.getQuantity(),
-            saved.getUnit(),
+            display.quantity(),
+            display.unit(),
             saved.getPurchased()
         );
 
@@ -358,6 +388,10 @@ public class ShoppingListService {
         selectedItem.setPurchased(request.purchased());
 
         ShoppingListItem saved = shoppingListItemRepository.save(selectedItem);
+
+        // convert to users preferred unit
+        PreferredUnit preferredUnit = getPreferredUnit(userId);
+        UnitConverter.NormalisedQuantity display = UnitConverter.convertToUsersPreferredUnit(saved.getQuantity(), saved.getUnit(), preferredUnit);
         
         return new ShoppingListItemResponse(
             saved.getItemId(),
@@ -365,8 +399,8 @@ public class ShoppingListService {
             saved.getIngId(),
             getItemName(saved.getIngId(), saved.getName()),
             getCategoryName(saved.getIngId()),
-            saved.getQuantity(),
-            saved.getUnit(),
+            display.quantity(),
+            display.unit(),
             saved.getPurchased()
         );
     }
@@ -502,8 +536,99 @@ public class ShoppingListService {
         return new ShoppingListResponse(saved.getShoppingListId(),
                                         saved.getUserId(),
                                         saved.getName(),
+                                        shoppingListItemRepository.countByShoppingListId(saved.getShoppingListId()),
                                         saved.getStatus(),
                                         saved.getCreatedAt()
+        );
+    }
+
+    // POST request - adds a recipe's ingredients to an already existing shopping list the user chooses
+    @Transactional
+    public ShoppingListWithItemsResponse addRecipeIngredientsToShoppingList(Integer userId, Integer shoppingListId, Integer recipeId, AddRecipeToShoppingListRequest request) { 
+        // check shopping list ownership
+        ShoppingList selectedList = shoppingListRepository.findById(shoppingListId)
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
+
+        if (!selectedList.getUserId().equals(userId)){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
+        }
+        
+        // check recipe exists
+        Recipe selectedRecipe = recipeRepository.findById(recipeId)
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
+
+        // could be owned by user in private vault, be a recipe in a shared vault or be in the global 
+        if (!canUserAccessRecipe(userId, selectedRecipe)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found");
+        }
+
+        // get all recipe ingredients
+        List<RecipeIngredient> recipeIngredients = recipeIngredientRepository.findByRecipe_RecipeId(recipeId);
+
+        // to hold items that are already in the shopping list - don't need to be added to shopping list
+        List<ShoppingListItem> existingListItems = new ArrayList<>(shoppingListItemRepository.findByShoppingListId(shoppingListId));
+
+        // tells us whether to add all of recipes ingredients or only add ones not already in pantry
+        Boolean comparePantry = Boolean.TRUE.equals(request.includeAvailablePantryItems());
+
+        for (RecipeIngredient ingredient : recipeIngredients) {
+            BigDecimal quantityToAdd = ingredient.getQuantity();
+
+            // only add mssing ingredients
+            if (comparePantry) {
+                // could have multiple of the same ingredient in the pantry
+                List<PantryIngredient> currentPantryIngredient = pantryIngredientRepository.findByUserIdAndIngId(userId, ingredient.getIngId());
+
+                // find total quantity of the specififc ingredient
+                BigDecimal totalPantryIngredientQuantity = BigDecimal.ZERO;
+                for (PantryIngredient ing : currentPantryIngredient) {
+                    totalPantryIngredientQuantity = totalPantryIngredientQuantity.add(ing.getQuantity());
+                }
+
+                // pantry already has enough of the ingredient 
+                if (totalPantryIngredientQuantity.compareTo(ingredient.getQuantity()) >= 0) {
+                    continue;
+                }
+
+                // pantry does not have enough, only add missing amount
+                quantityToAdd = ingredient.getQuantity().subtract(totalPantryIngredientQuantity);
+            }
+
+            // find ingredient in selected shopping list with the SAME UNIT to merge to - still in for loop
+            Optional<ShoppingListItem> matchingItem = existingListItems.stream().filter(item -> item.getIngId() != null && item.getIngId().equals(ingredient.getIngId()))
+                                                                                .filter(item -> ingredient.getUnit().equals(item.getUnit()))
+                                                                                .findFirst();
+            // found a matching item in the selected shopping list
+            if (matchingItem.isPresent()) {
+                ShoppingListItem foundItem = matchingItem.get();
+                foundItem.setQuantity(foundItem.getQuantity().add(quantityToAdd));
+                shoppingListItemRepository.save(foundItem);
+            }
+            else { // there is no matching item in list - cretae new shopping list  item
+                ShoppingListItem newItem = new ShoppingListItem();
+                newItem.setShoppingListId(shoppingListId);
+                newItem.setIngId(ingredient.getIngId());
+                newItem.setName(null); // because ingId from recipe will never be null
+                newItem.setQuantity(quantityToAdd);
+                newItem.setUnit(ingredient.getUnit());
+                newItem.setPurchased(false);
+                ShoppingListItem saved = shoppingListItemRepository.save(newItem);
+                existingListItems.add(saved);
+            }    
+        }   
+        
+        PreferredUnit preferredUnit = getPreferredUnit(userId);
+        List<ShoppingListItemResponse> items = convertItemResponses(shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId), preferredUnit);
+
+        // return Shopping List Response
+        return new ShoppingListWithItemsResponse(
+                                    selectedList.getShoppingListId(),
+                                    selectedList.getUserId(),
+                                    selectedList.getName(),
+                                    selectedList.getStatus(),
+                                    selectedList.getCreatedAt(),
+                                    items.size(),
+                                    items
         );
     }
 
@@ -548,7 +673,8 @@ public class ShoppingListService {
             shoppingListItemRepository.save(item);
         }
 
-        List<ShoppingListItemResponse> itemsToSave = shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId);
+        PreferredUnit preferredUnit = getPreferredUnit(userId);
+        List<ShoppingListItemResponse> itemsToSave = convertItemResponses(shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId), preferredUnit);
 
         return new ShoppingListWithItemsResponse(
             selectedList.getShoppingListId(),
@@ -556,6 +682,7 @@ public class ShoppingListService {
             selectedList.getName(),
             selectedList.getStatus(),
             selectedList.getCreatedAt(),
+            itemsToSave.size(),
             itemsToSave
         );
     }
@@ -578,7 +705,8 @@ public class ShoppingListService {
             shoppingListItemRepository.save(item);
         }
 
-        List<ShoppingListItemResponse> itemsToSave = shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId);
+        PreferredUnit preferredUnit = getPreferredUnit(userId);
+        List<ShoppingListItemResponse> itemsToSave = convertItemResponses(shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId), preferredUnit);
 
         return new ShoppingListWithItemsResponse(
             selectedList.getShoppingListId(),
@@ -586,6 +714,7 @@ public class ShoppingListService {
             selectedList.getName(),
             selectedList.getStatus(),
             selectedList.getCreatedAt(),
+            itemsToSave.size(),
             itemsToSave
         );
     }
@@ -630,17 +759,47 @@ public class ShoppingListService {
         }
 
         List<ShoppingListItem> remainingItems = shoppingListItemRepository.findByShoppingListId(shoppingListId);
-        Boolean shoppingListDeleted = false;
+        Boolean canDeleteShoppingList = false;
 
         if (remainingItems.isEmpty()) {
-            shoppingListDeleted = true;
-            shoppingListRepository.delete(selectedList);
+            canDeleteShoppingList = true;
         }
 
         return new CompleteShopResponse(
             addedToPantryCount,
             skippedManualItemNames,
-            shoppingListDeleted
+            canDeleteShoppingList
         );
+    }
+
+
+    // ========== Helper for unit conversion ==========
+
+     private PreferredUnit getPreferredUnit(Integer userId) {
+        // finding users preferred unit of measurement
+        return userProfileRepository.findByUserId(userId).map(UserProfile::getPreferredUnit)
+                                                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User profile not found"));
+    }
+
+    // converting to users preferred unit for a singular shopping list item
+    private ShoppingListItemResponse convertItemResponseToPreferredUnit(ShoppingListItemResponse response, PreferredUnit preferredUnit) {
+        UnitConverter.NormalisedQuantity display = UnitConverter.convertToUsersPreferredUnit(response.quantity(), response.unit(), preferredUnit);
+
+        return new ShoppingListItemResponse(
+            response.itemId(),
+            response.shoppingListId(),
+            response.ingId(),
+            response.name(),
+            response.category(),
+            display.quantity(),
+            display.unit(),
+            response.purchased()
+        );
+    }
+
+    // converting to users preferred unit for a listof items
+    private List<ShoppingListItemResponse> convertItemResponses(List<ShoppingListItemResponse> responses, PreferredUnit preferredUnit) {
+       return responses.stream().map(response -> convertItemResponseToPreferredUnit(response, preferredUnit))
+                                .toList();
     }
 }

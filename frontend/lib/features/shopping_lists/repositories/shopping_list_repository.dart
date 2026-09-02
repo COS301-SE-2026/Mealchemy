@@ -23,13 +23,27 @@ abstract class ShoppingListRepository {
     required bool purchased,
   });
 
-  //adds a manual item to one shopping list
+  //updates existing shopping list item
+  Future<ShoppingListItem> updateShoppingListItem({
+    required String listId,
+    required String itemId,
+    int? ingId,
+    String? name,
+    required String quantity,
+    required String unit,
+    required bool purchased,
+  });
+
+  //adds either a catalogue ingredient or a custom item to one shopping list
+  //exactly one of ingId or name
   Future<ShoppingListItem> addItemToShoppingList({
     required String listId,
-    required String name,
+    int? ingId,
+    String? name,
     required String quantity,
     required String unit,
   });
+
   //moves purchased list items into pantry and removes them from this list
   Future<CompleteShopResult> completeShop(String listId);
 
@@ -53,10 +67,16 @@ abstract class ShoppingListRepository {
     required String name,
     String status = 'ACTIVE',
   });
-  // genrating shopping list from recipe 
+  // genrating shopping list from recipe
   Future<ShoppingList> generateFromRecipe({
-  required int recipeId,
-  required String name,
-  required bool includeAvailablePantryItems,
-});
+    required int recipeId,
+    required String name,
+    required bool includeAvailablePantryItems,
+  });
+  //adds a recipe ingredients into an existing shopping list
+  Future<ShoppingList> addRecipeToExistingList({
+    required String listId,
+    required int recipeId,
+    required bool includeAvailablePantryItems,
+  });
 }

@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
+import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
 import '../../../core/shared_widgets/Molecules/app_confirm_dialog.dart';
+
 //single recipe row inside a vault folder
 class FolderRecipeRow extends StatelessWidget {
   const FolderRecipeRow({
@@ -11,11 +13,13 @@ class FolderRecipeRow extends StatelessWidget {
     required this.recipe,
     this.onEditTap,
     this.onDeleteConfirmed,
+    this.mutationsEnabled = true,
   });
 
   final Recipe recipe;
   final VoidCallback? onEditTap;
   final VoidCallback? onDeleteConfirmed;
+  final bool mutationsEnabled;
 
   String get _subtitle {
     final total = (recipe.prepTimeMins ?? 0) + (recipe.cookingTimeMins ?? 0);
@@ -27,7 +31,7 @@ class FolderRecipeRow extends StatelessWidget {
     return parts.join(' · ');
   }
 
-    Future<void> _handleDeleteTap(BuildContext context) async {
+  Future<void> _handleDeleteTap(BuildContext context) async {
     final confirmed = await showAppConfirmDialog(
       context: context,
       title: 'Delete recipe',
@@ -90,22 +94,37 @@ class FolderRecipeRow extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      onPressed:  () => _handleDeleteTap(context),
-                      icon: const Icon(
+                      onPressed: mutationsEnabled
+                          ? () => _handleDeleteTap(context)
+                          : null,
+                      tooltip: mutationsEnabled
+                          ? 'Delete recipe'
+                          : 'Unavailable offline',
+                      icon: Icon(
                         Icons.delete_outline,
                         size: 18,
-                        color: AppColors.primary,
+                        color: mutationsEnabled
+                            ? AppColors.primary
+                            : AppColors.textMuted,
                       ),
                       constraints: const BoxConstraints(),
                       padding: const EdgeInsets.all(6),
                     ),
                     IconButton(
-                      //Will add a edit recipe screen point
-                      onPressed: onEditTap,
-                      icon: const Icon(
+                      onPressed: mutationsEnabled
+                          ? onEditTap ??
+                              () => context
+                                  .push('/edit-recipe/${recipe.recipeId}')
+                          : null,
+                      tooltip: mutationsEnabled
+                          ? 'Edit recipe'
+                          : 'Unavailable offline',
+                      icon: Icon(
                         Icons.edit_outlined,
                         size: 18,
-                        color: AppColors.primary,
+                        color: mutationsEnabled
+                            ? AppColors.primary
+                            : AppColors.textMuted,
                       ),
                       constraints: const BoxConstraints(),
                       padding: const EdgeInsets.all(6),
@@ -128,26 +147,23 @@ class _RecipeThumb extends StatelessWidget {
   final String? photoUrl;
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: photoUrl == null ? AppColors.brand : null,
-        image: photoUrl != null
-            ? DecorationImage(
-                image: NetworkImage(photoUrl!),
-                fit: BoxFit.cover,
-              )
-            : null,
-      ),
-      child: photoUrl == null
-          ? const Icon(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        width: 56,
+        height: 56,
+        child: RecipeNetworkImage(
+          photoUrl: photoUrl,
+          placeholder: DecoratedBox(
+            decoration: const BoxDecoration(gradient: AppColors.brand),
+            child: const Icon(
               Icons.restaurant_rounded,
               color: AppColors.textDark,
               size: 22,
-            )
-          : null,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

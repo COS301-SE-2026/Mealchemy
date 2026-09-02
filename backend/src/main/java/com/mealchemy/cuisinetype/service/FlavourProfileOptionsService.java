@@ -27,4 +27,9 @@ public class FlavourProfileOptionsService {
     {
         return flavourProfileOptionsRepository.findAll().stream().map(FlavourProfileOptionsResponse::from).collect(Collectors.toList());
     }
+
+    // for user preference profile
+    public List<String> getValidCuisineTypes() {
+        return flavourProfileOptionsRepository.getAllValues();
+    }
 }

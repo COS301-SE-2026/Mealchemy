@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colours.dart';
@@ -8,7 +9,6 @@ import '../providers/vault_provider.dart';
 import 'folder_recipe_row.dart';
 import 'folder_menu.dart';
 import '../models/vault.dart';
-
 
 //folder row that expands in place to reveal its recipes
 class VaultFolderRow extends ConsumerStatefulWidget {
@@ -30,14 +30,25 @@ class _VaultFolderRowState extends ConsumerState<VaultFolderRow> {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
   @override
   Widget build(BuildContext context) {
+    final isReadOnly = ref.watch(offlineReadOnlyProvider);
     final recipesAsync =
         ref.watch(folderRecipeDisplayProvider(widget.folder.folderId));
 
@@ -130,8 +141,7 @@ class _VaultFolderRowState extends ConsumerState<VaultFolderRow> {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
                   'Unable to load recipes.',
-                  style: AppTextStyles.caption
-                  .copyWith(color: AppColors.error),
+                  style: AppTextStyles.caption.copyWith(color: AppColors.error),
                 ),
               ),
               data: (recipes) => recipes.isEmpty
@@ -148,8 +158,9 @@ class _VaultFolderRowState extends ConsumerState<VaultFolderRow> {
                         for (final recipe in recipes)
                           FolderRecipeRow(
                             recipe: recipe,
+                            mutationsEnabled: !isReadOnly,
                             onEditTap: () =>
-                                context.push('/recipe/${recipe.recipeId}/edit'),
+                                context.push('/edit-recipe/${recipe.recipeId}'),
                             onDeleteConfirmed: () async {
                               try {
                                 await ref.read(

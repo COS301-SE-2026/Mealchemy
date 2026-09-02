@@ -31,6 +31,13 @@
 		<postgresql.version>42.7.12</postgresql.version>
 		<tomcat.version>10.1.55</tomcat.version>
 		<jackson-bom.version>2.21.4</jackson-bom.version>
+		<springdoc.version>2.8.9</springdoc.version>
+
+		<!-- gcp photo storage -->
+		<google-cloud-storage.version>2.69.0</google-cloud-storage.version>
+
+		<micrometer.version>1.15.12</micrometer.version>
+		<spring-data-bom.version>2025.0.12</spring-data-bom.version>
 
 		<spring-framework.version>6.2.19</spring-framework.version>
 	</properties>
@@ -80,6 +87,13 @@
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
 
+		<!-- gcp photo storage -->
+		<dependency>
+			<groupId>com.google.cloud</groupId>
+			<artifactId>google-cloud-storage</artifactId>
+			<version>${google-cloud-storage.version}</version>
+		</dependency>
+
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
@@ -107,6 +121,13 @@
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+
+		<!-- OpenAPI 3 spec generation and Swagger UI. Serves the spec at /v3/api-docs and the UI at /swagger-ui.html -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>${springdoc.version}</version>
 		</dependency>
 	</dependencies>
 
@@ -157,6 +178,7 @@
                     <exclude>**/model/**/*.class</exclude>
                     <exclude>**/dto/**/*.class</exclude>
                     <exclude>**/pantry/**/*.class</exclude>
+					<exclude>**/external/NutritionDataProvider.class</exclude>
                 </excludes>
 				</configuration>
 				<executions>

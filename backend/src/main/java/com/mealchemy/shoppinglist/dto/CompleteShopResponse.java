@@ -9,5 +9,5 @@ public record CompleteShopResponse( //records are immutable and auto generate co
    //get specified shopping list from URL therefore not in request body
     @JsonProperty("added_to_pantry_count") Integer addedToPantryCount,
     @JsonProperty("skipped_manual_items") List<String> skippedManualItemNames,
-    @JsonProperty("shopping_list_deleted") Boolean shoppingListDeleted
+    @JsonProperty("can_delete_shopping_list") Boolean canDeleteShoppingList
 ) {}

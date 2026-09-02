@@ -10,6 +10,9 @@ import '../repositories/pantry_repository.dart';
 import '../widgets/pantry_item_card.dart';
 import '../../../core/providers/api_service_provider.dart';
 import '../repositories/ingredient_catalogue_repository.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../offline/providers/offline_cache_provider.dart';
+import '../../offline/repositories/cached_pantry_repository.dart';
 
 //selects mock/API repo
 final pantryRepositoryProvider = Provider<PantryRepository>((ref) {
@@ -17,7 +20,14 @@ final pantryRepositoryProvider = Provider<PantryRepository>((ref) {
     return MockPantryRepository();
   }
 
-  return ApiPantryRepository(ref.read(dioProvider));
+  final remote = ApiPantryRepository(ref.read(dioProvider));
+  final viewerUserId = ref.watch(activeIdentityProvider);
+  if (viewerUserId == null) return remote;
+  return CachedPantryRepository(
+    remote: remote,
+    cache: ref.watch(pantryCacheStoreProvider),
+    viewerUserId: viewerUserId,
+  );
 });
 
 //gives screens access to ingredient catalogue search
@@ -32,16 +42,16 @@ final pantryStateProvider = AsyncNotifierProvider<PantryNotifier, PantryState>(
 );
 
 class PantryNotifier extends AsyncNotifier<PantryState> {
-  late final PantryRepository _repository;
+  PantryRepository get _repository => ref.read(pantryRepositoryProvider);
 
   @override
   Future<PantryState> build() async {
-    _repository = ref.watch(pantryRepositoryProvider);
+    final repository = ref.watch(pantryRepositoryProvider);
 
-    final summary = await _repository.getPantrySummary();
-    final filters = await _repository.getPantryFilters();
-    final ingredients = await _repository.getPantryIngredients();
-    final categories = await _repository.getIngredientCategories();
+    final summary = await repository.getPantrySummary();
+    final filters = await repository.getPantryFilters();
+    final ingredients = await repository.getPantryIngredients();
+    final categories = await repository.getIngredientCategories();
 
     return PantryState(
       summary: summary,

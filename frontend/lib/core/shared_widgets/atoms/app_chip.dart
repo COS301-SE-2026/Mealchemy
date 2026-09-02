@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colours.dart';
 import '../../theme/app_typography.dart';
 
+enum AppChipVariant { solid, white }
+
 class AppChip extends StatelessWidget {
   const AppChip({
     super.key,
@@ -10,18 +12,29 @@ class AppChip extends StatelessWidget {
     this.selected = false,
     this.onTap,
     this.onRemove,
+    this.variant = AppChipVariant.solid,
   });
 
   final String label;
   final bool selected;
   final VoidCallback? onTap;
   final VoidCallback? onRemove;
+  final AppChipVariant variant;
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = selected ? AppColors.primary : AppColors.surfaceLight;
-    final foregroundColor = selected ? AppColors.textDark : AppColors.textLight;
-    final borderColor = selected ? AppColors.primary : AppColors.divider;
+    final white = variant == AppChipVariant.white;
+
+    final backgroundColor = white
+        ? AppColors.surfaceWhite
+        : (selected ? AppColors.primary : AppColors.surfaceLight);
+    final foregroundColor = white
+        ? AppColors.textLight
+        : (selected ? AppColors.textDark : AppColors.textLight);
+    final borderColor = white
+        ? AppColors.inputBorder
+        : (selected ? AppColors.primary : AppColors.divider);
+    final removeColor = white ? AppColors.primary : foregroundColor;
 
     return Material(
       color: backgroundColor,
@@ -56,7 +69,7 @@ class AppChip extends StatelessWidget {
                   child: Icon(
                     Icons.close,
                     size: 14,
-                    color: foregroundColor,
+                    color: removeColor,
                   ),
                 ),
               ],

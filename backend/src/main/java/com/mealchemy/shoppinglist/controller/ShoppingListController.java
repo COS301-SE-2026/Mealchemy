@@ -54,6 +54,11 @@ public class ShoppingListController {
         return ResponseEntity.ok(shoppingListService.generateShoppingListFromRecipe(Integer.parseInt(userId), recipeId, request));
     }
 
+    @PostMapping("/add-from-recipe/{shoppingListId}/{recipeId}")
+    public ResponseEntity<ShoppingListWithItemsResponse> autoGenerateFromRecipeToExistingList(@AuthenticationPrincipal String userId, @PathVariable Integer recipeId, @PathVariable Integer shoppingListId, @RequestBody AddRecipeToShoppingListRequest request) {
+        return ResponseEntity.ok(shoppingListService.addRecipeIngredientsToShoppingList(Integer.parseInt(userId), shoppingListId, recipeId, request));
+    }
+
 
     // ========== Shopping List Item Level ==========
 

@@ -5,9 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/widgets/recipe_hero.dart';
+import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
 import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
 import 'package:mealchemy/features/shopping_lists/repositories/mock_shopping_list_repository.dart';
-
 
 void main() {
   setUpAll(() {
@@ -48,24 +48,32 @@ void main() {
     expect(find.byIcon(Icons.restaurant_menu), findsOneWidget);
   });
 
+  testWidgets('RecipeHero uses the cached image for a photoUrl',
+      (tester) async {
+    await tester.pumpWidget(host(baseRecipe.copyWith(
+      photoUrl: 'https://example.test/risotto.jpg',
+    )));
+
+    expect(find.byType(RecipeNetworkImage), findsOneWidget);
+  });
+
   testWidgets('RecipeHero renders back, shopping-list and save buttons',
       (tester) async {
-
     await tester.pumpWidget(host(baseRecipe));
     expect(find.byIcon(Icons.arrow_back), findsOneWidget);
     expect(find.byIcon(Icons.add_shopping_cart), findsOneWidget);
     expect(find.byIcon(Icons.bookmark_add_outlined), findsOneWidget);
   });
 
-  testWidgets('tapping the shopping-list button shows a success snackbar',
+  testWidgets('tapping the shopping-list button opens the add-to-list sheet',
       (tester) async {
     await tester.pumpWidget(host(baseRecipe));
     await tester.pumpAndSettle();
+
     await tester.tap(find.byIcon(Icons.add_shopping_cart));
     await tester.pumpAndSettle();
-    expect(
-      find.text('Shopping list created for Saffron-Infused Risotto'),
-      findsOneWidget,
-    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Create Shopping List'), findsOneWidget);
   });
 }
