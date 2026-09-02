@@ -8,4 +8,5 @@ class AppConfig {
   static const bool mockPantry = false;
   static const bool mockDiscovery = false; 
   static const bool mockShoppinglist = false;
+  static const bool mockProfile = false;
 }

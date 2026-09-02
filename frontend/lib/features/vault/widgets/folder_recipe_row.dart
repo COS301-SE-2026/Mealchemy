@@ -13,11 +13,13 @@ class FolderRecipeRow extends StatelessWidget {
     required this.recipe,
     this.onEditTap,
     this.onDeleteConfirmed,
+    this.mutationsEnabled = true,
   });
 
   final Recipe recipe;
   final VoidCallback? onEditTap;
   final VoidCallback? onDeleteConfirmed;
+  final bool mutationsEnabled;
 
   String get _subtitle {
     final total = (recipe.prepTimeMins ?? 0) + (recipe.cookingTimeMins ?? 0);
@@ -92,22 +94,37 @@ class FolderRecipeRow extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      onPressed: () => _handleDeleteTap(context),
-                      icon: const Icon(
+                      onPressed: mutationsEnabled
+                          ? () => _handleDeleteTap(context)
+                          : null,
+                      tooltip: mutationsEnabled
+                          ? 'Delete recipe'
+                          : 'Unavailable offline',
+                      icon: Icon(
                         Icons.delete_outline,
                         size: 18,
-                        color: AppColors.primary,
+                        color: mutationsEnabled
+                            ? AppColors.primary
+                            : AppColors.textMuted,
                       ),
                       constraints: const BoxConstraints(),
                       padding: const EdgeInsets.all(6),
                     ),
                     IconButton(
-                      onPressed: onEditTap ??
-                          () => context.push('/edit-recipe/${recipe.recipeId}'),
-                      icon: const Icon(
+                      onPressed: mutationsEnabled
+                          ? onEditTap ??
+                              () => context
+                                  .push('/edit-recipe/${recipe.recipeId}')
+                          : null,
+                      tooltip: mutationsEnabled
+                          ? 'Edit recipe'
+                          : 'Unavailable offline',
+                      icon: Icon(
                         Icons.edit_outlined,
                         size: 18,
-                        color: AppColors.primary,
+                        color: mutationsEnabled
+                            ? AppColors.primary
+                            : AppColors.textMuted,
                       ),
                       constraints: const BoxConstraints(),
                       padding: const EdgeInsets.all(6),

@@ -12,12 +12,14 @@ class ShoppingListRow extends StatelessWidget {
     this.onTap,
     this.onEditTap,
     this.onMoreTap,
+    this.mutationsEnabled = true,
   });
 
   final ShoppingList list;
   final VoidCallback? onTap;
   final VoidCallback? onEditTap;
   final VoidCallback? onMoreTap;
+  final bool mutationsEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -36,9 +38,12 @@ class ShoppingListRow extends StatelessWidget {
                 child: _ListText(list: list),
               ),
               PopupMenuButton<String>(
+                enabled: mutationsEnabled,
                 icon: Icon(
                   Icons.more_vert,
-                  color: AppColors.inputBorder.withValues(alpha: 0.95),
+                  color: mutationsEnabled
+                      ? AppColors.inputBorder.withValues(alpha: 0.95)
+                      : AppColors.textMuted.withValues(alpha: 0.45),
                 ),
                 color: AppColors.bgLight,
                 onSelected: (value) async {

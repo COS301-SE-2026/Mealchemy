@@ -65,7 +65,7 @@ void main() {
     expect(find.byIcon(Icons.bookmark_add_outlined), findsOneWidget);
   });
 
-  testWidgets('tapping the shopping-list button completes without error',
+  testWidgets('tapping the shopping-list button opens the add-to-list sheet',
       (tester) async {
     await tester.pumpWidget(host(baseRecipe));
     await tester.pumpAndSettle();
@@ -74,6 +74,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.byIcon(Icons.add_shopping_cart), findsOneWidget);
+    expect(find.text('Create Shopping List'), findsOneWidget);
   });
 }

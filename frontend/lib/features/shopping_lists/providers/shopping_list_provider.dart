@@ -8,6 +8,9 @@ import '../models/shopping_list_item.dart';
 import '../../../core/providers/api_service_provider.dart';
 import '../repositories/api_shopping_list_repository.dart';
 import '../models/complete_shop_result.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../offline/providers/offline_cache_provider.dart';
+import '../../offline/repositories/cached_shopping_list_repository.dart';
 
 //select mock/API
 final shoppingListRepositoryProvider = Provider<ShoppingListRepository>((ref) {
@@ -15,7 +18,14 @@ final shoppingListRepositoryProvider = Provider<ShoppingListRepository>((ref) {
     return MockShoppingListRepository();
   }
 
-  return ApiShoppingListRepository(ref.read(dioProvider));
+  final remote = ApiShoppingListRepository(ref.read(dioProvider));
+  final viewerUserId = ref.watch(activeIdentityProvider);
+  if (viewerUserId == null) return remote;
+  return CachedShoppingListRepository(
+    remote: remote,
+    cache: ref.watch(shoppingListCacheStoreProvider),
+    viewerUserId: viewerUserId,
+  );
 });
 
 //state management provider
@@ -436,10 +446,11 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     });
   }
 
-  //generates a shopping list from a recipe's missing pantry items
+  //creates a new shopping list from a recipe
   Future<ShoppingList?> generateFromRecipe({
     required int recipeId,
     required String recipeName,
+    required bool includeMissingOnly,
   }) async {
     final current = state.valueOrNull;
     if (current == null) return null;
@@ -447,7 +458,7 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     final createdList = await _repository.generateFromRecipe(
       recipeId: recipeId,
       name: recipeName,
-      includeAvailablePantryItems: false, // false = only missing items
+      includeAvailablePantryItems: includeMissingOnly,
     );
 
     state = AsyncData(
@@ -455,6 +466,30 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     );
 
     return createdList;
+  }
+
+  Future<ShoppingList?> addToExistingList({
+    required String listId,
+    required int recipeId,
+    required bool includeMissingOnly,
+  }) async {
+    final current = state.valueOrNull;
+    if (current == null) return null;
+
+    final updatedList = await _repository.addRecipeToExistingList(
+      listId: listId,
+      recipeId: recipeId,
+      includeAvailablePantryItems: includeMissingOnly,
+    );
+
+    final updatedLists = current.lists.map((list) {
+      if (list.id != listId) return list;
+      return list.copyWith(items: updatedList.items);
+    }).toList();
+
+    state = AsyncData(current.copyWith(lists: updatedLists));
+
+    return current.getListById(listId)?.copyWith(items: updatedList.items);
   }
 }
 

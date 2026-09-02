@@ -1,12 +1,20 @@
 package com.mealchemy.pantry;
 
+// model
 import com.mealchemy.auth.model.User;
-import com.mealchemy.auth.repository.UserRepository;
+import com.mealchemy.profile.model.UserProfile;
 import com.mealchemy.ingredient.model.IngredientCatalogue;
-import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.pantry.model.PantryIngredient;
+// repository
+import com.mealchemy.auth.repository.UserRepository;
+import com.mealchemy.profile.repository.UserProfileRepository;
+import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.pantry.repository.PantryIngredientRepository;
+// dto
 import com.mealchemy.pantry.dto.PantryIngredientRequest;
+// enums
+import com.mealchemy.shared.enums.PreferredUnit;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.util.List;
@@ -50,6 +58,9 @@ public class PantryControllerIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private UserProfileRepository userProfileRepository;
+
     //stores seeded ingredient during testing
     private IngredientCatalogue testIngredient;
     private Integer testUserId; 
@@ -79,10 +90,15 @@ public class PantryControllerIntegrationTest {
         PantryIngredient pantryIngredient = new PantryIngredient();
         pantryIngredient.setUserId(testUserId);
         pantryIngredient.setIngredientId(testIngredient.getIngId());
-        pantryIngredient.setQuantity(new BigDecimal("2.5"));
-        pantryIngredient.setUnit("kg");
+        pantryIngredient.setQuantity(new BigDecimal("2500"));
+        pantryIngredient.setUnit("g");
 
         pantryIngredientRepository.save(pantryIngredient);
+
+        UserProfile profile = new UserProfile();
+        profile.setUserId(testUserId);
+        profile.setPreferredUnit(PreferredUnit.METRIC);
+        userProfileRepository.save(profile);
     }
 
     @Test
@@ -112,8 +128,8 @@ public class PantryControllerIntegrationTest {
 
         PantryIngredientRequest request = new PantryIngredientRequest(
                 testIngredient.getIngId(),
-                new BigDecimal("1.75"),
-                "kg"
+                new BigDecimal("1750"),
+                "g"
         );
 
         //bbackend fills in name/category from the ingredient catalogue.
@@ -142,9 +158,9 @@ public class PantryControllerIntegrationTest {
         //need to compare numbers not stcale
         org.junit.jupiter.api.Assertions.assertEquals(
                 0,
-                new BigDecimal("1.75").compareTo(savedItems.get(0).getQuantity())
+                new BigDecimal("1750").compareTo(savedItems.get(0).getQuantity())
         );
-        org.junit.jupiter.api.Assertions.assertEquals("kg", savedItems.get(0).getUnit());
+        org.junit.jupiter.api.Assertions.assertEquals("g", savedItems.get(0).getUnit());
     }
 
     @Test

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 
 import '../../../core/shared_widgets/Molecules/app_section_header.dart';
 import '../../../core/theme/app_colours.dart';
@@ -43,6 +44,7 @@ class _RecipeNutritionTabState extends ConsumerState<RecipeNutritionTab> {
           ),
         ),
         error: (error, stackTrace) => _NutritionError(
+          message: _nutritionErrorMessage(error),
           onRetry: () {
             ref.invalidate(
               recipeNutritionProvider(widget.recipeId),
@@ -170,6 +172,39 @@ class _RecipeNutritionTabState extends ConsumerState<RecipeNutritionTab> {
                     ),
                   ),
                 ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.info_outline,
+                      color: AppColors.textMuted,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Nutritional information is an estimate and may not be '
+                        'completely accurate. Values are based on data provided '
+                        'by USDA FoodData Central.',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textMuted,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           );
         },
@@ -524,7 +559,7 @@ class _IngredientNutritionTile extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                '${_formatNumber(ingredient.percentOfRecipeCalories)}% '
+                '${ingredient.percentOfRecipeCalories.round()}% '
                 'of recipe calories',
                 style: AppTextStyles.caption.copyWith(
                   color: AppColors.accentMuted,
@@ -601,9 +636,11 @@ class _EmptyIngredients extends StatelessWidget {
 
 class _NutritionError extends StatelessWidget {
   const _NutritionError({
+    required this.message,
     required this.onRetry,
   });
 
+  final String message;
   final VoidCallback onRetry;
 
   @override
@@ -621,7 +658,7 @@ class _NutritionError extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Unable to load nutritional information.',
+              message,
               textAlign: TextAlign.center,
               style: AppTextStyles.body.copyWith(
                 color: AppColors.textMuted,
@@ -642,6 +679,24 @@ class _NutritionError extends StatelessWidget {
       ),
     );
   }
+}
+
+String _nutritionErrorMessage(Object error) {
+  if (error is DioException) {
+    final statusCode = error.response?.statusCode;
+
+    if (statusCode == 404) {
+      //backend intentionally does not distinguish missing, inaccessible,
+      //or ingredient-less recipes
+      return 'Nutritional information is not available for this recipe.';
+    }
+
+    if (statusCode == 400) {
+      return 'This recipe could not be used for nutritional calculations.';
+    }
+  }
+
+  return 'Unable to load nutritional information.';
 }
 
 String _formatNumber(double value) {
