@@ -1,4 +1,4 @@
--- V46__alter_user_preference_weights.sql
+-- V48__alter_user_preference_weights.sql
 --
 -- alter the tables to add state_version column
 -- =============================================================================

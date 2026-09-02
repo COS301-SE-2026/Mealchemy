@@ -1,4 +1,4 @@
--- V48__alter_table_add_flushed.sql
+-- V50__alter_table_add_flushed.sql
 --
 -- alter the discovery_swipes so that flushed swipes can be tracked
 -- =============================================================================

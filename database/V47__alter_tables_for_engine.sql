@@ -1,12 +1,12 @@
 -- =============================================================================
--- V45__alter_tables_for_engine.sql
+-- V47__alter_tables_for_engine.sql
 --
 -- alter the tables as necessary for the recommendation engine to function correctly
 -- =============================================================================
 
 -- add storage_location on pantry ingredients
 
-CREATE TYPE storage_location_enum AS ENUM ('PANTRY', 'FRIDGE', 'FREEZER');
+CREATE TYPE storage_location_enum AS ENUM ('PANTRY', 'FRIDGE');
 
 ALTER TABLE pantry_ingredients ADD COLUMN storage_location storage_location_enum;
 
