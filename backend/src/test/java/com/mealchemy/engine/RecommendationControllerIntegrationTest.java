@@ -22,6 +22,8 @@ import com.mealchemy.category.repository.IngredientCategoryRepository;
 import com.mealchemy.pantry.repository.PantryIngredientRepository;
 import com.mealchemy.preference.repository.UserPreferencesRepository;
 import com.mealchemy.preference.repository.UserPreferenceWeightsRepository;
+import com.mealchemy.preference.model.UserCuisineAffinities;
+import com.mealchemy.preference.repository.UserCuisineAffinitiesRepository;
 
 // engine client + dtos
 import com.mealchemy.engine.client.EngineClient;
@@ -73,6 +75,7 @@ public class RecommendationControllerIntegrationTest {
     @Autowired private PantryIngredientRepository pantryIngredientRepository;
     @Autowired private UserPreferencesRepository userPreferencesRepository;
     @Autowired private UserPreferenceWeightsRepository userPreferenceWeightsRepository;
+    @Autowired private UserCuisineAffinitiesRepository userCuisineAffinitiesRepository;
 
     @MockitoBean private EngineClient engineClient;
 
@@ -89,6 +92,7 @@ public class RecommendationControllerIntegrationTest {
         ingredientCategoryRepository.deleteAll();
         userPreferencesRepository.deleteAll();
         userPreferenceWeightsRepository.deleteAll();
+        userCuisineAffinitiesRepository.deleteAll();
         userRepository.deleteAll();
 
         User user = new User();
@@ -165,6 +169,12 @@ public class RecommendationControllerIntegrationTest {
         weights.setNovelty(new BigDecimal("0.15"));
         weights.setStateVersion(1);
         userPreferenceWeightsRepository.save(weights);
+
+        UserCuisineAffinities affinities = new UserCuisineAffinities();
+        affinities.setUserId(testUserId);
+        affinities.setCuisineValue("ITALIAN");
+        affinities.setAffinityScore(new BigDecimal("0.5"));
+        userCuisineAffinitiesRepository.save(affinities);
     }
 
     private UsernamePasswordAuthenticationToken authAsTestUser() {

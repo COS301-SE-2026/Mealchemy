@@ -69,7 +69,7 @@ public class LearningUpdateServiceTest {
             new BigDecimal("0.42"), new BigDecimal("0.23"), new BigDecimal("0.15"),
             new BigDecimal("0.10"), new BigDecimal("0.10")
         );
-        engineResponse = new LearningUpdateResponse(updatedWeights, Map.of("ITALIAN", 0.75), 3);
+        engineResponse = new LearningUpdateResponse(updatedWeights, Map.of("ITALIAN", new BigDecimal(0.75)), 3);
 
         lenient().when(userPreferenceWeightsRepository.findByUserId(USER_ID)).thenReturn(Optional.of(currentWeights));
         lenient().when(userCuisineAffinitiesRepository.findAllByUserId(USER_ID)).thenReturn(List.of());

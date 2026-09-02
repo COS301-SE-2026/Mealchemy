@@ -1,6 +1,7 @@
 package com.mealchemy.engine.dto;
 
 /* Import classes */
+import com.mealchemy.swipes.dto.SwipeHistoryEntryRequest;
 
 /* Import libraries */
 import jakarta.validation.constraints.*;

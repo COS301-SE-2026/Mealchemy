@@ -3,6 +3,8 @@ package com.mealchemy.engine.client;
 /* Import classes */
 import com.mealchemy.engine.dto.RecommendationResponse;
 import com.mealchemy.engine.dto.RecommendationRequest;
+import com.mealchemy.engine.dto.LearningUpdateResponse;
+import com.mealchemy.engine.dto.LearningUpdateRequest;
 
 /* Import libraries */
 import org.springframework.stereotype.Component;

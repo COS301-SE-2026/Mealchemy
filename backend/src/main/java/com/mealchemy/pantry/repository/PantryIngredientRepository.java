@@ -26,6 +26,7 @@ public interface PantryIngredientRepository extends JpaRepository<PantryIngredie
             cat.name,
             p.quantity,
             p.unit,
+            p.storageLocation,
             p.createdAt,
             p.updatedAt
         )
@@ -45,6 +46,7 @@ public interface PantryIngredientRepository extends JpaRepository<PantryIngredie
             cat.name,
             p.quantity,
             p.unit,
+            p.storageLocation,
             p.createdAt,
             p.updatedAt
         )

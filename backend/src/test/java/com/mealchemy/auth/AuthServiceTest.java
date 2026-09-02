@@ -15,6 +15,10 @@ import com.mealchemy.preference.model.UserPreferences;
 import com.mealchemy.preference.repository.UserPreferencesRepository;
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.repository.VaultRepository;
+import com.mealchemy.preference.repository.UserCuisineAffinitiesRepository;
+import com.mealchemy.preference.repository.UserPreferenceWeightsRepository;
+import com.mealchemy.cuisinetype.service.FlavourProfileOptionsService;
+import com.mealchemy.preference.model.UserPreferenceWeights;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyList;
 
 @ExtendWith(MockitoExtension.class) //tells JUnit to use Mockito to create mocks
 public class AuthServiceTest {
@@ -41,6 +46,9 @@ public class AuthServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private UserProfileRepository userProfileRepository;
     @Mock private UserPreferencesRepository userPreferencesRepository;
+    @Mock private UserCuisineAffinitiesRepository userCuisineAffinitiesRepository;
+    @Mock private UserPreferenceWeightsRepository userPreferenceWeightsRepository;
+    @Mock private FlavourProfileOptionsService flavourProfileOptionsService;
     @Mock private VaultRepository vaultRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private JwtUtil jwtUtil;
@@ -105,6 +113,9 @@ public class AuthServiceTest {
         when(userPreferencesRepository.save(any(UserPreferences.class))).thenReturn(new UserPreferences());
         when(vaultRepository.save(any(Vault.class))).thenReturn(new Vault());
         when(jwtUtil.generateToken(any(User.class))).thenReturn("mock.jwt.token");
+        when(userPreferenceWeightsRepository.save(any(UserPreferenceWeights.class))).thenReturn(new UserPreferenceWeights());
+        when(flavourProfileOptionsService.getValidCuisineTypes()).thenReturn(List.of("ITALIAN", "MEXICAN")); 
+        when(userCuisineAffinitiesRepository.saveAll(anyList())).thenReturn(List.of());
 
         // Act
         AuthResponse response = authService.register(validRegisterRequest);
