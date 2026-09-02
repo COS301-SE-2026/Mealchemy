@@ -16,6 +16,7 @@ import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.recipe.model.RecipeIngredient;
 import com.mealchemy.tags.model.RecipeTags;
 import com.mealchemy.tags.model.Tags;
+import com.mealchemy.swipes.model.Swipe;
 import com.mealchemy.preference.model.UserPreferences;
 import com.mealchemy.preference.model.UserPreferenceWeights;
 import com.mealchemy.preference.model.UserCuisineAffinities;
@@ -38,12 +39,14 @@ import com.mealchemy.engine.dto.RecommendationResponse;
 import com.mealchemy.recipe.dto.RecipeResponse;
 import com.mealchemy.engine.dto.EnrichedRecommendationItem;
 import com.mealchemy.engine.dto.EnrichedRecommendationResponse;
+import com.mealchemy.swipes.dto.SwipeHistoryEntryRequest;
 import com.mealchemy.engine.client.EmptyPoolException;
 import com.mealchemy.shared.enums.StorageLocation;
 import com.mealchemy.nutritionalcalculator.service.NutritionalCalculatorService;
 import com.mealchemy.nutritionalcalculator.dto.RecipeNutritionResponse;
 import com.mealchemy.nutritionalcalculator.dto.RecipeNutritionValues;
 import com.mealchemy.engine.dto.NutritionRequest;
+import com.mealchemy.swipes.repository.SwipeRepository;
 
 @Service
 public class RecommendationService {
@@ -57,6 +60,7 @@ public class RecommendationService {
     private final RecipeTagsRepository recipeTagsRepository;
     private final EngineClient engineClient;
     private final NutritionalCalculatorService nutritionalCalculatorService;
+    private final SwipeRepository swipeRepository;
 
     private record CandidatePoolResult(
         List<CandidatePoolEntryRequest> pool,
@@ -67,7 +71,8 @@ public class RecommendationService {
         IngredientCatalogueRepository ingredientCatalogueRepository, IngredientCategoryRepository ingredientCategoryRepository,
         UserCuisineAffinitiesRepository userCuisineAffinitiesRepository, UserPreferencesRepository userPreferencesRepository,
         UserPreferenceWeightsRepository userPreferenceWeightsRepository, RecipeRepository recipeRepository, 
-        RecipeTagsRepository recipeTagsRepository, EngineClient engineClient, NutritionalCalculatorService nutritionalCalculatorService)
+        RecipeTagsRepository recipeTagsRepository, EngineClient engineClient, NutritionalCalculatorService nutritionalCalculatorService,
+        SwipeRepository swipeRepository)
     {
         this.pantryIngredientRepository = pantryIngredientRepository;
         this.ingredientCatalogueRepository = ingredientCatalogueRepository;
@@ -79,6 +84,7 @@ public class RecommendationService {
         this.recipeTagsRepository = recipeTagsRepository;
         this.engineClient = engineClient;
         this.nutritionalCalculatorService = nutritionalCalculatorService;
+        this.swipeRepository = swipeRepository;
     }
 
     // Helper function to build the pantry entries object
@@ -198,7 +204,7 @@ public class RecommendationService {
         }).toList();
     }
 
-    // Helper function to built the user state object
+    // Helper function to build the user state object
     private UserStateRequest buildUserState(Integer userId)
     {
         UserPreferences preferences = userPreferencesRepository.findByUserId(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User preferences not initialized."));
@@ -224,7 +230,8 @@ public class RecommendationService {
             preferences.getNutritionalGoals(),
             weightsRequest,
             cuisineAffinityMap,
-            buildPantryEntries(userId)
+            buildPantryEntries(userId),
+            buildSwipeHistory(userId)
         );
     }
 
@@ -279,5 +286,17 @@ public class RecommendationService {
             engineResponse.totalCandidatesAfterFilter(),
             engineResponse.totalRecipesConsidered()
         );
+    }
+
+    // Helper function to build the swipe history object
+    private List<SwipeHistoryEntryRequest> buildSwipeHistory(Integer userId)
+    {
+        return swipeRepository.findByUserId(userId).stream()
+            .map(swipe -> new SwipeHistoryEntryRequest(
+                swipe.getRecipeId(),
+                swipe.getAction(),
+                swipe.getSwipedAt()
+            ))
+            .toList();
     }
 }
