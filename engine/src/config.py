@@ -2,11 +2,11 @@
 
 # Default preference weights
 DEFAULT_PREFERENCE_WEIGHTS = {
-    "pantry_match" : 0.40,
-    "cuisine" : 0.25,
-    "nutrition" : 0.15,
-    "novelty" : 0.10,
-    "freshness" : 0.10,
+    "pantry_match": 0.40,
+    "cuisine": 0.25,
+    "nutrition": 0.15,
+    "novelty": 0.10,
+    "freshness": 0.10,
 }
 
 # Learning loop weights
@@ -19,20 +19,20 @@ DISLIKE_EXPIRY_DAYS = 30
 
 # Allergen category match table
 ALLERGEN_CATEGORY_MAP: dict[str, set[int]] = {
-    "PEANUTS":   {11},
+    "PEANUTS": {11},
     "TREE_NUTS": {11},
-    "SESAME":    {11, 6},
-    "GLUTEN":    {4, 1},
-    "DAIRY":     {5},
-    "EGGS":      {5},
-    "SOY":       {10},
+    "SESAME": {11, 6},
+    "GLUTEN": {4, 1},
+    "DAIRY": {5},
+    "EGGS": {5},
+    "SOY": {10},
     "SHELLFISH": {7},
-    "FISH":      {7},
-    "MOLLUSCS":  {7},
-    "MUSTARD":   {17},
-    "CELERY":    {19, 17},
+    "FISH": {7},
+    "MOLLUSCS": {7},
+    "MUSTARD": {17},
+    "CELERY": {19, 17},
     "SULPHITES": {3, 8},
-    "LUPIN":     {1, 10},
+    "LUPIN": {1, 10},
 }
 
 # Sampling
@@ -41,9 +41,9 @@ TOURNAMENT_SAMPLE_SIZE = 100
 # Signals
 
 # Novelty
-NOVELTY_LIKED_RECENT_DAYS = 3           # Suppress if < 3
-NOVELTY_LIKED_ACCEPTABLE_DAYS = 7       # Partial if < 7
-NOVELTY_SKIPPED_RECENT_DAYS = 7         # Suppress if < 7
+NOVELTY_LIKED_RECENT_DAYS = 3  # Suppress if < 3
+NOVELTY_LIKED_ACCEPTABLE_DAYS = 7  # Partial if < 7
+NOVELTY_SKIPPED_RECENT_DAYS = 7  # Suppress if < 7
 
 NOVELTY_SCORE_LIKED_RECENT = 0.3
 NOVELTY_SCORE_LIKED_ACCEPTABLE = 0.6

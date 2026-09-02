@@ -2,6 +2,7 @@
 
 from src.core.seeding import derive_seed
 
+
 class TestDeriveSeed:
     def test_none_base_seed_always_returns_none(self):
         assert derive_seed(None, "sampling") is None

@@ -1,12 +1,15 @@
 from dataclasses import dataclass
-from src.models.recommendation import RecommendationItem
+
 from src.config import WILDCARD_SLOTS
+from src.models.recommendation import RecommendationItem
+
 
 @dataclass
 class CuisineGroup:
-    cuisine:str
+    cuisine: str
     items: list[RecommendationItem]
     aggregate_score: float
+
 
 def rank_cuisines(scored_items: list[RecommendationItem]) -> list[CuisineGroup]:
     groups_by_cuisine: dict[str, list[RecommendationItem]] = {}
@@ -17,17 +20,18 @@ def rank_cuisines(scored_items: list[RecommendationItem]) -> list[CuisineGroup]:
     groups = []
 
     for cuisine, items in groups_by_cuisine.items():
-        items.sort(key = lambda i: i.score, reverse = True)
+        items.sort(key=lambda i: i.score, reverse=True)
         aggregate = sum(i.score for i in items) / len(items)
-        groups.append(CuisineGroup(cuisine = cuisine, items = items, aggregate_score = aggregate))
+        groups.append(CuisineGroup(cuisine=cuisine, items=items, aggregate_score=aggregate))
 
-    groups.sort(key = lambda g: g.aggregate_score, reverse = True)
+    groups.sort(key=lambda g: g.aggregate_score, reverse=True)
     return groups
+
 
 def allocate_slots(cuisine_groups: list[CuisineGroup], batch_size: int) -> dict[str, int]:
     if not cuisine_groups:
         return {}
-    
+
     available = batch_size - WILDCARD_SLOTS
     total_score = sum(g.aggregate_score for g in cuisine_groups)
 
@@ -58,17 +62,22 @@ def allocate_slots(cuisine_groups: list[CuisineGroup], batch_size: int) -> dict[
 
     return allocation
 
-def fill_wildcard(cuisine_groups: list[CuisineGroup], allocation: dict[str, int]) -> RecommendationItem | None:
+
+def fill_wildcard(
+    cuisine_groups: list[CuisineGroup], allocation: dict[str, int]
+) -> RecommendationItem | None:
     already_selected_ids = {
         item.recipe_id
         for group in cuisine_groups
-        for item in sorted(group.items, key = lambda i: i.score, reverse = True)[:allocation.get(group.cuisine, 0)]
+        for item in sorted(group.items, key=lambda i: i.score, reverse=True)[
+            : allocation.get(group.cuisine, 0)
+        ]
     }
 
     all_items_by_score = sorted(
         (item for group in cuisine_groups for item in group.items),
-        key = lambda i: i.score,
-        reverse = True
+        key=lambda i: i.score,
+        reverse=True,
     )
 
     for item in all_items_by_score:
@@ -77,12 +86,17 @@ def fill_wildcard(cuisine_groups: list[CuisineGroup], allocation: dict[str, int]
 
     return None
 
-def build_final_list(cuisine_groups: list[CuisineGroup], allocation: dict[str, int], wildcard: RecommendationItem | None) -> list[RecommendationItem]:
+
+def build_final_list(
+    cuisine_groups: list[CuisineGroup],
+    allocation: dict[str, int],
+    wildcard: RecommendationItem | None,
+) -> list[RecommendationItem]:
     final_list: list[RecommendationItem] = []
 
-    for group in sorted(cuisine_groups, key = lambda g: g.aggregate_score, reverse = True):
+    for group in sorted(cuisine_groups, key=lambda g: g.aggregate_score, reverse=True):
         slot_count = allocation.get(group.cuisine, 0)
-        top_items = sorted(group.items, key = lambda i: i.score, reverse = True)[:slot_count]
+        top_items = sorted(group.items, key=lambda i: i.score, reverse=True)[:slot_count]
         final_list.extend(top_items)
 
     if wildcard is not None and wildcard not in final_list:

@@ -1,6 +1,6 @@
 """Shared pytest fixtures and factory helpers for the MeAlchemy engine test suite."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -15,7 +15,9 @@ def make_ingredient(
     quantity: float = 1.0,
     unit: str = "g",
 ) -> Ingredient:
-    return Ingredient(ing_id=ing_id, category_id=category_id, name=name, quantity=quantity, unit=unit)
+    return Ingredient(
+        ing_id=ing_id, category_id=category_id, name=name, quantity=quantity, unit=unit
+    )
 
 
 def make_pantry_entry(
@@ -32,7 +34,7 @@ def make_pantry_entry(
         category_id=category_id,
         quantity=quantity,
         unit=unit,
-        added_at=added_at or datetime.now(timezone.utc),
+        added_at=added_at or datetime.now(UTC),
         shelf_life_days=shelf_life_days,
         storage_location=storage_location,
     )

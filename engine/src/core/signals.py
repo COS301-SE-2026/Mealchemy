@@ -1,22 +1,23 @@
-from datetime import datetime, timezone
-from src.models.user_state import SwipeHistoryEntry
-from src.core.ingredient_matching import pantry_ingredient_match
-from src.models.recipe import Ingredient, CandidatePoolEntry
-from src.models.user_state import PantryEntry, UserState
+from datetime import UTC, datetime
+
 from src.config import (
-    NOVELTY_LIKED_RECENT_DAYS,
+    NEUTRAL_SIGNAL_VALUE,
     NOVELTY_LIKED_ACCEPTABLE_DAYS,
-    NOVELTY_SKIPPED_RECENT_DAYS,
-    NOVELTY_SCORE_LIKED_RECENT,
+    NOVELTY_LIKED_RECENT_DAYS,
     NOVELTY_SCORE_LIKED_ACCEPTABLE,
     NOVELTY_SCORE_LIKED_OLD,
-    NOVELTY_SCORE_SKIPPED_RECENT,
-    NOVELTY_SCORE_SKIPPED_OLD,
+    NOVELTY_SCORE_LIKED_RECENT,
     NOVELTY_SCORE_NEVER_SEEN,
-    NEUTRAL_SIGNAL_VALUE,
+    NOVELTY_SCORE_SKIPPED_OLD,
+    NOVELTY_SCORE_SKIPPED_RECENT,
+    NOVELTY_SKIPPED_RECENT_DAYS,
     NUTRITION_HIGH_PROTEIN_MIN_G,
     NUTRITION_LOW_CARB_MAX_G,
 )
+from src.core.ingredient_matching import pantry_ingredient_match
+from src.models.recipe import CandidatePoolEntry, Ingredient
+from src.models.user_state import PantryEntry, SwipeHistoryEntry, UserState
+
 
 def novelty_score(recipe_id: int, swipe_history: list[SwipeHistoryEntry]) -> float:
     relevant_swipes = [s for s in swipe_history if s.recipe_id == recipe_id]
@@ -24,8 +25,8 @@ def novelty_score(recipe_id: int, swipe_history: list[SwipeHistoryEntry]) -> flo
     if not relevant_swipes:
         return NOVELTY_SCORE_NEVER_SEEN
 
-    last_swipe = max(relevant_swipes, key = lambda s: s.swiped_at)
-    days_ago = (datetime.now(timezone.utc) - last_swipe.swiped_at).days
+    last_swipe = max(relevant_swipes, key=lambda s: s.swiped_at)
+    days_ago = (datetime.now(UTC) - last_swipe.swiped_at).days
 
     if last_swipe.action == "LIKED":
         if days_ago < NOVELTY_LIKED_RECENT_DAYS:
@@ -41,6 +42,7 @@ def novelty_score(recipe_id: int, swipe_history: list[SwipeHistoryEntry]) -> flo
 
     return NEUTRAL_SIGNAL_VALUE
 
+
 # Although not used in the main pipeline this isn't dead code and is left in for unit testing
 def pantry_coverage_score(recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]) -> float:
     if not recipe_ingredients:
@@ -49,8 +51,10 @@ def pantry_coverage_score(recipe_ingredients: list[Ingredient], pantry: list[Pan
     owned_ids, _ = pantry_ingredient_match(recipe_ingredients, pantry)
     return len(owned_ids) / len(recipe_ingredients)
 
+
 def cuisine_affinity_score(cuisine: str, cuisine_affinities: dict[str, float]) -> float:
     return cuisine_affinities.get(cuisine, NEUTRAL_SIGNAL_VALUE)
+
 
 def nutrition_score(recipe: CandidatePoolEntry, user_state: UserState) -> float:
     if recipe.nutrition is None:
@@ -66,7 +70,9 @@ def nutrition_score(recipe: CandidatePoolEntry, user_state: UserState) -> float:
         if recipe.nutrition.protein_g is None:
             goal_scores.append(NEUTRAL_SIGNAL_VALUE)
         else:
-            goal_scores.append(1.0 if recipe.nutrition.protein_g >= NUTRITION_HIGH_PROTEIN_MIN_G else 0.0)
+            goal_scores.append(
+                1.0 if recipe.nutrition.protein_g >= NUTRITION_HIGH_PROTEIN_MIN_G else 0.0
+            )
 
     if "LOW_CARB" in relevant_goals:
         if recipe.nutrition.carbs_g is None:
@@ -76,13 +82,14 @@ def nutrition_score(recipe: CandidatePoolEntry, user_state: UserState) -> float:
 
     return sum(goal_scores) / len(goal_scores)
 
+
 def freshness_score(recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]) -> float:
     owned_ids, _ = pantry_ingredient_match(recipe_ingredients, pantry)
     if not owned_ids:
         return NEUTRAL_SIGNAL_VALUE
 
     pantry_by_ing_id = {p.ing_id: p for p in pantry}
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     urgencies = []
     for ing_id in owned_ids:

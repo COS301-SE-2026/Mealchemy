@@ -1,26 +1,28 @@
 from pydantic import BaseModel, Field, field_validator
-from typing import Optional
+
 
 class Ingredient(BaseModel):
-    ing_id: int = Field(gt = 0)
-    category_id: int = Field(gt = 0)
-    name: str = Field(min_length = 1)
-    quantity: float = Field(gt = 0)
-    unit: str = Field(min_length = 1)
+    ing_id: int = Field(gt=0)
+    category_id: int = Field(gt=0)
+    name: str = Field(min_length=1)
+    quantity: float = Field(gt=0)
+    unit: str = Field(min_length=1)
+
 
 class Nutrition(BaseModel):
-    calories_kcal: Optional[int] = Field(default = None, ge = 0)
-    protein_g: Optional[float] = Field(default = None, ge = 0)
-    carbs_g: Optional[float] = Field(default = None, ge = 0)
-    fat_g: Optional[float] = Field(default = None, ge = 0)
+    calories_kcal: int | None = Field(default=None, ge=0)
+    protein_g: float | None = Field(default=None, ge=0)
+    carbs_g: float | None = Field(default=None, ge=0)
+    fat_g: float | None = Field(default=None, ge=0)
+
 
 class CandidatePoolEntry(BaseModel):
-    recipe_id: int = Field(gt = 0)
-    title: str = Field(min_length = 1)
-    cuisine: str = Field(min_length = 1)
+    recipe_id: int = Field(gt=0)
+    title: str = Field(min_length=1)
+    cuisine: str = Field(min_length=1)
     dietary_tags: list[str]
-    ingredients: list[Ingredient] = Field(min_length = 1)
-    nutrition: Optional[Nutrition] = None
+    ingredients: list[Ingredient] = Field(min_length=1)
+    nutrition: Nutrition | None = None
 
     @field_validator("ingredients")
     @classmethod

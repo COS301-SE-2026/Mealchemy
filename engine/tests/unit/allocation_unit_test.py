@@ -3,7 +3,10 @@
 from src.core.allocation import allocate_slots, build_final_list, fill_wildcard, rank_cuisines
 from src.models.recommendation import RecommendationItem, ScoreBreakdown
 
-_NEUTRAL_BREAKDOWN = ScoreBreakdown(pantry_match=0.5, cuisine=0.5, nutrition=0.5, novelty=0.5, freshness=0.5)
+_NEUTRAL_BREAKDOWN = ScoreBreakdown(
+    pantry_match=0.5, cuisine=0.5, nutrition=0.5, novelty=0.5, freshness=0.5
+)
+
 
 def make_item(recipe_id: int, cuisine_type: str, score: float) -> RecommendationItem:
     return RecommendationItem(
@@ -14,6 +17,7 @@ def make_item(recipe_id: int, cuisine_type: str, score: float) -> Recommendation
         pantry_gap_count=0,
         missing_ingredients=[],
     )
+
 
 class TestRankCuisines:
     def test_groups_items_by_cuisine(self):
@@ -34,7 +38,7 @@ class TestRankCuisines:
             make_item(2, "ITALIAN", 0.9),
             make_item(3, "ITALIAN", 0.7),
         ]
- 
+
         groups = rank_cuisines(items)
         italian_group = next(g for g in groups if g.cuisine == "ITALIAN")
 
@@ -56,6 +60,7 @@ class TestRankCuisines:
         groups = rank_cuisines(items)
 
         assert [g.cuisine for g in groups] == ["ITALIAN", "MEXICAN"]
+
 
 class TestAllocateSlots:
     def test_empty_cuisine_groups_returns_empty_dict(self):
@@ -118,6 +123,7 @@ class TestAllocateSlots:
         assert allocation["MEXICAN"] == 1
         assert allocation["MEDITERRANEAN"] == 1
 
+
 class TestFillWildcard:
     def test_returns_highest_scorer_not_already_allocated(self):
         items = [
@@ -153,6 +159,7 @@ class TestFillWildcard:
 
         assert wildcard is not None
         assert wildcard.recipe_id == 1
+
 
 class TestBuildFinalList:
     def test_assembles_allocated_items_per_group(self):

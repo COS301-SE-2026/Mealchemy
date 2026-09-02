@@ -2,8 +2,11 @@
 
 import pytest
 from fastapi.testclient import TestClient
+
 from src.main import app
+
 client = TestClient(app)
+
 
 def _valid_recipe() -> dict:
     return {
@@ -16,6 +19,7 @@ def _valid_recipe() -> dict:
         ],
         "nutrition": None,
     }
+
 
 def _valid_user_state(**overrides) -> dict:
     base = {
@@ -38,6 +42,7 @@ def _valid_user_state(**overrides) -> dict:
     base.update(overrides)
     return base
 
+
 def _valid_request_body(**user_state_overrides) -> dict:
     return {
         "user_state": _valid_user_state(**user_state_overrides),
@@ -46,6 +51,7 @@ def _valid_request_body(**user_state_overrides) -> dict:
         "exclude_recipe_ids": None,
         "seed": 1,
     }
+
 
 def _valid_signal_scores(**overrides) -> dict:
     base = {
@@ -58,6 +64,7 @@ def _valid_signal_scores(**overrides) -> dict:
     base.update(overrides)
     return base
 
+
 def _valid_swipe(**overrides) -> dict:
     base = {
         "recipe_id": 1,
@@ -68,6 +75,7 @@ def _valid_swipe(**overrides) -> dict:
     }
     base.update(overrides)
     return base
+
 
 def _valid_learning_update_body(**overrides) -> dict:
     base = {
@@ -86,12 +94,14 @@ def _valid_learning_update_body(**overrides) -> dict:
     base.update(overrides)
     return base
 
+
 class TestHealthEndpoint:
     def test_returns_200_and_up_status(self):
         response = client.get("/health")
 
         assert response.status_code == 200
         assert response.json() == {"status": "UP"}
+
 
 class TestRecommendationsHappyPath:
     def test_valid_request_returns_200_with_expected_shape(self):
@@ -111,6 +121,7 @@ class TestRecommendationsHappyPath:
         assert body["total_recipes_considered"] == 1
         assert len(body["recommendations"]) == 1
         assert body["recommendations"][0]["recipe_id"] == 1
+
 
 class TestRecommendationsInvalidCandidate:
     def test_missing_candidate_pool_returns_400_invalid_candidate(self):
@@ -152,6 +163,7 @@ class TestRecommendationsInvalidCandidate:
         assert response.status_code == 400
         assert response.json()["error_code"] == "INVALID_CANDIDATE"
 
+
 class TestRecommendationsEmptyPool:
     def test_unsatisfiable_dietary_restriction_returns_422_empty_pool(self):
         body = _valid_request_body(dietary_restrictions=["HALAL"])
@@ -169,6 +181,7 @@ class TestRecommendationsEmptyPool:
 
         assert response.status_code == 422
         assert response.json()["error_code"] == "EMPTY_POOL"
+
 
 class TestLearningUpdateHappyPath:
     def test_valid_request_returns_200_with_expected_shape(self):
@@ -212,6 +225,7 @@ class TestLearningUpdateHappyPath:
 
         assert response.json()["cuisine_affinities"]["ITALIAN"] > 0.5
 
+
 class TestLearningUpdateInvalidBody:
     def test_missing_swipes_field_returns_400_invalid_candidate(self):
         malformed_body = _valid_learning_update_body()
@@ -232,9 +246,7 @@ class TestLearningUpdateInvalidBody:
         assert response.json()["error_code"] == "INVALID_CANDIDATE"
 
     def test_invalid_swipe_action_returns_400_invalid_candidate(self):
-        body = _valid_learning_update_body(
-            swipes=[_valid_swipe(action="NOT_A_REAL_ACTION")]
-        )
+        body = _valid_learning_update_body(swipes=[_valid_swipe(action="NOT_A_REAL_ACTION")])
 
         response = client.post("/learning/update", json=body)
 

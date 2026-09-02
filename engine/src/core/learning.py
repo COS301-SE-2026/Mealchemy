@@ -1,9 +1,20 @@
+from src.config import (
+    DEFAULT_PREFERENCE_WEIGHTS,
+    LIKE_REINFORCE_THRESHOLD,
+    NEUTRAL_SIGNAL_VALUE,
+    SKIPPED_LEARNING_RATE_MULTIPLIER,
+)
+from src.models.learning import LearningUpdateRequest, LearningUpdateResponse
 from src.models.recommendation import ScoreBreakdown
 from src.models.user_state import PreferenceWeights, SwipeAction
-from src.config import LIKE_REINFORCE_THRESHOLD, SKIPPED_LEARNING_RATE_MULTIPLIER, NEUTRAL_SIGNAL_VALUE, DEFAULT_PREFERENCE_WEIGHTS
-from src.models.learning import LearningUpdateRequest, LearningUpdateResponse
 
-def update_weights_from_swipe(current_weights: dict[str, float], action: SwipeAction, signal_scores: ScoreBreakdown, alpha: float) -> dict[str, float]:
+
+def update_weights_from_swipe(
+    current_weights: dict[str, float],
+    action: SwipeAction,
+    signal_scores: ScoreBreakdown,
+    alpha: float,
+) -> dict[str, float]:
     new_weights = dict(current_weights)
 
     if action == "LIKED":
@@ -25,7 +36,10 @@ def update_weights_from_swipe(current_weights: dict[str, float], action: SwipeAc
 
     return new_weights
 
-def update_cuisine_affinity_from_swipe(current_affinities: dict[str, float], cuisine: str, action: SwipeAction, alpha: float) -> dict[str, float]:
+
+def update_cuisine_affinity_from_swipe(
+    current_affinities: dict[str, float], cuisine: str, action: SwipeAction, alpha: float
+) -> dict[str, float]:
     new_affinities = dict(current_affinities)
 
     if not cuisine:
@@ -42,8 +56,10 @@ def update_cuisine_affinity_from_swipe(current_affinities: dict[str, float], cui
 
     return new_affinities
 
+
 def ema_update(old: float, target: float, alpha: float) -> float:
     return alpha * target + (1 - alpha) * old
+
 
 def renormalise(weights: dict[str, float]) -> dict[str, float]:
     total = sum(weights.values())
@@ -53,28 +69,29 @@ def renormalise(weights: dict[str, float]) -> dict[str, float]:
 
     return {k: v / total for k, v in weights.items()}
 
+
 def process_swipes(request: LearningUpdateRequest) -> LearningUpdateResponse:
     weights = dict(request.preference_weights.model_dump())
     affinities = dict(request.cuisine_affinities)
 
     for swipe in request.swipes:
         weights = update_weights_from_swipe(
-            current_weights = weights,
-            action = swipe.action,
-            signal_scores = swipe.signal_scores,
-            alpha = request.alpha
+            current_weights=weights,
+            action=swipe.action,
+            signal_scores=swipe.signal_scores,
+            alpha=request.alpha,
         )
         affinities = update_cuisine_affinity_from_swipe(
-            current_affinities = affinities,
-            cuisine = swipe.cuisine,
-            action = swipe.action,
-            alpha = request.alpha
+            current_affinities=affinities,
+            cuisine=swipe.cuisine,
+            action=swipe.action,
+            alpha=request.alpha,
         )
 
     weights = renormalise(weights)
 
     return LearningUpdateResponse(
-        preference_weights = PreferenceWeights(**weights),
-        cuisine_affinities = affinities,
-        state_version = request.state_version
+        preference_weights=PreferenceWeights(**weights),
+        cuisine_affinities=affinities,
+        state_version=request.state_version,
     )

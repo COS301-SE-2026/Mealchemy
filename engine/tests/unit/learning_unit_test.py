@@ -1,7 +1,15 @@
 """learning.py unit testing"""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 import pytest
+
+from src.config import (
+    DEFAULT_PREFERENCE_WEIGHTS,
+    LIKE_REINFORCE_THRESHOLD,
+    NEUTRAL_SIGNAL_VALUE,
+    SKIPPED_LEARNING_RATE_MULTIPLIER,
+)
 from src.core.learning import (
     ema_update,
     process_swipes,
@@ -9,22 +17,18 @@ from src.core.learning import (
     update_cuisine_affinity_from_swipe,
     update_weights_from_swipe,
 )
-from src.config import (
-    DEFAULT_PREFERENCE_WEIGHTS,
-    LIKE_REINFORCE_THRESHOLD,
-    NEUTRAL_SIGNAL_VALUE,
-    SKIPPED_LEARNING_RATE_MULTIPLIER,
-)
 from src.models.learning import LearningUpdateRequest, SwipeUpdate
 from src.models.recommendation import ScoreBreakdown
 from src.models.user_state import PreferenceWeights
 
 ALPHA = 0.15
 
+
 def _weights(**overrides) -> dict[str, float]:
     base = dict(DEFAULT_PREFERENCE_WEIGHTS)
     base.update(overrides)
     return base
+
 
 def _signal_scores(**overrides) -> ScoreBreakdown:
     base = {
@@ -37,16 +41,18 @@ def _signal_scores(**overrides) -> ScoreBreakdown:
     base.update(overrides)
     return ScoreBreakdown(**base)
 
+
 def _swipe_update(**overrides) -> SwipeUpdate:
     base = {
         "recipe_id": 1,
         "cuisine": "ITALIAN",
         "action": "LIKED",
         "signal_scores": _signal_scores(),
-        "swiped_at": datetime.now(timezone.utc),
+        "swiped_at": datetime.now(UTC),
     }
     base.update(overrides)
     return SwipeUpdate(**base)
+
 
 class TestEmaUpdate:
     def test_moves_toward_target(self):
@@ -58,6 +64,7 @@ class TestEmaUpdate:
 
     def test_alpha_one_returns_target_unchanged(self):
         assert ema_update(old=0.42, target=1.0, alpha=1.0) == pytest.approx(1.0)
+
 
 class TestUpdateWeightsFromSwipeLiked:
     def test_reinforces_pantry_when_above_threshold(self):
@@ -101,7 +108,9 @@ class TestUpdateWeightsFromSwipeLiked:
 
         result = update_weights_from_swipe(weights, "LIKED", signals, ALPHA)
 
-        assert result["pantry_match"] == pytest.approx(ema_update(weights["pantry_match"], 1.0, ALPHA))
+        assert result["pantry_match"] == pytest.approx(
+            ema_update(weights["pantry_match"], 1.0, ALPHA)
+        )
         assert result["cuisine"] == pytest.approx(ema_update(weights["cuisine"], 1.0, ALPHA))
         assert result["freshness"] == pytest.approx(ema_update(weights["freshness"], 1.0, ALPHA))
 
@@ -113,6 +122,7 @@ class TestUpdateWeightsFromSwipeLiked:
 
         assert result["nutrition"] == pytest.approx(weights["nutrition"])
         assert result["novelty"] == pytest.approx(weights["novelty"])
+
 
 class TestUpdateWeightsFromSwipeDisliked:
     def test_pushes_cuisine_down_when_above_threshold(self):
@@ -141,6 +151,7 @@ class TestUpdateWeightsFromSwipeDisliked:
         assert result["pantry_match"] == pytest.approx(weights["pantry_match"])
         assert result["freshness"] == pytest.approx(weights["freshness"])
 
+
 class TestUpdateWeightsFromSwipeSkipped:
     def test_nudges_novelty_with_damped_rate(self):
         weights = _weights()
@@ -161,6 +172,7 @@ class TestUpdateWeightsFromSwipeSkipped:
         assert result["cuisine"] == pytest.approx(weights["cuisine"])
         assert result["freshness"] == pytest.approx(weights["freshness"])
         assert result["nutrition"] == pytest.approx(weights["nutrition"])
+
 
 class TestUpdateCuisineAffinityFromSwipe:
     def test_liked_pushes_affinity_toward_one(self):
@@ -214,6 +226,7 @@ class TestUpdateCuisineAffinityFromSwipe:
 
         assert result == {"ITALIAN": 0.5}
 
+
 class TestRenormalise:
     def test_already_normal_weights_are_unchanged(self):
         weights = _weights()
@@ -248,6 +261,7 @@ class TestRenormalise:
         result["pantry_match"] = 999.0
 
         assert DEFAULT_PREFERENCE_WEIGHTS["pantry_match"] != 999.0
+
 
 class TestProcessSwipes:
     def test_single_liked_swipe_updates_weights_and_affinities(self):
@@ -320,10 +334,18 @@ class TestProcessSwipes:
             preference_weights=PreferenceWeights(**DEFAULT_PREFERENCE_WEIGHTS),
             cuisine_affinities={"ITALIAN": 0.5, "JAPANESE": 0.5},
             swipes=[
-                _swipe_update(recipe_id=1, cuisine="ITALIAN", action="LIKED",
-                              signal_scores=_signal_scores(pantry_match=0.9, cuisine=0.9)),
-                _swipe_update(recipe_id=2, cuisine="JAPANESE", action="DISLIKED",
-                              signal_scores=_signal_scores(cuisine=0.9)),
+                _swipe_update(
+                    recipe_id=1,
+                    cuisine="ITALIAN",
+                    action="LIKED",
+                    signal_scores=_signal_scores(pantry_match=0.9, cuisine=0.9),
+                ),
+                _swipe_update(
+                    recipe_id=2,
+                    cuisine="JAPANESE",
+                    action="DISLIKED",
+                    signal_scores=_signal_scores(cuisine=0.9),
+                ),
                 _swipe_update(recipe_id=3, cuisine="ITALIAN", action="SKIPPED"),
             ],
             alpha=ALPHA,
