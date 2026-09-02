@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.stream.*;
 import org.springframework.web.server.*;
 import org.springframework.http.*;
+import java.math.BigDecimal;
 
 /* Import classes */
 import com.mealchemy.pantry.model.PantryIngredient;
@@ -35,7 +36,11 @@ import com.mealchemy.engine.dto.PreferenceWeightsRequest;
 import com.mealchemy.engine.dto.RecommendationRequest;
 import com.mealchemy.engine.dto.RecommendationResponse;
 import com.mealchemy.engine.client.EmptyPoolException;
-import java.math.BigDecimal;
+import com.mealchemy.shared.enums.StorageLocation;
+import com.mealchemy.nutritionalcalculator.service.NutritionalCalculatorService;
+import com.mealchemy.nutritionalcalculator.dto.RecipeNutritionResponse;
+import com.mealchemy.nutritionalcalculator.dto.RecipeNutritionValues;
+import com.mealchemy.engine.dto.NutritionRequest;
 
 @Service
 public class RecommendationService {
@@ -48,12 +53,13 @@ public class RecommendationService {
     private final RecipeRepository recipeRepository;
     private final RecipeTagsRepository recipeTagsRepository;
     private final EngineClient engineClient;
+    private final NutritionalCalculatorService nutritionalCalculatorService;
 
     public RecommendationService(PantryIngredientRepository pantryIngredientRepository, 
         IngredientCatalogueRepository ingredientCatalogueRepository, IngredientCategoryRepository ingredientCategoryRepository,
         UserCuisineAffinitiesRepository userCuisineAffinitiesRepository, UserPreferencesRepository userPreferencesRepository,
         UserPreferenceWeightsRepository userPreferenceWeightsRepository, RecipeRepository recipeRepository, 
-        RecipeTagsRepository recipeTagsRepository, EngineClient engineClient)
+        RecipeTagsRepository recipeTagsRepository, EngineClient engineClient, NutritionalCalculatorService nutritionalCalculatorService)
     {
         this.pantryIngredientRepository = pantryIngredientRepository;
         this.ingredientCatalogueRepository = ingredientCatalogueRepository;
@@ -64,6 +70,7 @@ public class RecommendationService {
         this.recipeRepository = recipeRepository;
         this.recipeTagsRepository = recipeTagsRepository;
         this.engineClient = engineClient;
+        this.nutritionalCalculatorService = nutritionalCalculatorService;
     }
 
     // Helper function to build the pantry entries object
@@ -80,44 +87,45 @@ public class RecommendationService {
         Map<Integer, IngredientCategory> categoryById = ingredientCategoryRepository.findAllById(categoryIds).stream().collect(Collectors.toMap(IngredientCategory::getCategoryId, c -> c));
 
         // Map each pantry item
-        return pantryItems.stream().map(
-            item -> {
-                IngredientCatalogue catalogue = catalogueById.get(item.getIngredientId());
-                IngredientCategory category = categoryById.get(catalogue.getCategoryId());
+        return pantryItems.stream()
+        .map(item -> {
+            IngredientCatalogue catalogue = catalogueById.get(item.getIngredientId());
+            IngredientCategory category = categoryById.get(catalogue.getCategoryId());
+            StorageLocation storageLocation = item.getStorageLocation();
 
-                Integer shelfLifeDays = resolveShelfLifeDays(category);
+            if (storageLocation == null) return null;
 
-                return new PantryEntryRequest(
-                    item.getIngredientId(),
-                    catalogue.getCategoryId(),
-                    item.getQuantity(),
-                    item.getUnit(),
-                    item.getCreatedAt(),
-                    shelfLifeDays,
-                    "FRIDGE"
-                );
-            }).toList();
+            Integer shelfLifeDays = resolveShelfLifeDays(category, storageLocation);
+            if (shelfLifeDays == null) return null;
+
+            return new PantryEntryRequest(
+                item.getIngredientId(),
+                catalogue.getCategoryId(),
+                item.getQuantity(),
+                item.getUnit(),
+                item.getCreatedAt(),
+                shelfLifeDays,
+                storageLocation.name()
+            );
+        })
+        .filter(Objects::nonNull)
+        .toList();
     }
 
     // Helper function to resolve ingredient's shelf life
-    private Integer resolveShelfLifeDays(IngredientCategory category)
+    private Integer resolveShelfLifeDays(IngredientCategory category, StorageLocation storageLocation)
     {
-        Short fridge = category.getFridgeShelfLife();
-        Short pantryLife = category.getPantryShelfLife();
+        Integer fridge = category.getFridgeShelfLife() != null ? category.getFridgeShelfLife().intValue() : null;
+        Integer pantry = category.getPantryShelfLife() != null ? category.getPantryShelfLife().intValue() : null;
 
-        if(fridge != null)
-        {
-            return fridge.intValue();
-        }
-        if(pantryLife != null)
-        {
-            return pantryLife.intValue();
-        }
-        return null;
+        return switch (storageLocation) {
+            case FRIDGE -> fridge != null ? fridge : pantry;
+            case PANTRY -> pantry != null ? pantry : fridge;
+        };
     }
 
     // Helper function to build the candidate pool
-    private List<CandidatePoolEntryRequest> buildCandidatePool()
+    private List<CandidatePoolEntryRequest> buildCandidatePool(Integer userId)
     {
         List<Recipe> recipes = recipeRepository.findByIsCommunityPublishedTrue();
 
@@ -127,8 +135,25 @@ public class RecommendationService {
             recipe.getCuisineType(),
             buildDietaryTags(recipe),
             buildIngredients(recipe),
-            null
+            buildNutrition(userId, recipe.getRecipeId())
         )).toList();
+    }
+
+    // Helper function to build the butrition request object
+    private NutritionRequest buildNutrition(Integer userId, Integer recipeId)
+    {
+        try {
+            RecipeNutritionResponse nutrition = nutritionalCalculatorService.getRecipeNutrition(userId, recipeId);
+            RecipeNutritionValues totals = nutrition.totals();
+            return new NutritionRequest(
+                totals.caloriesKcal() != null ? totals.caloriesKcal().intValue() : null,
+                totals.proteinG(),
+                totals.carbsG(),
+                totals.fatG()
+            );
+        } catch (ResponseStatusException e) {
+        return null;
+        }
     }
 
     // Helper function to build the dietary tags object
@@ -195,8 +220,8 @@ public class RecommendationService {
     {
         UserStateRequest userState = buildUserState(userId);
 
-        List<CandidatePoolEntryRequest> candidatePool = buildCandidatePool();
-
+        List<CandidatePoolEntryRequest> candidatePool = buildCandidatePool(userId);
+        
         RecommendationRequest request = new RecommendationRequest(
             userState, 
             candidatePool, 
