@@ -14,6 +14,7 @@ import com.mealchemy.engine.client.StaleStateException;
 import com.mealchemy.engine.client.InvalidSwipeException;
 
 import java.time.Instant;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
