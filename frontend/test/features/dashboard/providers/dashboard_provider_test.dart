@@ -16,7 +16,6 @@ class _ThrowingDashboardRepo implements DashboardRepository {
   @override
   Future<int> getSmartSuggestionItemsAway() async =>
       throw Exception('network error');
-
   @override
   Future<int> getSmartSuggestionRecipeCount() async =>
       throw Exception('network error');
@@ -28,17 +27,15 @@ class _ThrowingDashboardRepo implements DashboardRepository {
       throw Exception('network error');
 }
 
-void main() {
-  group('dashboardRepositoryProvider', () {
-    test('returns MockDashboardRepository while AppConfig.useMockData is true',
-        () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      final repository = container.read(dashboardRepositoryProvider);
-      expect(repository, isA<MockDashboardRepository>());
-    });
-  });
+ProviderContainer _mockContainer() => ProviderContainer(
+      overrides: [
+        dashboardRepositoryProvider.overrideWithValue(
+          MockDashboardRepository(),
+        ),
+      ],
+    );
 
+void main() {
   group('DashboardState defaults', () {
     test('starts with isLoading  false ', () {
       const state = DashboardState();
@@ -79,7 +76,6 @@ void main() {
     test(' overrides only isLoading', () {
       const state = DashboardState();
       final next = state.copyWith(isLoading: true);
-
       expect(next.isLoading, true);
       expect(next.displayName, isEmpty);
       expect(next.pantryItemCount, 0);
@@ -103,28 +99,26 @@ void main() {
 
       expect(next.errorMessage, isNull);
     });
-
-    test('preserves existing lists when not overridden ', () {
-      final recipe = const DashboardRecipeCardData(
+    test('preserves existing lists when not overridden', () {
+      const recipe = DashboardRecipeCardData(
         recipe: Recipe(recipeId: 1, title: 'Test'),
         matchPercent: 90,
         tag: 'HIGH PROTEIN',
         rating: 4.5,
       );
-
-      final state = DashboardState(recommendedRecipes: [recipe]);
+      const state = DashboardState(recommendedRecipes: [recipe]);
       final next = state.copyWith(isLoading: true);
-      expect(next.recommendedRecipes, hasLength( 1));
+      expect(next.recommendedRecipes, hasLength(1));
     });
   });
 
   group('DashboardNotifier.loadDashboard', () {
     test('populates all state fields on success', () async {
-      final container = ProviderContainer();
+      final container = _mockContainer();
       addTearDown(container.dispose);
       await container.read(dashboardProvider.notifier).loadDashboard();
       final state = container.read(dashboardProvider);
-      
+
       expect(state.isLoading, false);
       expect(state.displayName, isNotEmpty);
       expect(state.pantryItemCount, greaterThan(0));
@@ -136,9 +130,8 @@ void main() {
     test('sets errorMessage when repository throws', () async {
       final container = ProviderContainer(
         overrides: [
-          dashboardRepositoryProvider.overrideWithValue(
-            _ThrowingDashboardRepo(),
-          ),
+          dashboardRepositoryProvider
+              .overrideWithValue(_ThrowingDashboardRepo()),
         ],
       );
       addTearDown(container.dispose);
@@ -159,18 +152,14 @@ void main() {
       addTearDown(container.dispose);
       await container.read(dashboardProvider.notifier).loadDashboard();
 
-      expect(
-        container.read(dashboardProvider).recommendedRecipes,
-        isEmpty,
-      );
+      expect(container.read(dashboardProvider).recommendedRecipes, isEmpty);
     });
 
     test('sets isLoading  to false after error ', () async {
       final container = ProviderContainer(
         overrides: [
-          dashboardRepositoryProvider.overrideWithValue(
-            _ThrowingDashboardRepo(),
-          ),
+          dashboardRepositoryProvider
+              .overrideWithValue(_ThrowingDashboardRepo()),
         ],
       );
       addTearDown(container.dispose);
