@@ -15,9 +15,8 @@ from src.config import (
     NUTRITION_LOW_CARB_MAX_G,
 )
 from src.core.ingredient_matching import pantry_ingredient_match
-from src.models.recipe import CandidatePoolEntry, Ingredient
+from src.models.recipe import CandidatePoolEntry, Ingredient, Nutrition
 from src.models.user_state import PantryEntry, SwipeHistoryEntry, UserState
-
 
 def novelty_score(recipe_id: int, swipe_history: list[SwipeHistoryEntry]) -> float:
     relevant_swipes = [s for s in swipe_history if s.recipe_id == recipe_id]
@@ -53,12 +52,12 @@ def pantry_coverage_score(recipe_ingredients: list[Ingredient], pantry: list[Pan
 def cuisine_affinity_score(cuisine: str, cuisine_affinities: dict[str, float]) -> float:
     return cuisine_affinities.get(cuisine, NEUTRAL_SIGNAL_VALUE)
 
-def _score_high_protein(nutrition) -> float:
+def _score_high_protein(nutrition: Nutrition) -> float:
     if nutrition.protein_g is None:
         return NEUTRAL_SIGNAL_VALUE
     return 1.0 if nutrition.protein_g >= NUTRITION_HIGH_PROTEIN_MIN_G else 0.0
 
-def _score_low_carb(nutrition) -> float:
+def _score_low_carb(nutrition: Nutrition) -> float:
     if nutrition.carbs_g is None:
         return NEUTRAL_SIGNAL_VALUE
     return 1.0 if nutrition.carbs_g <= NUTRITION_LOW_CARB_MAX_G else 0.0
