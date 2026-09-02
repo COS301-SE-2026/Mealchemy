@@ -42,7 +42,7 @@ on:
       - 'frontend/**'
       - 'database/**'
       - 'infrastructure/**'
-      - '.github/workflows/ci.yml'
+      - '.github/workflows/**'
       - '!**/*.md'
 
 env:
