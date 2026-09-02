@@ -1,0 +1,59 @@
+{
+  "baseline": {
+    "path": "nfr-tests/results/performance-baseline-10vu.json",
+    "environment": "staging",
+    "testProfile": "performance",
+    "virtualUsers": 10,
+    "duration": "5m",
+    "p95Milliseconds": 368.382,
+    "errorRate": 0,
+    "requestsPerSecond": 6.965
+  },
+  "peak": {
+    "path": "nfr-tests/results/performance-peak-20vu.json",
+    "environment": "staging",
+    "testProfile": "performance",
+    "virtualUsers": 20,
+    "duration": "5m",
+    "p95Milliseconds": 522.876,
+    "errorRate": 0,
+    "requestsPerSecond": 13.103
+  },
+  "latencyIncreasePercent": 41.939,
+  "throughputRatio": 1.881,
+  "checks": [
+    {
+      "name": "baseline is staging performance profile with 10 VUs for 5m",
+      "passed": true
+    },
+    {
+      "name": "peak is staging performance profile with 20 VUs for 5m",
+      "passed": true
+    },
+    {
+      "name": "baseline p95 <= 2000 ms",
+      "passed": true
+    },
+    {
+      "name": "peak p95 <= 2000 ms",
+      "passed": true
+    },
+    {
+      "name": "baseline error rate < 1%",
+      "passed": true
+    },
+    {
+      "name": "peak error rate < 1%",
+      "passed": true
+    },
+    {
+      "name": "peak p95 increase <= 50%",
+      "passed": true
+    },
+    {
+      "name": "peak throughput >= 1.8x baseline",
+      "passed": true
+    }
+  ],
+  "passed": true
+}

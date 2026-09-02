@@ -4,7 +4,7 @@
 only file that creates or updates application data.
 k6 load test logs into this account once during setup.
 
-all 500/ 1000 users virtual users will recieve the same token and perform read-only
+all users virtual users will recieve the same token and perform read-only
 gives the disposable account enough realisitc content that performace tests measure populated responses.
 
 script can issue:
@@ -332,11 +332,15 @@ async function prepareShoppingLists(request, ingredients, unit, targets) {
       const ingredient = ingredients[
         (listIndex * targets.shoppingListItems + itemIndex) % ingredients.length
       ];
+      const ingredientId = id(ingredient, 'ingId', 'ing_id');
+      if (!ingredientId) {
+        throw new Error(`Could not resolve an ingredient ID for ${ingredient.name}.`);
+      }
+
       await request(`/api/shopping-lists/${listId}/items`, {
         method: 'POST',
         body: {
-          ing_id: id(ingredient, 'ingId', 'ing_id'),
-          name: ingredient.name,
+          ing_id: ingredientId,
           quantity: itemIndex + 1,
           unit,
         },
