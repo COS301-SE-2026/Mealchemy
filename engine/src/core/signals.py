@@ -13,7 +13,9 @@ from src.config import (
     NOVELTY_SCORE_SKIPPED_RECENT,
     NOVELTY_SCORE_SKIPPED_OLD,
     NOVELTY_SCORE_NEVER_SEEN,
-    NEUTRAL_SIGNAL_VALUE
+    NEUTRAL_SIGNAL_VALUE,
+    NUTRITION_HIGH_PROTEIN_MIN_G,
+    NUTRITION_LOW_CARB_MAX_G,
 )
 
 def novelty_score(recipe_id: int, swipe_history: list[SwipeHistoryEntry]) -> float:
@@ -51,7 +53,47 @@ def cuisine_affinity_score(cuisine: str, cuisine_affinities: dict[str, float]) -
     return cuisine_affinities.get(cuisine, NEUTRAL_SIGNAL_VALUE)
 
 def nutrition_score(recipe: CandidatePoolEntry, user_state: UserState) -> float:
-    return NEUTRAL_SIGNAL_VALUE
+    if recipe.nutrition is None:
+        return NEUTRAL_SIGNAL_VALUE
+
+    relevant_goals = [g for g in user_state.nutritional_goals if g in ("HIGH_PROTEIN", "LOW_CARB")]
+    if not relevant_goals:
+        return NEUTRAL_SIGNAL_VALUE
+
+    goal_scores = []
+
+    if "HIGH_PROTEIN" in relevant_goals:
+        if recipe.nutrition.protein_g is None:
+            goal_scores.append(NEUTRAL_SIGNAL_VALUE)
+        else:
+            goal_scores.append(1.0 if recipe.nutrition.protein_g >= NUTRITION_HIGH_PROTEIN_MIN_G else 0.0)
+
+    if "LOW_CARB" in relevant_goals:
+        if recipe.nutrition.carbs_g is None:
+            goal_scores.append(NEUTRAL_SIGNAL_VALUE)
+        else:
+            goal_scores.append(1.0 if recipe.nutrition.carbs_g <= NUTRITION_LOW_CARB_MAX_G else 0.0)
+
+    return sum(goal_scores) / len(goal_scores)
 
 def freshness_score(recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]) -> float:
-    return NEUTRAL_SIGNAL_VALUE
+    owned_ids, _ = pantry_ingredient_match(recipe_ingredients, pantry)
+    if not owned_ids:
+        return NEUTRAL_SIGNAL_VALUE
+
+    pantry_by_ing_id = {p.ing_id: p for p in pantry}
+    now = datetime.now(timezone.utc)
+
+    urgencies = []
+    for ing_id in owned_ids:
+        entry = pantry_by_ing_id.get(ing_id)
+        if entry is None or entry.shelf_life_days is None:
+            continue
+        days_stored = (now - entry.added_at).days
+        urgency = min(max(days_stored / entry.shelf_life_days, 0.0), 1.0)
+        urgencies.append(urgency)
+
+    if not urgencies:
+        return NEUTRAL_SIGNAL_VALUE
+
+    return sum(urgencies) / len(urgencies)
