@@ -1,5 +1,5 @@
 -- =============================================================================
--- V47__alter_tables_for_engine.sql
+-- V48__alter_tables_for_engine.sql
 --
 -- alter the tables as necessary for the recommendation engine to function correctly
 -- =============================================================================
