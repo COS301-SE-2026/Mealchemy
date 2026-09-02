@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mealchemy/features/recipe/models/recipe_nutrition.dart';
 import 'package:mealchemy/features/recipe/providers/recipe_nutrition_provider.dart';
 import 'package:mealchemy/features/recipe/repositories/recipe_nutrition_repository.dart';
+import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
+import 'package:mealchemy/features/recipe/repositories/mock_recipe_nutrition_repository.dart';
 
 class _RecordingNutritionRepository implements RecipeNutritionRepository {
   int? requestedRecipeId;
@@ -36,6 +38,41 @@ class _RecordingNutritionRepository implements RecipeNutritionRepository {
 }
 
 void main() {
+  test('nutrition repository uses mock when Recipe mock mode is enabled', () {
+    final container = ProviderContainer(
+      overrides: [
+        mockRecipeEnabledProvider.overrideWithValue(true),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final repository = container.read(
+      recipeNutritionRepositoryProvider,
+    );
+
+    expect(repository, isA<MockRecipeNutritionRepository>());
+  });
+
+  test('nutrition repository uses remote repository in API mode', () {
+    final remoteRepository = _RecordingNutritionRepository();
+
+    final container = ProviderContainer(
+      overrides: [
+        mockRecipeEnabledProvider.overrideWithValue(false),
+        remoteRecipeNutritionRepositoryProvider.overrideWithValue(
+          remoteRepository,
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final repository = container.read(
+      recipeNutritionRepositoryProvider,
+    );
+
+    expect(repository, same(remoteRepository));
+  });
+
   test('recipeNutritionProvider loads nutrition for requested recipe',
       () async {
     final repository = _RecordingNutritionRepository();
