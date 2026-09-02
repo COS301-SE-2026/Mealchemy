@@ -30,9 +30,20 @@ name: CI
 #add actions/cashe for docker 
 #fix python mutable tag by adding dependabot
 
+#added ignore for documentation
+
 
 on:
+  workflow_dispatch:
   pull_request:
+    paths:
+      - 'backend/**'
+      - 'engine/**'
+      - 'frontend/**'
+      - 'database/**'
+      - 'infrastructure/**'
+      - '.github/workflows/ci.yml'
+      - '!**/*.md'
 
 env:
   ACT: ""
