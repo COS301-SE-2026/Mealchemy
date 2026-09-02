@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import com.mealchemy.swipes.service.SwipeService;
 import com.mealchemy.swipes.dto.SwipeRequest;
 import com.mealchemy.swipes.dto.SwipeResponse;
+import com.mealchemy.swipes.dto.LikedRecipesResponse;
 import com.mealchemy.swipes.model.Swipe;
 
 @RestController
@@ -32,5 +33,11 @@ public class SwipeController {
             request.signalScores()
         );
         return SwipeResponse.from(saved);
+    }
+
+    @GetMapping("/liked")
+    public LikedRecipesResponse getLikedRecipes(@AuthenticationPrincipal String userId)
+    {
+        return new LikedRecipesResponse(swipeService.getLikedRecipes(Integer.parseInt(userId)));
     }
 }
