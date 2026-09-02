@@ -91,7 +91,7 @@ public class RecipeIngredientController
 
 
     // Delete
-    @Operation(summary = "Delete a recipe ingredient", description = "Removes an ingredient line from a recipe. Only the owner may modify a recipe's ingredients")
+    @Operation(summary = "Delete a recipe ingredient", description = "Removes an ingredient line from a recipe. Only the owner may modify a recipe's ingredients.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Ingredient line deleted successfully"),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
