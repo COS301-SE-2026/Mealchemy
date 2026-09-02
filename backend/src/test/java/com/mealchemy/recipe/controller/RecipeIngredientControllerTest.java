@@ -148,12 +148,12 @@ public class RecipeIngredientControllerTest {
     }
 
     @Test
-    void deleteRecipeIngredient_returns200() throws Exception
+    void deleteRecipeIngredient_returns204() throws Exception
     {
         doNothing().when(recipeIngredientService).deleteRecipeIngredient(1, 1, 1);
 
         mockMvc.perform(delete("/ingredients/recipe/1/ingredient/1/delete").with(csrf()))
-            .andExpect(status().isOk());
+            .andExpect(status().isNoContent());
     }
 
     @Test

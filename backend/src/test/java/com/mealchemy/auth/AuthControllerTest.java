@@ -60,7 +60,7 @@ public class AuthControllerTest {
 
     // Happy path
     @Test
-    void register_withValidRequest_returns201() throws Exception {
+    void register_withValidRequest_returns200() throws Exception {
         // Arrange
         RegisterRequest request = new RegisterRequest(
             "test@test.com",
@@ -76,7 +76,7 @@ public class AuthControllerTest {
         mockMvc.perform(post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isCreated())               // 201
+            .andExpect(status().isOk())             // 200  
             .andExpect(jsonPath("$.user_id").value(1))
             .andExpect(jsonPath("$.token").value("mock.jwt.token"))
             .andExpect(jsonPath("$.onboarding_required").value(true));

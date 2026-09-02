@@ -148,7 +148,7 @@ public class ShoppingListService {
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
 
         if(!selectedList.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list");
         }
 
         selectedList.setName(request.name());
@@ -174,7 +174,7 @@ public class ShoppingListService {
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
 
         if(!selectedList.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list");
         }
 
         shoppingListRepository.delete(selectedList);
@@ -191,7 +191,7 @@ public class ShoppingListService {
 
         // user authentication - check items in list belong to logged in user
         if(!list.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list");
         }
 
         PreferredUnit preferredUnit = getPreferredUnit(userId);
@@ -217,7 +217,7 @@ public class ShoppingListService {
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
 
         if(!list.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list");
         }
 
         if(request.name() == null && request.ingId() == null) {
@@ -305,7 +305,7 @@ public class ShoppingListService {
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
 
         if(!selectedList.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list");
         }
 
         // get selected item
@@ -372,7 +372,7 @@ public class ShoppingListService {
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
 
         if(!selectedList.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list");
         }
 
         // get selected item
@@ -413,7 +413,7 @@ public class ShoppingListService {
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
 
         if(!selectedList.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list");
         }
 
         // get selected item
@@ -437,7 +437,7 @@ public class ShoppingListService {
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
 
         if(!selectedList.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list");
         }
         
         // extract items from request list
@@ -550,7 +550,7 @@ public class ShoppingListService {
                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
 
         if (!selectedList.getUserId().equals(userId)){
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list");
         }
         
         // check recipe exists
@@ -663,7 +663,7 @@ public class ShoppingListService {
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
 
         if(!selectedList.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list");
         }
 
         List<ShoppingListItem> items = shoppingListItemRepository.findByShoppingListId(shoppingListId);
@@ -695,7 +695,7 @@ public class ShoppingListService {
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
 
         if(!selectedList.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list");
         }
 
         List<ShoppingListItem> items = shoppingListItemRepository.findByShoppingListId(shoppingListId);
@@ -728,7 +728,7 @@ public class ShoppingListService {
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
 
         if(!selectedList.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list");
         }
 
         // find all items where purchased flag is true - list can be empty so if not found don't throw error

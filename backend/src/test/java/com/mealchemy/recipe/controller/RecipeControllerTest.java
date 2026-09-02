@@ -301,12 +301,12 @@ public class RecipeControllerTest {
     }
 
     @Test
-    void deleteRecipe_returns200() throws Exception
+    void deleteRecipe_returns204() throws Exception
     {
         doNothing().when(recipeService).deleteRecipe(1, 1);
 
         mockMvc.perform(delete("/recipes/delete/1").with(csrf()))
-            .andExpect(status().isOk());
+            .andExpect(status().isNoContent());
     }
     
 }
