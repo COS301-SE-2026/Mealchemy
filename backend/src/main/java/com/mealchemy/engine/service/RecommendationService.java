@@ -35,6 +35,9 @@ import com.mealchemy.engine.dto.UserStateRequest;
 import com.mealchemy.engine.dto.PreferenceWeightsRequest;
 import com.mealchemy.engine.dto.RecommendationRequest;
 import com.mealchemy.engine.dto.RecommendationResponse;
+import com.mealchemy.recipe.dto.RecipeResponse;
+import com.mealchemy.engine.dto.EnrichedRecommendationItem;
+import com.mealchemy.engine.dto.EnrichedRecommendationResponse;
 import com.mealchemy.engine.client.EmptyPoolException;
 import com.mealchemy.shared.enums.StorageLocation;
 import com.mealchemy.nutritionalcalculator.service.NutritionalCalculatorService;
@@ -54,6 +57,11 @@ public class RecommendationService {
     private final RecipeTagsRepository recipeTagsRepository;
     private final EngineClient engineClient;
     private final NutritionalCalculatorService nutritionalCalculatorService;
+
+    private record CandidatePoolResult(
+        List<CandidatePoolEntryRequest> pool,
+        Map<Integer, Recipe> recipeById
+    ){}
 
     public RecommendationService(PantryIngredientRepository pantryIngredientRepository, 
         IngredientCatalogueRepository ingredientCatalogueRepository, IngredientCategoryRepository ingredientCategoryRepository,
@@ -125,11 +133,14 @@ public class RecommendationService {
     }
 
     // Helper function to build the candidate pool
-    private List<CandidatePoolEntryRequest> buildCandidatePool(Integer userId)
+    private CandidatePoolResult buildCandidatePool(Integer userId)
     {
         List<Recipe> recipes = recipeRepository.findByIsCommunityPublishedTrue();
 
-        return recipes.stream().map(recipe -> new CandidatePoolEntryRequest(
+        Map<Integer, Recipe> recipeById = recipes.stream()
+            .collect(Collectors.toMap(Recipe::getRecipeId, r -> r));
+
+        List<CandidatePoolEntryRequest> pool = recipes.stream().map(recipe -> new CandidatePoolEntryRequest(
             recipe.getRecipeId(),
             recipe.getTitle(),
             recipe.getCuisineType(),
@@ -137,6 +148,8 @@ public class RecommendationService {
             buildIngredients(recipe),
             buildNutrition(userId, recipe.getRecipeId())
         )).toList();
+
+        return new CandidatePoolResult(pool, recipeById);
     }
 
     // Helper function to build the butrition request object
@@ -216,27 +229,55 @@ public class RecommendationService {
     }
 
     // get all recommended recipes 
-    public RecommendationResponse getRecommendations(Integer userId, Integer batchSize, List<Integer> excludeRecipeIds, Integer seed)
+    public EnrichedRecommendationResponse getRecommendations(Integer userId, Integer batchSize, List<Integer> excludeRecipeIds, Integer seed)
     {
         UserStateRequest userState = buildUserState(userId);
 
-        List<CandidatePoolEntryRequest> candidatePool = buildCandidatePool(userId);
-        
+        CandidatePoolResult candidatePoolResult = buildCandidatePool(userId);
+
         RecommendationRequest request = new RecommendationRequest(
-            userState, 
-            candidatePool, 
-            batchSize, 
-            excludeRecipeIds, 
+            userState,
+            candidatePoolResult.pool(),
+            batchSize,
+            excludeRecipeIds,
             seed
         );
 
+        RecommendationResponse engineResponse;
         try
         {
-            return engineClient.getRecommendations(request);
+            engineResponse = engineClient.getRecommendations(request);
         }
-        catch(EmptyPoolException e)
+        catch (EmptyPoolException e)
         {
-            return RecommendationResponse.from(List.of(), 0, true);
+            return EnrichedRecommendationResponse.empty();
         }
+
+        List<EnrichedRecommendationItem> enrichedItems = engineResponse.recommendations().stream()
+            .map(item -> {
+                Recipe recipe = candidatePoolResult.recipeById().get(item.recipeId());
+                if (recipe == null)
+                {
+                    return null;
+                }
+                return new EnrichedRecommendationItem(
+                    item.recipeId(),
+                    item.cuisineType(),
+                    item.score(),
+                    item.scoreBreakdown(),
+                    item.pantryGapCount(),
+                    item.missingIngredients(),
+                    RecipeResponse.from(recipe)
+                );
+            })
+            .filter(Objects::nonNull)
+            .toList();
+
+        return new EnrichedRecommendationResponse(
+            enrichedItems,
+            engineResponse.cuisineAllocation(),
+            engineResponse.totalCandidatesAfterFilter(),
+            engineResponse.totalRecipesConsidered()
+        );
     }
 }
