@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import com.mealchemy.swipes.service.SwipeService;
 import com.mealchemy.swipes.dto.SwipeRequest;
 import com.mealchemy.swipes.dto.SwipeResponse;
+import com.mealchemy.swipes.model.Swipe;
 
 @RestController
 @RequestMapping("/discovery")
