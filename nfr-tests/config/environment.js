@@ -1,13 +1,12 @@
-import { fail } from 'k6';
+import { check, fail } from 'k6';
 import http from 'k6/http';
-import { check } from 'k6';
 
 // -----shared k6 environment and authentication model------
 // every k6 test uses this same login behaviour
 // only local or staging
 
 export const environment = __ENV.NFR_ENVIRONMENT || '';
-export const baseUrl = (__ENV.STAGING_BASE_URL || '').replace(/\/+$/, '');
+export const baseUrl = removeTrailingSlashes(__ENV.STAGING_BASE_URL || '');
 
 // allows only local or staging
 export function validateEnvironment() {
@@ -64,4 +63,12 @@ export function login() {
   }
   // return token for authenticated request
   return response.json('token');
+}
+
+function removeTrailingSlashes(value) {
+  let end = value.length;
+  while (end > 0 && value[end - 1] === '/') {
+    end -= 1;
+  }
+  return value.slice(0, end);
 }

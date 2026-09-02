@@ -83,7 +83,7 @@ function readSummary(path) {
     typeof (failureMetric.rate ?? failureMetric.value) !== 'number' ||
     typeof requestMetric.rate !== 'number'
   ) {
-    throw new Error(`${path} is not a valid k6 summary export.`);
+    throw new TypeError(`${path} is not a valid k6 summary export.`);
   }
 
   return {

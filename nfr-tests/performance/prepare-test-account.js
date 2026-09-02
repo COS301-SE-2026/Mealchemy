@@ -77,7 +77,7 @@ function readConfig() {
     throw new Error('Account preparation requires NFR_ENVIRONMENT=staging.');
   }
 
-  const baseUrl = required('STAGING_BASE_URL').replace(/\/+$/, '');
+  const baseUrl = removeTrailingSlashes(required('STAGING_BASE_URL'));
   const target = new URL(baseUrl);
   if (target.protocol !== 'https:') {
     throw new Error('Account preparation requires an HTTPS staging target.');
@@ -233,7 +233,7 @@ async function loadReferenceData(request) {
       ?.value || cuisineOptions[0];
 
   if (typeof unit !== 'string' || typeof cuisineType !== 'string') {
-    throw new Error('Could not select valid unit and cuisine values.');
+    throw new TypeError('Could not select valid unit and cuisine values.');
   }
 
   return { ingredients, unit, cuisineType };
@@ -516,9 +516,17 @@ async function parseResponse(response) {
 function positiveInteger(name, fallback) {
   const value = Number(process.env[name] || fallback);
   if (!Number.isInteger(value) || value <= 0) {
-    throw new Error(`${name} must be a positive integer.`);
+    throw new TypeError(`${name} must be a positive integer.`);
   }
   return value;
+}
+
+function removeTrailingSlashes(value) {
+  let end = value.length;
+  while (end > 0 && value[end - 1] === '/') {
+    end -= 1;
+  }
+  return value.slice(0, end);
 }
 
 function required(name) {
@@ -527,7 +535,13 @@ function required(name) {
   return value;
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
-});
+async function run() {
+  try {
+    await main();
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  }
+}
+
+void run();

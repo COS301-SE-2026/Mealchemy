@@ -109,20 +109,20 @@ function normalizeAlert(scope, alert) {
 
 function validateAcceptedFindings(findings) {
   if (!Array.isArray(findings)) {
-    throw new Error('accepted-findings.json must contain a JSON array.');
+    throw new TypeError('accepted-findings.json must contain a JSON array.');
   }
 
   return findings.map((finding, index) => {
     for (const key of ['fingerprint', 'reason', 'owner', 'reviewBy']) {
       if (typeof finding?.[key] !== 'string' || !finding[key].trim()) {
-        throw new Error(
+        throw new TypeError(
           `Accepted finding ${index + 1} requires a non-empty ${key}.`,
         );
       }
     }
 
     if (Number.isNaN(Date.parse(finding.reviewBy))) {
-      throw new Error(
+      throw new TypeError(
         `Accepted finding ${index + 1} has an invalid reviewBy date.`,
       );
     }
@@ -157,17 +157,12 @@ function redactSecrets(value, secrets = []) {
   for (const secret of secrets.filter(Boolean)) {
     result = result.split(secret).join('[REDACTED]');
   }
-  return result
-  //regex for JWT token
-    .replace(/Bearer\s+[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/gi, 'Bearer [REDACTED]')
-    .replace(/[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g, '[REDACTED]');
+  return redactJwtLikeTokens(result);
 }
 // extra JWT check
 function assertNoJwt(value, secrets = []) {
   const serialized = JSON.stringify(value);
-  const containsJwt = /[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/.test(
-    serialized,
-  );
+  const containsJwt = containsJwtLikeToken(serialized);
   const containsSecret = secrets.filter(Boolean).some((secret) =>
     serialized.includes(secret),
   );
@@ -247,9 +242,52 @@ function safeUrl(value) {
   try {
     const url = new URL(value);
     return `${url.origin}${url.pathname}`;
-  } catch (_) {
+  } catch {
+    // ZAP can report malformed URLs, still remove any query data from them.
     return String(value).split('?')[0];
   }
+}
+
+function redactJwtLikeTokens(value) {
+  let output = '';
+  let cursor = 0;
+
+  while (cursor < value.length) {
+    if (!isJwtCharacter(value[cursor])) {
+      output += value[cursor];
+      cursor += 1;
+      continue;
+    }
+
+    let end = cursor;
+    while (end < value.length && isJwtCharacter(value[end])) {
+      end += 1;
+    }
+    const candidate = value.slice(cursor, end);
+    output += isJwtLikeToken(candidate) ? '[REDACTED]' : candidate;
+    cursor = end;
+  }
+
+  return output;
+}
+
+function containsJwtLikeToken(value) {
+  return redactJwtLikeTokens(value) !== value;
+}
+
+function isJwtLikeToken(value) {
+  const segments = value.split('.');
+  return segments.length === 3 && segments.every((segment) => segment.length >= 10);
+}
+
+function isJwtCharacter(value) {
+  if (value === '.' || value === '-' || value === '_') return true;
+  const code = value.charCodeAt(0);
+  return (
+    (code >= 48 && code <= 57) ||
+    (code >= 65 && code <= 90) ||
+    (code >= 97 && code <= 122)
+  );
 }
 
 // coerce val into array, null as empty

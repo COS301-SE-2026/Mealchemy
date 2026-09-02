@@ -30,6 +30,11 @@ const {
 } = require('./evaluate-zap-report');
 
 const DEFAULT_IMAGE = 'ghcr.io/zaproxy/zaproxy:stable';
+const DEFAULT_DOCKER_PATHS = [
+  '/usr/local/bin/docker',
+  '/opt/homebrew/bin/docker',
+  '/Applications/Docker.app/Contents/Resources/bin/docker',
+];
 const RESULTS_DIR = path.resolve(__dirname, '../../..', 'results');
 const ACCEPTED_FINDINGS_PATH = path.join(__dirname, 'accepted-findings.json');
 
@@ -126,7 +131,7 @@ function readConfig() {
     );
   }
 
-  const baseUrl = required('STAGING_BASE_URL').replace(/\/+$/, '');
+  const baseUrl = removeTrailingSlashes(required('STAGING_BASE_URL'));
   const parsedUrl = new URL(baseUrl);
   if (parsedUrl.protocol !== 'https:') {
     throw new Error('ZAP staging scans require an HTTPS target.');
@@ -155,6 +160,7 @@ function readConfig() {
     email: required('NFR_TEST_EMAIL'),
     password: required('NFR_TEST_PASSWORD'),
     image: process.env.ZAP_DOCKER_IMAGE || DEFAULT_IMAGE,
+    dockerExecutable: resolveDockerExecutable(),
     maxScanMinutes: positiveInteger('ZAP_MAX_SCAN_MINUTES', 15),
     delayMs: positiveInteger('ZAP_DELAY_MS', 100),
   };
@@ -219,7 +225,7 @@ function runZap({ config, scope, temporaryDirectory, token }) {
   );
 
   process.stdout.write(`Starting ${scope} GET-only ZAP scan against staging.\n`);
-  const result = spawnSync('docker', args, {
+  const result = spawnSync(config.dockerExecutable, args, {
     env: environment,
     encoding: 'utf8',
     maxBuffer: 100 * 1024 * 1024,
@@ -346,16 +352,45 @@ function required(name) {
 function positiveInteger(name, fallback) {
   const value = Number(process.env[name] || fallback);
   if (!Number.isInteger(value) || value <= 0) {
-    throw new Error(`${name} must be a positive integer.`);
+    throw new TypeError(`${name} must be a positive integer.`);
   }
   return value;
+}
+
+function removeTrailingSlashes(value) {
+  let end = value.length;
+  while (end > 0 && value[end - 1] === '/') {
+    end -= 1;
+  }
+  return value.slice(0, end);
+}
+
+function resolveDockerExecutable() {
+  const configured = process.env.ZAP_DOCKER_BIN;
+  const candidates = configured ? [configured] : DEFAULT_DOCKER_PATHS;
+
+  for (const candidate of candidates) {
+    if (path.isAbsolute(candidate) && fs.existsSync(candidate)) {
+      return fs.realpathSync(candidate);
+    }
+  }
+
+  throw new Error(
+    'Docker was not found at a trusted absolute path. Set ZAP_DOCKER_BIN to the absolute Docker executable path.',
+  );
 }
 
 function writeJson(filePath, value) {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
-});
+async function run() {
+  try {
+    await main();
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  }
+}
+
+void run();

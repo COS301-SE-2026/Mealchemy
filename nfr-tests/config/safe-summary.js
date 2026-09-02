@@ -7,7 +7,7 @@
 
 export function createSafeSummary(data) {
   const outputPath = __ENV.NFR_SUMMARY_PATH;
-  const safeData = JSON.parse(JSON.stringify(data));
+  const safeData = { ...data };
   delete safeData.setup_data;
 
   const output = {
@@ -38,15 +38,15 @@ function renderConsoleSummary(data) {
 
   return [
     'NFR SAFE SUMMARY',
-    `checks passed: ${number(checks.passes)}`,
-    `checks failed: ${number(checks.fails)}`,
-    `HTTP requests: ${number(requests.count)}`,
-    `HTTP request rate: ${number(requests.rate)}/s`,
-    `p95 duration: ${number(duration['p(95)'])} ms`,
-    `HTTP failure rate: ${number(failures.rate ?? failures.value)}`,
+    `checks passed: ${formatNumber(checks.passes)}`,
+    `checks failed: ${formatNumber(checks.fails)}`,
+    `HTTP requests: ${formatNumber(requests.count)}`,
+    `HTTP request rate: ${formatNumber(requests.rate)}/s`,
+    `p95 duration: ${formatNumber(duration['p(95)'])} ms`,
+    `HTTP failure rate: ${formatNumber(failures.rate ?? failures.value)}`,
     authorizationFailures.count === undefined
       ? null
-      : `authorization failures: ${number(authorizationFailures.count)}`,
+        : `authorization failures: ${formatNumber(authorizationFailures.count)}`,
     outputPath
       ? `sanitized evidence: ${outputPath}`
       : 'sanitized evidence: not written (set NFR_SUMMARY_PATH)',
@@ -59,9 +59,9 @@ function values(metric) {
   return metric?.values || metric || {};
 }
 
-function number(value) {
+function formatNumber(value) {
   if (typeof value !== 'number') {
     return 'n/a';
   }
-  return Math.round(value * 1000) / 1000;
+  return String(Math.round(value * 1000) / 1000);
 }
