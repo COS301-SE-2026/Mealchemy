@@ -10,7 +10,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import java.util.List;
 import jakarta.validation.Valid;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,14 +49,14 @@ public class ExternalLinkController {
 
     @Operation(summary = "Create a new external link", description = "Adds a new external link for the authenticated user.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "External link created successfully", content = @Content(schema = @Schema(implementation = ExternalLinkResponse.class))),
+        @ApiResponse(responseCode = "200", description = "External link created successfully", content = @Content(schema = @Schema(implementation = ExternalLinkResponse.class))),
         @ApiResponse(responseCode = "400", description = "Validation failed (e.g. missing name or invalid URL)", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("")
     public ResponseEntity<ExternalLinkResponse> createNewExternalLink(@AuthenticationPrincipal String userId, @Valid @RequestBody ExternalLinkRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(externalLinkService.createExternalLink(Integer.parseInt(userId), request));
+        return ResponseEntity.ok(externalLinkService.createExternalLink(Integer.parseInt(userId), request));
     }
 
 

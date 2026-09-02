@@ -5,7 +5,6 @@ import com.mealchemy.auth.dto.LoginRequest;
 import com.mealchemy.auth.dto.RegisterRequest;
 import com.mealchemy.auth.service.AuthService;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,13 +33,13 @@ public class AuthController {
     @Operation(summary = "Register a new user", description = "Creates a user profile, default preference row, and a private vault. Returns a JWT.")
     @SecurityRequirements // public endpoint - no token required
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "User registered successfully", content = @Content(schema = @Schema(implementation = AuthResponse.class))),
+        @ApiResponse(responseCode = "200", description = "User registered successfully", content = @Content(schema = @Schema(implementation = AuthResponse.class))),
         @ApiResponse(responseCode = "400", description = "Validation failed (e.g. invalid email, password too short)", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "409", description = "Email is already registered", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody @Valid RegisterRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
+        return ResponseEntity.ok(authService.register(request));
     }
 
 

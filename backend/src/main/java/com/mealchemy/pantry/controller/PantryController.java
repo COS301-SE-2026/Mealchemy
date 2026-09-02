@@ -8,7 +8,6 @@ import com.mealchemy.pantry.service.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.util.List;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,7 +49,7 @@ public class PantryController {
 
     @Operation(summary = "Add a pantry ingredient", description = "Adds an ingredient from the catalogue to the authenticated user's pantry with a quantity and unit.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Pantry ingredient added successfully", content = @Content(schema = @Schema(implementation = PantryIngredientResponse.class))),
+        @ApiResponse(responseCode = "200", description = "Pantry ingredient added successfully", content = @Content(schema = @Schema(implementation = PantryIngredientResponse.class))),
         @ApiResponse(responseCode = "400", description = "Validation failed (e.g. invalid quantity or unit)", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "404", description = "Ingredient or category not found in the catalogue, or user profile not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
@@ -59,7 +58,7 @@ public class PantryController {
     // user manually adds a new ingredient
     @PostMapping("")
     public ResponseEntity<PantryIngredientResponse> addPantryIngredientManually(@AuthenticationPrincipal String userId, @RequestBody PantryIngredientRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(pantryService.addIngredientManually(Integer.parseInt(userId), request));
+        return ResponseEntity.ok(pantryService.addIngredientManually(Integer.parseInt(userId), request));
     }
     
 

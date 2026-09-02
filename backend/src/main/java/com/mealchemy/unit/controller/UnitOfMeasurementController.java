@@ -37,7 +37,7 @@ public class UnitOfMeasurementController {
     // get mapping - get all units of measurement for frontend to display
     @Operation(summary = "Get units of measurement for the user", description = "Returns units matching the authenticated user's preferred measurement system (metric/imperial), plus any general-purpose units.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Units retrieved successfully", @Content(array = @ArraySchema(schema = @Schema(implementation = UnitOfMeasurementResponse.class)))),
+        @ApiResponse(responseCode = "200", description = "Units retrieved successfully", content = @Content(array = @ArraySchema(schema = @Schema(implementation = UnitOfMeasurementResponse.class)))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "404", description = "User profile not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
