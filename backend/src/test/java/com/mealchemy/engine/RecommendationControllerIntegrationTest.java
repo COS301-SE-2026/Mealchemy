@@ -49,7 +49,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -88,8 +88,6 @@ public class RecommendationControllerIntegrationTest {
         tagsRepository.deleteAll();
         pantryIngredientRepository.deleteAll();
         recipeRepository.deleteAll();
-        ingredientCatalogueRepository.deleteAll();
-        ingredientCategoryRepository.deleteAll();
         userPreferencesRepository.deleteAll();
         userPreferenceWeightsRepository.deleteAll();
         userCuisineAffinitiesRepository.deleteAll();
@@ -102,16 +100,15 @@ public class RecommendationControllerIntegrationTest {
         user = userRepository.save(user);
         testUserId = user.getUserId();
 
-        IngredientCategory category = new IngredientCategory();
-        category.setCategoryName("Legumes and Legume Products");
-        category.setPantryShelfLife((short) 30);
-        category.setPantryFridgeLife((short) 10);
-        category = ingredientCategoryRepository.save(category);
+        IngredientCategory category = ingredientCategoryRepository.findAll().stream()
+            .filter(c -> "Legumes and Legume Products".equals(c.getCategoryName()))
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException("Seeded category not found"));
 
-        IngredientCatalogue catalogue = new IngredientCatalogue();
-        catalogue.setCategoryId(category.getCategoryId());
-        catalogue.setName("Hummus");
-        catalogue = ingredientCatalogueRepository.save(catalogue);
+        IngredientCatalogue catalogue = ingredientCatalogueRepository.findAll().stream()
+            .filter(i -> "Hummus, commercial".equals(i.getName()))
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException("Seeded ingredient not found"));
 
         RecipeIngredient ingredient = new RecipeIngredient();
         ingredient.setIngId(catalogue.getIngId());
@@ -192,6 +189,7 @@ public class RecommendationControllerIntegrationTest {
 
         mockMvc.perform(get("/discovery/recommendations").with(authentication(authAsTestUser())))
             .andExpect(status().isOk())
+            .andDo(print())
             .andExpect(jsonPath("$.recommendations", hasSize(1)))
             .andExpect(jsonPath("$.recommendations[0].recipeId", is(testRecipeId)))
             .andExpect(jsonPath("$.recommendations[0].recipe.title", is("Hummus Bowl")))

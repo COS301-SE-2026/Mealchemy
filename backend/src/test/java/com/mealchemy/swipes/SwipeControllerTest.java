@@ -82,7 +82,7 @@ public class SwipeControllerTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.recipeId").value(100))
+            .andExpect(jsonPath("$.recipe_id").value(100))
             .andExpect(jsonPath("$.action").value("LIKED"));
     }
 
@@ -115,8 +115,8 @@ public class SwipeControllerTest {
 
         mockMvc.perform(get("/discovery/liked"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.likedRecipes[0].recipeId").value(100))
-            .andExpect(jsonPath("$.likedRecipes[0].recipe.title").value("Hummus Bowl"));
+            .andExpect(jsonPath("$.liked_recipes[0].recipe_id").value(100))
+            .andExpect(jsonPath("$.liked_recipes[0].recipe.title").value("Hummus Bowl"));
     }
 
     @Test
@@ -126,6 +126,6 @@ public class SwipeControllerTest {
 
         mockMvc.perform(get("/discovery/liked"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.likedRecipes").isEmpty());
+            .andExpect(jsonPath("$.liked_recipes").isEmpty());
     }
 }

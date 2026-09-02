@@ -144,7 +144,7 @@ public class VaultFolderRecipeControllerIntegrationTest {
         recipe.setOwnerId(owner.getUserId());
         recipe.setTitle(title);
         recipe.setDescription("A test recipe description");
-        recipe.setCuisineType("Test Cuisine");
+        recipe.setCuisineType("ITALIAN");
         recipe.setPrepTimeMins(10);
         recipe.setCookingTimeMins(20);
         recipe.setServingSize(4);

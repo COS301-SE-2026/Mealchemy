@@ -91,22 +91,26 @@ public class RecommendationService {
     private List<PantryEntryRequest> buildPantryEntries(Integer userId)
     {
         List<PantryIngredient> pantryItems = pantryIngredientRepository.findByUserId(userId);
+        if (pantryItems == null || pantryItems.isEmpty()) return Collections.emptyList();
 
         // Resolve categoryId per ingredient
-        List<Integer> ingIds = pantryItems.stream().map(PantryIngredient::getIngredientId).distinct().toList();
+        List<Integer> ingIds = pantryItems.stream().map(PantryIngredient::getIngredientId).filter(Objects::nonNull).distinct().toList();
         Map<Integer, IngredientCatalogue> catalogueById = ingredientCatalogueRepository.findAllById(ingIds).stream().collect(Collectors.toMap(IngredientCatalogue::getIngId, ic -> ic));
 
         // Resolve shelf life per category
-        List<Integer> categoryIds = catalogueById.values().stream().map(IngredientCatalogue::getCategoryId).distinct().toList();
+        List<Integer> categoryIds = catalogueById.values().stream().map(IngredientCatalogue::getCategoryId).filter(Objects::nonNull).distinct().toList();
         Map<Integer, IngredientCategory> categoryById = ingredientCategoryRepository.findAllById(categoryIds).stream().collect(Collectors.toMap(IngredientCategory::getCategoryId, c -> c));
 
         // Map each pantry item
         return pantryItems.stream()
         .map(item -> {
             IngredientCatalogue catalogue = catalogueById.get(item.getIngredientId());
-            IngredientCategory category = categoryById.get(catalogue.getCategoryId());
-            StorageLocation storageLocation = item.getStorageLocation();
+            if (catalogue == null) return null;
 
+            IngredientCategory category = categoryById.get(catalogue.getCategoryId());
+            if (category == null) return null;
+
+            StorageLocation storageLocation = item.getStorageLocation();
             if (storageLocation == null) return null;
 
             Integer shelfLifeDays = resolveShelfLifeDays(category, storageLocation);
@@ -163,6 +167,9 @@ public class RecommendationService {
     {
         try {
             RecipeNutritionResponse nutrition = nutritionalCalculatorService.getRecipeNutrition(userId, recipeId);
+            if (nutrition == null || nutrition.totals() == null) {
+                return null;
+            }
             RecipeNutritionValues totals = nutrition.totals();
             return new NutritionRequest(
                 totals.caloriesKcal() != null ? totals.caloriesKcal().intValue() : null,
@@ -171,7 +178,7 @@ public class RecommendationService {
                 totals.fatG()
             );
         } catch (ResponseStatusException e) {
-        return null;
+            return null;
         }
     }
 
@@ -191,13 +198,19 @@ public class RecommendationService {
     private List<IngredientRequest> buildIngredients(Recipe recipe)
     {
         List<RecipeIngredient> recipeIngredients = recipe.getIngredients();
+        if (recipeIngredients == null || recipeIngredients.isEmpty()) {
+            return Collections.emptyList();
+        }
 
-        List<Integer> ingIds = recipeIngredients.stream().map(RecipeIngredient::getIngId).distinct().toList();
-
+        List<Integer> ingIds = recipeIngredients.stream().map(RecipeIngredient::getIngId).filter(Objects::nonNull).distinct().toList();
+        
         Map<Integer, IngredientCatalogue> catalogueById = ingredientCatalogueRepository.findAllById(ingIds).stream().collect(Collectors.toMap(IngredientCatalogue::getIngId, ic -> ic));
 
         return recipeIngredients.stream().map(ri -> {
             IngredientCatalogue catalogue = catalogueById.get(ri.getIngId());
+            if (catalogue == null) {
+                return null;
+            }
             return new IngredientRequest(
                 ri.getIngId(),
                 catalogue.getCategoryId(),
@@ -205,7 +218,7 @@ public class RecommendationService {
                 ri.getQuantity(),
                 ri.getUnit()
             );
-        }).toList();
+        }).filter(Objects::nonNull).toList();
     }
 
     // Helper function to build the user state object

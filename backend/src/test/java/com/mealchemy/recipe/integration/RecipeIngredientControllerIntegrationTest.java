@@ -64,7 +64,7 @@ public class RecipeIngredientControllerIntegrationTest {
     @Autowired
     private UserProfileRepository userProfileRepository;
 
-    private static final String VALID_CUISINE = "italian";
+    private static final String VALID_CUISINE = "ITALIAN";
 
     private User owner;
     private User otherUser;

@@ -7,9 +7,13 @@ import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.shared.enums.SwipeAction;
 import com.mealchemy.engine.dto.SignalScoresResponse;
+import com.mealchemy.auth.repository.UserRepository;
+import com.mealchemy.auth.model.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
+import java.time.OffsetDateTime;
+import org.springframework.test.web.servlet.MvcResult;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,9 +49,12 @@ public class SwipeControllerIntegrationTest {
     private RecipeRepository recipeRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
-    private static final Integer USER_ID = 1;
+    private Integer USER_ID = 1;
 
     private Recipe recipe;
 
@@ -55,6 +62,14 @@ public class SwipeControllerIntegrationTest {
     void setUp() {
         swipeRepository.deleteAll();
         recipeRepository.deleteAll();
+        userRepository.deleteAll();
+
+        User user = new User();
+        user.setEmail("swipe-test-" + System.nanoTime() + "@example.com");
+        user.setPasswordHash("hashed-password");
+        user.setRoles(List.of("USER"));
+        user = userRepository.save(user);
+        USER_ID = user.getUserId();
 
         recipe = newRecipe(USER_ID, "Hummus Bowl", "MEDITERRANEAN");
     }
@@ -100,7 +115,7 @@ public class SwipeControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.recipeId", is(recipe.getRecipeId())))
+                .andExpect(jsonPath("$.recipe_id", is(recipe.getRecipeId())))
                 .andExpect(jsonPath("$.action", is("LIKED")));
 
         List<Swipe> savedRows = swipeRepository.findByUserId(USER_ID);
@@ -153,10 +168,10 @@ public class SwipeControllerIntegrationTest {
         mockMvc.perform(get("/discovery/liked")
                         .with(authentication(authAs(USER_ID))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.likedRecipes", hasSize(1)))
-                .andExpect(jsonPath("$.likedRecipes[0].recipeId", is(recipe.getRecipeId())))
-                .andExpect(jsonPath("$.likedRecipes[0].recipe.title", is("Hummus Bowl")))
-                .andExpect(jsonPath("$.likedRecipes[0].likedAt", notNullValue()));
+                .andExpect(jsonPath("$.liked_recipes", hasSize(1)))
+                .andExpect(jsonPath("$.liked_recipes[0].recipe_id", is(recipe.getRecipeId())))
+                .andExpect(jsonPath("$.liked_recipes[0].recipe.title", is("Hummus Bowl")))
+                .andExpect(jsonPath("$.liked_recipes[0].liked_at", notNullValue()));
     }
 
     @Test
@@ -164,7 +179,7 @@ public class SwipeControllerIntegrationTest {
         mockMvc.perform(get("/discovery/liked")
                         .with(authentication(authAs(USER_ID))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.likedRecipes", hasSize(0)));
+                .andExpect(jsonPath("$.liked_recipes", hasSize(0)));
     }
 
     @Test
@@ -179,8 +194,8 @@ public class SwipeControllerIntegrationTest {
         mockMvc.perform(get("/discovery/liked")
                         .with(authentication(authAs(USER_ID))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.likedRecipes", hasSize(1)))
-                .andExpect(jsonPath("$.likedRecipes[0].recipeId", is(recipe.getRecipeId())));
+                .andExpect(jsonPath("$.liked_recipes", hasSize(1)))
+                .andExpect(jsonPath("$.liked_recipes[0].recipe_id", is(recipe.getRecipeId())));
     }
 
     @Test
@@ -189,13 +204,19 @@ public class SwipeControllerIntegrationTest {
         Thread.sleep(50);
         Swipe mostRecent = addSwipeRow(USER_ID, recipe.getRecipeId(), "MEDITERRANEAN", SwipeAction.LIKED);
 
-        mockMvc.perform(get("/discovery/liked")
+        MvcResult result = mockMvc.perform(get("/discovery/liked")
                         .with(authentication(authAs(USER_ID))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.likedRecipes", hasSize(1)))
-                .andExpect(jsonPath("$.likedRecipes[0].recipeId", is(recipe.getRecipeId())))
-                .andExpect(jsonPath("$.likedRecipes[0].likedAt",
-                        is(mostRecent.getSwipedAt().toString())));
+                .andExpect(jsonPath("$.liked_recipes", hasSize(1)))
+                .andExpect(jsonPath("$.liked_recipes[0].recipe_id", is(recipe.getRecipeId())))
+                .andReturn();
+
+        String json = result.getResponse().getContentAsString();
+        String likedAtStr = com.jayway.jsonpath.JsonPath.read(json, "$.liked_recipes[0].liked_at");
+        org.junit.jupiter.api.Assertions.assertEquals(
+            mostRecent.getSwipedAt().toInstant(),
+            OffsetDateTime.parse(likedAtStr).toInstant()
+        );
     }
 
     @Test
@@ -209,18 +230,23 @@ public class SwipeControllerIntegrationTest {
         mockMvc.perform(get("/discovery/liked")
                         .with(authentication(authAs(USER_ID))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.likedRecipes", hasSize(1)))
-                .andExpect(jsonPath("$.likedRecipes[0].recipeId", is(recipe.getRecipeId())));
+                .andExpect(jsonPath("$.liked_recipes", hasSize(1)))
+                .andExpect(jsonPath("$.liked_recipes[0].recipe_id", is(recipe.getRecipeId())));
     }
 
     @Test
     void getLikedRecipes_doesNotReturnAnotherUsersLikes() throws Exception {
-        Integer otherUserId = 2;
+        User otherUser = new User();
+        otherUser.setEmail("swipe-other-" + System.nanoTime() + "@example.com");
+        otherUser.setPasswordHash("hashed-password");
+        otherUser.setRoles(List.of("USER"));
+        otherUser = userRepository.save(otherUser);
+        Integer otherUserId = otherUser.getUserId();
         addSwipeRow(otherUserId, recipe.getRecipeId(), "MEDITERRANEAN", SwipeAction.LIKED);
 
         mockMvc.perform(get("/discovery/liked")
                         .with(authentication(authAs(USER_ID))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.likedRecipes", hasSize(0)));
+                .andExpect(jsonPath("$.liked_recipes", hasSize(0)));
     }
 }

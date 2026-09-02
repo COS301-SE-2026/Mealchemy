@@ -50,7 +50,7 @@ public class GlobalExceptionHandler {
     //malinformed request body and invalid path variale types
     @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
     public ResponseEntity<Map<String, String>> handleBadRequest(Exception ex) {
-        log.error("Bad request", ex);
+        // log.error("Bad request", ex);
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("message", "Invalid request"));
