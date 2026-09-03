@@ -84,7 +84,7 @@ class _SignupFormState extends ConsumerState<SignupForm> with ScrollHelper {
     if (!mounted) return;
     setState(() => _isLoading = false);
     if (success) {
-      context.go('/preference');
+      context.go('/profile');
     } else {
       final error = ref.read(authProvider).errorMessage;
       setState(() => _confirmPasswordError = error);
