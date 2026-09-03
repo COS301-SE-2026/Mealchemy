@@ -30,32 +30,32 @@ class AppNavbar extends StatelessWidget {
   final List<AppNavItem> items;
 
   static const List<AppNavItem> defaultItems = [
-    AppNavItem(
-      label: 'Home',
-      icon: Icons.home_outlined,
-      route: AppRoutes.dashboard,
-    ),
-     AppNavItem(
-      label: 'Vault',
-      icon: Icons.bookmark_border,
-      route: AppRoutes.vault,
-    ),
-    AppNavItem(
-      label: 'Discover',
-      icon: Icons.explore_outlined,
-      route: AppRoutes.discovery,
-    ),
-    AppNavItem(
-      label: 'Pantry',
-      icon: Icons.kitchen_outlined,
-      route: AppRoutes.pantry,
-    ),
-    AppNavItem(
-      label: 'Profile',
-        icon: Icons.person_outline,
-      route: AppRoutes.preference,
-    ),
-  ];
+  AppNavItem(
+    label: 'Home',
+    icon: Icons.home_outlined,
+    route: AppRoutes.dashboard,
+  ),
+  AppNavItem(
+    label: 'Swipes',
+    icon: Icons.style_outlined,
+    route: AppRoutes.guidedDiscovery,
+  ),
+  AppNavItem(
+    label: 'Discover',
+    icon: Icons.explore_outlined,
+    route: AppRoutes.discovery,
+  ),
+  AppNavItem(
+    label: 'Vault',
+    icon: Icons.bookmark_border,
+    route: AppRoutes.vault,
+  ),
+  AppNavItem(
+    label: 'Pantry',
+    icon: Icons.kitchen_outlined,
+    route: AppRoutes.pantry,
+  ),
+];
 
   @override
   Widget build(BuildContext context) {

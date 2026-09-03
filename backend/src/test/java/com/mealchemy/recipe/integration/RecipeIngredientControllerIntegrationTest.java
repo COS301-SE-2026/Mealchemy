@@ -1,13 +1,19 @@
-package com.mealchemy.recipe.controller;
-
+package com.mealchemy.recipe.integration;
+// model
 import com.mealchemy.auth.model.User;
-import com.mealchemy.auth.repository.UserRepository;
-import com.mealchemy.recipe.dto.RecipeIngredientRequest;
+import com.mealchemy.profile.model.UserProfile;
 import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.recipe.model.RecipeIngredient;
+// repository
+import com.mealchemy.auth.repository.UserRepository;
 import com.mealchemy.recipe.repository.RecipeIngredientRepository;
-import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
+import com.mealchemy.recipe.repository.RecipeRepository;
+import com.mealchemy.profile.repository.UserProfileRepository;
+// dto
+import com.mealchemy.recipe.dto.RecipeIngredientRequest;
+
+import com.mealchemy.shared.enums.PreferredUnit;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
@@ -55,7 +61,10 @@ public class RecipeIngredientControllerIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private static final String VALID_CUISINE = "italian";
+    @Autowired
+    private UserProfileRepository userProfileRepository;
+
+    private static final String VALID_CUISINE = "ITALIAN";
 
     private User owner;
     private User otherUser;
@@ -91,6 +100,16 @@ public class RecipeIngredientControllerIntegrationTest {
         otherIngId = second.getIngId();
         ingName = first.getName();
         otherIngName = second.getName();
+
+        UserProfile ownerProfile = new UserProfile();
+        ownerProfile.setUserId(owner.getUserId());
+        ownerProfile.setPreferredUnit(PreferredUnit.METRIC);
+        userProfileRepository.save(ownerProfile);
+
+        UserProfile otherProfile = new UserProfile();
+        otherProfile.setUserId(otherUser.getUserId());
+        otherProfile.setPreferredUnit(PreferredUnit.METRIC);
+        userProfileRepository.save(otherProfile);
     }
 
     private User newUser(String email) {
@@ -327,13 +346,13 @@ public class RecipeIngredientControllerIntegrationTest {
     // DELETE /ingredients/recipe/{recipeId}/ingredient/{id}/delete
 
     @Test
-    void deleteIngredient_returns200_andRemovesRow_whenOwner() throws Exception {
+    void deleteIngredient_returns204_andRemovesRow_whenOwner() throws Exception {
         RecipeIngredient row = saveIngredientRow(recipe, ingId, "cups", 1);
 
         mockMvc.perform(delete("/ingredients/recipe/{recipeId}/ingredient/{id}/delete", recipe.getRecipeId(), row.getIngredientId())
                         .with(authentication(authAs(owner.getUserId())))
                         .with(csrf()))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         org.junit.jupiter.api.Assertions.assertTrue(
                 recipeIngredientRepository.findById(row.getIngredientId()).isEmpty()

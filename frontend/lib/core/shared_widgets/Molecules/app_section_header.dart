@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_colours.dart';
 import '../../theme/app_typography.dart';
+import '../atoms/app_icon_button.dart';
 
 enum SectionHeaderSize { small, medium, large }
 
 enum SectionHeaderWeight { normal, semiBold, bold }
-
+// Two variants of section headers: 
+// Line variadnt: a line accent to the right of the title
+// Icon variant: a gradient icon tile to the left of the title with optonal subtitle
 class AppSectionHeader extends StatelessWidget {
   const AppSectionHeader({
     super.key,
@@ -17,7 +20,23 @@ class AppSectionHeader extends StatelessWidget {
     this.size = SectionHeaderSize.medium,
     this.weight = SectionHeaderWeight.semiBold,
     this.titleStyle,
-  });
+    this.leadingIcon,
+  })  : icon = null,
+        subtitle = null,
+        _variant = _HeaderVariant.line;
+  const AppSectionHeader.icon({
+    super.key,
+    required this.title,
+    required this.icon,
+    this.subtitle,
+  })  : trailing = null,
+        onTrailingTap = null,
+        showAccentLine = false,
+        size = SectionHeaderSize.large,
+        weight = SectionHeaderWeight.bold,
+        titleStyle = null,
+        leadingIcon = null,
+        _variant = _HeaderVariant.icon;
 
   final String title;
   final String? trailing;
@@ -26,6 +45,10 @@ class AppSectionHeader extends StatelessWidget {
   final SectionHeaderSize size;
   final SectionHeaderWeight weight;
   final TextStyle? titleStyle;
+  final IconData? icon;
+  final String? subtitle;
+  final IconData? leadingIcon;
+  final _HeaderVariant _variant;
 
   double get _fontSize {
     switch (size) {
@@ -51,19 +74,59 @@ class AppSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (_variant == _HeaderVariant.icon) return _buildIcon();
+    return _buildLine();
+  }
+
+  Widget _buildIcon() {
+    return Row(
+      children: [
+        AppIconButton.gradientIcon(icon: icon!),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (subtitle != null) ...[
+                Text(
+                  subtitle!.toUpperCase(),
+                  style: AppTextStyles.label.copyWith(
+                    color: AppColors.accentMuted,
+                    letterSpacing: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 3),
+              ],
+              Text(
+                title,
+                style: AppTextStyles.heading2.copyWith(
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLine() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        //Title
+        if (leadingIcon != null) ...[
+          Icon(leadingIcon, size: _fontSize + 2, color: AppColors.accent),
+          const SizedBox(width: 8),
+        ],
         Text(
           title,
-          style: titleStyle ?? AppTextStyles.body.copyWith(
-            fontSize: _fontSize,
-            fontWeight: _fontWeight,
-            color: AppColors.primaryLight,
-          ),
+          style: titleStyle ??
+              AppTextStyles.body.copyWith(
+                fontSize: _fontSize,
+                fontWeight: _fontWeight,
+                color: AppColors.primaryLight,
+              ),
         ),
-        //Horizontal accent line
         if (showAccentLine) ...[
           const SizedBox(width: 10),
           Container(
@@ -87,9 +150,11 @@ class AppSectionHeader extends StatelessWidget {
                 fontSize: _fontSize - 4,
               ),
             ),
-          )
+          ),
         ],
       ],
     );
   }
 }
+
+enum _HeaderVariant { line, icon }

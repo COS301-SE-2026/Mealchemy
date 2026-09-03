@@ -7,6 +7,8 @@ import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
 import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
 import 'package:mealchemy/features/recipe/screens/recipe_detail_screen.dart';
+import 'package:mealchemy/features/recipe/providers/recipe_nutrition_provider.dart';
+import 'package:mealchemy/features/recipe/repositories/mock_recipe_nutrition_repository.dart';
 
 const _fixture = Recipe(
   recipeId: 1,
@@ -36,7 +38,7 @@ const _fixture = Recipe(
     RecipeStep(stepNr: 2, content: 'Toast the rice.'),
   ],
 );
- 
+
 Widget _host(Widget child, List<Override> overrides) {
   return ProviderScope(
     overrides: overrides,
@@ -148,5 +150,55 @@ void main() {
 
     // hero's share button became a save/bookmark button
     expect(find.byIcon(Icons.bookmark_add_outlined), findsOneWidget);
+  });
+
+  testWidgets('opens mocked nutrition data in the Nutrition tab', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _host(
+        const RecipeDetailScreen(recipeId: 1),
+        [
+          recipeDetailProvider(1).overrideWith(
+            (ref) async => _fixture,
+          ),
+          recipeNutritionRepositoryProvider.overrideWithValue(
+            MockRecipeNutritionRepository(),
+          ),
+        ],
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Nutrition'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Nutritional Information'), findsOneWidget);
+    expect(find.text('4 servings per recipe'), findsOneWidget);
+    expect(find.text('1167'), findsOneWidget);
+    expect(find.text('Chicken Breast Fillet'), findsOneWidget);
+  });
+
+  testWidgets('tapping the servings stepper scales ingredient amounts',
+      (tester) async {
+    await tester.pumpWidget(_host(
+      const RecipeDetailScreen(recipeId: 1),
+      [recipeDetailProvider(1).overrideWith((ref) async => _fixture)],
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('320 g'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.add).first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('400 g'), findsOneWidget);
+    expect(find.text('320 g'), findsNothing);
+
+    await tester.tap(find.text('Reset'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('320 g'), findsOneWidget);
   });
 }

@@ -66,6 +66,9 @@ name: CD
 # Changes to frontend, wiki, landing page docs, other workflow files, or the CI workflow won't triger a redeploy.
 #landing page now own job so that can manually trigger workflows without redeploying backend or engine
 
+#added photo bucket storage and recipe photo signing service account.
+#a bucket for prod and a bucket for staging. both ran by same service account
+
 
 
 #------------------------------------------------------------------------------------------------------------
@@ -85,6 +88,9 @@ on:
       - 'infrastructure/Dockerfile.backend'
       - 'infrastructure/Dockerfile.engine'
       - '.github/workflows/cd.yml'
+      - '!**/*.md'
+      - '!backend/src/test/**'
+      - '!engine/tests/**'
 
 #identifiers
 env:
@@ -97,6 +103,8 @@ env:
   CD_SA_EMAIL: cd-deployer@mealchemy.iam.gserviceaccount.com
   RUNTIME_SA_EMAIL: mealchemy-backend-runtime@mealchemy.iam.gserviceaccount.com
   ENGINE_RUNTIME_SA_EMAIL: mealchemy-engine-runtime@mealchemy.iam.gserviceaccount.com
+  RECIPE_PHOTO_BUCKET_PROD: mealchemy-recipe-photos-prod
+  RECIPE_PHOTO_BUCKET_STAGING: mealchemy-recipe-photos-staging
 
 
 
@@ -238,7 +246,13 @@ jobs:
         env:
           BACKEND_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/backend
         run: |
-          docker push "${{ env.BACKEND_IMAGE }}:${{ github.sha }}"
+          IMAGE="${BACKEND_IMAGE}:${{ github.sha }}"
+          if gcloud artifacts docker images describe "${IMAGE}" \
+              --project "${{ env.GCP_PROJECT_ID }}" &>/dev/null; then
+            echo "Backend image ${IMAGE} already exists; reusing immutable SHA tag."
+          else
+            docker push "${IMAGE}"
+          fi
 
   # ------------------------------ BUILD ENGINE ---------------------------------------------------------
   # Parallel with build-backend
@@ -298,7 +312,13 @@ jobs:
         env:
           ENGINE_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/engine
         run: |
-          docker push "${{ env.ENGINE_IMAGE }}:${{ github.sha }}"
+          IMAGE="${ENGINE_IMAGE}:${{ github.sha }}"
+          if gcloud artifacts docker images describe "${IMAGE}" \
+              --project "${{ env.GCP_PROJECT_ID }}" &>/dev/null; then
+            echo "Engine image ${IMAGE} already exists; reusing immutable SHA tag."
+          else
+            docker push "${IMAGE}"
+          fi
 
   # ------------------------------ DEPLOY BACKEND -------------------------------------------------------
   # Outputs the live backend URL so deploy-engine can pass it as BACKEND_URL
@@ -342,10 +362,26 @@ jobs:
           ENV: ${{ steps.env.outputs.name }}
           BACKEND_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/backend
         run: |
+          if [[ "${ENV}" == "prod" ]]; then
+            RECIPE_PHOTO_BUCKET="${{ env.RECIPE_PHOTO_BUCKET_PROD }}"
+          else
+            RECIPE_PHOTO_BUCKET="${{ env.RECIPE_PHOTO_BUCKET_STAGING }}"
+          fi
+
+          ENGINE_URL=$(gcloud run services describe "mealchemy-engine-${ENV}" \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --format="value(status.url)")
+          if [[ -z "${ENGINE_URL}" ]]; then
+            echo "::error::Could not resolve the Cloud Run URL for mealchemy-engine-${ENV}."
+            exit 1
+          fi
+
           SECRETS="SPRING_DATASOURCE_URL=mealchemy-db-url-${ENV}:latest,"
           SECRETS+="SPRING_DATASOURCE_USERNAME=mealchemy-db-username-${ENV}:latest,"
           SECRETS+="SPRING_DATASOURCE_PASSWORD=mealchemy-db-password-${ENV}:latest,"
-          SECRETS+="JWT_SECRET=mealchemy-jwt-secret:latest"
+          SECRETS+="JWT_SECRET=mealchemy-jwt-secret:latest,"
+          SECRETS+="USDA_API_KEY=mealchemy-usda-api-key:latest"
 
           SERVICE_EXISTS=false
           if gcloud run services describe "mealchemy-backend-${ENV}" \
@@ -361,7 +397,7 @@ jobs:
             --project "${{ env.GCP_PROJECT_ID }}"
             --service-account "${{ env.RUNTIME_SA_EMAIL }}"
             --set-secrets "${SECRETS}"
-            --set-env-vars "SPRING_FLYWAY_ENABLED=false,JWT_EXPIRATION_MS=86400000"
+            --set-env-vars "SPRING_FLYWAY_ENABLED=false,JWT_EXPIRATION_MS=86400000,RECIPE_PHOTO_BUCKET=${RECIPE_PHOTO_BUCKET},RECIPE_PHOTO_SIGNING_SERVICE_ACCOUNT=${{ env.RUNTIME_SA_EMAIL }},ENGINE_URL=${ENGINE_URL},ENGINE_TIMEOUT_MS=5000"
             --allow-unauthenticated
             --min-instances 0
             --max-instances 3

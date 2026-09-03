@@ -14,6 +14,7 @@ import com.mealchemy.shoppinglist.dto.UpdateShoppingListItemRequest;
 import com.mealchemy.shoppinglist.dto.UpdateShoppingListRequest;
 import com.mealchemy.shoppinglist.dto.DeleteBatchItemsRequest;
 import com.mealchemy.shoppinglist.dto.CompleteShopResponse;
+import com.mealchemy.shoppinglist.dto.AddRecipeToShoppingListRequest;
 
 //models
 import com.mealchemy.shoppinglist.model.ShoppingList;
@@ -26,7 +27,7 @@ import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.recipe.model.RecipeIngredient; // can get recipeId from recipe ingredients table
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.model.VaultFolderRecipe;
-
+import com.mealchemy.profile.model.UserProfile;
 
 //repositories
 import com.mealchemy.shoppinglist.repository.ShoppingListRepository;
@@ -38,9 +39,12 @@ import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.recipe.repository.RecipeIngredientRepository;
 import com.mealchemy.vault.repository.VaultFolderRecipeRepository;
 import com.mealchemy.vault.repository.VaultMemberRepository;
+import com.mealchemy.profile.repository.UserProfileRepository;
 
 // import service
 import com.mealchemy.shoppinglist.service.ShoppingListService;
+
+import com.mealchemy.shared.enums.PreferredUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -59,6 +63,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -72,7 +77,8 @@ public class ShoppingListServiceTest {
     @Mock private RecipeRepository recipeRepository;
     @Mock private RecipeIngredientRepository recipeIngredientRepository;
     @Mock private VaultFolderRecipeRepository vaultFolderRecipeRepository;
-    @Mock private VaultMemberRepository vaultMemberRepository; 
+    @Mock private VaultMemberRepository vaultMemberRepository;
+    @Mock private UserProfileRepository userProfileRepository; 
     
     // @InjectMocks creates the real PantryService and injects the mocks above into it - actually testing ShoppingListService
     @InjectMocks
@@ -84,6 +90,7 @@ public class ShoppingListServiceTest {
     private IngredientCategory categoryInstance;
     private Recipe existingRecipe;
     private PantryIngredient existingPantryIngredient;
+    private UserProfile userProfile;
 
     // requests that have bodies that need to be mocked
     private CreateShoppingListRequest createShoppingListRequest;
@@ -92,10 +99,15 @@ public class ShoppingListServiceTest {
     private UpdateShoppingListItemRequest updateShoppingListItemRequest;
     private PurchasedUpdateRequest purchasedUpdateRequest;
     private PantryRecipeComparisonRequest pantryRecipeComparisonRequest;
+    private AddRecipeToShoppingListRequest addRecipeToShoppingListRequest;
     
 
     @BeforeEach
     void setUp() {
+
+        userProfile = new UserProfile();
+        userProfile.setPreferredUnit(PreferredUnit.METRIC);
+
         // simulates what db returns for existing shopping list owned by user 1
         existingShoppingList = new ShoppingList();
         existingShoppingList.setUserId(1);
@@ -174,6 +186,16 @@ public class ShoppingListServiceTest {
             false
         );
 
+        // what flutter sends to dedicated purchased toggle 
+        purchasedUpdateRequest = new PurchasedUpdateRequest(true);
+
+        // generate shopping list request
+        addRecipeToShoppingListRequest = new AddRecipeToShoppingListRequest(
+            false // add all items, don't compare pantry
+        );
+
+        // so call doesn't have to change in every test
+        lenient().when(userProfileRepository.findByUserId(anyInt())).thenReturn(Optional.of(userProfile));
     }
 
 
@@ -266,7 +288,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test
-    void updateShoppingList_whenNotOwned_throwsUnauthorized() {
+    void updateShoppingList_whenNotOwned_throwsForbidden() {
         // Arrange
         existingShoppingList.setUserId(2);
         when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
@@ -278,7 +300,7 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
     @Test
@@ -316,7 +338,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test
-    void deleteShoppingList_whenNotOwned_throwsUnauthorized() {
+    void deleteShoppingList_whenNotOwned_throwsForbidden() {
         // Arrange
         existingShoppingList.setUserId(2);
         when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
@@ -328,7 +350,7 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
     @Test
@@ -363,7 +385,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test
-    void getSpecificListItems_whenNotOwned_throwsUnauthorized() {
+    void getSpecificListItems_whenNotOwned_throwsForbidden() {
         // Arrange
         existingShoppingList.setUserId(2);
         when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
@@ -375,7 +397,7 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
     @Test
@@ -414,7 +436,7 @@ public class ShoppingListServiceTest {
         assertEquals(2, actualItem.ingId());
         assertEquals("Hummus", actualItem.name());
         assertEquals("Legumes and Legume Products", actualItem.category());
-        assertEquals(new BigDecimal("250"), actualItem.quantity());
+        assertEquals(0, BigDecimal.valueOf(250).compareTo(actualItem.quantity()));
         assertEquals("g", actualItem.unit());
         assertEquals(false, actualItem.purchased());
 
@@ -438,7 +460,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test 
-    void addNewShoppingListItem_whenNotOwned_throwsUnauthorized() {
+    void addNewShoppingListItem_whenNotOwned_throwsForbidden() {
         // Arrange
         existingShoppingList.setUserId(2);
         ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
@@ -451,7 +473,7 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
     @Test
@@ -517,7 +539,7 @@ public class ShoppingListServiceTest {
         assertEquals(2, response.ingId());
         assertEquals("Hummus", response.name());
         assertEquals("Legumes and Legume Products", response.category());
-        assertEquals(new BigDecimal("250"), response.quantity());
+        assertEquals(0, BigDecimal.valueOf(250).compareTo(response.quantity()));
     }
 
     @Test
@@ -550,7 +572,7 @@ public class ShoppingListServiceTest {
         assertEquals(null, response.ingId()); //ing_id
         assertEquals("Tomatoes", response.name());
         assertEquals(null, response.category()); 
-        assertEquals(new BigDecimal("150"), response.quantity());
+        assertEquals(0, BigDecimal.valueOf(150).compareTo(response.quantity()));
         assertEquals("g", response.unit()); 
         assertEquals(false, response.purchased());
     }
@@ -574,7 +596,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test 
-    void updateShoppingListItem_whenNotOwned_throwsUnauthorized() {
+    void updateShoppingListItem_whenNotOwned_throwsForbidden() {
         // Arrange
         existingShoppingList.setUserId(2);
         ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
@@ -587,7 +609,7 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
     @Test
@@ -648,7 +670,7 @@ public class ShoppingListServiceTest {
         assertEquals(2, response.ingId());
         assertEquals("Hummus", response.name());
         assertEquals("Legumes and Legume Products", response.category());
-        assertEquals(new BigDecimal("150"), response.quantity());
+        assertEquals(0, BigDecimal.valueOf(150).compareTo(response.quantity()));
         assertEquals("g", response.unit());
         assertEquals(false, response.purchased());
     }
@@ -672,7 +694,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test
-    void updatePurchasedFlag_whenNotOwned_throwsUnauthorized() {
+    void updatePurchasedFlag_whenNotOwned_throwsForbidden() {
         // Arrange
         existingShoppingList.setUserId(2);
         ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
@@ -685,7 +707,7 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
     @Test
@@ -744,7 +766,7 @@ public class ShoppingListServiceTest {
         
         // Assert
         assertEquals(2, response.ingId());
-        assertEquals(new BigDecimal("250"), response.quantity());
+        assertEquals(0, BigDecimal.valueOf(250).compareTo(response.quantity()));
         assertEquals("g", response.unit());
         assertEquals(true, response.purchased());
     }
@@ -768,7 +790,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test
-    void deleteShoppingListItem_whenNotOwned_throwsUnauthorized() {
+    void deleteShoppingListItem_whenNotOwned_throwsForbidden() {
         // Arrange
         existingShoppingList.setUserId(2);
         ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
@@ -781,7 +803,7 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
     @Test
@@ -859,7 +881,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test
-    void deleteSelectedItems_whenNotOwned_throwsUnauthorized() {
+    void deleteSelectedItems_whenNotOwned_throwsForbidden() {
         // Arrange
         existingShoppingList.setUserId(2);
         ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
@@ -874,7 +896,7 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
     @Test
@@ -978,7 +1000,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test
-    void selectAllItemsAsPurchase_whenNotOwned_throwsUnauthorized() {
+    void selectAllItemsAsPurchase_whenNotOwned_throwsForbidden() {
         // Arrange
         existingShoppingList.setUserId(2);
         ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
@@ -991,7 +1013,7 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
     @Test
@@ -1037,7 +1059,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test
-    void deselectAllItemsAsPurchase_whenNotOwned_throwsUnauthorized() {
+    void deselectAllItemsAsPurchase_whenNotOwned_throwsForbidden() {
         // Arrange
         existingShoppingList.setUserId(2);
         ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
@@ -1050,7 +1072,7 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
     @Test
@@ -1095,7 +1117,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test
-    void autoAddToPantryRemoveFromList_whenNotOwned_throwsUnauthorized() {
+    void autoAddToPantryRemoveFromList_whenNotOwned_throwsForbidden() {
         // Arrange
         existingShoppingList.setUserId(2);
         ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
@@ -1108,7 +1130,7 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
     @Test
@@ -1196,7 +1218,7 @@ public class ShoppingListServiceTest {
         assertEquals(1, response.addedToPantryCount());
         assertTrue(response.skippedManualItemNames().isEmpty());
         verify(pantryIngredientRepository).save(any(PantryIngredient.class));
-        assertFalse(response.shoppingListDeleted());
+        assertFalse(response.canDeleteShoppingList());
         verify(shoppingListItemRepository).delete(itemInCatalogue);
         verify(shoppingListItemRepository, never()).delete(unpurchased);
     }
@@ -1221,8 +1243,8 @@ public class ShoppingListServiceTest {
         CompleteShopResponse response = shoppingListService.autoAddToPantryRemoveFromList(1, 1);
 
         // Assert
-        assertTrue(response.shoppingListDeleted());
-        verify(shoppingListRepository).delete(existingShoppingList);  
+        assertTrue(response.canDeleteShoppingList());
+        verify(shoppingListRepository, never()).delete(any(ShoppingList.class));  
     }
     
     @Test
@@ -1252,7 +1274,7 @@ public class ShoppingListServiceTest {
         // Act
         CompleteShopResponse response = shoppingListService.autoAddToPantryRemoveFromList(1, 1);
 
-        assertFalse(response.shoppingListDeleted());
+        assertFalse(response.canDeleteShoppingList());
         verify(shoppingListRepository, never()).delete(any(ShoppingList.class));
     }
 
@@ -1434,6 +1456,234 @@ public class ShoppingListServiceTest {
         shoppingListService.generateShoppingListFromRecipe(1, 1, pantryRecipeComparisonRequest);
 
         // Assert
+        verify(shoppingListItemRepository, times(1)).save(any(ShoppingListItem.class));
+    }
+
+
+    //  ========== Generating Shopping List Items Add to existing list (Compares recipe to current pantry ingredients and inserts the rest into shopping list) Testing ==========
+
+    @Test 
+    public void addRecipeIngredientsToShoppingList_whenListNotFound_throwsNotFound() {
+        // Arrange
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.empty());
+        
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, addRecipeToShoppingListRequest)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }  
+
+
+    @Test
+    public void addRecipeIngredientsToShoppingList_whenNotOwned_throwsForbidden() {    
+        // Arrange
+        existingShoppingList.setUserId(2);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 2, addRecipeToShoppingListRequest)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
+    public void addRecipeIngredientsToShoppingList_whenRecipeNotFound_throwsNotFound() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(recipeRepository.findById(1)).thenReturn(Optional.empty());
+        
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, addRecipeToShoppingListRequest)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    public void addRecipeIngredientsToShoppingList_whenUserCannotAccessRecipe_throwsNotFound() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        existingRecipe.setOwnerId(2);
+        existingRecipe.setIsCommunityPublished(false);
+        ReflectionTestUtils.setField(existingRecipe, "recipeId", 1);
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
+        when(vaultFolderRecipeRepository.findByRecipe_RecipeId(1)).thenReturn(List.of());
+
+        // Act 
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, addRecipeToShoppingListRequest)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    // actual behaviour
+    @Test
+    public void addRecipeIngredientsToShoppingList_noPantryComparison_addsAllIngredientsAsNewItems() {
+        // Arrange
+        
+        // selected shopping list
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        RecipeIngredient ingredient1 = new RecipeIngredient();
+        ingredient1.setIngId(2);
+        ingredient1.setQuantity(new BigDecimal("100"));
+        ingredient1.setUnit("g");
+
+        RecipeIngredient ingredient2 = new RecipeIngredient();
+        ingredient2.setIngId(3);
+        ingredient2.setQuantity(new BigDecimal("50"));
+        ingredient2.setUnit("ml");
+
+        existingRecipe.setOwnerId(1);
+        ReflectionTestUtils.setField(existingRecipe, "recipeId", 1);
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
+        when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(ingredient1, ingredient2));
+
+        when(shoppingListItemRepository.save(any(ShoppingListItem.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, addRecipeToShoppingListRequest);
+
+        // Assert
+        verify(shoppingListItemRepository, times(2)).save(any(ShoppingListItem.class));
+        verify(pantryIngredientRepository, never()).findByUserIdAndIngId(any(), any());
+    }
+
+    // compare to current pantry ingredients- partially enough of ingredient, add shortfall
+    @Test
+    public void addRecipeIngredientsToShoppingList_pantryComparison_onlyAddShortfall() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        ReflectionTestUtils.setField(existingRecipe, "recipeId", 1);
+        existingRecipe.setOwnerId(1);
+
+        // selected shopping list
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
+
+        RecipeIngredient ingredient1 = new RecipeIngredient();
+        ingredient1.setIngId(2);
+        ingredient1.setQuantity(new BigDecimal("100"));
+        ingredient1.setUnit("g");
+        when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(ingredient1));
+
+        // no existing item - no merge
+        when(shoppingListItemRepository.findByShoppingListId(1)).thenReturn(List.of());
+
+        PantryIngredient existingPantryIngredient = new PantryIngredient();
+        existingPantryIngredient.setUserId(1);
+        existingPantryIngredient.setIngredientId(2);
+        existingPantryIngredient.setQuantity(new BigDecimal("40"));
+        existingPantryIngredient.setUnit("g");
+
+        when(pantryIngredientRepository.findByUserIdAndIngId(1, 2)).thenReturn(List.of(existingPantryIngredient));
+
+        when(shoppingListItemRepository.getSpecificShoppingListItems(1)).thenReturn(List.of());
+
+        // save passed in to access value to assert equals
+        ArgumentCaptor<ShoppingListItem> captor = ArgumentCaptor.forClass(ShoppingListItem.class);
+        when(shoppingListItemRepository.save(captor.capture())).thenAnswer(inv -> inv.getArgument(0)); // else will throw a null ptr exception
+
+        AddRecipeToShoppingListRequest requestWithPantryComparison = new AddRecipeToShoppingListRequest(true);
+
+        // Act
+        shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, requestWithPantryComparison);
+
+        // Assert
+        assertEquals(0, BigDecimal.valueOf(60).compareTo(captor.getValue().getQuantity()));
+        assertEquals(2, captor.getValue().getIngId());
+        verify(shoppingListItemRepository, times(1)).save(any(ShoppingListItem.class));
+    }
+
+    // compare to current pantry ingredients- add full ingredient quantity
+    @Test
+    void addRecipeIngredientsToShoppingList_pantryComparison_addFullIngredient() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        ReflectionTestUtils.setField(existingRecipe, "recipeId", 1);
+        existingRecipe.setOwnerId(1);
+
+        // selected shopping list
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
+
+        RecipeIngredient ingredient1 = new RecipeIngredient();
+        ingredient1.setIngId(2);
+        ingredient1.setQuantity(new BigDecimal("100"));
+        ingredient1.setUnit("g");
+        when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(ingredient1));
+
+        // no existing item - no merge
+        when(shoppingListItemRepository.findByShoppingListId(1)).thenReturn(List.of());
+
+        when(shoppingListItemRepository.getSpecificShoppingListItems(1)).thenReturn(List.of());
+
+        // save passed in to access value to assert equals
+        ArgumentCaptor<ShoppingListItem> captor = ArgumentCaptor.forClass(ShoppingListItem.class);
+        when(shoppingListItemRepository.save(captor.capture())).thenAnswer(inv -> inv.getArgument(0)); // else will throw a null ptr exception
+
+        AddRecipeToShoppingListRequest requestWithPantryComparison = new AddRecipeToShoppingListRequest(true);
+
+        // Act
+        shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, requestWithPantryComparison);
+
+        // Assert
+        assertEquals(0, BigDecimal.valueOf(100).compareTo(captor.getValue().getQuantity()));
+        verify(shoppingListItemRepository, times(1)).save(any(ShoppingListItem.class));
+    }
+
+    // matching ingredient already exists in shopping list - merge
+    @Test
+    void addRecipeIngredientsToShoppingList_pantryComparison_mergeQuantity() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        ReflectionTestUtils.setField(existingRecipe, "recipeId", 1);
+        existingRecipe.setOwnerId(1);
+
+        // selected shopping list
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
+
+        RecipeIngredient ingredient1 = new RecipeIngredient();
+        ingredient1.setIngId(2);
+        ingredient1.setQuantity(new BigDecimal("50"));
+        ingredient1.setUnit("g");
+        when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(ingredient1));
+
+        // existing item in shopping list
+        ShoppingListItem existingMatch = new ShoppingListItem();
+        existingMatch.setShoppingListId(1);
+        existingMatch.setIngId(2);
+        existingMatch.setUnit("g");
+        existingMatch.setQuantity(new BigDecimal("100"));
+        ReflectionTestUtils.setField(existingMatch, "itemId", 4);
+
+        when(shoppingListItemRepository.findByShoppingListId(1)).thenReturn(List.of(existingMatch));
+        when(shoppingListItemRepository.getSpecificShoppingListItems(1)).thenReturn(List.of());
+        when(shoppingListItemRepository.save(any(ShoppingListItem.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AddRecipeToShoppingListRequest requestWithPantryComparison = new AddRecipeToShoppingListRequest(true);
+
+        // Act
+        shoppingListService.addRecipeIngredientsToShoppingList(1, 1, 1, requestWithPantryComparison);
+
+        // Assert
+        assertEquals(0, BigDecimal.valueOf(150).compareTo(existingMatch.getQuantity()));
+        verify(shoppingListItemRepository, times(1)).save(existingMatch);
         verify(shoppingListItemRepository, times(1)).save(any(ShoppingListItem.class));
     }
 }

@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyInt;
 
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
@@ -24,12 +25,16 @@ import org.springframework.http.HttpStatus;
 
 import com.mealchemy.recipe.model.RecipeIngredient;
 import com.mealchemy.recipe.model.Recipe;
+import com.mealchemy.profile.model.UserProfile;
 import com.mealchemy.ingredient.model.IngredientCatalogue;
 import com.mealchemy.recipe.dto.RecipeIngredientRequest;
 import com.mealchemy.recipe.dto.RecipeIngredientResponse;
 import com.mealchemy.recipe.repository.RecipeIngredientRepository;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
+import com.mealchemy.profile.repository.UserProfileRepository;
+
+import com.mealchemy.shared.enums.PreferredUnit;
 
 @ExtendWith(MockitoExtension.class)
 public class RecipeIngredientServiceTest {
@@ -38,6 +43,9 @@ public class RecipeIngredientServiceTest {
 
     @Mock
     private RecipeRepository recipeRepository;
+
+    @Mock
+    private UserProfileRepository userProfileRepository;
 
     @Mock
     private IngredientCatalogueRepository ingredientCatalogueRepository;
@@ -51,6 +59,7 @@ public class RecipeIngredientServiceTest {
     private RecipeIngredientRequest request;
     private IngredientCatalogue existingIngredientCatalogue;
     private IngredientCatalogue newIngredientCatalogue;
+    private UserProfile userProfile;
 
     @BeforeEach
     void setUp()
@@ -67,7 +76,7 @@ public class RecipeIngredientServiceTest {
         ReflectionTestUtils.setField(recipeIngredient, "ingredientId", 1);
         recipeIngredient.setIngId(1);
         recipeIngredient.setQuantity(BigDecimal.valueOf(2.75));
-        recipeIngredient.setUnit("grams");
+        recipeIngredient.setUnit("g");
         recipeIngredient.setSortOrder(1);
         
         request = new RecipeIngredientRequest(2, BigDecimal.valueOf(30), "ml", 1);
@@ -79,6 +88,12 @@ public class RecipeIngredientServiceTest {
         newIngredientCatalogue = new IngredientCatalogue();
         newIngredientCatalogue.setName("Sugar");
         ReflectionTestUtils.setField(newIngredientCatalogue, "ingId", 2);
+
+        userProfile = new UserProfile();
+        userProfile.setPreferredUnit(PreferredUnit.METRIC);
+
+        // so call doesn't have to change in every test
+        lenient().when(userProfileRepository.findByUserId(anyInt())).thenReturn(Optional.of(userProfile));
     }
 
     @Test
@@ -87,7 +102,7 @@ public class RecipeIngredientServiceTest {
         when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(recipeIngredient));
         when(ingredientCatalogueRepository.findAllById(List.of(1))).thenReturn(List.of(existingIngredientCatalogue));
 
-        List<RecipeIngredientResponse> result = recipeIngredientService.getAllIngredientsByRecipeId(1);
+        List<RecipeIngredientResponse> result = recipeIngredientService.getAllIngredientsByRecipeId(1, 1);
 
         assertEquals(1, result.size());
         assertEquals(1, result.get(0).ingredientId());
@@ -99,7 +114,7 @@ public class RecipeIngredientServiceTest {
     {
         when(recipeIngredientRepository.findByRecipe_RecipeId(99)).thenReturn(List.of());
 
-        List<RecipeIngredientResponse> result = recipeIngredientService.getAllIngredientsByRecipeId(99);
+        List<RecipeIngredientResponse> result = recipeIngredientService.getAllIngredientsByRecipeId(99, 1);
 
         assertTrue(result.isEmpty());
     }
@@ -125,7 +140,7 @@ public class RecipeIngredientServiceTest {
         when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(recipeIngredient));
         when(ingredientCatalogueRepository.findAllById(List.of(1))).thenReturn(List.of()); // orphaned - not found
 
-        List<RecipeIngredientResponse> result = recipeIngredientService.getAllIngredientsByRecipeId(1);
+        List<RecipeIngredientResponse> result = recipeIngredientService.getAllIngredientsByRecipeId(1, 1);
 
         assertEquals(1, result.size());
         assertEquals("Unknown Ingredient", result.get(0).ingName());

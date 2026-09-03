@@ -1,39 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
+import 'package:mealchemy/core/shared_widgets/atoms/app_badge.dart';
 import 'package:mealchemy/core/shared_widgets/atoms/app_icon_button.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_section_header.dart';
+import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
 import 'vault_switcher.dart';
 import 'shared_vault_strip.dart';
 
-class VaultHero extends StatelessWidget {
-  const VaultHero({
-    super.key,
-    required this.onSearch,
-    required this.onShoppingList,
-  });
-
-  final VoidCallback onSearch;
-  final VoidCallback onShoppingList;
+class VaultHero extends ConsumerWidget {
+  const VaultHero({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cartCount = ref.watch(shoppingListCountProvider);
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Left block search, title, switcher
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppIconButton.ghost(
-                  icon: Icons.search,
-                  onPressed: onSearch,
-                  customColor: AppColors.textLight,
-                ),
-                const SizedBox(height: 4),
                 AppSectionHeader(
                   title: 'Vault',
                   titleStyle: AppTextStyles.heading1.copyWith(
@@ -43,17 +36,22 @@ class VaultHero extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 const VaultSwitcher(),
-                 const SharedVaultStrip(),
+                const SharedVaultStrip(),
               ],
             ),
           ),
-          //Right block add above shopping list
-          Column(
+          Stack(
+            clipBehavior: Clip.none,
             children: [
               AppIconButton.ghost(
                 icon: Icons.shopping_cart_outlined,
-                onPressed: onShoppingList,
+                onPressed: () => context.push(AppRoutes.shoppingLists),
                 customColor: AppColors.textLight,
+              ),
+              Positioned(
+                top: 2,
+                right: 2,
+                child: AppBadge(count: cartCount),
               ),
             ],
           ),

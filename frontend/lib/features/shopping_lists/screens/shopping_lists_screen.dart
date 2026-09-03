@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/routes/app_routes.dart';
-import '../../../core/shared_widgets/Organisms/app_navbar.dart';
+import '../../../core/connectivity/network_status_provider.dart';
+import '../../../core/shared_widgets/Molecules/app_refresh.dart';
+import '../../../core/shared_widgets/atoms/app_icon_button.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/shopping_list.dart';
 import '../providers/shopping_list_provider.dart';
 import '../widgets/shopping_list_row.dart';
 import '../widgets/shopping_section_header.dart';
+import '../../offline/data/offline_cache_store.dart';
+import '../../offline/widgets/cache_freshness_label.dart';
 
 //main overview screen
 class ShoppingListsScreen extends ConsumerWidget {
@@ -18,86 +21,109 @@ class ShoppingListsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final shoppingLists = ref.watch(shoppingListsProvider);
+    final isReadOnly = ref.watch(offlineReadOnlyProvider);
 
     return Scaffold(
       backgroundColor: AppColors.bgLight,
-      body: shoppingLists.when(
-        data: (state) => _ShoppingListsContent(
-          state: state,
-          onSearchChanged: (query) {
-            ref.read(shoppingListsProvider.notifier).updateSearchQuery(query);
-          },
-          onCreateList: (name) async {
-            await ref.read(shoppingListsProvider.notifier).createShoppingList(
-                  name: name,
-                );
-          },
-          onUpdateListName: ({
-            required listId,
-            required name,
-          }) async {
-            await ref
-                .read(shoppingListsProvider.notifier)
-                .updateShoppingListName(
-                  listId: listId,
-                  name: name,
-                );
-          },
-          onDeleteList: (listId) async {
-            await ref
-                .read(shoppingListsProvider.notifier)
-                .deleteShoppingList(listId);
-          },
-        ),
-        loading: () => const Center(
-          child: CircularProgressIndicator(
-            color: AppColors.primary,
-          ),
-        ),
-        error: (_, __) => Center(
-          child: Text(
-            'Unable to load shopping lists.',
-            style: AppTextStyles.body.copyWith(
-              color: AppColors.textMuted,
-            ),
-          ),
-        ),
-      ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showCreateListDialog(
-          context,
-          (name) async {
-            await ref.read(shoppingListsProvider.notifier).createShoppingList(
-                  name: name,
-                );
-          },
-        ),
-        backgroundColor: AppColors.primary,
+        onPressed: isReadOnly
+            ? null
+            : () => _showCreateListDialog(
+                  context,
+                  (name) async {
+                    await ref
+                        .read(shoppingListsProvider.notifier)
+                        .createShoppingList(name: name);
+                  },
+                ),
+        backgroundColor:
+            isReadOnly ? AppColors.surfaceMuted : AppColors.primary,
         foregroundColor: AppColors.textDark,
         elevation: 8,
         child: const Icon(Icons.add),
       ),
-      bottomNavigationBar: AppNavbar(
-        currentRoute: AppRoutes.shoppingLists,
-        onRouteSelected: (route) => context.go(route),
+      body: SafeArea(
+        child: AppRefresh(
+          onRefresh: () =>
+              ref.read(shoppingListsProvider.notifier).resetShoppingLists(),
+          child: shoppingLists.when(
+            data: (state) => _ShoppingListsContent(
+              state: state,
+              isReadOnly: isReadOnly,
+              onSearchChanged: (query) {
+                ref
+                    .read(shoppingListsProvider.notifier)
+                    .updateSearchQuery(query);
+              },
+              onUpdateListName: ({
+                required listId,
+                required name,
+              }) async {
+                await ref
+                    .read(shoppingListsProvider.notifier)
+                    .updateShoppingListName(
+                      listId: listId,
+                      name: name,
+                    );
+              },
+              onDeleteList: (listId) async {
+                await ref
+                    .read(shoppingListsProvider.notifier)
+                    .deleteShoppingList(listId);
+              },
+            ),
+            loading: () => const _ScrollableCentre(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
+            error: (_, __) => _ScrollableCentre(
+              child: Text(
+                'Unable to load shopping lists.',
+                style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
 }
 
+// Wraps a centred widget in a scroll view so pull-to-refresh still triggers
+// on the loading and error states.
+class _ScrollableCentre extends StatelessWidget {
+  const _ScrollableCentre({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(child: child),
+          ),
+        );
+      },
+    );
+  }
+}
+
 //loaded content for shopping lists overview screen
-class _ShoppingListsContent extends StatelessWidget {
+class _ShoppingListsContent extends ConsumerWidget {
   const _ShoppingListsContent({
     required this.state,
+    required this.isReadOnly,
     required this.onSearchChanged,
-    required this.onCreateList,
     required this.onUpdateListName,
     required this.onDeleteList,
   });
 
   final ShoppingListsState state;
+  final bool isReadOnly;
   final ValueChanged<String> onSearchChanged;
-  final Future<void> Function(String name) onCreateList;
   final Future<void> Function({
     required String listId,
     required String name,
@@ -105,38 +131,53 @@ class _ShoppingListsContent extends StatelessWidget {
   final Future<void> Function(String listId) onDeleteList;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final searchOpen = ref.watch(searchOpenProvider);
+
     final groupedLists = state.groupedFilteredLists;
     final listWidgets = state.filteredLists.isEmpty
         ? <Widget>[const _EmptySearchState()]
         : _buildSections(
             context: context,
             groupedLists: groupedLists,
+            isReadOnly: isReadOnly,
             onUpdateListName: onUpdateListName,
             onDeleteList: onDeleteList,
           );
 
-    return SafeArea(
-      bottom: false,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 22, 24, 96),
-        children: [
-          _ShoppingListsTopBar(
-            searchQuery: state.searchQuery,
-            onSearchChanged: onSearchChanged,
-            onCreateList: onCreateList,
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 96),
+      children: [
+        _ShoppingListsTitle(
+          onSearchTap: () {
+            ref.read(searchOpenProvider.notifier).state = !searchOpen;
+          },
+        ),
+        if (searchOpen) ...[
+          const SizedBox(height: 18),
+          _SearchField(
+            query: state.searchQuery,
+            onChanged: onSearchChanged,
+            onClose: () {
+              onSearchChanged('');
+              ref.read(searchOpenProvider.notifier).state = false;
+            },
           ),
-          const SizedBox(height: 26),
-          const _ShoppingListsTitle(),
-          const SizedBox(height: 30),
-          ShoppingSectionHeader(
-            title: 'Lists',
-            trailing: '${state.filteredLists.length} lists',
-          ),
-          const SizedBox(height: 34),
-          ...listWidgets,
         ],
-      ),
+        const SizedBox(height: 6),
+        const CacheFreshnessLabel(
+          collection: CacheCollection.shoppingLists,
+          scopeId: CacheScope.all,
+        ),
+        const SizedBox(height: 30),
+        ShoppingSectionHeader(
+          title: 'Lists',
+          trailing: '${state.filteredLists.length} lists',
+        ),
+        const SizedBox(height: 34),
+        ...listWidgets,
+      ],
     );
   }
 
@@ -144,6 +185,7 @@ class _ShoppingListsContent extends StatelessWidget {
   List<Widget> _buildSections({
     required BuildContext context,
     required Map<String, List<ShoppingList>> groupedLists,
+    required bool isReadOnly,
     required Future<void> Function({
       required String listId,
       required String name,
@@ -171,6 +213,7 @@ class _ShoppingListsContent extends StatelessWidget {
         widgets.add(
           ShoppingListRow(
             list: list,
+            mutationsEnabled: !isReadOnly,
             onTap: () {
               context.go('/shopping-lists/${list.id}');
             },
@@ -195,149 +238,74 @@ class _ShoppingListsContent extends StatelessWidget {
   }
 }
 
-//top icon row for search/add/camera actions
-class _ShoppingListsTopBar extends StatefulWidget {
-  const _ShoppingListsTopBar({
-    required this.searchQuery,
-    required this.onSearchChanged,
-    required this.onCreateList,
+//inline search field shown when the title search icon is toggled on
+class _SearchField extends StatefulWidget {
+  const _SearchField({
+    required this.query,
+    required this.onChanged,
+    required this.onClose,
   });
 
-  final String searchQuery;
-  final ValueChanged<String> onSearchChanged;
-  final Future<void> Function(String name) onCreateList;
+  final String query;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClose;
 
   @override
-  State<_ShoppingListsTopBar> createState() => _ShoppingListsTopBarState();
+  State<_SearchField> createState() => _SearchFieldState();
 }
 
-class _ShoppingListsTopBarState extends State<_ShoppingListsTopBar> {
-  late final TextEditingController _searchController;
-  var _searchOpen = false;
+class _SearchFieldState extends State<_SearchField> {
+  late final TextEditingController _controller;
 
   @override
   void initState() {
     super.initState();
-    _searchController = TextEditingController(text: widget.searchQuery);
-  }
-
-  @override
-  void didUpdateWidget(covariant _ShoppingListsTopBar oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (widget.searchQuery != _searchController.text) {
-      _searchController.text = widget.searchQuery;
-    }
+    _controller = TextEditingController(text: widget.query);
   }
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _controller.dispose();
     super.dispose();
-  }
-
-  //clears search, closes search field
-  void _clearSearch() {
-    _searchController.clear();
-    widget.onSearchChanged('');
-
-    setState(() {
-      _searchOpen = false;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_searchOpen) {
-      return TextField(
-        controller: _searchController,
-        autofocus: true,
-        onChanged: widget.onSearchChanged,
-        style: AppTextStyles.body.copyWith(
-          color: AppColors.textLight,
+    return TextField(
+      controller: _controller,
+      autofocus: true,
+      onChanged: widget.onChanged,
+      style: AppTextStyles.body.copyWith(color: AppColors.textLight),
+      decoration: InputDecoration(
+        hintText: 'Search lists',
+        hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+        prefixIcon: const Icon(Icons.search, color: AppColors.textMuted),
+        suffixIcon: IconButton(
+          onPressed: widget.onClose,
+          icon: const Icon(Icons.close, color: AppColors.textLight),
         ),
-        decoration: InputDecoration(
-          hintText: 'Search lists',
-          hintStyle: AppTextStyles.body.copyWith(
-            color: AppColors.textMuted,
-          ),
-          prefixIcon: const Icon(
-            Icons.search,
-            color: AppColors.textMuted,
-          ),
-          suffixIcon: IconButton(
-            onPressed: _clearSearch,
-            icon: const Icon(
-              Icons.close,
-              color: AppColors.textLight,
-            ),
-          ),
-          filled: true,
-          fillColor: AppColors.surfaceLight,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(
-              color: AppColors.divider,
-            ),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(
-              color: AppColors.primary,
-            ),
-            borderRadius: BorderRadius.circular(14),
-          ),
+        filled: true,
+        fillColor: AppColors.surfaceLight,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        enabledBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: AppColors.divider),
+          borderRadius: BorderRadius.circular(14),
         ),
-      );
-    }
-
-    return Row(
-      children: [
-        IconButton(
-          onPressed: () {
-            setState(() {
-              _searchOpen = true;
-            });
-          },
-          icon: const Icon(
-            Icons.search,
-            color: AppColors.textLight,
-            size: 28,
-          ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: AppColors.primary),
+          borderRadius: BorderRadius.circular(14),
         ),
-        const Spacer(),
-        Column(
-          children: [
-            IconButton(
-              onPressed: () =>
-                  _showCreateListDialog(context, widget.onCreateList),
-              icon: const Icon(
-                Icons.add,
-                color: AppColors.textLight,
-                size: 32,
-              ),
-            ),
-            IconButton(
-              onPressed: () {},
-              icon: const Icon(
-                Icons.add_a_photo_outlined,
-                color: AppColors.textLight,
-                size: 26,
-              ),
-            ),
-          ],
-        ),
-      ],
+      ),
     );
   }
 }
 
-//title row for shopping lists heading
+//title row for shopping lists heading, with the search toggle beside it
 class _ShoppingListsTitle extends StatelessWidget {
-  const _ShoppingListsTitle();
+  const _ShoppingListsTitle({required this.onSearchTap});
+
+  final VoidCallback onSearchTap;
 
   @override
   Widget build(BuildContext context) {
@@ -359,6 +327,12 @@ class _ShoppingListsTitle extends StatelessWidget {
             color: AppColors.accent,
             borderRadius: BorderRadius.circular(99),
           ),
+        ),
+        const Spacer(),
+        AppIconButton.ghost(
+          icon: Icons.search,
+          onPressed: onSearchTap,
+          customColor: AppColors.textLight,
         ),
       ],
     );

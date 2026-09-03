@@ -224,7 +224,10 @@ class _AppButtonState extends State<AppButton>
     if (oldStatus == newStatus) return;
 
     if (oldStatus == AppButtonStatus.idle && !widget.isFullWidth) {
-      _lockedWidth = context.size?.width;
+      final renderBox = context.findRenderObject() as RenderBox?;
+      if (renderBox != null && renderBox.hasSize) {
+        _lockedWidth = renderBox.size.width;
+      }
     }
 
     _revertTimer?.cancel();

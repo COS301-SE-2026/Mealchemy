@@ -1,4 +1,4 @@
-package com.mealchemy.vault.controller;
+package com.mealchemy.vault.integration;
 
 import com.mealchemy.auth.model.User;
 import com.mealchemy.auth.repository.UserRepository;
@@ -335,13 +335,13 @@ public class VaultFolderControllerIntegrationTest {
     /* deleteVaultFolder */
 
     @Test
-    void deleteVaultFolder_returns200_andDeletesRow() throws Exception {
+    void deleteVaultFolder_returns204_andDeletesRow() throws Exception {
         VaultFolder folder = newFolder(sharedVault, "General");
 
         mockMvc.perform(delete("/folders/vault/{vaultId}/folder/{id}", sharedVault.getVaultId(), folder.getFolderId())
                         .with(authentication(authAs(owner.getUserId())))
                         .with(csrf()))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         org.junit.jupiter.api.Assertions.assertTrue(vaultFolderRepository.findById(folder.getFolderId()).isEmpty());
     }

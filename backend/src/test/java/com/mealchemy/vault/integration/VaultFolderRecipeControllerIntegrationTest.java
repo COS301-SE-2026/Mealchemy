@@ -1,4 +1,4 @@
-package com.mealchemy.vault.controller;
+package com.mealchemy.vault.integration;
 
 import com.mealchemy.auth.model.User;
 import com.mealchemy.auth.repository.UserRepository;
@@ -144,7 +144,7 @@ public class VaultFolderRecipeControllerIntegrationTest {
         recipe.setOwnerId(owner.getUserId());
         recipe.setTitle(title);
         recipe.setDescription("A test recipe description");
-        recipe.setCuisineType("Test Cuisine");
+        recipe.setCuisineType("ITALIAN");
         recipe.setPrepTimeMins(10);
         recipe.setCookingTimeMins(20);
         recipe.setServingSize(4);
@@ -411,7 +411,7 @@ public class VaultFolderRecipeControllerIntegrationTest {
         mockMvc.perform(delete("/recipefolders/{id}", vaultFolderRecipe.getId())
                         .with(authentication(authAs(owner)))
                         .with(csrf()))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         org.junit.jupiter.api.Assertions.assertFalse(
                 vaultFolderRecipeRepository.findById(vaultFolderRecipe.getId()).isPresent()
@@ -423,7 +423,7 @@ public class VaultFolderRecipeControllerIntegrationTest {
         mockMvc.perform(delete("/recipefolders/{id}", vaultFolderRecipe.getId())
                         .with(authentication(authAs(memberUser)))
                         .with(csrf()))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         org.junit.jupiter.api.Assertions.assertFalse(
                 vaultFolderRecipeRepository.findById(vaultFolderRecipe.getId()).isPresent()

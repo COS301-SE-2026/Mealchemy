@@ -1,4 +1,4 @@
-package com.mealchemy.recipe.controller;
+package com.mealchemy.recipe.integration;
 
 import com.mealchemy.auth.model.User;
 import com.mealchemy.auth.repository.UserRepository;
@@ -52,7 +52,7 @@ public class RecipeStepControllerIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private static final String VALID_CUISINE = "italian";
+    private static final String VALID_CUISINE = "ITALIAN";
 
     private User owner;
     private User otherUser;
@@ -378,13 +378,13 @@ public class RecipeStepControllerIntegrationTest {
     // DELETE /steps/recipe/{recipeId}/step/{id}/delete
 
     @Test
-    void deleteStep_returns200_andRemovesRow_whenOwner() throws Exception {
+    void deleteStep_returns204_andRemovesRow_whenOwner() throws Exception {
         RecipeStep row = saveStepRow(recipe, 1, "Doomed step.");
 
         mockMvc.perform(delete("/steps/recipe/{recipeId}/step/{id}/delete", recipe.getRecipeId(), row.getStepId())
                         .with(authentication(authAs(owner.getUserId())))
                         .with(csrf()))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         org.junit.jupiter.api.Assertions.assertTrue(
                 recipeStepRepository.findById(row.getStepId()).isEmpty()

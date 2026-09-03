@@ -1,21 +1,29 @@
-package com.mealchemy.recipe.controller;
-
+package com.mealchemy.recipe.integration;
 import com.mealchemy.auth.model.User;
 import com.mealchemy.auth.repository.UserRepository;
 import com.mealchemy.recipe.dto.RecipeRequest;
 import com.mealchemy.recipe.dto.RecipeFullRequest;
+import com.mealchemy.recipe.dto.RecipeUpdateRequest;
 import com.mealchemy.recipe.dto.RecipeIngredientRequest;
 import com.mealchemy.recipe.dto.RecipeStepRequest;
 import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.model.VaultFolder;
+import com.mealchemy.vault.model.VaultFolderRecipe;
+import com.mealchemy.vault.model.VaultMember;
 import com.mealchemy.vault.repository.VaultFolderRepository;
 import com.mealchemy.vault.repository.VaultFolderRecipeRepository;
+import com.mealchemy.vault.repository.VaultMemberRepository;
 import com.mealchemy.vault.repository.VaultRepository;
+import com.mealchemy.profile.model.UserProfile;
+import com.mealchemy.profile.repository.UserProfileRepository;
 import com.mealchemy.shared.enums.VaultType;
+import com.mealchemy.shared.enums.PreferredUnit;
 import com.mealchemy.cuisinetype.repository.FlavourProfileOptionsRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.Storage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
@@ -28,9 +36,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.http.MediaType;
 
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -39,10 +50,12 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@TestPropertySource(properties = "recipe.photo.bucket-name=recipe-photo-bucket")
 public class RecipeControllerIntegrationTest {
 
     @Autowired
@@ -61,6 +74,9 @@ public class RecipeControllerIntegrationTest {
     private VaultFolderRecipeRepository vaultFolderRecipeRepository;
 
     @Autowired
+    private VaultMemberRepository vaultMemberRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -71,6 +87,13 @@ public class RecipeControllerIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private UserProfileRepository userProfileRepository;
+
+    // mock cloud storage to limit usage costs
+    @MockitoBean
+    private Storage storage;
 
 
     private String validCuisine;
@@ -85,6 +108,7 @@ public class RecipeControllerIntegrationTest {
     void setUp() {
         
         vaultFolderRecipeRepository.deleteAll();
+        vaultMemberRepository.deleteAll();
         recipeRepository.deleteAll();
         vaultFolderRepository.deleteAll();
         vaultRepository.deleteAll();
@@ -113,6 +137,16 @@ public class RecipeControllerIntegrationTest {
                 .stream().findFirst()
                 .orElseThrow(() -> new IllegalStateException("No rows seeded in ingredient_catalogue"))
                 .getIngId();
+
+        UserProfile ownerProfile = new UserProfile();
+        ownerProfile.setUserId(owner.getUserId());
+        ownerProfile.setPreferredUnit(PreferredUnit.METRIC);
+        userProfileRepository.save(ownerProfile);
+
+        UserProfile otherProfile = new UserProfile();
+        otherProfile.setUserId(otherUser.getUserId());
+        otherProfile.setPreferredUnit(PreferredUnit.METRIC);
+        userProfileRepository.save(otherProfile);
     }
 
     // Helpers
@@ -152,6 +186,35 @@ public class RecipeControllerIntegrationTest {
         return recipeRepository.save(recipe);
     }
 
+    private Vault saveVault(User vaultOwner, VaultType vaultType, String name) {
+        Vault vault = new Vault();
+        vault.setOwnerId(vaultOwner.getUserId());
+        vault.setVaultType(vaultType);
+        vault.setName(name);
+        return vaultRepository.save(vault);
+    }
+
+    private VaultFolder saveFolder(Vault vault, String name) {
+        VaultFolder folder = new VaultFolder();
+        folder.setVault(vault);
+        folder.setFolderName(name);
+        return vaultFolderRepository.save(folder);
+    }
+
+    private void addVaultMember(Vault vault, User user) {
+        VaultMember member = new VaultMember();
+        member.setVault(vault);
+        member.setUser(user);
+        vaultMemberRepository.save(member);
+    }
+
+    private void addRecipeToFolder(Recipe recipe, VaultFolder folder) {
+        VaultFolderRecipe folderRecipe = new VaultFolderRecipe();
+        folderRecipe.setRecipe(recipe);
+        folderRecipe.setFolder(folder);
+        vaultFolderRecipeRepository.save(folderRecipe);
+    }
+
     private RecipeRequest recipeRequest(String title, String cuisine, Integer folderId) {
         return new RecipeRequest(
                 title, "A description.", cuisine,
@@ -171,6 +234,20 @@ public class RecipeControllerIntegrationTest {
         );
     }
 
+    private RecipeUpdateRequest updateRequest(
+            String title,
+            String photoUrl,
+            boolean removePhoto,
+            List<RecipeIngredientRequest> ingredients,
+            List<RecipeStepRequest> steps) {
+        return new RecipeUpdateRequest(
+                title, "A description.", validCuisine,
+                10, 20, 2,
+                photoUrl, removePhoto, null, null, false,
+                ingredients, steps
+        );
+    }
+
     private UsernamePasswordAuthenticationToken authAs(Integer userId) {
         return new UsernamePasswordAuthenticationToken(String.valueOf(userId), null, List.of());
     }
@@ -178,14 +255,47 @@ public class RecipeControllerIntegrationTest {
     // GET /recipes/all
 
     @Test
-    void getAllRecipes_returns200_withEveryRecipe() throws Exception {
-        saveRecipe(owner, "Recipe One");
-        saveRecipe(otherUser, "Recipe Two");
+    void getAllRecipes_returns200_withOnlyAccessibleRecipes() throws Exception {
+        saveRecipe(owner, "Owned Recipe");
+        saveRecipe(otherUser, "Inaccessible Recipe");
+        savePublishedRecipe(otherUser, "Community Recipe");
+
+        Vault ownerVault = saveVault(owner, VaultType.SHARED, "Owner Shared Vault");
+        VaultFolder ownerFolder = saveFolder(ownerVault, "Owner Folder");
+        Recipe vaultOwnedRecipe = saveRecipe(otherUser, "Vault Owner Recipe");
+        addRecipeToFolder(vaultOwnedRecipe, ownerFolder);
+
+        Vault memberVault = saveVault(otherUser, VaultType.SHARED, "Member Shared Vault");
+        VaultFolder memberFolder = saveFolder(memberVault, "Member Folder");
+        Recipe sharedRecipe = saveRecipe(otherUser, "Shared Recipe");
+        addVaultMember(memberVault, owner);
+        addRecipeToFolder(sharedRecipe, memberFolder);
 
         mockMvc.perform(get("/recipes/all")
                         .with(authentication(authAs(owner.getUserId()))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)));
+                .andExpect(jsonPath("$", hasSize(4)))
+                .andExpect(jsonPath("$[*].title", hasItems(
+                        "Owned Recipe",
+                        "Community Recipe",
+                        "Vault Owner Recipe",
+                        "Shared Recipe"
+                )));
+    }
+
+    @Test
+    void getAllRecipes_returnsEachRecipeOnce_whenAccessibleInMultipleWays() throws Exception {
+        Recipe recipe = savePublishedRecipe(owner, "Accessible Recipe");
+        Vault sharedVault = saveVault(otherUser, VaultType.SHARED, "Shared Vault");
+        VaultFolder sharedFolder = saveFolder(sharedVault, "Shared Folder");
+        addVaultMember(sharedVault, owner);
+        addRecipeToFolder(recipe, sharedFolder);
+
+        mockMvc.perform(get("/recipes/all")
+                        .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].title", is("Accessible Recipe")));
     }
 
     // GET /recipes/community
@@ -224,6 +334,53 @@ public class RecipeControllerIntegrationTest {
                         .with(authentication(authAs(owner.getUserId()))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Recipe not found."));
+    }
+
+    @Test
+    void getRecipeById_returns403_whenPrivateRecipeIsNotAccessible() throws Exception {
+        Recipe recipe = saveRecipe(otherUser, "Private Recipe");
+
+        mockMvc.perform(get("/recipes/single/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("You do not have permission to view this recipe."));
+    }
+
+    @Test
+    void getRecipeById_returns200_whenCommunityPublished() throws Exception {
+        Recipe recipe = savePublishedRecipe(otherUser, "Community Recipe");
+
+        mockMvc.perform(get("/recipes/single/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title", is("Community Recipe")));
+    }
+
+    @Test
+    void getRecipeById_returns200_whenUserIsSharedVaultMember() throws Exception {
+        Vault sharedVault = saveVault(otherUser, VaultType.SHARED, "Shared Vault");
+        VaultFolder sharedFolder = saveFolder(sharedVault, "Shared Folder");
+        Recipe recipe = saveRecipe(otherUser, "Shared Recipe");
+        addVaultMember(sharedVault, owner);
+        addRecipeToFolder(recipe, sharedFolder);
+
+        mockMvc.perform(get("/recipes/single/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title", is("Shared Recipe")));
+    }
+
+    @Test
+    void getRecipeById_returns403_whenUserIsNotSharedVaultMember() throws Exception {
+        Vault sharedVault = saveVault(otherUser, VaultType.SHARED, "Shared Vault");
+        VaultFolder sharedFolder = saveFolder(sharedVault, "Shared Folder");
+        Recipe recipe = saveRecipe(otherUser, "Shared Recipe");
+        addRecipeToFolder(recipe, sharedFolder);
+
+        mockMvc.perform(get("/recipes/single/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("You do not have permission to view this recipe."));
     }
 
     // POST /recipes/create
@@ -390,6 +547,129 @@ public class RecipeControllerIntegrationTest {
     }
 
     @Test
+    void updateRecipe_replacesIngredientsAndSteps_whenProvided() throws Exception {
+        Recipe recipe = saveRecipe(owner, "Old Title");
+        RecipeUpdateRequest request = updateRequest(
+                "New Title", null, false,
+                List.of(new RecipeIngredientRequest(ingId, new BigDecimal("2.5"), "cups", 0)),
+                List.of(new RecipeStepRequest(1, "Replacement step"))
+        );
+
+        mockMvc.perform(put("/recipes/edit/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId())))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title", is("New Title")));
+
+        mockMvc.perform(get("/ingredients/recipe/{recipeId}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].ingId", is(ingId)));
+
+        mockMvc.perform(get("/steps/recipe/{recipeId}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].content", is("Replacement step")));
+    }
+
+    @Test
+    void updateRecipe_clearsIngredientsAndSteps_whenEmptyListsAreProvided() throws Exception {
+        Recipe recipe = saveRecipe(owner, "Old Title");
+        RecipeUpdateRequest populatedRequest = updateRequest(
+                "Populated", null, false,
+                List.of(new RecipeIngredientRequest(ingId, BigDecimal.ONE, "cup", 0)),
+                List.of(new RecipeStepRequest(1, "Existing step"))
+        );
+        RecipeUpdateRequest clearRequest = updateRequest(
+                "Cleared", null, false, List.of(), List.of()
+        );
+
+        mockMvc.perform(put("/recipes/edit/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId())))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(populatedRequest)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put("/recipes/edit/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId())))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(clearRequest)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/ingredients/recipe/{recipeId}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+
+        mockMvc.perform(get("/steps/recipe/{recipeId}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void updateRecipe_commitsNewPhotoBeforeDeletingOldPhoto() throws Exception {
+        Recipe recipe = saveRecipe(owner, "Old Title");
+        String oldObjectName = "recipes/" + recipe.getRecipeId() + "/old.jpg";
+        String oldPhotoUrl = "https://storage.googleapis.com/recipe-photo-bucket/"
+                + oldObjectName;
+        String newPhotoUrl = "https://storage.googleapis.com/recipe-photo-bucket/recipes/"
+                + recipe.getRecipeId() + "/new.jpg";
+        recipe.setPhotoUrl(oldPhotoUrl);
+        recipeRepository.save(recipe);
+        RecipeRequest request = new RecipeRequest(
+                "New Title", "A description.", validCuisine,
+                10, 20, 2,
+                newPhotoUrl, null, null, false, null
+        );
+
+        mockMvc.perform(put("/recipes/edit/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId())))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        org.junit.jupiter.api.Assertions.assertEquals(
+                newPhotoUrl,
+                recipeRepository.findById(recipe.getRecipeId()).get().getPhotoUrl()
+        );
+        verify(storage).delete(BlobId.of("recipe-photo-bucket", oldObjectName));
+    }
+
+    @Test
+    void updateRecipe_removesPhotoAfterDatabaseCommit() throws Exception {
+        Recipe recipe = saveRecipe(owner, "Old Title");
+        String oldObjectName = "recipes/" + recipe.getRecipeId() + "/old.jpg";
+        String oldPhotoUrl = "https://storage.googleapis.com/recipe-photo-bucket/"
+                + oldObjectName;
+        recipe.setPhotoUrl(oldPhotoUrl);
+        recipeRepository.save(recipe);
+        RecipeUpdateRequest request = updateRequest(
+                "New Title", null, true, null, null
+        );
+
+        mockMvc.perform(put("/recipes/edit/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId())))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.photoUrl").doesNotExist());
+
+        org.junit.jupiter.api.Assertions.assertNull(
+                recipeRepository.findById(recipe.getRecipeId()).get().getPhotoUrl()
+        );
+        verify(storage).delete(BlobId.of("recipe-photo-bucket", oldObjectName));
+    }
+
+    @Test
     void updateRecipe_returns403_whenNotOwner() throws Exception {
         Recipe recipe = saveRecipe(owner, "Owner's Recipe");
         RecipeRequest request = recipeRequest("Hijacked", validCuisine, null);
@@ -433,17 +713,37 @@ public class RecipeControllerIntegrationTest {
     // DELETE /recipes/delete/{id}
 
     @Test
-    void deleteRecipe_returns200_andRemovesRow_whenOwner() throws Exception {
+    void deleteRecipe_returns204_andRemovesRow_whenOwner() throws Exception {
         Recipe recipe = saveRecipe(owner, "Doomed Recipe");
 
         mockMvc.perform(delete("/recipes/delete/{id}", recipe.getRecipeId())
                         .with(authentication(authAs(owner.getUserId())))
                         .with(csrf()))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         org.junit.jupiter.api.Assertions.assertTrue(
                 recipeRepository.findById(recipe.getRecipeId()).isEmpty()
         );
+    }
+
+    @Test
+    void deleteRecipe_commitsDeletionBeforeDeletingPhoto() throws Exception {
+        Recipe recipe = saveRecipe(owner, "Doomed Recipe");
+        String objectName = "recipes/" + recipe.getRecipeId() + "/photo.jpg";
+        recipe.setPhotoUrl(
+                "https://storage.googleapis.com/recipe-photo-bucket/" + objectName
+        );
+        recipeRepository.save(recipe);
+
+        mockMvc.perform(delete("/recipes/delete/{id}", recipe.getRecipeId())
+                        .with(authentication(authAs(owner.getUserId())))
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+
+        org.junit.jupiter.api.Assertions.assertTrue(
+                recipeRepository.findById(recipe.getRecipeId()).isEmpty()
+        );
+        verify(storage).delete(BlobId.of("recipe-photo-bucket", objectName));
     }
 
     @Test

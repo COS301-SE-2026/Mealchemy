@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/shared_widgets/atoms/app_button.dart';
+import '../../../core/shared_widgets/Molecules/app_refresh.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/recipe.dart';
@@ -11,9 +12,13 @@ import '../models/recipe_step.dart';
 import '../providers/recipe_provider.dart';
 import '../widgets/recipe_hero.dart';
 import '../widgets/recipe_ingredient_row.dart';
+import '../widgets/recipe_nutrition_tab.dart';
 import '../widgets/recipe_stat_card.dart';
+import '../widgets/recipe_servings_section.dart';
 import '../widgets/recipe_step_row.dart';
 import '../widgets/recipe_tab_bar.dart';
+import '../../offline/data/offline_cache_store.dart';
+import '../../offline/widgets/cache_freshness_label.dart';
 
 //tabs need controller with animation support
 class RecipeDetailScreen extends ConsumerStatefulWidget {
@@ -34,12 +39,16 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
   }
+
 //4 tabs are overview, ingredients, steops and nutrition
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
   }
+
+  Future<void> _refresh() =>
+      ref.refresh(recipeDetailProvider(widget.recipeId).future);
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +72,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
       data: (recipe) => _RecipeDetailContent(
         recipe: recipe,
         tabController: _tabController,
+        onRefresh: _refresh,
       ),
     );
   }
@@ -72,11 +82,12 @@ class _RecipeDetailContent extends StatelessWidget {
   const _RecipeDetailContent({
     required this.recipe,
     required this.tabController,
+    required this.onRefresh,
   });
-
 
   final Recipe recipe;
   final TabController tabController;
+  final Future<void> Function() onRefresh;
 
 //ingredients and steps are null on endpoint
 //sorted* guards against null
@@ -84,26 +95,32 @@ class _RecipeDetailContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final ingredients = _sortedIngredients(recipe.ingredients);
     final steps = _sortedSteps(recipe.steps);
-  //to make hero stay fixed at top, while scroll
+    //to make hero stay fixed at top, while scroll
     return Scaffold(
       backgroundColor: AppColors.bgLight,
       body: Column(
         children: [
           RecipeHero(recipe: recipe),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
+            child: CacheFreshnessLabel(
+              collection: CacheCollection.recipe,
+              scopeId: recipe.recipeId.toString(),
+            ),
+          ),
           RecipeTabBar(controller: tabController),
           Expanded(
             child: TabBarView(
               controller: tabController,
               children: [
-                _OverviewTab(recipe: recipe, ingredients: ingredients, steps: steps),
-                _IngredientsTab(ingredients: ingredients),
-                _StepsTab(steps: steps),
-                const _NutritionTab(),
-              ],
+                _OverviewTab(
+                  recipe: recipe, ingredients: ingredients, steps: steps, onRefresh: onRefresh, ),
+                _IngredientsTab( recipe: recipe, ingredients: ingredients, onRefresh: onRefresh,),
+                _StepsTab(steps: steps, onRefresh: onRefresh),
+                AppRefresh( onRefresh: onRefresh, child: RecipeNutritionTab(recipeId: recipe.recipeId),)              ],
             ),
           ),
         ],
-
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
@@ -119,97 +136,103 @@ class _RecipeDetailContent extends StatelessWidget {
       ),
     );
   }
-}//simulate to start cooking, to still be implemented
-
-
+} //simulate to start cooking, to still be implemented
 
 class _OverviewTab extends StatelessWidget {
   const _OverviewTab({
     required this.recipe,
     required this.ingredients,
     required this.steps,
+    required this.onRefresh,
   });
 
   final Recipe recipe;
   final List<RecipeIngredient> ingredients;
   final List<RecipeStep> steps;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
-      children: [
-        _StatRow(recipe: recipe),
-        const SizedBox(height: 26),
-        const _SectionTitle(title: 'Ingredients'),
-        const SizedBox(height: 12),
-        ...ingredients.map((ing) => RecipeIngredientRow(ingredient: ing)),
-        const SizedBox(height: 28),
-        const _SectionTitle(title: 'Preparation'),
-        const SizedBox(height: 12),
-        ...steps.map((step) => RecipeStepRow(step: step)),
-        const SizedBox(height: 22),
-      ],
+    return AppRefresh(
+      onRefresh: onRefresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
+        children: [
+          _StatRow(recipe: recipe),
+          const SizedBox(height: 12),
+          RecipeServingsSection(
+            recipeId: recipe.recipeId,
+            baseServings: recipe.servingSize ?? 1,
+          ),
+          const SizedBox(height: 26),
+          const _SectionTitle(title: 'Ingredients'),
+          const SizedBox(height: 12),
+          ...ingredients.map(
+            (ing) => RecipeIngredientRow(
+              ingredient: ing,
+              recipeId: recipe.recipeId,
+              baseServings: recipe.servingSize ?? 1,
+            ),
+          ),
+          const SizedBox(height: 28),
+          const _SectionTitle(title: 'Preparation'),
+          const SizedBox(height: 12),
+          ...steps.map((step) => RecipeStepRow(step: step)),
+          const SizedBox(height: 22),
+        ],
+      ),
     );
   }
 }
 
 class _IngredientsTab extends StatelessWidget {
-  const _IngredientsTab({required this.ingredients});
-
+  const _IngredientsTab({required this.recipe, required this.ingredients, required this.onRefresh});
+  final Recipe recipe;
   final List<RecipeIngredient> ingredients;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
-      children: [
-        const _SectionTitle(title: 'Ingredients'),
-        const SizedBox(height: 12),
-        ...ingredients.map((ing) => RecipeIngredientRow(ingredient: ing)),
-      ],
+    return AppRefresh(
+      onRefresh: onRefresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
+        children: [
+          const _SectionTitle(title: 'Ingredients'),
+          const SizedBox(height: 12),
+          ...ingredients.map(
+            (ing) => RecipeIngredientRow(
+              ingredient: ing,
+              recipeId: recipe.recipeId,
+              baseServings: recipe.servingSize ?? 1,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _StepsTab extends StatelessWidget {
-  const _StepsTab({required this.steps});
+  const _StepsTab({required this.steps, required this.onRefresh});
 
   final List<RecipeStep> steps;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
-      children: [
-        const _SectionTitle(title: 'Preparation'),
-        const SizedBox(height: 12),
-        ...steps.map((step) => RecipeStepRow(step: step)),
-      ],
-    );
-  }
-}
-//nutrition to be mocked for now as well
-class _NutritionTab extends StatelessWidget {
-  const _NutritionTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.bar_chart_rounded, size: 48, color: AppColors.textMuted),
-            const SizedBox(height: 12),
-            Text(
-              'Nutrition data coming soon',
-              style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+    return AppRefresh(
+      onRefresh: onRefresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
+        children: [
+          const _SectionTitle(title: 'Preparation'),
+          const SizedBox(height: 12),
+          ...steps.map((step) => RecipeStepRow(step: step)),
+        ],
       ),
     );
   }
@@ -227,7 +250,9 @@ class _StatRow extends StatelessWidget {
         Expanded(
           child: RecipeStatCard(
             icon: Icons.local_fire_department_outlined,
-            value: recipe.cookingTimeMins != null ? '${recipe.cookingTimeMins}m' : '-',
+            value: recipe.cookingTimeMins != null
+                ? '${recipe.cookingTimeMins}m'
+                : '-',
             label: 'Cook time',
           ),
         ),
@@ -235,7 +260,8 @@ class _StatRow extends StatelessWidget {
         Expanded(
           child: RecipeStatCard(
             icon: Icons.access_time,
-            value: recipe.prepTimeMins != null ? '${recipe.prepTimeMins}m' : '-',
+            value:
+                recipe.prepTimeMins != null ? '${recipe.prepTimeMins}m' : '-',
             label: 'Prep time',
           ),
         ),

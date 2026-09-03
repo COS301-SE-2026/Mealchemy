@@ -14,6 +14,7 @@ import com.mealchemy.shoppinglist.dto.UpdateShoppingListItemRequest;
 import com.mealchemy.shoppinglist.dto.UpdateShoppingListRequest;
 import com.mealchemy.shoppinglist.dto.DeleteBatchItemsRequest;
 import com.mealchemy.shoppinglist.dto.CompleteShopResponse;
+import com.mealchemy.shoppinglist.dto.AddRecipeToShoppingListRequest;
 
 // controller
 import com.mealchemy.shoppinglist.controller.ShoppingListController;
@@ -98,6 +99,7 @@ public class ShoppingListControllerTest {
             1,
             1,
             "Weekly Groceries",
+            3,
             ShoppingListStatus.ACTIVE,
             OffsetDateTime.parse("2026-07-23T23:00:00Z")
         );
@@ -111,6 +113,7 @@ public class ShoppingListControllerTest {
                 .andExpect(jsonPath("$[0].shopping_list_id").value(1))
                 .andExpect(jsonPath("$[0].user_id").value(1))
                 .andExpect(jsonPath("$[0].name").value("Weekly Groceries"))
+                .andExpect(jsonPath("$[0].num_items").value(3))
                 .andExpect(jsonPath("$[0].status").value("ACTIVE"));
     }
 
@@ -141,6 +144,7 @@ public class ShoppingListControllerTest {
             1,
             1,
             "New List",
+            0,
             ShoppingListStatus.ACTIVE,
             OffsetDateTime.parse("2026-07-23T23:00:00Z")
         );
@@ -156,6 +160,7 @@ public class ShoppingListControllerTest {
                 .andExpect(jsonPath("$.shopping_list_id").value(1))
                 .andExpect(jsonPath("$.user_id").value(1))
                 .andExpect(jsonPath("$.name").value("New List"))
+                .andExpect(jsonPath("$.num_items").value(0))
                 .andExpect(jsonPath("$.status").value("ACTIVE"));
     }
 
@@ -189,6 +194,7 @@ public class ShoppingListControllerTest {
             1,
             1,
             "Updated List",
+            3,
             ShoppingListStatus.COMPLETED,
             OffsetDateTime.parse("2026-07-23T23:00:00Z")
         );
@@ -204,6 +210,7 @@ public class ShoppingListControllerTest {
                 .andExpect(jsonPath("$.shopping_list_id").value(1))
                 .andExpect(jsonPath("$.user_id").value(1))
                 .andExpect(jsonPath("$.name").value("Updated List"))
+                .andExpect(jsonPath("$.num_items").value(3))
                 .andExpect(jsonPath("$.status").value("COMPLETED"));
     }
 
@@ -226,20 +233,20 @@ public class ShoppingListControllerTest {
     }
     
     @Test
-    void updateShoppingList_notOwned_return401() throws Exception {
+    void updateShoppingList_notOwned_return403() throws Exception {
         UpdateShoppingListRequest mockRequest = new UpdateShoppingListRequest(
             "Updated List",
             ShoppingListStatus.COMPLETED
         );
 
-        when(shoppingListService.updateShoppingList(anyInt(), eq(1), any(UpdateShoppingListRequest.class))).thenThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list"));
+        when(shoppingListService.updateShoppingList(anyInt(), eq(1), any(UpdateShoppingListRequest.class))).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list"));
 
         // Act and assert
         mockMvc.perform(put("/api/shopping-lists/{id}", 1).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
                 // fields in response object
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(mockRequest)))
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You do not own this shopping list"));
     }
 
@@ -279,13 +286,13 @@ public class ShoppingListControllerTest {
     }
 
     @Test
-    void deleteShoppingList_notOwned_returns401() throws Exception {
+    void deleteShoppingList_notOwned_returns403() throws Exception {
 
-        doThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list")).when(shoppingListService).deleteShoppingList(anyInt(), eq(3));
+        doThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list")).when(shoppingListService).deleteShoppingList(anyInt(), eq(3));
 
         // Act and Assert
         mockMvc.perform(delete("/api/shopping-lists/{id}", 3).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))  
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You do not own this shopping list"));
     }
 
@@ -312,6 +319,7 @@ public class ShoppingListControllerTest {
             "Weekly Groceries",
             ShoppingListStatus.ACTIVE,
             OffsetDateTime.parse("2026-07-23T23:00:00Z"),
+            1,
             List.of(itemResponse)
         );
 
@@ -324,6 +332,7 @@ public class ShoppingListControllerTest {
                 .andExpect(jsonPath("$.shopping_list_id").value(1))
                 .andExpect(jsonPath("$.user_id").value(1))
                 .andExpect(jsonPath("$.name").value("Weekly Groceries"))
+                .andExpect(jsonPath("$.num_items").value(1))
                 .andExpect(jsonPath("$.status").value("ACTIVE"))
                 .andExpect(jsonPath("$.items[0].item_id").value(1))
                 .andExpect(jsonPath("$.items[0].shopping_list_id").value(1))
@@ -348,15 +357,15 @@ public class ShoppingListControllerTest {
     }
     
     @Test
-    void getListWithItems_notOwned_returns401() throws Exception {
+    void getListWithItems_notOwned_returns403() throws Exception {
         
-        when(shoppingListService.getSpecificListItems(anyInt(), eq(1))).thenThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list"));
+        when(shoppingListService.getSpecificListItems(anyInt(), eq(1))).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list"));
 
         // Act and assert
         mockMvc.perform(get("/api/shopping-lists/{id}", 1).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
                 // fields in response object
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You do not own this shopping list"));
     }
 
@@ -639,6 +648,7 @@ public class ShoppingListControllerTest {
             "Weekly Groceries", 
             ShoppingListStatus.ACTIVE,
             OffsetDateTime.parse("2026-07-23T23:00:00Z"),
+            1,
             List.of(itemResponse)
         );
 
@@ -647,6 +657,7 @@ public class ShoppingListControllerTest {
         mockMvc.perform(put("/api/shopping-lists/{id}/items/select-all", 1).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.shopping_list_id").value(1))
+                .andExpect(jsonPath("$.num_items").value(1)) 
                 .andExpect(jsonPath("$.items[0].purchased").value(true));
     }
 
@@ -681,6 +692,7 @@ public class ShoppingListControllerTest {
             "Weekly Groceries", 
             ShoppingListStatus.ACTIVE,
             OffsetDateTime.parse("2026-07-23T23:00:00Z"),
+            1,
             List.of(itemResponse)
         );
 
@@ -689,6 +701,7 @@ public class ShoppingListControllerTest {
         mockMvc.perform(put("/api/shopping-lists/{id}/items/deselect-all", 1).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.shopping_list_id").value(1))
+                .andExpect(jsonPath("$.num_items").value(1)) 
                 .andExpect(jsonPath("$.items[0].purchased").value(false));
     }
 
@@ -718,7 +731,7 @@ public class ShoppingListControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.added_to_pantry_count").value(2))
                 .andExpect(jsonPath("$.skipped_manual_items[0]").value("Fresh basil bunch"))
-                .andExpect(jsonPath("$.shopping_list_deleted").value(false));
+                .andExpect(jsonPath("$.can_delete_shopping_list").value(false));
     }
 
     @Test
@@ -745,6 +758,7 @@ public class ShoppingListControllerTest {
             1,
             1,
             "Generate Shopping List With All Items",
+            2,
             ShoppingListStatus.ACTIVE,
             OffsetDateTime.parse("2026-07-23T23:00:00Z")
         );
@@ -760,6 +774,7 @@ public class ShoppingListControllerTest {
                 .andExpect(jsonPath("$.shopping_list_id").value(1))
                 .andExpect(jsonPath("$.user_id").value(1))
                 .andExpect(jsonPath("$.name").value("Generate Shopping List With All Items"))
+                .andExpect(jsonPath("$.num_items").value(2)) 
                 .andExpect(jsonPath("$.status").value("ACTIVE"));
     }
 
@@ -790,6 +805,92 @@ public class ShoppingListControllerTest {
 
         // Act and assert
         mockMvc.perform(post("/api/shopping-lists/from-recipe/{recipeId}", 1).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                // fields in response object
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(mockRequest)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Recipe not found"));
+    }
+
+    // Compares recipe to current pantry ingredients and inserts the rest into shopping list specified by the user
+    @Test
+    void addRecipeIngredientsToShoppingList_validRequest_return200() throws Exception {
+        // Arrange - mock response
+        AddRecipeToShoppingListRequest mockRequest = new AddRecipeToShoppingListRequest(
+            false
+        );
+
+        ShoppingListItemResponse itemResponse = new ShoppingListItemResponse(
+            1,
+            5,
+            2,
+            "Hummus",
+            "Legumes and Legume Products",
+            new BigDecimal("100"),
+            "g",
+            false
+        );
+
+        ShoppingListWithItemsResponse mockResponse = new ShoppingListWithItemsResponse(
+            5,
+            1,
+            "Weekly Groceries",
+            ShoppingListStatus.ACTIVE,
+            OffsetDateTime.parse("2026-07-23T23:00:00Z"),
+            1,
+            List.of(itemResponse)
+        );
+
+       when(shoppingListService.addRecipeIngredientsToShoppingList(anyInt(), eq(5), eq(9), any(AddRecipeToShoppingListRequest.class))).thenReturn(mockResponse);
+
+        // Act and assert
+        mockMvc.perform(post("/api/shopping-lists/add-from-recipe/{shoppingListId}/{recipeId}", 5, 9).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(mockRequest)))        
+                .andExpect(status().isOk())
+                // fields in response object
+                .andExpect(jsonPath("$.shopping_list_id").value(5))
+                .andExpect(jsonPath("$.user_id").value(1))
+                .andExpect(jsonPath("$.name").value("Weekly Groceries"))
+                .andExpect(jsonPath("$.num_items").value(1))
+                .andExpect(jsonPath("$.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.items[0].item_id").value(1))
+                .andExpect(jsonPath("$.items[0].shopping_list_id").value(5))
+                .andExpect(jsonPath("$.items[0].ing_id").value(2))
+                .andExpect(jsonPath("$.items[0].name").value("Hummus"))
+                .andExpect(jsonPath("$.items[0].category").value("Legumes and Legume Products"))
+                .andExpect(jsonPath("$.items[0].quantity").value(100))
+                .andExpect(jsonPath("$.items[0].unit").value("g"))
+                .andExpect(jsonPath("$.items[0].purchased").value(false));
+    }
+
+    @Test
+    void addRecipeIngredientsToShoppingList_bad_request_returns400() throws Exception {
+        // Bad request
+       String badRequest = """
+                            {
+                                "include_available_pantry_items": "wrong"
+                            }
+                         """;
+
+        // Act and Assert
+        mockMvc.perform(post("/api/shopping-lists/add-from-recipe/{shoppingListId}/{recipeId}", 2, 1).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(badRequest))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test 
+    void addRecipeIngredientsToShoppingList_recipeNotFound_returns404() throws Exception{
+
+        AddRecipeToShoppingListRequest mockRequest = new AddRecipeToShoppingListRequest(
+            false
+        );
+
+        when(shoppingListService.addRecipeIngredientsToShoppingList(anyInt(), eq(2), eq(1), any(AddRecipeToShoppingListRequest.class))).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
+
+        // Act and assert
+        mockMvc.perform(post("/api/shopping-lists/add-from-recipe/{shoppingListId}/{recipeId}", 2, 1).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
                 // fields in response object
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(mockRequest)))

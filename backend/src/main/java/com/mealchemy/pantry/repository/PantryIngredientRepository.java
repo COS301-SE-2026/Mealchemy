@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PantryIngredientRepository extends JpaRepository<PantryIngredient, Integer> {
     // user defined queries
@@ -17,6 +18,11 @@ public interface PantryIngredientRepository extends JpaRepository<PantryIngredie
     List<PantryIngredient> findByIngId(Integer ingId); //could have multiple of same ingredient in pantry
 
     List<PantryIngredient> findByUserIdAndIngId(Integer userId, Integer ingId);
+    
+    @Query("""
+            SELECT p FROM PantryIngredient p WHERE p.pIngredientId = :pIngredientId AND p.userId = :userId
+    """)
+    Optional<PantryIngredient> findByPIngredientIdAndUserId(@Param("pIngredientId") Integer pIngredientId, @Param("userId") Integer userId);
 
     @Query("""
         SELECT new com.mealchemy.pantry.dto.PantryIngredientResponse(
@@ -26,6 +32,7 @@ public interface PantryIngredientRepository extends JpaRepository<PantryIngredie
             cat.name,
             p.quantity,
             p.unit,
+            p.storageLocation,
             p.createdAt,
             p.updatedAt
         )
@@ -45,6 +52,7 @@ public interface PantryIngredientRepository extends JpaRepository<PantryIngredie
             cat.name,
             p.quantity,
             p.unit,
+            p.storageLocation,
             p.createdAt,
             p.updatedAt
         )

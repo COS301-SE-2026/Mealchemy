@@ -178,12 +178,12 @@ public class VaultControllerTest {
     }
  
     @Test
-    void deleteVault_returns200() throws Exception
+    void deleteVault_returns204() throws Exception
     {
         doNothing().when(vaultService).deleteVault(1, 1);
  
         mockMvc.perform(delete("/vaults/1").with(csrf()))
-            .andExpect(status().isOk());
+            .andExpect(status().isNoContent());
     }
  
     @Test

@@ -32,6 +32,8 @@ import com.mealchemy.recipe.dto.RecipeIngredientRequest;
 import com.mealchemy.recipe.dto.RecipeIngredientResponse;
 import com.mealchemy.recipe.service.RecipeIngredientService;
 import com.mealchemy.config.WithMockJwtUser;
+import com.mealchemy.profile.model.UserProfile;
+import com.mealchemy.shared.enums.PreferredUnit;
 
 
 @ExtendWith(SpringExtension.class)
@@ -64,7 +66,7 @@ public class RecipeIngredientControllerTest {
     @Test
     void getAllIngredientsByRecipeId_returns200_withList() throws Exception
     {
-        when(recipeIngredientService.getAllIngredientsByRecipeId(1)).thenReturn(List.of(response));
+        when(recipeIngredientService.getAllIngredientsByRecipeId(1, 1)).thenReturn(List.of(response));
 
         mockMvc.perform(get("/ingredients/recipe/1")).andExpect(status().isOk()).andExpect(jsonPath("$[0].unit").value("grams")).andExpect(jsonPath("$[0].ingName").value("Salt"));
     }
@@ -72,7 +74,7 @@ public class RecipeIngredientControllerTest {
     @Test
     void getAllIngredientsByRecipeId_returns200_withEmptyList() throws Exception
     {
-        when(recipeIngredientService.getAllIngredientsByRecipeId(99)).thenReturn(List.of());
+        when(recipeIngredientService.getAllIngredientsByRecipeId(99, 1)).thenReturn(List.of());
 
         mockMvc.perform(get("/ingredients/recipe/99")).andExpect(status().isOk()).andExpect(jsonPath("$").isEmpty());
     }
@@ -146,12 +148,12 @@ public class RecipeIngredientControllerTest {
     }
 
     @Test
-    void deleteRecipeIngredient_returns200() throws Exception
+    void deleteRecipeIngredient_returns204() throws Exception
     {
         doNothing().when(recipeIngredientService).deleteRecipeIngredient(1, 1, 1);
 
         mockMvc.perform(delete("/ingredients/recipe/1/ingredient/1/delete").with(csrf()))
-            .andExpect(status().isOk());
+            .andExpect(status().isNoContent());
     }
 
     @Test

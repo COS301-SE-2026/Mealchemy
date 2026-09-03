@@ -6,9 +6,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/connectivity/network_status_provider.dart';
 import '../models/recipe.dart';
+import 'recipe_network_image.dart';
 import 'save_to_vault_sheet.dart';
-import '../../shopping_lists/providers/shopping_list_provider.dart';
+import 'add_to_sl.dart';
 
 //image with overlay, back/share buttons, recipe title
 class RecipeHero extends ConsumerWidget {
@@ -19,6 +21,7 @@ class RecipeHero extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isReadOnly = ref.watch(offlineReadOnlyProvider);
     return SizedBox(
       height: height,
       child: Stack(
@@ -49,7 +52,14 @@ class RecipeHero extends ConsumerWidget {
                     const Spacer(),
                     _HeroCircleButton(
                       icon: Icons.add_shopping_cart,
-                      onTap: () => _generateShoppingList(context, ref),
+                      onTap: isReadOnly
+                          ? null
+                          : () => showAddToSl(
+                                context: context,
+                                ref: ref,
+                                recipeId: recipe.recipeId,
+                                recipeName: recipe.title,
+                              ),
                       background: AppColors.textLight.withValues(alpha: 0.45),
                       iconColor: AppColors.textDark,
                       frosted: true,
@@ -57,11 +67,13 @@ class RecipeHero extends ConsumerWidget {
                     const SizedBox(width: 10),
                     _HeroCircleButton(
                       icon: Icons.bookmark_add_outlined,
-                      onTap: () => showSaveToVaultSheet(
-                        context: context,
-                        ref: ref,
-                        recipeId: recipe.recipeId,
-                      ),
+                      onTap: isReadOnly
+                          ? null
+                          : () => showSaveToVaultSheet(
+                                context: context,
+                                ref: ref,
+                                recipeId: recipe.recipeId,
+                              ),
                       background: AppColors.textLight.withValues(alpha: 0.45),
                       iconColor: AppColors.textDark,
                       frosted: true,
@@ -88,29 +100,6 @@ class RecipeHero extends ConsumerWidget {
       ),
     );
   }
-
-  //generates a shopping list from this recipe's missing pantry items
-  Future<void> _generateShoppingList(BuildContext context, WidgetRef ref) async {
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      await ref.read(shoppingListsProvider.notifier).generateFromRecipe(
-            recipeId: recipe.recipeId,
-            recipeName: recipe.title,
-          );
-      ref.invalidate(shoppingListsProvider);
-      if (!context.mounted) return;
-      messenger.showSnackBar(
-        SnackBar(content: Text('Shopping list created for ${recipe.title}')),
-      );
-    } catch (e) {
-      if (!context.mounted) return;
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Could not create shopping list. Try again.'),
-        ),
-      );
-    }
-  }
 }
 
 class _HeroImage extends StatelessWidget {
@@ -120,14 +109,10 @@ class _HeroImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (photoUrl != null) {
-      return Image.network(
-        photoUrl!,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const _HeroPlaceholder(),
-      );
-    }
-    return const _HeroPlaceholder();
+    return RecipeNetworkImage(
+      photoUrl: photoUrl,
+      placeholder: const _HeroPlaceholder(),
+    );
   }
 }
 
@@ -159,7 +144,7 @@ class _HeroCircleButton extends StatelessWidget {
   });
 
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final Color background;
   final Color iconColor;
   final bool frosted;
@@ -176,16 +161,19 @@ class _HeroCircleButton extends StatelessWidget {
       child: Icon(icon, color: iconColor, size: 19),
     );
 
-    return GestureDetector(
-      onTap: onTap,
-      child: frosted
-          ? ClipOval(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                child: button,
-              ),
-            )
-          : button,
+    return Opacity(
+      opacity: onTap == null ? 0.45 : 1,
+      child: GestureDetector(
+        onTap: onTap,
+        child: frosted
+            ? ClipOval(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                  child: button,
+                ),
+              )
+            : button,
+      ),
     );
   }
 }

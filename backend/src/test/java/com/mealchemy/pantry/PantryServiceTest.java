@@ -9,12 +9,20 @@ import com.mealchemy.pantry.dto.PantryIngredientResponse;
 import com.mealchemy.pantry.model.PantryIngredient;
 import com.mealchemy.ingredient.model.IngredientCatalogue;
 import com.mealchemy.category.model.IngredientCategory;
+import com.mealchemy.profile.model.UserProfile;
+
 // import repository
 import com.mealchemy.pantry.repository.PantryIngredientRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.category.repository.IngredientCategoryRepository;
+import com.mealchemy.profile.repository.UserProfileRepository;
+
 // import service
 import com.mealchemy.pantry.service.PantryService;
+
+// shared
+import com.mealchemy.shared.enums.PreferredUnit;
+import com.mealchemy.shared.enums.StorageLocation;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +40,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyInt;
 
 
 @ExtendWith(MockitoExtension.class) //tells JUnit to use Mockito to create mocks
@@ -40,10 +49,12 @@ public class PantryServiceTest {
     @Mock private PantryIngredientRepository pantryIngredientRepository;
     @Mock private IngredientCatalogueRepository ingredientCatalogueRepository;
     @Mock private IngredientCategoryRepository ingredientCategoryRepository;
+    @Mock private UserProfileRepository userProfileRepository; 
 
     // @InjectMocks creates the real PantryService and injects the mocks above into it - actually testing PantryService
     @InjectMocks
     private PantryService pantryService;
+    private UserProfile userProfile;
 
     private PantryIngredient existingPantryIngredient;
     private IngredientCatalogue catalogueInstance;
@@ -53,12 +64,16 @@ public class PantryServiceTest {
 
     @BeforeEach
     void setUp() {
+
+        userProfile = new UserProfile();
+        userProfile.setPreferredUnit(PreferredUnit.METRIC);
         // simulates what db returns for existing user pantry
         existingPantryIngredient = new PantryIngredient();
         existingPantryIngredient.setUserId(1);
         existingPantryIngredient.setIngredientId(2);
         existingPantryIngredient.setQuantity(new BigDecimal("250"));
         existingPantryIngredient.setUnit("g");
+        existingPantryIngredient.setStorageLocation(StorageLocation.PANTRY);
 
         catalogueInstance = new IngredientCatalogue();
         catalogueInstance.setName("Hummus");
@@ -71,8 +86,12 @@ public class PantryServiceTest {
         createRequest = new PantryIngredientRequest (
             2,
             new BigDecimal("150"),
-            "g"
+            "g",
+            StorageLocation.FRIDGE
         );
+
+        // so call doesn't have to change in every test
+        lenient().when(userProfileRepository.findByUserId(anyInt())).thenReturn(Optional.of(userProfile));
     }
 
 
@@ -102,6 +121,7 @@ public class PantryServiceTest {
             "Legumes and Legume Products",
             new BigDecimal("250"),
             "g",
+            StorageLocation.PANTRY,
             null,
             null
         );
@@ -117,7 +137,7 @@ public class PantryServiceTest {
         assertEquals(2, response.ingId());
         assertEquals("Hummus", response.name());
         assertEquals("Legumes and Legume Products", response.category());
-        assertEquals(new BigDecimal("250"), response.quantity());
+        assertEquals(0, BigDecimal.valueOf(250).compareTo(response.quantity()));
         assertEquals("g", response.unit());
     }
 
@@ -155,6 +175,20 @@ public class PantryServiceTest {
         verify(pantryIngredientRepository).save(any(PantryIngredient.class));
     }
 
+    @Test
+    void addIngredientManually_setsStorageLocationFromRequest() {
+        // Arrange
+        when(ingredientCatalogueRepository.findById(2)).thenReturn(Optional.of(catalogueInstance));
+        when(ingredientCategoryRepository.findById(5)).thenReturn(Optional.of(categoryInstance));
+        when(pantryIngredientRepository.save(any(PantryIngredient.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Act
+        PantryIngredientResponse response = pantryService.addIngredientManually(1, createRequest);
+
+        // Assert
+        assertEquals(StorageLocation.FRIDGE, response.storageLocation());
+    }
+
 
     // ========== Update Ingredient Manually Testing ==========
 
@@ -162,7 +196,7 @@ public class PantryServiceTest {
     @Test
     void updateIngredientManually_whenNotFound_throwNotFound() {
         // Arrange
-        when(pantryIngredientRepository.findById(48)).thenReturn(Optional.empty());
+        when(pantryIngredientRepository.findByPIngredientIdAndUserId(48, 1)).thenReturn(Optional.empty());
 
         // Act
         ResponseStatusException ex = assertThrows(
@@ -175,10 +209,9 @@ public class PantryServiceTest {
 
    
     @Test
-    void updateIngredientManually_whenNotOwned_throwsForbidden() {
+    void updateIngredientManually_whenNotOwned_throwsNotFound() {
         // Arrange
-        existingPantryIngredient.setUserId(2);
-        when(pantryIngredientRepository.findById(1)).thenReturn(Optional.of(existingPantryIngredient));
+        when(pantryIngredientRepository.findByPIngredientIdAndUserId(1, 1)).thenReturn(Optional.empty());
 
         // Act
         ResponseStatusException ex = assertThrows(
@@ -186,14 +219,14 @@ public class PantryServiceTest {
             () -> pantryService.updateIngredientManually(1, 1, createRequest)
         );
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 
     // Happy
     @Test
     void updateIngredientManually_withPositiveQuantity_updateAndReturnPantryIngredientResponse() {
         // Arrange 
-        when(pantryIngredientRepository.findById(1)).thenReturn(Optional.of(existingPantryIngredient));
+        when(pantryIngredientRepository.findByPIngredientIdAndUserId(1, 1)).thenReturn(Optional.of(existingPantryIngredient));
         when(pantryIngredientRepository.save(any(PantryIngredient.class))).thenReturn(existingPantryIngredient);
         when(ingredientCatalogueRepository.findById(2)).thenReturn(Optional.of(catalogueInstance));
         when(ingredientCategoryRepository.findById(5)).thenReturn(Optional.of(categoryInstance));
@@ -213,10 +246,11 @@ public class PantryServiceTest {
         PantryIngredientRequest request = new PantryIngredientRequest (
             2,
             BigDecimal.ZERO,
-            "g"
+            "g",
+            StorageLocation.PANTRY
         );
 
-        when(pantryIngredientRepository.findById(1)).thenReturn(Optional.of(existingPantryIngredient));
+        when(pantryIngredientRepository.findByPIngredientIdAndUserId(1, 1)).thenReturn(Optional.of(existingPantryIngredient));
 
         // Act
         Optional<PantryIngredientResponse> response = pantryService.updateIngredientManually(1, 1, request);
@@ -227,6 +261,41 @@ public class PantryServiceTest {
         verify(pantryIngredientRepository, never()).save(any());
     }
 
+    @Test
+    void updateIngredientManually_changesStorageLocation_whenDifferentFromExisting() {
+        // Arrange
+        when(pantryIngredientRepository.findByPIngredientIdAndUserId(1, 1)).thenReturn(Optional.of(existingPantryIngredient));
+        when(pantryIngredientRepository.save(any(PantryIngredient.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(ingredientCatalogueRepository.findById(2)).thenReturn(Optional.of(catalogueInstance));
+        when(ingredientCategoryRepository.findById(5)).thenReturn(Optional.of(categoryInstance));
+
+        // Act
+        Optional<PantryIngredientResponse> response = pantryService.updateIngredientManually(1, 1, createRequest);
+
+        // Assert
+        assertTrue(response.isPresent());
+        assertEquals(StorageLocation.FRIDGE, response.get().storageLocation());
+    }
+
+    @Test
+    void updateIngredientManually_withZeroQuantity_deletesRegardlessOfStorageLocation() {
+        // Arrange
+        PantryIngredientRequest zeroQtyRequest = new PantryIngredientRequest(
+            2,
+            BigDecimal.ZERO,
+            "g",
+            StorageLocation.FRIDGE
+        );
+        when(pantryIngredientRepository.findByPIngredientIdAndUserId(1, 1)).thenReturn(Optional.of(existingPantryIngredient));
+
+        // Act
+        Optional<PantryIngredientResponse> response = pantryService.updateIngredientManually(1, 1, zeroQtyRequest);
+
+        // Assert
+        assertTrue(response.isEmpty());
+        verify(pantryIngredientRepository).delete(existingPantryIngredient);
+        verify(pantryIngredientRepository, never()).save(any());
+    }
 
     // ========== Deleting Ingredient Manually Testing ==========
 
@@ -234,7 +303,7 @@ public class PantryServiceTest {
     @Test
     void removePantryIngredient_whenNotFound_throwNotFound() {
         // Arrange
-        when(pantryIngredientRepository.findById(48)).thenReturn(Optional.empty());
+        when(pantryIngredientRepository.findByPIngredientIdAndUserId(48, 1)).thenReturn(Optional.empty());
 
         // Act
         ResponseStatusException ex = assertThrows(
@@ -246,10 +315,9 @@ public class PantryServiceTest {
     }
 
     @Test
-    void removePantryIngredient_whenNotOwned_throwsForbidden() {
+    void removePantryIngredient_whenNotOwned_throwsNotFound() {
         // Arrange
-        existingPantryIngredient.setUserId(2);
-        when(pantryIngredientRepository.findById(1)).thenReturn(Optional.of(existingPantryIngredient));
+        when(pantryIngredientRepository.findByPIngredientIdAndUserId(1, 1)).thenReturn(Optional.empty());
 
         // Act
         ResponseStatusException ex = assertThrows(
@@ -257,14 +325,14 @@ public class PantryServiceTest {
             () -> pantryService.removePantryIngredient(1, 1)
         );
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 
     // Happy
     @Test 
     void removePantryIngredient_sucessfulDelete() {
         // Arrange
-        when(pantryIngredientRepository.findById(1)).thenReturn(Optional.of(existingPantryIngredient));
+        when(pantryIngredientRepository.findByPIngredientIdAndUserId(1, 1)).thenReturn(Optional.of(existingPantryIngredient));
 
         // Act 
         pantryService.removePantryIngredient(1, 1);
@@ -285,6 +353,7 @@ public class PantryServiceTest {
             "Legumes and Legume Products",
             new BigDecimal("250"),
             "g",
+            StorageLocation.PANTRY,
             null,
             null
         );

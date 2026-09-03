@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/features/shopping_lists/screens/shopping_list_detail_screen.dart';
 import 'package:mealchemy/features/shopping_lists/screens/shopping_lists_screen.dart';
@@ -16,13 +17,19 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  Future<void> pumpShoppingListsScreen(WidgetTester tester) async {
+  Future<void> pumpShoppingListsScreen(
+    WidgetTester tester, {
+    bool isOffline = false,
+  }) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          offlineReadOnlyProvider.overrideWithValue(isOffline),
           shoppingListRepositoryProvider.overrideWithValue(
             MockShoppingListRepository(),
           ),
+          //start each test with search closed so state does not leak between them
+          searchOpenProvider.overrideWith((ref) => false),
         ],
         child: const MaterialApp(
           home: ShoppingListsScreen(),
@@ -43,6 +50,36 @@ void main() {
     expect(find.text('Weekly Groceries'), findsOneWidget);
     expect(find.text('FROM YOUR RECIPES'), findsOneWidget);
   });
+
+  testWidgets(
+    'ShoppingListsScreen keeps cached reads and disables writes offline',
+    (tester) async {
+      await pumpShoppingListsScreen(tester, isOffline: true);
+
+      expect(find.text('General List'), findsOneWidget);
+
+      final row = tester.widget<ShoppingListRow>(
+        find.ancestor(
+          of: find.text('General List'),
+          matching: find.byType(ShoppingListRow),
+        ),
+      );
+      expect(row.mutationsEnabled, isFalse);
+
+      final addButton = tester.widget<FloatingActionButton>(
+        find.byType(FloatingActionButton),
+      );
+      expect(addButton.onPressed, isNull);
+
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'weekly');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Weekly Groceries'), findsOneWidget);
+      expect(find.text('General List'), findsNothing);
+    },
+  );
 
   testWidgets('ShoppingListsScreen filters lists using search', (tester) async {
     await pumpShoppingListsScreen(tester);
@@ -99,6 +136,7 @@ void main() {
           shoppingListRepositoryProvider.overrideWithValue(
             MockShoppingListRepository(),
           ),
+          searchOpenProvider.overrideWith((ref) => false),
         ],
         child: MaterialApp.router(
           routerConfig: router,
@@ -114,6 +152,7 @@ void main() {
     expect(find.text('All Items'), findsOneWidget);
     expect(find.text('Heirloom Tomatoes'), findsOneWidget);
   });
+
   testWidgets(
       'ShoppingListsScreen creates new list from floating action button',
       (tester) async {

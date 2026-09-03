@@ -35,12 +35,22 @@ class ApiRecipeRepository implements RecipeRepository {
     });
     return Recipe.fromJson(response.data as Map<String, dynamic>);
   }
-
-// Updates the recipe
+  //For metadata and photo url updates
   @override
   Future<Recipe> updateRecipe(int id, Recipe recipe) async {
-    final response =
-        await _dio.put('/recipes/edit/$id', data: recipe.toCreateRequestJson());
+    final response = await _dio.put(
+      '/recipes/edit/$id',
+      data: recipe.toCreateRequestJson(),
+    );
+    return Recipe.fromJson(response.data as Map<String, dynamic>);
+  }
+
+// Updates the recipe, including ingredients and steps
+  @override
+  Future<Recipe> updateRecipeFull(int id, Recipe recipe,
+      {bool removePhoto = false}) async {
+    final response = await _dio.put('/recipes/edit/$id',
+        data: recipe.toFullRequestJson(removePhoto: removePhoto));
     return Recipe.fromJson(response.data as Map<String, dynamic>);
   }
 

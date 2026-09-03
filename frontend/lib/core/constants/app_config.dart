@@ -1,5 +1,5 @@
 class AppConfig {
-  static const bool useMockData = true;
+  static const bool useMockData = false;
 
 //if it's true the app will be on mock for the feature , false = real API for the feature
   static const bool mockAuth = false;
@@ -8,4 +8,7 @@ class AppConfig {
   static const bool mockPantry = false;
   static const bool mockDiscovery = false; 
   static const bool mockShoppinglist = false;
+  static const bool mockProfile = false;
+  static const bool mockGuidedDiscovery = false; 
+  static const bool mockDashboard = false;
 }

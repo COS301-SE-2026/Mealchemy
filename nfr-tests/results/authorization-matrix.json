@@ -1,0 +1,1310 @@
+{
+  "root_group": {
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e",
+    "groups": [
+      {
+        "name": "setup",
+        "path": "::setup",
+        "id": "5c0f8025f7e0b6654089e5b00e950f1a",
+        "groups": [],
+        "checks": [
+            {
+              "name": "test account login succeeds",
+              "path": "::setup::test account login succeeds",
+              "id": "4bd581aaa23341e5b62760eaabe579ad",
+              "passes": 1,
+              "fails": 0
+            },
+            {
+              "passes": 1,
+              "fails": 0,
+              "name": "login response contains a token",
+              "path": "::setup::login response contains a token",
+              "id": "677743670ca17fe0e3c314667c2da86f"
+            }
+          ]
+      }
+    ],
+    "checks": [
+      {
+        "name": "missing-token: vault members is rejected",
+        "path": "::missing-token: vault members is rejected",
+        "id": "2bf10cadf1a0b2be3ac8464f1c1582ef",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "fails": 0,
+        "name": "invalid-token: vault members is rejected",
+        "path": "::invalid-token: vault members is rejected",
+        "id": "319d2d8263e269c4a29ca964f55158b0",
+        "passes": 1
+      },
+      {
+        "fails": 0,
+        "name": "missing-token: create vault member is rejected",
+        "path": "::missing-token: create vault member is rejected",
+        "id": "17e241bef1fbf440f0d82a8eb6d6a8b6",
+        "passes": 1
+      },
+      {
+        "id": "8c3e4d0306fba969783f8bca088aeb62",
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: create vault member is rejected",
+        "path": "::invalid-token: create vault member is rejected"
+      },
+      {
+        "name": "missing-token: delete vault member is rejected",
+        "path": "::missing-token: delete vault member is rejected",
+        "id": "1a36daef446e30443ac077a6db306bc3",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: delete vault member is rejected",
+        "path": "::invalid-token: delete vault member is rejected",
+        "id": "a99ba8c302188ba811ad55184047e093",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: dietary restrictions is rejected",
+        "path": "::missing-token: dietary restrictions is rejected",
+        "id": "3ca673df4a94e8225e725f7324e15372"
+      },
+      {
+        "fails": 0,
+        "name": "invalid-token: dietary restrictions is rejected",
+        "path": "::invalid-token: dietary restrictions is rejected",
+        "id": "cf0a4e4ae7db3b02c9f8c9446d2a666f",
+        "passes": 1
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: user profile is rejected",
+        "path": "::missing-token: user profile is rejected",
+        "id": "65ad0ea53fe9bc6c4d6c59be424248e8"
+      },
+      {
+        "fails": 0,
+        "name": "invalid-token: user profile is rejected",
+        "path": "::invalid-token: user profile is rejected",
+        "id": "aa8081eee9461fa1772192eea77c1563",
+        "passes": 1
+      },
+      {
+        "id": "001e2357a5e1d19b4dc1b29b2d8b0a56",
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: update user profile is rejected",
+        "path": "::missing-token: update user profile is rejected"
+      },
+      {
+        "name": "invalid-token: update user profile is rejected",
+        "path": "::invalid-token: update user profile is rejected",
+        "id": "8c9f0179172e891a09394723e658fba2",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "path": "::missing-token: logout is rejected",
+        "id": "d9598166a1a86ca5147e1637e65fc5e7",
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: logout is rejected"
+      },
+      {
+        "path": "::invalid-token: logout is rejected",
+        "id": "e28fb855d7525d9cceb00f68d8702c51",
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: logout is rejected"
+      },
+      {
+        "path": "::missing-token: owned vaults is rejected",
+        "id": "99f72f14fa52f918d78eaf12be694522",
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: owned vaults is rejected"
+      },
+      {
+        "fails": 0,
+        "name": "invalid-token: owned vaults is rejected",
+        "path": "::invalid-token: owned vaults is rejected",
+        "id": "24f00f770122eea173f7f2e62eb8080c",
+        "passes": 1
+      },
+      {
+        "path": "::missing-token: vault by id is rejected",
+        "id": "aa44a6b171d14ba6b3e24df7353d0401",
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: vault by id is rejected"
+      },
+      {
+        "name": "invalid-token: vault by id is rejected",
+        "path": "::invalid-token: vault by id is rejected",
+        "id": "aaf1c7af5b8e00e1c3351a2b2a4913e9",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: accessible vaults is rejected",
+        "path": "::missing-token: accessible vaults is rejected",
+        "id": "42302962696a951dfb0676214d0dd701",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: accessible vaults is rejected",
+        "path": "::invalid-token: accessible vaults is rejected",
+        "id": "e88964c0cd1116ae48cb3ee48a94589c",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "path": "::missing-token: create vault is rejected",
+        "id": "8a5cb5bc2931e09ba6edc2c79e120e80",
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: create vault is rejected"
+      },
+      {
+        "id": "67871fcd15ceddef13345429c317b109",
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: create vault is rejected",
+        "path": "::invalid-token: create vault is rejected"
+      },
+      {
+        "name": "missing-token: update vault is rejected",
+        "path": "::missing-token: update vault is rejected",
+        "id": "7a87fa753504cfe43dc6ecec8a954958",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: update vault is rejected",
+        "path": "::invalid-token: update vault is rejected",
+        "id": "5963dececa73635bd4c02f66eb041105",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: delete vault is rejected",
+        "path": "::missing-token: delete vault is rejected",
+        "id": "cc16ab2a74145712fd00ceacd9900a5c"
+      },
+      {
+        "name": "invalid-token: delete vault is rejected",
+        "path": "::invalid-token: delete vault is rejected",
+        "id": "8d5c5f4795c9094ac09de5bda4291644",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: folder recipes is rejected",
+        "path": "::missing-token: folder recipes is rejected",
+        "id": "28a6881127d987dc5b0970114c1174ef",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: folder recipes is rejected",
+        "path": "::invalid-token: folder recipes is rejected",
+        "id": "68f4a0cbb2f9950c6b11bcaad7995d1f",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: recipe folders is rejected",
+        "path": "::missing-token: recipe folders is rejected",
+        "id": "6c59a1f5c1391c1d1d8c3df7ba39c36b",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "path": "::invalid-token: recipe folders is rejected",
+        "id": "c95f84a5f7586b4d78885b2ba9a0b2dc",
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: recipe folders is rejected"
+      },
+      {
+        "name": "missing-token: recipe folder link is rejected",
+        "path": "::missing-token: recipe folder link is rejected",
+        "id": "d93bd81ff5d1e07f987997b93eeac339",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: recipe folder link is rejected",
+        "path": "::invalid-token: recipe folder link is rejected",
+        "id": "c42be22d7fa509379485b12c547082dd",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: create recipe folder link is rejected",
+        "path": "::missing-token: create recipe folder link is rejected",
+        "id": "c017ad737d06fcfc240d212a7f47476a",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "id": "a75cb98adcb0bb97107479a620b59f46",
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: create recipe folder link is rejected",
+        "path": "::invalid-token: create recipe folder link is rejected"
+      },
+      {
+        "name": "missing-token: update recipe folder link is rejected",
+        "path": "::missing-token: update recipe folder link is rejected",
+        "id": "91f4bae754b2f91915d6dfa40658747e",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: update recipe folder link is rejected",
+        "path": "::invalid-token: update recipe folder link is rejected",
+        "id": "8295bd7972b539b06bbe8335efb3492e"
+      },
+      {
+        "path": "::missing-token: delete recipe folder link is rejected",
+        "id": "be6fa5d99662e2b58dda5dc3d0f40986",
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: delete recipe folder link is rejected"
+      },
+      {
+        "name": "invalid-token: delete recipe folder link is rejected",
+        "path": "::invalid-token: delete recipe folder link is rejected",
+        "id": "6d3bcdd038b427cf2ea36b1dc6f9655f",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: user preferences is rejected",
+        "path": "::missing-token: user preferences is rejected",
+        "id": "d6db6d2d623a12e45ddb114b56309167",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: user preferences is rejected",
+        "path": "::invalid-token: user preferences is rejected",
+        "id": "5a89c3b8e6f90f2352cc36087925e365",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "id": "2b3b5555f71855434e3b969c2533c92e",
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: update user preferences is rejected",
+        "path": "::missing-token: update user preferences is rejected"
+      },
+      {
+        "path": "::invalid-token: update user preferences is rejected",
+        "id": "9f2d34fff1697ec2ba2180c32f6ae40f",
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: update user preferences is rejected"
+      },
+      {
+        "name": "missing-token: private vault folders is rejected",
+        "path": "::missing-token: private vault folders is rejected",
+        "id": "6651f748dfe88012e4cbd0dcf8c8f1b2",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "fails": 0,
+        "name": "invalid-token: private vault folders is rejected",
+        "path": "::invalid-token: private vault folders is rejected",
+        "id": "b552402241455a3959d06f15bb3ef472",
+        "passes": 1
+      },
+      {
+        "name": "missing-token: vault folders is rejected",
+        "path": "::missing-token: vault folders is rejected",
+        "id": "e6b8e45fd018a019cfdff1b9c869b3b9",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: vault folders is rejected",
+        "path": "::invalid-token: vault folders is rejected",
+        "id": "c905858d36148412751f6bf255cdb119"
+      },
+      {
+        "path": "::missing-token: folder by name is rejected",
+        "id": "8cf58cc85ff8a94e8cf7f63eed2e8b30",
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: folder by name is rejected"
+      },
+      {
+        "name": "invalid-token: folder by name is rejected",
+        "path": "::invalid-token: folder by name is rejected",
+        "id": "6c420f90f1534977553feb50b7f027e6",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: folder by id is rejected",
+        "path": "::missing-token: folder by id is rejected",
+        "id": "14c1269b115dfd1be2e02d8fe3ef82f8",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "id": "12890249ccdbea9718484523b4354fb8",
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: folder by id is rejected",
+        "path": "::invalid-token: folder by id is rejected"
+      },
+      {
+        "fails": 0,
+        "name": "missing-token: create folder is rejected",
+        "path": "::missing-token: create folder is rejected",
+        "id": "db0f731cf50881b4df399a3ec0feaea0",
+        "passes": 1
+      },
+      {
+        "name": "invalid-token: create folder is rejected",
+        "path": "::invalid-token: create folder is rejected",
+        "id": "d8ea8bf161742eb0f1598218eed259d1",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: update folder is rejected",
+        "path": "::missing-token: update folder is rejected",
+        "id": "611e4ce410b38454be668b41a54d9f07",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: update folder is rejected",
+        "path": "::invalid-token: update folder is rejected",
+        "id": "d767640689ba32ac82d79c6a7db8990d"
+      },
+      {
+        "name": "missing-token: delete folder is rejected",
+        "path": "::missing-token: delete folder is rejected",
+        "id": "9f90df37e6de090bbaef56e3b77284c7",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: delete folder is rejected",
+        "path": "::invalid-token: delete folder is rejected",
+        "id": "6f43fba77b1c14c82456bd59d84d3e42",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "path": "::missing-token: ingredient categories is rejected",
+        "id": "d60e6fbbddf6d39e1adc9423c2458966",
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: ingredient categories is rejected"
+      },
+      {
+        "fails": 0,
+        "name": "invalid-token: ingredient categories is rejected",
+        "path": "::invalid-token: ingredient categories is rejected",
+        "id": "2a558d1ff244c1f2570542cbe2ca7174",
+        "passes": 1
+      },
+      {
+        "path": "::missing-token: allergy options is rejected",
+        "id": "3fa39e96a5acb3dfd4dc14add5326289",
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: allergy options is rejected"
+      },
+      {
+        "name": "invalid-token: allergy options is rejected",
+        "path": "::invalid-token: allergy options is rejected",
+        "id": "695220d647ee2b2627763ba080799855",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: ingredient catalogue is rejected",
+        "path": "::missing-token: ingredient catalogue is rejected",
+        "id": "999f3fef319b69cbdefac293080b7950",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: ingredient catalogue is rejected",
+        "path": "::invalid-token: ingredient catalogue is rejected",
+        "id": "824130ba7f6804f6860e699129050b65",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "path": "::missing-token: ingredient catalogue search is rejected",
+        "id": "5242cd381752e3b6585893e43108892f",
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: ingredient catalogue search is rejected"
+      },
+      {
+        "name": "invalid-token: ingredient catalogue search is rejected",
+        "path": "::invalid-token: ingredient catalogue search is rejected",
+        "id": "9dc375a5f788e3dc13059deddfaef818",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: add external ingredient is rejected",
+        "path": "::missing-token: add external ingredient is rejected",
+        "id": "18460764528cffd6552477b35686007b",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: add external ingredient is rejected",
+        "path": "::invalid-token: add external ingredient is rejected",
+        "id": "cce2c42f2b24461577a805637bce4676",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "fails": 0,
+        "name": "missing-token: shopping lists is rejected",
+        "path": "::missing-token: shopping lists is rejected",
+        "id": "7ce96e3364f557f56bdf4642c4904982",
+        "passes": 1
+      },
+      {
+        "name": "invalid-token: shopping lists is rejected",
+        "path": "::invalid-token: shopping lists is rejected",
+        "id": "e3f15a6e8baeb69c14ffb999b25f86ad",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "id": "9a3a33ce9e5d16a72a44c5e516fae102",
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: create shopping list is rejected",
+        "path": "::missing-token: create shopping list is rejected"
+      },
+      {
+        "fails": 0,
+        "name": "invalid-token: create shopping list is rejected",
+        "path": "::invalid-token: create shopping list is rejected",
+        "id": "dff72fdad4c3f91f3087b7655f31df73",
+        "passes": 1
+      },
+      {
+        "fails": 0,
+        "name": "missing-token: update shopping list is rejected",
+        "path": "::missing-token: update shopping list is rejected",
+        "id": "6eb93f1bed0e18e2406f00c789b34032",
+        "passes": 1
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: update shopping list is rejected",
+        "path": "::invalid-token: update shopping list is rejected",
+        "id": "3d30429eb7d930747fe2b44441aa6649"
+      },
+      {
+        "path": "::missing-token: delete shopping list is rejected",
+        "id": "c0638feb31d2ad2b5e84a4d1d6a9b92d",
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: delete shopping list is rejected"
+      },
+      {
+        "name": "invalid-token: delete shopping list is rejected",
+        "path": "::invalid-token: delete shopping list is rejected",
+        "id": "031ad103a51ed67030178a98f530f02f",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: shopping list from recipe is rejected",
+        "path": "::missing-token: shopping list from recipe is rejected",
+        "id": "88b3d2c3135269628fe8b69286baf13d",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: shopping list from recipe is rejected",
+        "path": "::invalid-token: shopping list from recipe is rejected",
+        "id": "e5241c8963fceacff643d01473853748",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: add recipe to shopping list is rejected",
+        "path": "::missing-token: add recipe to shopping list is rejected",
+        "id": "5f1c6d25cdf3f3dcbafec000e365c62c",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: add recipe to shopping list is rejected",
+        "path": "::invalid-token: add recipe to shopping list is rejected",
+        "id": "c9668ed569a41c354111581dcb071e63",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: shopping list by id is rejected",
+        "path": "::missing-token: shopping list by id is rejected",
+        "id": "4cf8197ba9965baefd916c2260113f8d",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: shopping list by id is rejected",
+        "path": "::invalid-token: shopping list by id is rejected",
+        "id": "6ffc99ce69370afe332643d039397a59"
+      },
+      {
+        "name": "missing-token: create shopping item is rejected",
+        "path": "::missing-token: create shopping item is rejected",
+        "id": "5a2dbcb6dbea5de2471668480f2fd88b",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: create shopping item is rejected",
+        "path": "::invalid-token: create shopping item is rejected",
+        "id": "08335e2d91ae0c57c0e170ad58712681",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: update shopping item is rejected",
+        "path": "::missing-token: update shopping item is rejected",
+        "id": "b32b504a81d5b0522936c9f5f95071b6",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: update shopping item is rejected",
+        "path": "::invalid-token: update shopping item is rejected",
+        "id": "cb7f10e193c6d920fedf36188e0bd0ca",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: toggle purchased item is rejected",
+        "path": "::missing-token: toggle purchased item is rejected",
+        "id": "b12a3859e49dcce65e747dac32f71381"
+      },
+      {
+        "name": "invalid-token: toggle purchased item is rejected",
+        "path": "::invalid-token: toggle purchased item is rejected",
+        "id": "24a42ebba1bcb2a5b6e1a052f06dded5",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: delete shopping item is rejected",
+        "path": "::missing-token: delete shopping item is rejected",
+        "id": "3f9515819d2204d7a89968e021de44c3",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: delete shopping item is rejected",
+        "path": "::invalid-token: delete shopping item is rejected",
+        "id": "4bc51c5b08783dd6d78a6eecce571c32",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "id": "bf170cc75fd7928b753bfd7826d499dd",
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: batch delete shopping items is rejected",
+        "path": "::missing-token: batch delete shopping items is rejected"
+      },
+      {
+        "name": "invalid-token: batch delete shopping items is rejected",
+        "path": "::invalid-token: batch delete shopping items is rejected",
+        "id": "eaa7333dd469996616dd5264e4473ed9",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: select all shopping items is rejected",
+        "path": "::missing-token: select all shopping items is rejected",
+        "id": "8389b93949d865a5bd1ab31fdaa2c530",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "path": "::invalid-token: select all shopping items is rejected",
+        "id": "c67814639730f1e08efaae98f7237647",
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: select all shopping items is rejected"
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: deselect all shopping items is rejected",
+        "path": "::missing-token: deselect all shopping items is rejected",
+        "id": "1f43aa6cb229f64193deda3e09ac6133"
+      },
+      {
+        "name": "invalid-token: deselect all shopping items is rejected",
+        "path": "::invalid-token: deselect all shopping items is rejected",
+        "id": "43e3f1c0b81b27c55add633afdb4d4c1",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: complete shopping list is rejected",
+        "path": "::missing-token: complete shopping list is rejected",
+        "id": "f8c4f80cb2292cfe90c13be6ced91b60",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: complete shopping list is rejected",
+        "path": "::invalid-token: complete shopping list is rejected",
+        "id": "c7ac0b5c72262bcd3d41eab63ec044ab"
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: units of measurement is rejected",
+        "path": "::missing-token: units of measurement is rejected",
+        "id": "449b118cfc294e9cac9e503d28192f6c"
+      },
+      {
+        "name": "invalid-token: units of measurement is rejected",
+        "path": "::invalid-token: units of measurement is rejected",
+        "id": "842d2920316419bfb52df7ce704e67d3",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: nutritional goals is rejected",
+        "path": "::missing-token: nutritional goals is rejected",
+        "id": "db9a7df259484c698b05edf19950b2ac",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: nutritional goals is rejected",
+        "path": "::invalid-token: nutritional goals is rejected",
+        "id": "6f6c453eb25cf4d30f978ecb7c91950c",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "fails": 0,
+        "name": "missing-token: recipe ingredients is rejected",
+        "path": "::missing-token: recipe ingredients is rejected",
+        "id": "3e2f5d393ec71893a870db0c36e2ca91",
+        "passes": 1
+      },
+      {
+        "id": "4d072a31a1612950cdd3fd2ac7a75bd9",
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: recipe ingredients is rejected",
+        "path": "::invalid-token: recipe ingredients is rejected"
+      },
+      {
+        "fails": 0,
+        "name": "missing-token: create recipe ingredient is rejected",
+        "path": "::missing-token: create recipe ingredient is rejected",
+        "id": "db88ffb8f23da4deb145d74be8c5f0d5",
+        "passes": 1
+      },
+      {
+        "fails": 0,
+        "name": "invalid-token: create recipe ingredient is rejected",
+        "path": "::invalid-token: create recipe ingredient is rejected",
+        "id": "e1a00b5c4c9bcf5e9adb49a0490aa2f2",
+        "passes": 1
+      },
+      {
+        "name": "missing-token: update recipe ingredient is rejected",
+        "path": "::missing-token: update recipe ingredient is rejected",
+        "id": "aea51ff9328e2d8203ec9809e9fd2782",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "path": "::invalid-token: update recipe ingredient is rejected",
+        "id": "95d82154f8548a1ab2d0836846116ae2",
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: update recipe ingredient is rejected"
+      },
+      {
+        "id": "814b1c7725c77c1e39a4bd519d69530a",
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: delete recipe ingredient is rejected",
+        "path": "::missing-token: delete recipe ingredient is rejected"
+      },
+      {
+        "name": "invalid-token: delete recipe ingredient is rejected",
+        "path": "::invalid-token: delete recipe ingredient is rejected",
+        "id": "3713bc23308c0df9523bb097e976bcbc",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "path": "::missing-token: pantry is rejected",
+        "id": "b2a5496a1000ad59f2b26fec5ed04e3f",
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: pantry is rejected"
+      },
+      {
+        "id": "5be4f2083e219fcbf7574fe4ca7ce1ce",
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: pantry is rejected",
+        "path": "::invalid-token: pantry is rejected"
+      },
+      {
+        "fails": 0,
+        "name": "missing-token: create pantry item is rejected",
+        "path": "::missing-token: create pantry item is rejected",
+        "id": "785441f988a4f372d8e596e60deb5bdd",
+        "passes": 1
+      },
+      {
+        "name": "invalid-token: create pantry item is rejected",
+        "path": "::invalid-token: create pantry item is rejected",
+        "id": "bb384dc664486770712a47ba3d980cf2",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: update pantry item is rejected",
+        "path": "::missing-token: update pantry item is rejected",
+        "id": "c7f48d06e6fda395a325caef153b98bb",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: update pantry item is rejected",
+        "path": "::invalid-token: update pantry item is rejected",
+        "id": "f11a6cff38b6bf5264dec70f06f033f6"
+      },
+      {
+        "name": "missing-token: delete pantry item is rejected",
+        "path": "::missing-token: delete pantry item is rejected",
+        "id": "01e7e2ec80ae4e0755ee158ec3ee8449",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "id": "772804ecf5515f955cbcfa7f4fc65413",
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: delete pantry item is rejected",
+        "path": "::invalid-token: delete pantry item is rejected"
+      },
+      {
+        "name": "missing-token: pantry search is rejected",
+        "path": "::missing-token: pantry search is rejected",
+        "id": "dab2b7fa59768c06439b575de4d3a71d",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: pantry search is rejected",
+        "path": "::invalid-token: pantry search is rejected",
+        "id": "2b09ca109bce6c7f8792d57a6737eb54",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: recipes is rejected",
+        "path": "::missing-token: recipes is rejected",
+        "id": "5cf1b5a41bc29315faf6bafbdf4a5b89",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "path": "::invalid-token: recipes is rejected",
+        "id": "9050c494145b36e1a48f95c7e62c1fec",
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: recipes is rejected"
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: community recipes is rejected",
+        "path": "::missing-token: community recipes is rejected",
+        "id": "8488fdc7c4607f8f12aa6313c014ddd9"
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: community recipes is rejected",
+        "path": "::invalid-token: community recipes is rejected",
+        "id": "d40cc3503cb25e60944ec2ead7914d49"
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: recipe by id is rejected",
+        "path": "::missing-token: recipe by id is rejected",
+        "id": "35f70acc926b23def8467b197dc4f805"
+      },
+      {
+        "fails": 0,
+        "name": "invalid-token: recipe by id is rejected",
+        "path": "::invalid-token: recipe by id is rejected",
+        "id": "56c05896ff14fc564866876f95602304",
+        "passes": 1
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: create recipe is rejected",
+        "path": "::missing-token: create recipe is rejected",
+        "id": "0d03bf2baf21104b463c8fd22ab79b0d"
+      },
+      {
+        "name": "invalid-token: create recipe is rejected",
+        "path": "::invalid-token: create recipe is rejected",
+        "id": "40547e44cc43a26b9b0f9fb49ca4abd5",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "path": "::missing-token: copy recipe is rejected",
+        "id": "2dcf63a7d77abe46d247b4f14c8b51b4",
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: copy recipe is rejected"
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: copy recipe is rejected",
+        "path": "::invalid-token: copy recipe is rejected",
+        "id": "e887e5f379ba19fa66b990d8d694a811"
+      },
+      {
+        "name": "missing-token: recipe photo upload URL is rejected",
+        "path": "::missing-token: recipe photo upload URL is rejected",
+        "id": "74af8f5ecad79ec46e820300c8539570",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "id": "e600019ca1566441a16663ac4212482d",
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: recipe photo upload URL is rejected",
+        "path": "::invalid-token: recipe photo upload URL is rejected"
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: update recipe is rejected",
+        "path": "::missing-token: update recipe is rejected",
+        "id": "525161bb4c081dba94e1045d78c39ceb"
+      },
+      {
+        "name": "invalid-token: update recipe is rejected",
+        "path": "::invalid-token: update recipe is rejected",
+        "id": "898550936cc9424a28b00917cddb1a00",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "id": "a1a523f85460de36e362fbfe350feb27",
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: delete recipe is rejected",
+        "path": "::missing-token: delete recipe is rejected"
+      },
+      {
+        "name": "invalid-token: delete recipe is rejected",
+        "path": "::invalid-token: delete recipe is rejected",
+        "id": "d4feee7bccacfb3dd182c6401115b82e",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: recipe steps is rejected",
+        "path": "::missing-token: recipe steps is rejected",
+        "id": "7208d5c3e4c665228fd92e9a85fd5b77",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: recipe steps is rejected",
+        "path": "::invalid-token: recipe steps is rejected",
+        "id": "8aef942de5f5ac89ec4e8b209ef72f12",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: create recipe step is rejected",
+        "path": "::missing-token: create recipe step is rejected",
+        "id": "6ee1c8e3f56221918b527e58c41745e4",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: create recipe step is rejected",
+        "path": "::invalid-token: create recipe step is rejected",
+        "id": "0e3599dfb8895e82dc15b038fc85d669",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "missing-token: update recipe step is rejected",
+        "path": "::missing-token: update recipe step is rejected",
+        "id": "b6937b26253de970014751218ac4ec86",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: update recipe step is rejected",
+        "path": "::invalid-token: update recipe step is rejected",
+        "id": "ded6cc792b77a79109c2d1b57f3aa50a",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: reorder recipe steps is rejected",
+        "path": "::missing-token: reorder recipe steps is rejected",
+        "id": "370436be8a92d5b2d8b8a829f6d8af99"
+      },
+      {
+        "path": "::invalid-token: reorder recipe steps is rejected",
+        "id": "d636ba341000252671068e1670ba0ebf",
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: reorder recipe steps is rejected"
+      },
+      {
+        "path": "::missing-token: delete recipe step is rejected",
+        "id": "904a1bb1ac6a0a7f39a1f983c0fa8101",
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: delete recipe step is rejected"
+      },
+      {
+        "fails": 0,
+        "name": "invalid-token: delete recipe step is rejected",
+        "path": "::invalid-token: delete recipe step is rejected",
+        "id": "2a068d7258d0a31db4b7bc9c73590cb3",
+        "passes": 1
+      },
+      {
+        "name": "missing-token: flavour profile options is rejected",
+        "path": "::missing-token: flavour profile options is rejected",
+        "id": "1ffffcaa93e39edfc3e8384c49b529ea",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "name": "invalid-token: flavour profile options is rejected",
+        "path": "::invalid-token: flavour profile options is rejected",
+        "id": "e90a2cb87640f0d75df22ebae04a3605",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "missing-token: equipment is rejected",
+        "path": "::missing-token: equipment is rejected",
+        "id": "88442a3d1d3363a0abdbba680754844c"
+      },
+      {
+        "passes": 1,
+        "fails": 0,
+        "name": "invalid-token: equipment is rejected",
+        "path": "::invalid-token: equipment is rejected",
+        "id": "3d962a9d62333c8017c632cc118b2127"
+      },
+      {
+        "path": "::valid token: owned vaults returns HTTP 200",
+        "id": "b4ac661e023780d6c152645f99c309b6",
+        "passes": 1,
+        "fails": 0,
+        "name": "valid token: owned vaults returns HTTP 200"
+      },
+      {
+        "name": "valid token: pantry returns HTTP 200",
+        "path": "::valid token: pantry returns HTTP 200",
+        "id": "edb6ba95b7d6ffff8d17eb0ea2f67b70",
+        "passes": 1,
+        "fails": 0
+      },
+      {
+        "id": "d3af07cee6188a7b602e532917f925aa",
+        "passes": 1,
+        "fails": 0,
+        "name": "valid token: shopping lists returns HTTP 200",
+        "path": "::valid token: shopping lists returns HTTP 200"
+      },
+      {
+        "name": "valid token: recipes returns HTTP 200",
+        "path": "::valid token: recipes returns HTTP 200",
+        "id": "0bbd679c431056d5d6f49e6329128074",
+        "passes": 1,
+        "fails": 0
+      }
+    ],
+    "name": ""
+  },
+  "options": {
+    "noColor": false,
+    "summaryTrendStats": [
+      "avg",
+      "min",
+      "med",
+      "max",
+      "p(90)",
+      "p(95)"
+    ],
+    "summaryTimeUnit": ""
+  },
+  "state": {
+    "isStdOutTTY": true,
+    "isStdErrTTY": true,
+    "testRunDurationMs": 39091.414
+  },
+  "metrics": {
+    "http_req_waiting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(95)": 423.54859999999996,
+        "avg": 250.2302614379084,
+        "min": 182.713,
+        "med": 207.792,
+        "max": 1310.311,
+        "p(90)": 332.0754
+      }
+    },
+    "data_sent": {
+      "contains": "data",
+      "values": {
+        "count": 20161,
+        "rate": 515.7398501880746
+      },
+      "type": "counter"
+    },
+    "http_req_duration{expected_response:true}": {
+      "contains": "time",
+      "values": {
+        "p(95)": 423.8478,
+        "avg": 251.28195424836602,
+        "min": 183.087,
+        "med": 208.35,
+        "max": 1311.823,
+        "p(90)": 332.3608
+      },
+      "type": "trend"
+    },
+    "http_req_receiving": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(90)": 0.3158,
+        "p(95)": 0.49379999999999946,
+        "avg": 0.8587254901960784,
+        "min": 0.034,
+        "med": 0.129,
+        "max": 86.4
+      }
+    },
+    "http_reqs": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 153,
+        "rate": 3.9139029353095287
+      }
+    },
+    "http_req_failed": {
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 153
+      },
+      "type": "rate",
+      "contains": "default"
+    },
+    "vus": {
+      "contains": "default",
+      "values": {
+        "min": 0,
+        "max": 1,
+        "value": 1
+      },
+      "type": "gauge"
+    },
+    "http_req_connecting": {
+      "contains": "time",
+      "values": {
+        "max": 7.803,
+        "p(90)": 0,
+        "p(95)": 0,
+        "avg": 0.1006797385620915,
+        "min": 0,
+        "med": 0
+      },
+      "type": "trend"
+    },
+    "iteration_duration": {
+      "contains": "time",
+      "values": {
+        "avg": 37390.383125,
+        "min": 37390.383125,
+        "med": 37390.383125,
+        "max": 37390.383125,
+        "p(90)": 37390.383125,
+        "p(95)": 37390.383125
+      },
+      "type": "trend"
+    },
+    "vus_max": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "value": 1,
+        "min": 1,
+        "max": 1
+      }
+    },
+    "http_req_tls_handshaking": {
+      "contains": "time",
+      "values": {
+        "min": 0,
+        "med": 0,
+        "max": 193.405,
+        "p(90)": 0,
+        "p(95)": 0,
+        "avg": 2.4330980392156865
+      },
+      "type": "trend"
+    },
+    "iterations": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "rate": 0.025581064936663584,
+        "count": 1
+      }
+    },
+    "checks": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "passes": 154,
+        "fails": 0,
+        "rate": 1
+      },
+      "thresholds": {
+        "rate==1": {
+          "ok": true
+        }
+      }
+    },
+    "http_req_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 251.28195424836602,
+        "min": 183.087,
+        "med": 208.35,
+        "max": 1311.823,
+        "p(90)": 332.3608,
+        "p(95)": 423.8478
+      }
+    },
+    "http_req_blocked": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 0.001,
+        "max": 386.464,
+        "p(90)": 0.002,
+        "p(95)": 0.002,
+        "avg": 3.7473790849672945,
+        "min": 0
+      }
+    },
+    "http_req_sending": {
+      "values": {
+        "max": 1.134,
+        "p(90)": 0.33960000000000007,
+        "p(95)": 0.4863999999999998,
+        "avg": 0.1929673202614379,
+        "min": 0.028,
+        "med": 0.149
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "data_received": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "count": 51111,
+        "rate": 1307.4738099778126
+      }
+    },
+    "authorization_failures": {
+      "thresholds": {
+        "count==0": {
+          "ok": true
+        }
+      },
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 0,
+        "rate": 0
+      }
+    }
+  }
+}

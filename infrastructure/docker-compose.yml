@@ -17,6 +17,10 @@
 #   docker compose -f infrastructure/docker-compose.yml --env-file .env up --build
 #   docker compose -f infrastructure/docker-compose.yml --env-file .env --profile engine up --build
 #   docker compose -f infrastructure/docker-compose.yml --env-file .env --profile tools up --build  (starts pgAdmin at http://localhost:5050)
+
+# swagger docs locally only at : http://localhost:8080/swagger-ui.html
+# intensioanlly not deployed to not expose api interface
+
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:
@@ -62,7 +66,14 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS} 
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
+      SPRING_PROFILES_ACTIVE: local
+      ENGINE_URL: http://engine:8000
+      ENGINE_TIMEOUT_MS: "5000"
+      # Swagger UI is off for  deployed services to no publish API surface.
+      # Local development turns it on
+      SPRINGDOC_ENABLED: "true"
+      USDA_API_KEY: ${USDA_API_KEY}
     ports:
       - "8080:8080"
     # Only start after postgres is healthy, not just started
@@ -145,5 +156,4 @@ services:
 volumes:
   postgres_data:
   pgadmin_data:
-
 

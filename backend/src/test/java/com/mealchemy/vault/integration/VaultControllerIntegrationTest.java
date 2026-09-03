@@ -1,4 +1,4 @@
-package com.mealchemy.vault.controller;
+package com.mealchemy.vault.integration;
 
 import com.mealchemy.auth.model.User;
 import com.mealchemy.auth.repository.UserRepository;
@@ -289,7 +289,7 @@ public class VaultControllerIntegrationTest {
         mockMvc.perform(delete("/vaults/{id}", ownedVault.getVaultId())
                         .with(authentication(authAs(owner)))
                         .with(csrf()))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         org.junit.jupiter.api.Assertions.assertFalse(
                 vaultRepository.findById(ownedVault.getVaultId()).isPresent()

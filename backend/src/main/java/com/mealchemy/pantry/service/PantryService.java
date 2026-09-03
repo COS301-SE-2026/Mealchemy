@@ -3,11 +3,13 @@ package com.mealchemy.pantry.service;
 import com.mealchemy.pantry.model.PantryIngredient;
 import com.mealchemy.ingredient.model.IngredientCatalogue;
 import com.mealchemy.category.model.IngredientCategory;
+import com.mealchemy.profile.model.UserProfile;
 
 //repositories
 import com.mealchemy.pantry.repository.PantryIngredientRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.category.repository.IngredientCategoryRepository;
+import com.mealchemy.profile.repository.UserProfileRepository;
 
 
 import org.springframework.transaction.annotation.Transactional; //need to annotate any function that makes an update to the database
@@ -15,8 +17,10 @@ import org.springframework.transaction.annotation.Transactional; //need to annot
 //dtos
 import com.mealchemy.pantry.dto.PantryIngredientRequest;
 import com.mealchemy.pantry.dto.PantryIngredientResponse;
-// import com.mealchemy.ingredient.dto.IngredientCatalogueRequest;
-// import com.mealchemy.ingredient.dto.IngredientCatalogueResponse;
+
+//shared unit conversion
+import com.mealchemy.shared.unitconverter.UnitConverter;
+import com.mealchemy.shared.enums.PreferredUnit;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,17 +36,21 @@ public class PantryService {
     private final PantryIngredientRepository pantryIngredientRepository;
     private final IngredientCatalogueRepository ingredientCatalogueRepository;
     private final IngredientCategoryRepository ingredientCategoryRepository;
+    private final UserProfileRepository userProfileRepository;
 
     //constructor
-    public PantryService(PantryIngredientRepository pantryIngredientRepository, IngredientCatalogueRepository ingredientCatalogueRepository, IngredientCategoryRepository ingredientCategoryRepository) {
+    public PantryService(PantryIngredientRepository pantryIngredientRepository, IngredientCatalogueRepository ingredientCatalogueRepository, IngredientCategoryRepository ingredientCategoryRepository, UserProfileRepository userProfileRepository) {
         this.pantryIngredientRepository = pantryIngredientRepository;
         this.ingredientCatalogueRepository = ingredientCatalogueRepository;
         this.ingredientCategoryRepository = ingredientCategoryRepository;
+        this.userProfileRepository = userProfileRepository;
     }
 
     // GET request - returns all pantry items for the logged-in user
     public List<PantryIngredientResponse> getUserPantryItems(Integer userId) {
-        return pantryIngredientRepository.findPantryIngredientsByUserId(userId);   
+        PreferredUnit preferredUnit = getPreferredUnit(userId);
+        List<PantryIngredientResponse> results = pantryIngredientRepository.findPantryIngredientsByUserId(userId);
+        return convertIngredientResponses(results, preferredUnit); 
     }
 
     // POST - manual addition of ingredient to user's pantry (query to ingredient catalogue)
@@ -61,21 +69,29 @@ public class PantryService {
         IngredientCategory category = ingredientCategoryRepository.findById(selectedIngredient.getCategoryId())
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
 
+        UnitConverter.NormalisedQuantity normalised = UnitConverter.normaliseIngredient(request.quantity(), request.unit());
+
         // create new PantryIngredient
         PantryIngredient newIngredient = new PantryIngredient();
         newIngredient.setUserId(userId);
         newIngredient.setIngredientId(request.ingId());
-        newIngredient.setQuantity(request.quantity());
-        newIngredient.setUnit(request.unit());
+        newIngredient.setQuantity(normalised.quantity());
+        newIngredient.setUnit(normalised.unit());
+        newIngredient.setStorageLocation(request.storageLocation());
 
         PantryIngredient saved = pantryIngredientRepository.save(newIngredient);
+
+        PreferredUnit preferredUnit = getPreferredUnit(userId);
+        UnitConverter.NormalisedQuantity display = UnitConverter.convertToUsersPreferredUnit(saved.getQuantity(), saved.getUnit(), preferredUnit);
+
 
         return new PantryIngredientResponse(saved.getPIngredientId(), //must call methods on OBJECT not repository
                                             saved.getIngredientId(), 
                                             selectedIngredient.getName(), //name from catalogue
                                             category.getCategoryName(), 
-                                            saved.getQuantity(),
-                                            saved.getUnit(),
+                                            display.quantity(),
+                                            display.unit(),
+                                            saved.getStorageLocation(),
                                             saved.getCreatedAt(),
                                             saved.getUpdatedAt()
         );
@@ -86,22 +102,21 @@ public class PantryService {
     // PUT - manual update of a pantry ingredient when it has been selected
     @Transactional
     public Optional<PantryIngredientResponse> updateIngredientManually(Integer userId, Integer pIngredientId, PantryIngredientRequest request) {
-        PantryIngredient selectedPantryIngredient = pantryIngredientRepository.findById(pIngredientId)
+        PantryIngredient selectedPantryIngredient = pantryIngredientRepository.findByPIngredientIdAndUserId(pIngredientId, userId)
                                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found in pantry"));
-
-        // check if selected belongs to logged in user
-        if (!selectedPantryIngredient.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this ingredient");
-        }
 
         if (request.quantity().compareTo(BigDecimal.ZERO) <= 0) {
             pantryIngredientRepository.delete(selectedPantryIngredient);
             return Optional.empty();
         }
 
+        // normalise quantity and unit to canonical before saving
+        UnitConverter.NormalisedQuantity normalised = UnitConverter.normaliseIngredient(request.quantity(), request.unit());
+
         // assuming all 3 parameters are sent in everytime, even if only 1 changes - we don't set the id because it will change the ingredient
-        selectedPantryIngredient.setQuantity(request.quantity());
-        selectedPantryIngredient.setUnit(request.unit());
+        selectedPantryIngredient.setQuantity(normalised.quantity());
+        selectedPantryIngredient.setUnit(normalised.unit());
+        selectedPantryIngredient.setStorageLocation(request.storageLocation());
 
         PantryIngredient saved = pantryIngredientRepository.save(selectedPantryIngredient);
 
@@ -114,12 +129,18 @@ public class PantryService {
         IngredientCategory category = ingredientCategoryRepository.findById(selectedIngredient.getCategoryId())
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
 
+
+        // show response with users preferred unit
+        PreferredUnit preferredUnit = getPreferredUnit(userId);
+        UnitConverter.NormalisedQuantity display = UnitConverter.convertToUsersPreferredUnit(saved.getQuantity(), saved.getUnit(), preferredUnit);
+
         return Optional.of(new PantryIngredientResponse(saved.getPIngredientId(), //must call methods on OBJECT not repository
                                             saved.getIngredientId(), 
                                             selectedIngredient.getName(), //name from catalogue
                                             category.getCategoryName(), 
-                                            saved.getQuantity(),
-                                            saved.getUnit(),
+                                            display.quantity(),
+                                            display.unit(),
+                                            saved.getStorageLocation(),
                                             saved.getCreatedAt(),
                                             saved.getUpdatedAt()
         ));
@@ -131,23 +152,50 @@ public class PantryService {
     @Transactional
     public void removePantryIngredient(Integer userId, Integer pIngredientId) {
         // check if row exists
-        PantryIngredient selectedPantryIngredient = pantryIngredientRepository.findById(pIngredientId)
+        PantryIngredient selectedPantryIngredient = pantryIngredientRepository.findByPIngredientIdAndUserId(pIngredientId, userId)
                                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found in pantry"));
-
-        // check if selected belongs to logged in user
-        if (!selectedPantryIngredient.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this ingredient");
-        }
 
         pantryIngredientRepository.delete(selectedPantryIngredient);
 
     }
 
 
-    // GET - search for ingreient by name
+    // GET - search for ingreient by name - convert to preferred unit
     public List<PantryIngredientResponse> findPantryIngredientsByName(Integer userId, String ingredientName) { //might update when full USDA is implemented
-        // personal query
-        return pantryIngredientRepository.getIngredientByName(userId, ingredientName);    
+        PreferredUnit preferredUnit = getPreferredUnit(userId);
+        List<PantryIngredientResponse> results = pantryIngredientRepository.getIngredientByName(userId, ingredientName);
+        return convertIngredientResponses(results, preferredUnit); 
     }
 
+    // ========== Helpers ==========
+
+    private PreferredUnit getPreferredUnit(Integer userId) {
+        // finding users preferred unit of measurement
+        return userProfileRepository.findByUserId(userId).map(UserProfile::getPreferredUnit)
+                                                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User profile not found"));
+    }
+
+    
+    // converting to users preferred unit for a singular pantry ingredient
+    private PantryIngredientResponse convertIngredientResponseToPreferredUnit(PantryIngredientResponse response, PreferredUnit preferredUnit) {
+        UnitConverter.NormalisedQuantity display = UnitConverter.convertToUsersPreferredUnit(response.quantity(), response.unit(), preferredUnit);
+
+        return new PantryIngredientResponse(
+                    response.pIngredientId(), //must call methods on OBJECT not repository
+                    response.ingId(), 
+                    response.name(), //name from catalogue
+                    response.category(), 
+                    display.quantity(),
+                    display.unit(),
+                    response.storageLocation(),
+                    response.createdAt(),
+                    response.updatedAt()
+            );
+    }
+
+    // converting to users preferred unit for a list of pantry ingredients
+    private List<PantryIngredientResponse> convertIngredientResponses(List<PantryIngredientResponse> responses, PreferredUnit preferredUnit) {
+       return responses.stream().map(response -> convertIngredientResponseToPreferredUnit(response, preferredUnit))
+                                .toList();
+    }
 }

@@ -1,5 +1,12 @@
+import 'package:dio/dio.dart';
+import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mealchemy/features/auth/providers/auth_provider.dart';
+import 'package:mealchemy/features/offline/data/offline_cache_database.dart';
+import 'package:mealchemy/features/offline/data/offline_cache_store.dart';
+import 'package:mealchemy/features/offline/providers/offline_cache_provider.dart';
+import 'package:mealchemy/features/offline/repositories/cached_recipe_repository.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
@@ -24,6 +31,7 @@ const _validRecipe = Recipe(
 
 class _RecordingRepo implements RecipeRepository {
   final List<(Recipe, int)> saved = [];
+  final List<(int, Recipe, bool)> updated = [];
 
   @override
   Future<Recipe> addRecipe(Recipe recipe, int folderId) async {
@@ -34,6 +42,13 @@ class _RecordingRepo implements RecipeRepository {
   @override
   Future<Recipe> updateRecipe(int id, Recipe recipe) async =>
       throw UnimplementedError();
+
+  @override
+  Future<Recipe> updateRecipeFull(int id, Recipe recipe,
+      {bool removePhoto = false}) async {
+    updated.add((id, recipe, removePhoto));
+    return recipe.copyWith(recipeId: id);
+  }
 
   @override
   Future<List<Recipe>> getRecipes() async => const [];
@@ -64,13 +79,56 @@ class _RecordingRepo implements RecipeRepository {
   Future<void> deleteRecipe(int recipeId) async {}
 }
 
-
 class _ThrowingAddRepo extends _RecordingRepo {
   @override
   Future<Recipe> addRecipe(Recipe recipe, int folderId) async =>
       throw Exception('backend down');
 }
 
+class _CompleteRecipeRepo extends _RecordingRepo {
+  _CompleteRecipeRepo({this.error});
+
+  final Object? error;
+
+  Recipe get recipe => const Recipe(
+        recipeId: 7,
+        title: 'Complete recipe',
+        cuisineType: 'other',
+        prepTimeMins: 5,
+        cookingTimeMins: 10,
+        servingSize: 2,
+      );
+
+  @override
+  Future<Recipe> getRecipeById(int id) async {
+    if (error case final error?) throw error;
+    return recipe;
+  }
+
+  @override
+  Future<List<RecipeIngredient>> getRecipeIngredients(int recipeId) async {
+    if (error case final error?) throw error;
+    return const [
+      RecipeIngredient(
+        ingredientId: 1,
+        recipeId: 7,
+        ingId: 8,
+        name: 'Milk',
+        quantity: 1,
+        unit: 'L',
+        sortOrder: 0,
+      ),
+    ];
+  }
+
+  @override
+  Future<List<RecipeStep>> getRecipeSteps(int recipeId) async {
+    if (error case final error?) throw error;
+    return const [
+      RecipeStep(stepId: 1, recipeId: 7, stepNr: 1, content: 'Mix'),
+    ];
+  }
+}
 
 class _FakeVaultRepo implements VaultRepository {
   bool createFolderCalled = false;
@@ -122,7 +180,6 @@ class _FakeVaultRepo implements VaultRepository {
       throw UnimplementedError('${invocation.memberName} not stubbed');
 }
 
-
 ProviderContainer makeContainer({
   RecipeRepository? recipeRepo,
   VaultRepository? vaultRepo,
@@ -138,12 +195,157 @@ ProviderContainer makeContainer({
 
 void main() {
   group('recipeRepositoryProvider', () {
-  test('resolves a RecipeRepository', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-    expect(container.read(recipeRepositoryProvider), isA<RecipeRepository>());
+    test('resolves a RecipeRepository', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      expect(container.read(recipeRepositoryProvider), isA<RecipeRepository>());
+    });
+
+    test('decorates the remote repository for an authenticated viewer', () {
+      final database = OfflineCacheDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      final remote = _CompleteRecipeRepo();
+      final container = ProviderContainer(
+        overrides: [
+          mockRecipeEnabledProvider.overrideWithValue(false),
+          remoteRecipeRepositoryProvider.overrideWithValue(remote),
+          activeIdentityProvider.overrideWithValue(11),
+          offlineCacheDatabaseProvider.overrideWithValue(database),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      expect(
+        container.read(recipeRepositoryProvider),
+        isA<CachedRecipeRepository>(),
+      );
+    });
+
+    test('returns the remote repository when no identity is known', () {
+      final database = OfflineCacheDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      final remote = _CompleteRecipeRepo();
+      final container = ProviderContainer(
+        overrides: [
+          mockRecipeEnabledProvider.overrideWithValue(false),
+          remoteRecipeRepositoryProvider.overrideWithValue(remote),
+          activeIdentityProvider.overrideWithValue(null),
+          offlineCacheDatabaseProvider.overrideWithValue(database),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      expect(container.read(recipeRepositoryProvider), same(remote));
+    });
   });
-});
+
+  group('recipeDetailProvider', () {
+    test('assembles and caches every endpoint before returning', () async {
+      final database = OfflineCacheDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      final container = ProviderContainer(
+        overrides: [
+          mockRecipeEnabledProvider.overrideWithValue(false),
+          remoteRecipeRepositoryProvider.overrideWithValue(
+            _CompleteRecipeRepo(),
+          ),
+          activeIdentityProvider.overrideWithValue(11),
+          offlineCacheDatabaseProvider.overrideWithValue(database),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final recipe = await container.read(recipeDetailProvider(7).future);
+      final cached = await OfflineCacheStore(database).readCompleteRecipe(
+        viewerUserId: 11,
+        recipeId: 7,
+      );
+
+      expect(recipe.ingredients?.single.name, 'Milk');
+      expect(recipe.steps?.single.content, 'Mix');
+      expect(cached?.ingredients?.single.name, 'Milk');
+      expect(cached?.steps?.single.content, 'Mix');
+    });
+
+    test('returns a complete aggregate after a transport failure', () async {
+      final database = OfflineCacheDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      final cache = OfflineCacheStore(database);
+      final complete = _CompleteRecipeRepo();
+      await cache.storeCompleteRecipe(
+        viewerUserId: 11,
+        recipe: complete.recipe.copyWith(
+          ingredients: await complete.getRecipeIngredients(7),
+          steps: await complete.getRecipeSteps(7),
+        ),
+        syncedAt: DateTime.now().toUtc(),
+      );
+      final error = DioException(
+        requestOptions: RequestOptions(path: '/recipes/7'),
+        type: DioExceptionType.connectionError,
+      );
+      final container = ProviderContainer(
+        overrides: [
+          mockRecipeEnabledProvider.overrideWithValue(false),
+          remoteRecipeRepositoryProvider.overrideWithValue(
+            _CompleteRecipeRepo(error: error),
+          ),
+          activeIdentityProvider.overrideWithValue(11),
+          offlineCacheDatabaseProvider.overrideWithValue(database),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final recipe = await container.read(recipeDetailProvider(7).future);
+
+      expect(recipe.title, 'Complete recipe');
+      expect(recipe.ingredients?.single.name, 'Milk');
+    });
+
+    test('propagates HTTP errors instead of returning cached data', () async {
+      final database = OfflineCacheDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      final error = DioException.badResponse(
+        statusCode: 401,
+        requestOptions: RequestOptions(path: '/recipes/7'),
+        response: Response<void>(
+          requestOptions: RequestOptions(path: '/recipes/7'),
+          statusCode: 401,
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          mockRecipeEnabledProvider.overrideWithValue(false),
+          remoteRecipeRepositoryProvider.overrideWithValue(
+            _CompleteRecipeRepo(error: error),
+          ),
+          activeIdentityProvider.overrideWithValue(11),
+          offlineCacheDatabaseProvider.overrideWithValue(database),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await expectLater(
+        container.read(recipeDetailProvider(7).future),
+        throwsA(same(error)),
+      );
+    });
+
+    test('assembles mock endpoint responses without writing cache', () async {
+      final container = ProviderContainer(
+        overrides: [
+          mockRecipeEnabledProvider.overrideWithValue(true),
+          recipeRepositoryProvider.overrideWithValue(_CompleteRecipeRepo()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final recipe = await container.read(recipeDetailProvider(7).future);
+
+      expect(recipe.ingredients?.single.name, 'Milk');
+      expect(recipe.steps?.single.content, 'Mix');
+    });
+  });
 
   group('AddRecipeState', () {
     test('default values are non-submitting, no error, not successful', () {
@@ -220,7 +422,6 @@ void main() {
 
       await container.read(addRecipeProvider.notifier).submit(_validRecipe);
 
-     
       expect(vault.createFolderCalled, false);
       expect(repo.saved.single.$2, 10);
       expect(container.read(addRecipeProvider).isSuccess, true);
@@ -238,6 +439,25 @@ void main() {
       expect(container.read(addRecipeProvider).errorMessage,
           'Could not save recipe. Try again.');
       expect(container.read(addRecipeProvider).isSuccess, false);
+    });
+
+    test('edit submit forwards the recipe id and photo removal choice',
+        () async {
+      final repo = _RecordingRepo();
+      final container = makeContainer(recipeRepo: repo);
+      addTearDown(container.dispose);
+
+      final result = await container.read(addRecipeProvider.notifier).submit(
+            _validRecipe,
+            recipeId: 77,
+            removePhoto: true,
+          );
+
+      expect(result, isNotNull);
+      expect(repo.updated.single.$1, 77);
+      expect(repo.updated.single.$2, _validRecipe);
+      expect(repo.updated.single.$3, isTrue);
+      expect(container.read(addRecipeProvider).isSuccess, true);
     });
 
     test('reset returns the state to its defaults', () async {

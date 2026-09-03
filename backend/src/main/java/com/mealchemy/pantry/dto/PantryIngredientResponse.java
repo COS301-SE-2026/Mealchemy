@@ -1,8 +1,13 @@
 package com.mealchemy.pantry.dto;
 
+/* Import libraries */
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+
+/* Import classes */
+import com.mealchemy.shared.enums.StorageLocation;
 
 public record PantryIngredientResponse ( //records are immutable and auto generate constructors
    //exactly what client sees not necessarily same as what model has
@@ -13,6 +18,7 @@ public record PantryIngredientResponse ( //records are immutable and auto genera
    //freshness?
    BigDecimal quantity,
    String unit,
+   @JsonProperty("storage_location") StorageLocation storageLocation,
    @JsonProperty("created_at") OffsetDateTime createdAt,
    @JsonProperty("updated_at") OffsetDateTime updatedAt
 ) {}

@@ -2,12 +2,18 @@
 
 package com.mealchemy.pantry.model;
 
+/* Import  libraries*/
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.OffsetDateTime;
 import java.math.BigDecimal;
 import java.util.Optional;
+
+/* Import classes */
+import com.mealchemy.shared.enums.StorageLocation;
 
 @Entity
 @Table(name = "pantry_ingredients")
@@ -37,6 +43,10 @@ public class PantryIngredient {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "storage_location")
+    private StorageLocation storageLocation;
 
     // Getters and setters
     public Integer getPIngredientId() {
@@ -81,6 +91,16 @@ public class PantryIngredient {
 
     public OffsetDateTime getUpdatedAt() { 
         return updatedAt; 
+    }
+
+    public StorageLocation getStorageLocation()
+    {
+        return storageLocation;
+    }
+
+    public void setStorageLocation(StorageLocation storageLocationIn)
+    {
+        this.storageLocation = storageLocationIn;
     }
 
 }
