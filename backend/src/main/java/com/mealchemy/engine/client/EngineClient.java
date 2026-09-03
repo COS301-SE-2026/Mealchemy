@@ -28,9 +28,12 @@ public class EngineClient {
             .accept(MediaType.APPLICATION_JSON)
             .body(request)
             .retrieve()
+            .onStatus(status -> status.value() == 422, (req, res) -> {
+                throw new EmptyPoolException("No recipes remain in the pool after hard-filtering.");
+            })
             .onStatus(status -> status.value() == 400, (req, res) -> {
-            String body = new String(res.getBody().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
-            throw new IllegalStateException("Engine rejected candidate pool: " + body);
+                String body = new String(res.getBody().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                throw new IllegalStateException("Engine rejected candidate pool: " + body);
             })
             .body(RecommendationResponse.class);
     }
