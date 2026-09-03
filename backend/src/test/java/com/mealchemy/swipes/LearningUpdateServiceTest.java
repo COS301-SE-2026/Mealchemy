@@ -155,7 +155,6 @@ public class LearningUpdateServiceTest {
         swipe1.setCuisineValue("ITALIAN");
         swipe1.setAction(SwipeAction.LIKED);
         swipe1.setWeightsSnapshot(new SignalScoresResponse(0.9, 0.8, 0.5, 0.3, 1.0));
-        swipe1.setSwipedAt(OffsetDateTime.now());
         swipe1.setFlushed(false);
 
         Swipe swipe2 = new Swipe();
