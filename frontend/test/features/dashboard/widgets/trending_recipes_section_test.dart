@@ -3,11 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mealchemy/features/dashboard/models/dashboard_recipe_card_data.dart';
 import 'package:mealchemy/features/dashboard/models/trending_recipe_data.dart';
 import 'package:mealchemy/features/dashboard/providers/dashboard_provider.dart';
 import 'package:mealchemy/features/dashboard/repositories/dashboard_repository.dart';
 import 'package:mealchemy/features/dashboard/widgets/trending_recipes_section.dart';
+import 'package:mealchemy/features/guided_discovery/models/recommendation.dart';
+import 'package:mealchemy/features/guided_discovery/models/swipe.dart';
+import 'package:mealchemy/features/guided_discovery/providers/guided_discovery_provider.dart';
+import 'package:mealchemy/features/guided_discovery/repositories/guided_discovery_repository.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 
 class _FakeDashboardRepo implements DashboardRepository {
@@ -19,8 +22,7 @@ class _FakeDashboardRepo implements DashboardRepository {
   Future<int> getSmartSuggestionItemsAway() async => 3;
   @override
   Future<int> getSmartSuggestionRecipeCount() async => 10;
-  @override
-  Future<List<DashboardRecipeCardData>> getRecommendedRecipes() async => [];
+
 
   @override
   Future<List<TrendingRecipeData>> getTrendingRecipes() async {
@@ -40,6 +42,19 @@ class _FakeDashboardRepo implements DashboardRepository {
     ];
   }
 }
+class _EmptyGuidedDiscoveryRepo implements GuidedDiscoveryRepository {
+  @override
+  Future<List<Recommendation>> getRecommendations({
+    int batchSize = 10,
+    List<int> excludeRecipeIds = const [],
+  }) async =>
+      const [];
+
+  @override
+  Future<SwipeResponse> recordSwipe(SwipeRequest request) async =>
+      throw UnimplementedError();
+}
+
 void main() {
   setUpAll(() {
     GoogleFonts.config.allowRuntimeFetching = false;
@@ -64,6 +79,8 @@ void main() {
     return ProviderScope(
       overrides: [
         dashboardRepositoryProvider.overrideWithValue(_FakeDashboardRepo()),
+        guidedDiscoveryRepositoryProvider
+            .overrideWithValue(_EmptyGuidedDiscoveryRepo()),
       ],
       child: MaterialApp.router(routerConfig: router),
     );

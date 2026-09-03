@@ -47,25 +47,28 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: RecipePreviewSheet(recommendation: rec)),
+          body: RecipePreviewSheet(recommendation: rec),
+        ),
       ),
     );
     await tester.pump();
 
     expect(find.text('Miso Salmon Rice Bowl'), findsOneWidget);
-    expect(find.text('Japanese'), findsOneWidget); 
-    expect( find.text('A balanced rice bowl with savoury miso salmon.'),
-            findsOneWidget,);
+    expect(find.text('Japanese'), findsOneWidget);
+    expect(
+      find.text('A balanced rice bowl with savoury miso salmon.'),
+      findsOneWidget,
+    );
     expect(find.text('89% Match'), findsOneWidget);
-    expect(find.text('10m'), findsOneWidget); 
-    expect(find.text('22m'), findsOneWidget); 
-    expect(find.text('32m'), findsOneWidget); 
+    expect(find.text('10m'), findsOneWidget);
+    expect(find.text('22m'), findsOneWidget);
+    expect(find.text('32m'), findsOneWidget);
     expect(find.text('Why this matches you'), findsOneWidget);
     expect(find.text("You're missing 2 items"), findsOneWidget);
     expect(find.text('white miso'), findsOneWidget);
     expect(find.text('sesame seeds'), findsOneWidget);
     expect(find.text('Looks Good'), findsOneWidget);
-    expect(find.text('Close'), findsOneWidget);
+    expect(find.text('Close Preview'), findsOneWidget);
   });
 
   testWidgets('closes the sheet when Close is tapped', (tester) async {
@@ -89,7 +92,7 @@ void main() {
     await tester.tap(find.text('Open Preview'));
     await tester.pumpAndSettle();
     expect(find.text('Miso Salmon Rice Bowl'), findsOneWidget);
-    final closeBtn = find.text('Close');
+    final closeBtn = find.text('Close Preview');
     await tester.ensureVisible(closeBtn);
     await tester.pumpAndSettle();
     await tester.tap(closeBtn);
