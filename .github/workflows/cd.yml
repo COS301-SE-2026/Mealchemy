@@ -246,7 +246,13 @@ jobs:
         env:
           BACKEND_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/backend
         run: |
-          docker push "${{ env.BACKEND_IMAGE }}:${{ github.sha }}"
+          IMAGE="${BACKEND_IMAGE}:${{ github.sha }}"
+          if gcloud artifacts docker images describe "${IMAGE}" \
+              --project "${{ env.GCP_PROJECT_ID }}" &>/dev/null; then
+            echo "Backend image ${IMAGE} already exists; reusing immutable SHA tag."
+          else
+            docker push "${IMAGE}"
+          fi
 
   # ------------------------------ BUILD ENGINE ---------------------------------------------------------
   # Parallel with build-backend
@@ -306,7 +312,13 @@ jobs:
         env:
           ENGINE_IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/engine
         run: |
-          docker push "${{ env.ENGINE_IMAGE }}:${{ github.sha }}"
+          IMAGE="${ENGINE_IMAGE}:${{ github.sha }}"
+          if gcloud artifacts docker images describe "${IMAGE}" \
+              --project "${{ env.GCP_PROJECT_ID }}" &>/dev/null; then
+            echo "Engine image ${IMAGE} already exists; reusing immutable SHA tag."
+          else
+            docker push "${IMAGE}"
+          fi
 
   # ------------------------------ DEPLOY BACKEND -------------------------------------------------------
   # Outputs the live backend URL so deploy-engine can pass it as BACKEND_URL
