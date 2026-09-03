@@ -67,6 +67,9 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
+      SPRING_PROFILES_ACTIVE: local
+      ENGINE_URL: http://engine:8000
+      ENGINE_TIMEOUT_MS: "5000"
       # Swagger UI is off for  deployed services to no publish API surface.
       # Local development turns it on
       SPRINGDOC_ENABLED: "true"
@@ -153,5 +156,4 @@ services:
 volumes:
   postgres_data:
   pgadmin_data:
-
 
