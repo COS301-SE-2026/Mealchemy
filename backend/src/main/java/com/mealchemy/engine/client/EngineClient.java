@@ -23,6 +23,8 @@ public class EngineClient {
     {
         return engineRestClient.post()
             .uri("/recommendations")
+            .contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON)
             .body(request)
             .retrieve()
             .onStatus(status -> status.value() == 422, (req, res) -> {
@@ -38,6 +40,8 @@ public class EngineClient {
     {
         return engineRestClient.post()
             .uri("/learning/update")
+            .contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON)
             .body(request)
             .retrieve()
             .onStatus(status -> status.value() == 409, (req, res) -> {
