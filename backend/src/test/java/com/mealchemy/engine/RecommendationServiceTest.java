@@ -10,6 +10,7 @@ import com.mealchemy.engine.dto.EnrichedRecommendationResponse;
 import com.mealchemy.engine.dto.IngredientRequest;
 import com.mealchemy.engine.dto.RecommendationDto;
 import com.mealchemy.engine.dto.RecommendationRequest;
+import com.mealchemy.engine.dto.PreferenceWeightsRequest;
 import com.mealchemy.engine.dto.RecommendationResponse;
 import com.mealchemy.engine.dto.SignalScoresResponse;
 import com.mealchemy.engine.client.EmptyPoolException;
@@ -233,6 +234,31 @@ public class RecommendationServiceTest {
 
         // Assert
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ex.getStatusCode());
+    }
+
+    @Test
+    void getRecommendations_whenPreferenceWeightsSumToZero_fallsBackToDefaultTotal() {
+        // Arrange
+        weights.setPantryMatch(BigDecimal.ZERO);
+        weights.setCuisine(BigDecimal.ZERO);
+        weights.setNutrition(BigDecimal.ZERO);
+        weights.setFreshness(BigDecimal.ZERO);
+        weights.setNovelty(BigDecimal.ZERO);
+
+        RecommendationResponse engineResponse = RecommendationResponse.from(List.of(), Map.of(), 0, 1);
+        ArgumentCaptor<RecommendationRequest> captor = ArgumentCaptor.forClass(RecommendationRequest.class);
+        when(engineClient.getRecommendations(captor.capture())).thenReturn(engineResponse);
+
+        // Act
+        recommendationService.getRecommendations(USER_ID, 10, List.of(), null);
+
+        // Assert
+        PreferenceWeightsRequest sentWeights = captor.getValue().userState().preferenceWeights();
+        assertEquals(0, sentWeights.pantryMatch().compareTo(BigDecimal.ZERO));
+        assertEquals(0, sentWeights.cuisine().compareTo(BigDecimal.ZERO));
+        assertEquals(0, sentWeights.nutrition().compareTo(BigDecimal.ZERO));
+        assertEquals(0, sentWeights.freshness().compareTo(BigDecimal.ZERO));
+        assertEquals(0, sentWeights.novelty().compareTo(BigDecimal.ONE));
     }
 
     @Test
