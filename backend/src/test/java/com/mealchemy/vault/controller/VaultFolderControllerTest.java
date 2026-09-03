@@ -191,12 +191,12 @@ public class VaultFolderControllerTest {
     }
 
     @Test
-    void deleteVaultFolder_returns200() throws Exception
+    void deleteVaultFolder_returns204() throws Exception
     {
         doNothing().when(vaultFolderService).deleteVaultFolder(1, 1, 1);
 
         mockMvc.perform(delete("/folders/vault/1/folder/1").with(csrf()))
-            .andExpect(status().isOk());
+            .andExpect(status().isNoContent());
     }
 
     @Test

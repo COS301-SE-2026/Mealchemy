@@ -173,12 +173,12 @@ public class RecipeStepControllerTest {
     }
 
     @Test
-    void deleteRecipeStep_returns200() throws Exception
+    void deleteRecipeStep_returns204() throws Exception
     {
         doNothing().when(recipeStepService).deleteRecipeStep(1, 1, 1);
 
         mockMvc.perform(delete("/steps/recipe/1/step/1/delete").with(csrf()))
-            .andExpect(status().isOk());
+            .andExpect(status().isNoContent());
     }
 
     @Test

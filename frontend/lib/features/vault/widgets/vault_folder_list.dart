@@ -11,6 +11,7 @@ import 'vault_folder_row.dart';
 import '../providers/vault_repository_provider.dart';
 import '../providers/vault_provider.dart';
 import '../../../core/connectivity/network_status_provider.dart';
+import '../../external_links/widgets/my_links_folder_row.dart';
 
 //folder section vault name label plus one row per folder
 class VaultFolderList extends ConsumerWidget {
@@ -40,6 +41,8 @@ class VaultFolderList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isReadOnly = ref.watch(offlineReadOnlyProvider);
+    final isPrivate = vault.vaultType == VaultTypes.private;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -72,6 +75,7 @@ class VaultFolderList extends ConsumerWidget {
               vault: vault,
               folder: folder,
             ),
+        if (isPrivate) const MyLinksFolderRow(),
         if (folders.length < 3) ...[
           const SizedBox(height: 16),
           AppButton.dashed(

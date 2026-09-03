@@ -4,7 +4,7 @@ import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_match_badge.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
-import 'package:mealchemy/features/dashboard/models/dashboard_recipe_card_data.dart';
+import 'package:mealchemy/features/guided_discovery/models/recommendation.dart';
 import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
 
 class RecipeRecommendationCard extends StatelessWidget {
@@ -13,8 +13,8 @@ class RecipeRecommendationCard extends StatelessWidget {
     required this.data,
   });
 
-  final DashboardRecipeCardData data;
-  //total time label
+  final Recommendation data;
+
   String get _timeLabel {
     final total =
         (data.recipe.prepTimeMins ?? 0) + (data.recipe.cookingTimeMins ?? 0);
@@ -26,7 +26,7 @@ class RecipeRecommendationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => context.push(
-        AppRoutes.recipeDetail.replaceFirst(':id', '${data.recipe.recipeId}'),
+        AppRoutes.recipeDetail.replaceFirst(':id', '${data.recipeId}'),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
@@ -58,7 +58,7 @@ class RecipeRecommendationCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    //Match badge top left
+                    // Match badge
                     Align(
                       alignment: Alignment.topRight,
                       child: AppMatchBadge(
@@ -66,9 +66,8 @@ class RecipeRecommendationCard extends StatelessWidget {
                         size: BadgeSize.small,
                       ),
                     ),
-
                     const Spacer(),
-                    //Category tag
+                    // Cuisine tag
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
@@ -79,7 +78,7 @@ class RecipeRecommendationCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        data.tag,
+                        _titleCase(data.cuisineType),
                         style: AppTextStyles.label.copyWith(
                           color: AppColors.textDark,
                           letterSpacing: 0.8,
@@ -87,7 +86,6 @@ class RecipeRecommendationCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    //recipe title
                     Text(
                       data.recipe.title,
                       style: AppTextStyles.bodyBold.copyWith(
@@ -97,7 +95,7 @@ class RecipeRecommendationCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-                    //time and rating row
+                    // Time and pantry-gap hint
                     Row(
                       children: [
                         Icon(
@@ -114,13 +112,17 @@ class RecipeRecommendationCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 10),
                         Icon(
-                          Icons.star,
+                          data.pantryGapCount <= 0
+                              ? Icons.check_circle
+                              : Icons.shopping_basket_outlined,
                           size: 12,
                           color: AppColors.accent,
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${data.rating}',
+                          data.pantryGapCount <= 0
+                              ? 'Ready to cook'
+                              : '${data.pantryGapCount} to buy',
                           style: AppTextStyles.caption.copyWith(
                             color: AppColors.textDark.withValues(alpha: 0.8),
                           ),
@@ -151,4 +153,13 @@ class _RecipeImage extends StatelessWidget {
       placeholder: Container(color: AppColors.primaryLight),
     );
   }
+}
+
+String _titleCase(String enumValue) {
+  return enumValue
+      .split('_')
+      .map((w) => w.isEmpty
+          ? w
+          : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}')
+      .join(' ');
 }

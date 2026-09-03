@@ -168,12 +168,12 @@ public class VaultFolderRecipeControllerTest {
     }
 
     @Test
-    void deleteVaultFolderRecipe_returns200() throws Exception
+    void deleteVaultFolderRecipe_returns204() throws Exception
     {
         doNothing().when(vaultFolderRecipeService).deleteVaultFolderRecipe(1, 1);
 
         mockMvc.perform(delete("/recipefolders/1").with(csrf()))
-            .andExpect(status().isOk());
+            .andExpect(status().isNoContent());
     }
 
     @Test

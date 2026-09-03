@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import '../../auth/providers/auth_provider.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/providers/api_service_provider.dart';
 import '../models/preference_option.dart';
@@ -143,8 +143,10 @@ class ProfileNotifier extends StateNotifier<AsyncValue<ProfileEditState>> {
   }
 }
 
+// rebuild and refetch when the user changes
 final profileProvider =
     StateNotifierProvider<ProfileNotifier, AsyncValue<ProfileEditState>>((ref) {
+  ref.watch(activeIdentityProvider); 
   return ProfileNotifier(ref.watch(profileRepositoryProvider));
 });
 
@@ -273,9 +275,11 @@ class PreferencesNotifier
   }
 }
 
+// rebuild and refetch when the user changes
 final preferencesProvider =
     StateNotifierProvider<PreferencesNotifier, AsyncValue<PreferencesEditState>>(
         (ref) {
+  ref.watch(activeIdentityProvider);
   return PreferencesNotifier(ref.watch(profileRepositoryProvider));
 });
 

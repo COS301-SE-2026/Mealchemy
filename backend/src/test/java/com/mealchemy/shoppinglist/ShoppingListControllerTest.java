@@ -233,20 +233,20 @@ public class ShoppingListControllerTest {
     }
     
     @Test
-    void updateShoppingList_notOwned_return401() throws Exception {
+    void updateShoppingList_notOwned_return403() throws Exception {
         UpdateShoppingListRequest mockRequest = new UpdateShoppingListRequest(
             "Updated List",
             ShoppingListStatus.COMPLETED
         );
 
-        when(shoppingListService.updateShoppingList(anyInt(), eq(1), any(UpdateShoppingListRequest.class))).thenThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list"));
+        when(shoppingListService.updateShoppingList(anyInt(), eq(1), any(UpdateShoppingListRequest.class))).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list"));
 
         // Act and assert
         mockMvc.perform(put("/api/shopping-lists/{id}", 1).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
                 // fields in response object
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(mockRequest)))
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You do not own this shopping list"));
     }
 
@@ -286,13 +286,13 @@ public class ShoppingListControllerTest {
     }
 
     @Test
-    void deleteShoppingList_notOwned_returns401() throws Exception {
+    void deleteShoppingList_notOwned_returns403() throws Exception {
 
-        doThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list")).when(shoppingListService).deleteShoppingList(anyInt(), eq(3));
+        doThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list")).when(shoppingListService).deleteShoppingList(anyInt(), eq(3));
 
         // Act and Assert
         mockMvc.perform(delete("/api/shopping-lists/{id}", 3).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))  
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You do not own this shopping list"));
     }
 
@@ -357,15 +357,15 @@ public class ShoppingListControllerTest {
     }
     
     @Test
-    void getListWithItems_notOwned_returns401() throws Exception {
+    void getListWithItems_notOwned_returns403() throws Exception {
         
-        when(shoppingListService.getSpecificListItems(anyInt(), eq(1))).thenThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not own this shopping list"));
+        when(shoppingListService.getSpecificListItems(anyInt(), eq(1))).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list"));
 
         // Act and assert
         mockMvc.perform(get("/api/shopping-lists/{id}", 1).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
                 // fields in response object
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You do not own this shopping list"));
     }
 

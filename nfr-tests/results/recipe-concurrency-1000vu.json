@@ -1,0 +1,350 @@
+{
+  "root_group": {
+    "id": "d41d8cd98f00b204e9800998ecf8427e",
+    "groups": [
+      {
+        "groups": [],
+        "checks": [
+            {
+              "path": "::setup::test account login succeeds",
+              "id": "4bd581aaa23341e5b62760eaabe579ad",
+              "passes": 1,
+              "fails": 0,
+              "name": "test account login succeeds"
+            },
+            {
+              "id": "677743670ca17fe0e3c314667c2da86f",
+              "passes": 1,
+              "fails": 0,
+              "name": "login response contains a token",
+              "path": "::setup::login response contains a token"
+            }
+          ],
+        "name": "setup",
+        "path": "::setup",
+        "id": "5c0f8025f7e0b6654089e5b00e950f1a"
+      }
+    ],
+    "checks": [
+      {
+        "name": "recipe storage succeeds and returns an ID",
+        "path": "::recipe storage succeeds and returns an ID",
+        "id": "075292d1aa03ad111440518ccca6d83c",
+        "passes": 988,
+        "fails": 12
+      },
+      {
+        "name": "saved recipe retrieval returns the matching recipe",
+        "path": "::saved recipe retrieval returns the matching recipe",
+        "id": "0524d52545ec8caa6147e2bd104d2792",
+        "passes": 8812,
+        "fails": 25
+      }
+    ],
+    "name": "",
+    "path": ""
+  },
+  "options": {
+    "summaryTrendStats": [
+      "avg",
+      "min",
+      "med",
+      "max",
+      "p(90)",
+      "p(95)"
+    ],
+    "summaryTimeUnit": "",
+    "noColor": false
+  },
+  "state": {
+    "isStdOutTTY": true,
+    "isStdErrTTY": true,
+    "testRunDurationMs": 386577.042
+  },
+  "metrics": {
+    "http_req_waiting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 1496.8001355619124,
+        "min": 182.843,
+        "med": 234.083,
+        "max": 24508.119,
+        "p(90)": 643.2166000000002,
+        "p(95)": 18386.78839999999
+      }
+    },
+    "endpoint_recipe_store_failed": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.012,
+        "passes": 12,
+        "fails": 988
+      },
+      "thresholds": {
+        "rate<0.01": {
+          "ok": false
+        }
+      }
+    },
+    "http_req_duration{expected_response:true}": {
+      "contains": "time",
+      "values": {
+        "max": 24508.288,
+        "p(90)": 624.7495,
+        "p(95)": 18434.516299999992,
+        "avg": 1467.6739140103848,
+        "min": 182.945,
+        "med": 235.04000000000002
+      },
+      "type": "trend"
+    },
+    "http_req_tls_handshaking": {
+      "contains": "time",
+      "values": {
+        "med": 0,
+        "max": 696.554,
+        "p(90)": 0,
+        "p(95)": 194.12499999999994,
+        "avg": 20.481082463754777,
+        "min": 0
+      },
+      "type": "trend"
+    },
+    "http_req_duration": {
+      "contains": "time",
+      "values": {
+        "avg": 1499.1897060670492,
+        "min": 182.945,
+        "med": 235.295,
+        "max": 24508.288,
+        "p(90)": 651.7704000000003,
+        "p(95)": 18387.11999999999
+      },
+      "type": "trend"
+    },
+    "http_reqs": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 10829,
+        "rate": 28.012527448538965
+      }
+    },
+    "http_req_receiving": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 792.63,
+        "p(90)": 1.421,
+        "p(95)": 3.803,
+        "avg": 2.1178221442423126,
+        "min": 0.009,
+        "med": 0.106
+      }
+    },
+    "iteration_duration": {
+      "values": {
+        "max": 97853.874459,
+        "p(90)": 49860.369459,
+        "p(95)": 85661.26017674999,
+        "avg": 35189.69056184272,
+        "min": 30000.038167,
+        "med": 30240.120312500003
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "http_req_duration{measured:true}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(90)": 734.5482,
+        "p(95)": 19235.887399999996,
+        "avg": 1622.893157873343,
+        "min": 182.945,
+        "med": 234.356,
+        "max": 24508.288
+      },
+      "thresholds": {
+        "p(95)<5000": {
+          "ok": false
+        }
+      }
+    },
+    "data_received": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "rate": 38268.72885017315,
+        "count": 14793812
+      }
+    },
+    "endpoint_recipe_retrieve_failed": {
+      "thresholds": {
+        "rate<0.01": {
+          "ok": true
+        }
+      },
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.0028290143713930065,
+        "passes": 25,
+        "fails": 8812
+      }
+    },
+    "http_req_blocked": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 24.70778576045464,
+        "min": 0,
+        "med": 0,
+        "max": 846.071,
+        "p(90)": 0.005200000000000241,
+        "p(95)": 226.82919999999984
+      }
+    },
+    "endpoint_recipe_retrieve_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(90)": 450.3924000000001,
+        "p(95)": 1154.8439999999978,
+        "avg": 1037.8359848364864,
+        "min": 182.945,
+        "med": 227.718,
+        "max": 24508.288
+      },
+      "thresholds": {
+        "p(95)<2000": {
+          "ok": true
+        }
+      }
+    },
+    "http_req_connecting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 4.14126198171577,
+        "min": 0,
+        "med": 0,
+        "max": 257.826,
+        "p(90)": 0,
+        "p(95)": 18.306199999999937
+      }
+    },
+    "http_req_sending": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 0.2717483608828153,
+        "min": 0.008,
+        "med": 0.13,
+        "max": 36.549,
+        "p(90)": 0.38520000000000026,
+        "p(95)": 0.6573999999999981
+      }
+    },
+    "vus": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "value": 0,
+        "min": 0,
+        "max": 1000
+      }
+    },
+    "checks": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "fails": 37,
+        "rate": 0.99623945522919,
+        "passes": 9802
+      },
+      "thresholds": {
+        "rate>0.99": {
+          "ok": true
+        }
+      }
+    },
+    "endpoint_recipe_store_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(90)": 21507.4784,
+        "p(95)": 22097.70825,
+        "avg": 6793.043395999996,
+        "min": 202.658,
+        "med": 508.501,
+        "max": 24194.245
+      },
+      "thresholds": {
+        "p(95)<5000": {
+          "ok": false
+        }
+      }
+    },
+    "data_sent": {
+      "values": {
+        "count": 3248890,
+        "rate": 8404.249727794233
+      },
+      "type": "counter",
+      "contains": "data"
+    },
+    "vus_max": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "value": 1000,
+        "min": 1000,
+        "max": 1000
+      }
+    },
+    "http_req_failed{measured:true}": {
+      "thresholds": {
+        "rate<0.01": {
+          "ok": true
+        }
+      },
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.0037613093422791503,
+        "passes": 37,
+        "fails": 9800
+      }
+    },
+    "http_req_failed": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.0034167513159109797,
+        "passes": 37,
+        "fails": 10792
+      }
+    },
+    "iterations": {
+      "values": {
+        "count": 8906,
+        "rate": 23.038098573893066
+      },
+      "type": "counter",
+      "contains": "default"
+    }
+  },
+  "evidence": {
+    "requirement": "Store and retrieve saved recipe data for up to 1,000 concurrent users",
+    "environment": "staging",
+    "testProfile": "recipe-concurrency",
+    "virtualUsers": 1000,
+    "duration": "5m",
+    "pacingSeconds": 30,
+    "startupStaggerSeconds": 60,
+    "operationModel": "Each VU stores one temporary private recipe and repeatedly retrieves it"
+  }
+}

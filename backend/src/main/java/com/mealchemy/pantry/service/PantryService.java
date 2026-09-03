@@ -77,6 +77,7 @@ public class PantryService {
         newIngredient.setIngredientId(request.ingId());
         newIngredient.setQuantity(normalised.quantity());
         newIngredient.setUnit(normalised.unit());
+        newIngredient.setStorageLocation(request.storageLocation());
 
         PantryIngredient saved = pantryIngredientRepository.save(newIngredient);
 
@@ -90,6 +91,7 @@ public class PantryService {
                                             category.getCategoryName(), 
                                             display.quantity(),
                                             display.unit(),
+                                            saved.getStorageLocation(),
                                             saved.getCreatedAt(),
                                             saved.getUpdatedAt()
         );
@@ -100,13 +102,8 @@ public class PantryService {
     // PUT - manual update of a pantry ingredient when it has been selected
     @Transactional
     public Optional<PantryIngredientResponse> updateIngredientManually(Integer userId, Integer pIngredientId, PantryIngredientRequest request) {
-        PantryIngredient selectedPantryIngredient = pantryIngredientRepository.findById(pIngredientId)
+        PantryIngredient selectedPantryIngredient = pantryIngredientRepository.findByPIngredientIdAndUserId(pIngredientId, userId)
                                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found in pantry"));
-
-        // check if selected belongs to logged in user
-        if (!selectedPantryIngredient.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this ingredient");
-        }
 
         if (request.quantity().compareTo(BigDecimal.ZERO) <= 0) {
             pantryIngredientRepository.delete(selectedPantryIngredient);
@@ -119,6 +116,7 @@ public class PantryService {
         // assuming all 3 parameters are sent in everytime, even if only 1 changes - we don't set the id because it will change the ingredient
         selectedPantryIngredient.setQuantity(normalised.quantity());
         selectedPantryIngredient.setUnit(normalised.unit());
+        selectedPantryIngredient.setStorageLocation(request.storageLocation());
 
         PantryIngredient saved = pantryIngredientRepository.save(selectedPantryIngredient);
 
@@ -142,6 +140,7 @@ public class PantryService {
                                             category.getCategoryName(), 
                                             display.quantity(),
                                             display.unit(),
+                                            saved.getStorageLocation(),
                                             saved.getCreatedAt(),
                                             saved.getUpdatedAt()
         ));
@@ -153,13 +152,8 @@ public class PantryService {
     @Transactional
     public void removePantryIngredient(Integer userId, Integer pIngredientId) {
         // check if row exists
-        PantryIngredient selectedPantryIngredient = pantryIngredientRepository.findById(pIngredientId)
+        PantryIngredient selectedPantryIngredient = pantryIngredientRepository.findByPIngredientIdAndUserId(pIngredientId, userId)
                                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found in pantry"));
-
-        // check if selected belongs to logged in user
-        if (!selectedPantryIngredient.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this ingredient");
-        }
 
         pantryIngredientRepository.delete(selectedPantryIngredient);
 
@@ -193,6 +187,7 @@ public class PantryService {
                     response.category(), 
                     display.quantity(),
                     display.unit(),
+                    response.storageLocation(),
                     response.createdAt(),
                     response.updatedAt()
             );

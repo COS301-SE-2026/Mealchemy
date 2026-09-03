@@ -368,6 +368,15 @@ jobs:
             RECIPE_PHOTO_BUCKET="${{ env.RECIPE_PHOTO_BUCKET_STAGING }}"
           fi
 
+          ENGINE_URL=$(gcloud run services describe "mealchemy-engine-${ENV}" \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --format="value(status.url)")
+          if [[ -z "${ENGINE_URL}" ]]; then
+            echo "::error::Could not resolve the Cloud Run URL for mealchemy-engine-${ENV}."
+            exit 1
+          fi
+
           SECRETS="SPRING_DATASOURCE_URL=mealchemy-db-url-${ENV}:latest,"
           SECRETS+="SPRING_DATASOURCE_USERNAME=mealchemy-db-username-${ENV}:latest,"
           SECRETS+="SPRING_DATASOURCE_PASSWORD=mealchemy-db-password-${ENV}:latest,"
@@ -388,7 +397,7 @@ jobs:
             --project "${{ env.GCP_PROJECT_ID }}"
             --service-account "${{ env.RUNTIME_SA_EMAIL }}"
             --set-secrets "${SECRETS}"
-            --set-env-vars "SPRING_FLYWAY_ENABLED=false,JWT_EXPIRATION_MS=86400000,RECIPE_PHOTO_BUCKET=${RECIPE_PHOTO_BUCKET},RECIPE_PHOTO_SIGNING_SERVICE_ACCOUNT=${{ env.RUNTIME_SA_EMAIL }}"
+            --set-env-vars "SPRING_FLYWAY_ENABLED=false,JWT_EXPIRATION_MS=86400000,RECIPE_PHOTO_BUCKET=${RECIPE_PHOTO_BUCKET},RECIPE_PHOTO_SIGNING_SERVICE_ACCOUNT=${{ env.RUNTIME_SA_EMAIL }},ENGINE_URL=${ENGINE_URL},ENGINE_TIMEOUT_MS=5000"
             --allow-unauthenticated
             --min-instances 0
             --max-instances 3

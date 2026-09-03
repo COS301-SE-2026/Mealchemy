@@ -10,6 +10,7 @@ import 'package:mealchemy/features/vault/models/vault_folder.dart';
 import 'package:mealchemy/features/vault/providers/vault_provider.dart';
 import 'package:mealchemy/features/vault/screens/vault_screen.dart';
 import 'package:mealchemy/features/vault/widgets/vault_folder_list.dart';
+import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
 
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
@@ -39,6 +40,7 @@ void main() {
 
   Widget buildWidget({
     Future<List<Vault>>? vaultsFuture,
+    int cartCount = 0,
     bool sharedMode = false,
     Vault? selected,
   }) {
@@ -48,8 +50,10 @@ void main() {
             .overrideWith((ref) => vaultsFuture ?? Future.value([vault])),
         selectedVaultProvider.overrideWithValue(selected ?? vault),
         isSharedModeProvider.overrideWith((ref) => sharedMode),
-       vaultFoldersProvider.overrideWith((ref, vaultId) async => folders),
-folderRecipeDisplayProvider.overrideWith((ref, folderId) async => <Recipe>[]),
+        vaultFoldersProvider.overrideWith((ref, vaultId) async => folders),
+        folderRecipeDisplayProvider
+            .overrideWith((ref, folderId) async => <Recipe>[]),
+        shoppingListCountProvider.overrideWith((ref) => cartCount),
       ],
       child: MaterialApp.router(
         theme: AppTheme.light,
@@ -119,5 +123,11 @@ folderRecipeDisplayProvider.overrideWith((ref, folderId) async => <Recipe>[]),
       expect(find.text('Unable to load vault.'), findsOneWidget);
       expect(find.textContaining('No vault found.'), findsOneWidget);
     });
+  });
+
+  testWidgets('shows cart badge when shopping lists exist', (tester) async {
+    await tester.pumpWidget(buildWidget(cartCount: 2));
+    await tester.pumpAndSettle();
+    expect(find.text('2'), findsOneWidget);
   });
 }

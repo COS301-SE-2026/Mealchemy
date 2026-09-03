@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
-import '../models/discovery_recipe.dart';
+import '../models/recommendation.dart';
 
-//recipe recommendation card with recipe photo, perc, recipe details, nutritional info, cooking time
+// Swipe card recipe photo, match badge, title, cuisine/time, and a pantry hint
 class DiscoveryRecipeCard extends StatelessWidget {
   const DiscoveryRecipeCard({
     super.key,
-    required this.recipe,
+    required this.recommendation,
     required this.currentIndex,
     required this.totalRecipes,
     this.onViewRecipe,
   });
 
-  final DiscoveryRecipe recipe;
+  final Recommendation recommendation;
   final int currentIndex;
   final int totalRecipes;
   final VoidCallback? onViewRecipe;
@@ -23,7 +23,6 @@ class DiscoveryRecipeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        //restrict card size for uniformity across diff devices
         final cardWidth = constraints.maxWidth.clamp(300.0, 402.0);
         final cardHeight = constraints.maxHeight.clamp(360.0, 520.0);
 
@@ -52,34 +51,19 @@ class DiscoveryRecipeCard extends StatelessWidget {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.network(
-                        recipe.imageUrl,
-                        fit: BoxFit.cover,
-                        alignment: Alignment.center,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: AppColors.surfaceMuted,
-                            alignment: Alignment.center,
-                            child: const Icon(
-                              Icons.restaurant,
-                              color: AppColors.textMuted,
-                              size: 42,
-                            ),
-                          );
-                        },
-                      ),
+                      _CardImage(url: recommendation.recipe.photoUrl),
                       Positioned(
                         left: 14,
                         top: 14,
                         child: _MatchBadge(
-                          matchPercentage: recipe.matchPercentage,
+                          matchPercentage: recommendation.matchPercent,
                         ),
                       ),
                     ],
                   ),
                 ),
                 _RecipeInfo(
-                  recipe: recipe,
+                  recommendation: recommendation,
                   currentIndex: currentIndex,
                   totalRecipes: totalRecipes,
                   onViewRecipe: onViewRecipe,
@@ -93,22 +77,47 @@ class DiscoveryRecipeCard extends StatelessWidget {
   }
 }
 
-//shows recipe info and nutritional summary below recipe picture
+class _CardImage extends StatelessWidget {
+  const _CardImage({required this.url});
+
+  final String? url;
+
+  @override
+  Widget build(BuildContext context) {
+    final placeholder = Container(
+      color: AppColors.surfaceMuted,
+      alignment: Alignment.center,
+      child: const Icon(Icons.restaurant, color: AppColors.textMuted, size: 42),
+    );
+    if (url == null || url!.isEmpty) return placeholder;
+    return Image.network(
+      url!,
+      fit: BoxFit.cover,
+      alignment: Alignment.center,
+      errorBuilder: (context, error, stackTrace) => placeholder,
+    );
+  }
+}
+
 class _RecipeInfo extends StatelessWidget {
   const _RecipeInfo({
-    required this.recipe,
+    required this.recommendation,
     required this.currentIndex,
     required this.totalRecipes,
     required this.onViewRecipe,
   });
 
-  final DiscoveryRecipe recipe;
+  final Recommendation recommendation;
   final int currentIndex;
   final int totalRecipes;
   final VoidCallback? onViewRecipe;
 
   @override
   Widget build(BuildContext context) {
+    final recipe = recommendation.recipe;
+    final totalTime =
+        (recipe.prepTimeMins ?? 0) + (recipe.cookingTimeMins ?? 0);
+
     return Container(
       color: AppColors.surfaceLight,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 13),
@@ -127,65 +136,30 @@ class _RecipeInfo extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text.rich(
-            TextSpan(
-              text: 'by ',
+          if (recipe.cuisineType != null)
+            Text(
+              _titleCase(recipe.cuisineType!),
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.tertiaryMuted,
                 fontSize: 12,
               ),
-              children: [
-                TextSpan(
-                  text: recipe.chefName,
-                  style: AppTextStyles.bodyBold.copyWith(
-                    color: AppColors.textLight,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
             ),
-          ),
           const SizedBox(height: 10),
           const Divider(height: 1, color: AppColors.divider),
           const SizedBox(height: 9),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _NutritionStat(
-                icon: Icons.local_fire_department_outlined,
-                value: recipe.calories.toString(),
-                label: 'KCAL',
-              ),
-              _NutritionStat(
-                icon: Icons.egg_alt_outlined,
-                value: '${recipe.proteinGrams}g',
-                label: 'PROT',
-              ),
-              _NutritionStat(
-                icon: Icons.bakery_dining_outlined,
-                value: '${recipe.carbsGrams}g',
-                label: 'CARBS',
-              ),
-              _NutritionStat(
-                icon: Icons.water_drop_outlined,
-                value: '${recipe.fatGrams}g',
-                label: 'FAT',
-              ),
-            ],
+          _PantryHint(
+            gapCount: recommendation.pantryGapCount,
+            missing: recommendation.missingIngredients,
           ),
           const SizedBox(height: 9),
           const Divider(height: 1, color: AppColors.divider),
           const SizedBox(height: 9),
           Row(
             children: [
-              const Icon(
-                Icons.schedule,
-                size: 15,
-                color: AppColors.primary,
-              ),
+              const Icon(Icons.schedule, size: 15, color: AppColors.primary),
               const SizedBox(width: 5),
               Text(
-                '${recipe.cookTimeMinutes}m',
+                '${totalTime}m',
                 style: AppTextStyles.label.copyWith(
                   color: AppColors.primary,
                   fontSize: 11,
@@ -222,35 +196,72 @@ class _RecipeInfo extends StatelessWidget {
   }
 }
 
-//displays percentage match
+class _PantryHint extends StatelessWidget {
+  const _PantryHint({required this.gapCount, required this.missing});
+
+  final int gapCount;
+  final List<String> missing;
+
+  @override
+  Widget build(BuildContext context) {
+    if (gapCount <= 0) {
+      return Row(
+        children: [
+          const Icon(Icons.check_circle_outline,
+              size: 15, color: AppColors.success),
+          const SizedBox(width: 6),
+          Text(
+            'You have everything',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.success,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      );
+    }
+
+    final label =
+        missing.isEmpty ? '$gapCount to buy' : 'Missing: ${missing.join(', ')}';
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(Icons.shopping_basket_outlined,
+            size: 15, color: AppColors.accentMuted),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.tertiaryMuted,
+              fontSize: 12,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _MatchBadge extends StatelessWidget {
-  const _MatchBadge({
-    required this.matchPercentage,
-  });
+  const _MatchBadge({required this.matchPercentage});
 
   final int matchPercentage;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 11,
-        vertical: 7,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
       decoration: BoxDecoration(
         color: AppColors.bgDark.withValues(alpha: 0.84),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.accent.withValues(alpha: 0.35),
-        ),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.check_circle,
-            size: 13,
-            color: AppColors.accent,
-          ),
+          const Icon(Icons.check_circle, size: 13, color: AppColors.accent),
           const SizedBox(width: 6),
           Text(
             '$matchPercentage% Match',
@@ -265,59 +276,21 @@ class _MatchBadge extends StatelessWidget {
   }
 }
 
-//nutritional information (calories, carbs, fats, etc)
-class _NutritionStat extends StatelessWidget {
-  const _NutritionStat({
-    required this.icon,
-    required this.value,
-    required this.label,
-  });
-
-  final IconData icon;
-  final String value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, color: AppColors.accent, size: 16),
-        const SizedBox(height: 3),
-        Text(
-          value,
-          style: AppTextStyles.label.copyWith(
-            color: AppColors.primary,
-            fontSize: 11,
-          ),
-        ),
-        Text(
-          label,
-          style: AppTextStyles.caption.copyWith(
-            color: AppColors.tertiaryMuted,
-            fontSize: 8,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-//carousel for recipe cards
 class _CardDots extends StatelessWidget {
-  const _CardDots({
-    required this.currentIndex,
-    required this.totalRecipes,
-  });
+  const _CardDots({required this.currentIndex, required this.totalRecipes});
 
   final int currentIndex;
   final int totalRecipes;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: List.generate(totalRecipes, (index) {
-        final selected = index == currentIndex;
+    const maxDots = 8;
+    final count = totalRecipes.clamp(0, maxDots);
+    final active = currentIndex.clamp(0, count - 1 < 0 ? 0 : count - 1);
 
+    return Row(
+      children: List.generate(count, (index) {
+        final selected = index == active;
         return Container(
           width: selected ? 7 : 5,
           height: selected ? 7 : 5,
@@ -332,4 +305,13 @@ class _CardDots extends StatelessWidget {
       }),
     );
   }
+}
+
+String _titleCase(String enumValue) {
+  return enumValue
+      .split('_')
+      .map((w) => w.isEmpty
+          ? w
+          : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}')
+      .join(' ');
 }

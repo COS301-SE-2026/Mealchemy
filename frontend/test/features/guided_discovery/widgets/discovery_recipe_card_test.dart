@@ -1,93 +1,108 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mealchemy/features/guided_discovery/models/discovery_recipe.dart';
+import 'package:mealchemy/features/recipe/models/recipe.dart';
+import 'package:mealchemy/features/guided_discovery/models/recommendation.dart';
+import 'package:mealchemy/features/guided_discovery/models/signal_scores.dart';
 import 'package:mealchemy/features/guided_discovery/widgets/discovery_recipe_card.dart';
 
 void main() {
-  //disable google fonts during tests
   setUpAll(() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  //sample recipe for recipe card functionality
-  final recipe = DiscoveryRecipe(
-    id: 'test-recipe',
-    title: 'Braised Short Rib Pappardelle',
-    chefName: 'Chef Isabella',
-    imageUrl: 'https://example.com/pasta.jpg',
-    matchPercentage: 92,
-    cookTimeMinutes: 45,
-    calories: 420,
-    proteinGrams: 12,
-    carbsGrams: 54,
-    fatGrams: 18,
-    tags: const ['Quick Meals', 'High Protein'],
-    ingredients: const ['Pappardelle', 'Short rib', 'Tomato'],
-    description: 'A rich pasta dish with slow-cooked short rib.',
-    steps: const ['Cook the pasta.', 'Serve with sauce.'],
-    matchReason: 'You liked hearty pasta dishes.',
+  const signals = SignalScores(
+    pantryMatch: 0.9,
+    cuisine: 0.8,
+    nutrition: 0.5,
+    freshness: 0.3,
+    novelty: 1.0,
   );
 
-  //tests that recipe card displays info
-  testWidgets('DiscoveryRecipeCard renders recipe details', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
+  final withGap = Recommendation(
+    recipeId: 7,
+    cuisineType: 'ITALIAN',
+    score: 0.92,
+    scoreBreakdown: signals,
+    pantryGapCount: 1,
+    missingIngredients: const ['parmesan'],
+    recipe: const Recipe(
+      recipeId: 7,
+      title: 'Braised Short Rib Pappardelle',
+      cuisineType: 'ITALIAN',
+      prepTimeMins: 15,
+      cookingTimeMins: 30,
+      servingSize: 4,
+      photoUrl: 'https://example.com/pasta.jpg',
+      isCommunityPublished: true,
+    ),
+  );
+
+  Widget host(Recommendation rec, {VoidCallback? onView}) => MaterialApp(
         home: Scaffold(
           body: SizedBox(
             height: 560,
             child: DiscoveryRecipeCard(
-              recipe: recipe,
+              recommendation: rec,
               currentIndex: 0,
               totalRecipes: 3,
-              onViewRecipe: () {},
+              onViewRecipe: onView ?? () {},
             ),
           ),
         ),
-      ),
-    );
+      );
 
+  testWidgets('renders match, title, cuisine, time and the view link', (
+    tester,
+  ) async {
+    await tester.pumpWidget(host(withGap));
     await tester.pump();
 
-    //verify match percentage
     expect(find.text('92% Match'), findsOneWidget);
-    //recipe info
     expect(find.text('Braised Short Rib Pappardelle'), findsOneWidget);
-    expect(find.textContaining('Chef Isabella'), findsOneWidget);
-    expect(find.text('420'), findsOneWidget);
-    expect(find.text('12g'), findsOneWidget);
-    expect(find.text('54g'), findsOneWidget);
-    expect(find.text('18g'), findsOneWidget);
-    expect(find.text('45m'), findsOneWidget);
+    expect(find.text('Italian'), findsOneWidget); 
+    expect(find.text('45m'), findsOneWidget); 
     expect(find.text('View Full Recipe ->'), findsOneWidget);
   });
 
-  //tests that tapping recipe action link
-  testWidgets('DiscoveryRecipeCard calls onViewRecipe when link is tapped', (
+  testWidgets('shows the missing-ingredients pantry hint', (tester) async {
+    await tester.pumpWidget(host(withGap));
+    await tester.pump();
+    expect(find.text('Missing: parmesan'), findsOneWidget);
+  });
+
+  testWidgets('shows "You have everything" when there is no pantry gap', (
     tester,
   ) async {
-    var tapped = false;
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            height: 560,
-            child: DiscoveryRecipeCard(
-              recipe: recipe,
-              currentIndex: 0,
-              totalRecipes: 3,
-              onViewRecipe: () => tapped = true,
-            ),
-          ),
-        ),
+    final noGap = Recommendation(
+      recipeId: 8,
+      cuisineType: 'GREEK',
+      score: 0.7,
+      scoreBreakdown: signals,
+      pantryGapCount: 0,
+      missingIngredients: const [],
+      recipe: const Recipe(
+        recipeId: 8,
+        title: 'Greek Salad',
+        cuisineType: 'GREEK',
+        prepTimeMins: 10,
+        cookingTimeMins: 0,
+        servingSize: 2,
       ),
     );
 
+    await tester.pumpWidget(host(noGap));
+    await tester.pump();
+
+    expect(find.text('You have everything'), findsOneWidget);
+  });
+
+  testWidgets('calls onViewRecipe when the link is tapped', (tester) async {
+    var tapped = false;
+    await tester.pumpWidget(host(withGap, onView: () => tapped = true));
     await tester.pump();
 
     await tester.tap(find.text('View Full Recipe ->'));
-
     expect(tapped, isTrue);
   });
 }

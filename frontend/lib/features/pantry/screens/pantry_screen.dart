@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/connectivity/network_status_provider.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/connectivity/network_status_provider.dart';
+import '../../../core/shared_widgets/Molecules/app_refresh.dart';
 import '../../../core/shared_widgets/Molecules/app_search_bar.dart';
 import '../../../core/shared_widgets/Molecules/app_section_header.dart';
 import '../../../core/shared_widgets/Organisms/app_filter_bar.dart';
-import '../../../core/shared_widgets/Organisms/app_navbar.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/pantry_ingredient.dart';
@@ -32,7 +32,6 @@ const List<String> _unitOptions = [
   'pcs',
 ];
 
-//change from stateless widget to consumer widget
 class PantryScreen extends ConsumerWidget {
   const PantryScreen({super.key});
 
@@ -43,25 +42,6 @@ class PantryScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.bgLight,
-      appBar: AppBar(
-        title: const Text('Pantry'),
-        actions: [
-          IconButton(
-            onPressed: isReadOnly ? null : () {},
-            icon: const Icon(Icons.qr_code_scanner_outlined),
-            tooltip: 'Scan ingredient',
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.more_vert),
-            tooltip: 'More options',
-          ),
-        ],
-      ),
-      bottomNavigationBar: AppNavbar(
-        currentRoute: AppRoutes.pantry,
-        onRouteSelected: (route) => context.go(route),
-      ),
       floatingActionButton: FloatingActionButton(
         tooltip: 'Add Pantry Ingredient',
         onPressed:
@@ -72,15 +52,45 @@ class PantryScreen extends ConsumerWidget {
         child: const Icon(Icons.add),
       ),
       body: SafeArea(
-        child: pantryState.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => _PantryError(message: '$error'),
-          data: (state) => _PantryContent(
-            pantryState: state,
-            isReadOnly: isReadOnly,
+        child: AppRefresh(
+          onRefresh: () async => ref.invalidate(pantryStateProvider),
+          child: pantryState.when(
+            loading: () => const _ScrollableCentre(
+              child: CircularProgressIndicator(),
+            ),
+            error: (error, stackTrace) => const _ScrollableCentre(
+              child: _PantryError(),
+            ),
+            data: (state) => _PantryContent(
+              pantryState: state,
+              isReadOnly: isReadOnly,
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+// Wraps a centred widget in a scroll view so pull-to-refresh still triggers
+// on the loading and error states.
+class _ScrollableCentre extends StatelessWidget {
+  const _ScrollableCentre({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(child: child),
+          ),
+        );
+      },
     );
   }
 }
@@ -101,7 +111,8 @@ class _PantryContent extends ConsumerWidget {
     final groupedIngredients = _groupIngredientsByCategory(visibleIngredients);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 28),
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
       children: [
         AppSearchBar(
           hint: 'Search pantry...',
@@ -251,17 +262,13 @@ class _EmptyPantryResults extends StatelessWidget {
 }
 
 class _PantryError extends StatelessWidget {
-  const _PantryError({required this.message});
-
-  final String message;
+  const _PantryError();
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Unable to load pantry data.',
-        style: AppTextStyles.body.copyWith(color: AppColors.error),
-      ),
+    return Text(
+      'Unable to load pantry data.',
+      style: AppTextStyles.body.copyWith(color: AppColors.error),
     );
   }
 }

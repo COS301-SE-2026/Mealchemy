@@ -28,6 +28,8 @@ void main() {
           shoppingListRepositoryProvider.overrideWithValue(
             MockShoppingListRepository(),
           ),
+          //start each test with search closed so state does not leak between them
+          searchOpenProvider.overrideWith((ref) => false),
         ],
         child: const MaterialApp(
           home: ShoppingListsScreen(),
@@ -134,6 +136,7 @@ void main() {
           shoppingListRepositoryProvider.overrideWithValue(
             MockShoppingListRepository(),
           ),
+          searchOpenProvider.overrideWith((ref) => false),
         ],
         child: MaterialApp.router(
           routerConfig: router,
@@ -149,6 +152,7 @@ void main() {
     expect(find.text('All Items'), findsOneWidget);
     expect(find.text('Heirloom Tomatoes'), findsOneWidget);
   });
+
   testWidgets(
       'ShoppingListsScreen creates new list from floating action button',
       (tester) async {

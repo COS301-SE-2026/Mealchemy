@@ -94,6 +94,13 @@
 			<version>${google-cloud-storage.version}</version>
 		</dependency>
 
+        <!-- engine auth interceptor -->
+        <dependency>
+            <groupId>com.google.auth</groupId>
+            <artifactId>google-auth-library-oauth2-http</artifactId>
+            <version>1.23.0</version>
+        </dependency>
+
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
@@ -179,6 +186,8 @@
                     <exclude>**/dto/**/*.class</exclude>
                     <exclude>**/pantry/**/*.class</exclude>
 					<exclude>**/external/NutritionDataProvider.class</exclude>
+                    <exclude>**/engine/client/StaleStateException.class</exclude>
+                    <exclude>**/engine/client/InvalidSwipeException.class</exclude>
                 </excludes>
 				</configuration>
 				<executions>

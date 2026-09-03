@@ -36,14 +36,6 @@ name: CI
 on:
   workflow_dispatch:
   pull_request:
-    paths:
-      - 'backend/**'
-      - 'engine/**'
-      - 'frontend/**'
-      - 'database/**'
-      - 'infrastructure/**'
-      - '.github/workflows/**'
-      - '!**/*.md'
 
 env:
   ACT: ""

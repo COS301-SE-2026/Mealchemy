@@ -713,13 +713,13 @@ public class RecipeControllerIntegrationTest {
     // DELETE /recipes/delete/{id}
 
     @Test
-    void deleteRecipe_returns200_andRemovesRow_whenOwner() throws Exception {
+    void deleteRecipe_returns204_andRemovesRow_whenOwner() throws Exception {
         Recipe recipe = saveRecipe(owner, "Doomed Recipe");
 
         mockMvc.perform(delete("/recipes/delete/{id}", recipe.getRecipeId())
                         .with(authentication(authAs(owner.getUserId())))
                         .with(csrf()))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         org.junit.jupiter.api.Assertions.assertTrue(
                 recipeRepository.findById(recipe.getRecipeId()).isEmpty()
@@ -738,7 +738,7 @@ public class RecipeControllerIntegrationTest {
         mockMvc.perform(delete("/recipes/delete/{id}", recipe.getRecipeId())
                         .with(authentication(authAs(owner.getUserId())))
                         .with(csrf()))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         org.junit.jupiter.api.Assertions.assertTrue(
                 recipeRepository.findById(recipe.getRecipeId()).isEmpty()

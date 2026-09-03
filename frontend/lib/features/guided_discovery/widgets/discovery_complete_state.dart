@@ -2,44 +2,34 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
-import '../models/discovery_recipe.dart';
 
-//displays completion screen shown after user has reviewed all reommended recipes
+// Shown when the recommendation pool is exhausted. Summarizes the session from
+// the real swipe counts. 
 class DiscoveryCompleteState extends StatelessWidget {
   const DiscoveryCompleteState({
     super.key,
-    //recipe counts
     required this.likedCount,
     required this.dislikedCount,
-    required this.tasteSignals,
-    required this.recommendedRecipe,
+    required this.skippedCount,
     required this.onReset,
   });
 
   final int likedCount;
   final int dislikedCount;
-  final List<String> tasteSignals;
-  final DiscoveryRecipe? recommendedRecipe;
+  final int skippedCount;
   final VoidCallback onReset;
 
   @override
   Widget build(BuildContext context) {
-    final signals = tasteSignals.isEmpty
-        ? ['Balanced', 'Flexible', 'Exploratory']
-        : tasteSignals;
-
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(28, 20, 28, 24),
       child: Column(
         children: [
-          const Icon(
-            Icons.auto_awesome,
-            color: AppColors.accent,
-            size: 42,
-          ),
+          const Icon(Icons.auto_awesome, color: AppColors.accent, size: 42),
           const SizedBox(height: 12),
           Text(
-            'Taste profile ready',
+            "That's everything for now",
             style: AppTextStyles.heading1.copyWith(
               color: AppColors.primary,
               fontSize: 30,
@@ -47,20 +37,17 @@ class DiscoveryCompleteState extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          //summary
           Text(
-            'Your mock recommendations were shaped by $likedCount likes and $dislikedCount skips.',
-            style: AppTextStyles.body.copyWith(
-              color: AppColors.tertiaryMuted,
-            ),
+            'Your swipes help tune what comes next. Check back soon for a fresh set.',
+            style: AppTextStyles.body.copyWith(color: AppColors.tertiaryMuted),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 22),
-          _TasteSignalSection(signals: signals),
-          if (recommendedRecipe != null) ...[
-            const SizedBox(height: 18),
-            _RecommendedRecipeCard(recipe: recommendedRecipe!),
-          ],
+          _SessionSummary(
+            likedCount: likedCount,
+            dislikedCount: dislikedCount,
+            skippedCount: skippedCount,
+          ),
           const SizedBox(height: 22),
           SizedBox(
             width: double.infinity,
@@ -77,9 +64,7 @@ class DiscoveryCompleteState extends StatelessWidget {
               ),
               child: Text(
                 'Start Again',
-                style: AppTextStyles.button.copyWith(
-                  color: AppColors.textDark,
-                ),
+                style: AppTextStyles.button.copyWith(color: AppColors.textDark),
               ),
             ),
           ),
@@ -89,60 +74,44 @@ class DiscoveryCompleteState extends StatelessWidget {
   }
 }
 
-class _TasteSignalSection extends StatelessWidget {
-  const _TasteSignalSection({
-    required this.signals,
+class _SessionSummary extends StatelessWidget {
+  const _SessionSummary({
+    required this.likedCount,
+    required this.dislikedCount,
+    required this.skippedCount,
   });
 
-  final List<String> signals;
+  final int likedCount;
+  final int dislikedCount;
+  final int skippedCount;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 18),
       decoration: BoxDecoration(
         color: AppColors.surfaceWhite.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.divider),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Text(
-            'Taste signals',
-            style: AppTextStyles.label.copyWith(
-              color: AppColors.primary,
-              fontSize: 12,
-              letterSpacing: 0.8,
-            ),
+          _SummaryStat(
+            icon: Icons.favorite,
+            value: likedCount,
+            label: 'LIKED',
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: signals.map((signal) {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 9,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.18),
-                  ),
-                ),
-                child: Text(
-                  signal,
-                  style: AppTextStyles.label.copyWith(
-                    color: AppColors.primary,
-                    fontSize: 11,
-                  ),
-                ),
-              );
-            }).toList(),
+          _SummaryStat(
+            icon: Icons.close,
+            value: dislikedCount,
+            label: 'PASSED',
+          ),
+          _SummaryStat(
+            icon: Icons.skip_next,
+            value: skippedCount,
+            label: 'SKIPPED',
           ),
         ],
       ),
@@ -150,83 +119,39 @@ class _TasteSignalSection extends StatelessWidget {
   }
 }
 
-class _RecommendedRecipeCard extends StatelessWidget {
-  const _RecommendedRecipeCard({
-    required this.recipe,
+class _SummaryStat extends StatelessWidget {
+  const _SummaryStat({
+    required this.icon,
+    required this.value,
+    required this.label,
   });
 
-  final DiscoveryRecipe recipe;
+  final IconData icon;
+  final int value;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.accentMuted.withValues(alpha: 0.35),
+    return Column(
+      children: [
+        Icon(icon, color: AppColors.accent, size: 20),
+        const SizedBox(height: 6),
+        Text(
+          value.toString(),
+          style: AppTextStyles.heading2.copyWith(
+            color: AppColors.primary,
+            fontSize: 22,
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 112,
-            height: 124,
-            child: Image.network(
-              recipe.imageUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: AppColors.surfaceMuted,
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.restaurant,
-                    color: AppColors.textMuted,
-                    size: 36,
-                  ),
-                );
-              },
-            ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: AppTextStyles.caption.copyWith(
+            color: AppColors.tertiaryMuted,
+            fontSize: 9,
           ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Recommended next',
-                    style: AppTextStyles.label.copyWith(
-                      color: AppColors.accentMuted,
-                      fontSize: 10,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    recipe.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.title.copyWith(
-                      color: AppColors.primary,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 7),
-                  Text(
-                    '${recipe.matchPercentage}% match • ${recipe.cookTimeMinutes}m',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.tertiaryMuted,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

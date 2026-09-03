@@ -50,7 +50,7 @@ public class UserProfileService {
                                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User profile not found"));
 
         // send through every field on every request
-        if (request.displayName() == null || request.avatarUrl() == null || request.preferredUnit() == null || request.equipment() == null) {
+        if (request.displayName() == null || request.preferredUnit() == null || request.equipment() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "All profile fields are required");
         }
 

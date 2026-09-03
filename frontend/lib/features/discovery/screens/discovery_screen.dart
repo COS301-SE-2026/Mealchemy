@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mealchemy/core/routes/app_routes.dart';
+import 'package:mealchemy/core/theme/app_colours.dart';
+import 'package:mealchemy/core/shared_widgets/atoms/app_badge.dart';
+import 'package:mealchemy/core/shared_widgets/atoms/app_icon_button.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_page_filter.dart';
-import 'package:mealchemy/core/shared_widgets/Organisms/app_navbar.dart';
+import 'package:mealchemy/core/shared_widgets/Molecules/app_refresh.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_section_header.dart';
 import 'package:mealchemy/features/discovery/widgets/popular_categories_section.dart';
 import 'package:mealchemy/features/discovery/providers/discovery_provider.dart';
-import 'package:mealchemy/core/theme/app_colours.dart';
-import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/features/discovery/widgets/explore_section.dart';
+import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
 
 class DiscoveryScreen extends ConsumerStatefulWidget {
   const DiscoveryScreen({super.key});
@@ -36,46 +39,63 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgLight,
-      body: SafeArea(
+    final cartCount = ref.watch(shoppingListCountProvider);
+    return AppRefresh(
+      onRefresh: () => ref.read(discoveryProvider.notifier).loadDiscovery(),
+      child: SafeArea(
         child: SingleChildScrollView(
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: AppSectionHeader(
-                title: 'Discover',
-                size: SectionHeaderSize.large,
-                weight: SectionHeaderWeight.bold,
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 40),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: AppSectionHeader(
+                        title: 'Discover',
+                        size: SectionHeaderSize.large,
+                        weight: SectionHeaderWeight.bold,
+                      ),
+                    ),
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        AppIconButton.ghost(
+                          icon: Icons.shopping_cart_outlined,
+                          onPressed: () =>
+                              context.push(AppRoutes.shoppingLists),
+                          customColor: AppColors.textLight,
+                        ),
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: AppBadge(count: cartCount),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            //Fillter bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: AppPageFilter(
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: AppPageFilter(
                   options: _filters,
                   selectedIndex: _selectedFilterIndex,
-                  onSelected: (i) => _selectedFilterIndex = i),
-            ),
-
-            //Popular Categories Section
-            const SizedBox(height: 28),
-
-            const PopularCategoriesSection(),
-
-            const SizedBox(height: 28),
-
-            const ExploreSection(),
-
-            const SizedBox(height: 32),
-          ]),
+                  onSelected: (i) => setState(() => _selectedFilterIndex = i),
+                ),
+              ),
+              const SizedBox(height: 28),
+              const PopularCategoriesSection(),
+              const SizedBox(height: 28),
+              const ExploreSection(),
+              const SizedBox(height: 32),
+            ],
+          ),
         ),
-      ),
-      bottomNavigationBar: AppNavbar(
-        currentRoute: AppRoutes.discovery,
-        onRouteSelected: (route) => context.go(route),
       ),
     );
   }

@@ -97,7 +97,6 @@ class _StatusBanner extends StatelessWidget {
                   IconButton(
                     onPressed: onSignIn,
                     icon: const Icon(Icons.login),
-                    tooltip: 'Sign in',
                     visualDensity: VisualDensity.compact,
                   ),
               ],

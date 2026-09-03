@@ -1,17 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/recipe_ingredient.dart';
+import '../providers/recipe_provider.dart';
+import '../utils/serving_scaler.dart';
 
-//a row in the ingredients list
-class RecipeIngredientRow extends StatelessWidget {
-  const RecipeIngredientRow({super.key, required this.ingredient});
+//a row in the ingredients list, amount scales with the chosen serving count
+class RecipeIngredientRow extends ConsumerWidget {
+  const RecipeIngredientRow({
+    super.key,
+    required this.ingredient,
+    required this.recipeId,
+    required this.baseServings,
+  });
 
   final RecipeIngredient ingredient;
+  final int recipeId;
+  final int baseServings;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stored = ref.watch(servingsProvider(recipeId));
+    final servings = stored == 0 ? baseServings : stored;
+    final factor = baseServings > 0 ? servings / baseServings : 1.0;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -26,18 +40,16 @@ class RecipeIngredientRow extends StatelessWidget {
           ),
           if (ingredient.quantity != null)
             Text(
-              _formatQuantity(ingredient),
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+              formatScaledQuantity(
+                quantity: ingredient.quantity!,
+                unit: ingredient.unit,
+                factor: factor,
+              ),
+              style:
+                  AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
             ),
         ],
       ),
     );
   }
-}
-
-String _formatQuantity(RecipeIngredient ing) {
-  if (ing.quantity == null) return '';
-  final qty = ing.quantity!;
-  final qtyStr = qty == qty.truncateToDouble() ? qty.toInt().toString() : qty.toString();
-  return ing.unit != null ? '$qtyStr ${ing.unit}' : qtyStr;
 }

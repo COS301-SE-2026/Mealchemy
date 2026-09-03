@@ -25,8 +25,11 @@ class ApiAuthRepository implements AuthRepository {
         ),
         onboardingRequired: response.data['onboarding_required'] ?? false,
       );
-    } catch (e) {
-      return AuthResult.failure('Invalid email or password');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        return AuthResult.failure('Invalid email or password');
+      }
+      return AuthResult.failure(_messageFrom(e));
     }
   }
 //register method calls for thge sign up page 
@@ -52,13 +55,21 @@ class ApiAuthRepository implements AuthRepository {
         ),
         onboardingRequired: response.data['onboarding_required'] ?? false,
       );
-    } catch (e) {
-      return AuthResult.failure('Something went wrong. Please try again.');
+    } on DioException catch (e) {
+      return AuthResult.failure(_messageFrom(e));
     }
   }
-//logout method calls
+
   @override
   Future<void> logout() async {
     await _dio.post('/auth/logout');
+  }
+
+  String _messageFrom(DioException e) {
+    final data = e.response?.data;
+    if (data is Map && data['message'] is String) {
+      return data['message'] as String;
+    }
+    return 'Something went wrong. Please try again.';
   }
 }

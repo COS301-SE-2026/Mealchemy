@@ -1,31 +1,32 @@
 """Mealchemy recommendation engine entry point."""
 
-# This is a place holder, minimla HTTP server that exists to keep Docker coatiner alive and pass health check, this will get replaced when we implement the engine. Docker hits http://localhost:8000/health to check health of Engine conatainer
+import os
 
-import http.server
-import json
+import uvicorn
+from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
+from fastapi.requests import Request
+from fastapi.responses import JSONResponse
 
+from src.api.errors import ERROR_CODE_INVALID_CANDIDATE, ErrorResponse
+from src.api.routes import router
 
-class HealthHandler(http.server.BaseHTTPRequestHandler):
-    def do_GET(self) -> None:
-        if self.path == "/health":
-            body = json.dumps({"status": "UP"}).encode()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(body)
-        else:
-            self.send_response(404)
-            self.end_headers()
-
-    def log_message(self, format: str, *args: object) -> None:
-        pass  # suppress per-request access logs
+# create app and mount router
+app = FastAPI(title="Mealchemy Recommendation Engine")
+app.include_router(router)
 
 
+# invalid candidate handler
+@app.exception_handler(RequestValidationError)
+async def handle_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+    error = ErrorResponse(error_code=ERROR_CODE_INVALID_CANDIDATE, message=str(exc))
+    return JSONResponse(status_code=400, content=error.model_dump())
+
+
+# uvicorn launch
 def main() -> None:
-    server = http.server.HTTPServer(("0.0.0.0", 8000), HealthHandler)
-    print("Mealchemy engine starting on port 8000...")
-    server.serve_forever()
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port) # sonar-resolve [safe] python:S8392 "Docker network routing" # noqa
 
 
 if __name__ == "__main__":

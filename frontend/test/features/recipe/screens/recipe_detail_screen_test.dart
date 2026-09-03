@@ -179,4 +179,26 @@ void main() {
     expect(find.text('1167'), findsOneWidget);
     expect(find.text('Chicken Breast Fillet'), findsOneWidget);
   });
+
+  testWidgets('tapping the servings stepper scales ingredient amounts',
+      (tester) async {
+    await tester.pumpWidget(_host(
+      const RecipeDetailScreen(recipeId: 1),
+      [recipeDetailProvider(1).overrideWith((ref) async => _fixture)],
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('320 g'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.add).first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('400 g'), findsOneWidget);
+    expect(find.text('320 g'), findsNothing);
+
+    await tester.tap(find.text('Reset'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('320 g'), findsOneWidget);
+  });
 }
