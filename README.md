@@ -56,12 +56,49 @@
 | Landing page | [Static-Landing-Page](https://mealchemy-firebase.web.app/)
 | Android app | [Android App download](https://appdistribution.firebase.dev/i/9aea731b3a1ce2f6)|
 | Brand style guide | [Brand Guide](https://cos301-se-2026.github.io/Mealchemy/)|
+| Service Contracts | [OpenAPI/Swagger Schema](https://github.com/orgs/COS301-SE-2026/projects/67) |
 
 ---
 
 ## Documentation
 
 Note: All documentation is contained within the Wiki
+
+<details>
+  <summary>Demo 3 - Click to expand</summary>
+
+### Software Requirements Specifications (SRS)
+
+| Page | Description |
+|------|-------------|
+| [Introduction](https://github.com/COS301-SE-2026/Mealchemy/wiki/SRS-Introduction-Demo-3) | Project background, motivation, and scope |
+| [User Stories](https://github.com/COS301-SE-2026/Mealchemy/wiki/User-Stories-and-Characteristics-Demo-3) | Intended users and how they interact with the system |
+| [Use Cases](https://github.com/COS301-SE-2026/Mealchemy/wiki/Use-Cases-Demo-3) | High-level use case diagrams and descriptions |
+| [Functional Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Functional-Requirements-Demo-3) | Feature breakdown by subsystem |
+| [Non-Functional Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Non‐Functional-Requirements-Demo-3) | Feature breakdown by subsystem |
+| [Domain Model](https://github.com/COS301-SE-2026/Mealchemy/wiki/Domain-Model-Demo-3) | UML class diagram |
+
+### Software Architecture Specifications (SAS)
+
+| Page | Description |
+|------|-------------|
+| [Introduction](https://github.com/COS301-SE-2026/Mealchemy/wiki/SAS-Introduction-Demo-3) | Project background, motivation, and scope |
+| [Architectural Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Architectural-Requirements-Demo-3) | Intended users and how they interact with the system |
+| [Technology Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Technology-Requirements-Demo-3) | Technology Requirements |
+| [API Service Contracts](https://github.com/COS301-SE-2026/Mealchemy/wiki/API-Service-Contracts-Demo-3) | API Contracts |
+| [Deployment](https://github.com/COS301-SE-2026/Mealchemy/wiki/Deployment-Demo-3) | Deployment |
+
+### Other Documents
+
+| Page | Description |
+|------|-------------|
+| [Coding Standards Document](https://github.com/COS301-SE-2026/Mealchemy/wiki/Coding-Standards-Document-Demo-3) | Code style conventions and repository structure guidelines |
+| [User Manual](https://github.com/COS301-SE-2026/Mealchemy/wiki/User-Manual-Document-Demo-3) | How to use the app - screenshots and feature walkthroughs |
+| [Testing Policy Document](https://github.com/COS301-SE-2026/Mealchemy/wiki/Testing-Policy-Document-Demo-3) | Testing standards, types, tools, and responsibilities |
+| [Changelog](https://github.com/COS301-SE-2026/Mealchemy/wiki/Changelog-Demo-3) | Version history and what changed each demo |
+
+</details>
+
 
 <details>
   <summary>Demo 2 - Click to expand</summary>
