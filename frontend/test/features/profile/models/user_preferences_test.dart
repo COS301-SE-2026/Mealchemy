@@ -5,11 +5,11 @@ void main() {
   group('UserPreferences.fromJson', () {
     test('parses a full payload ', () {
       final prefs = UserPreferences.fromJson(<String, dynamic>{
-        'dietaryRestrictions': ['GLUTEN_FREE'],
+        'dietary_restrictions': ['GLUTEN_FREE'],
         'allergies': ['PEANUTS', 'SHELLFISH'],
-        'dislikedIngredients': ['Hummus, commercial'],
-        'flavourProfile': ['ITALIAN'],
-        'nutritionalGoals': ['HIGH_PROTEIN'],
+        'disliked_ingredients': ['Hummus, commercial'],
+        'flavour_profile': ['ITALIAN'],
+        'nutritional_goals': ['HIGH_PROTEIN'],
       });
       expect(prefs.dietaryRestrictions, ['GLUTEN_FREE']);
       expect(prefs.allergies, ['PEANUTS', 'SHELLFISH']);
@@ -29,7 +29,7 @@ void main() {
   });
 
   group('UserPreferences.toJson', () {
-    test('emits all five camelCase arrays', () {
+    test('emits all five snake_case arrays', () {
       const prefs = UserPreferences(
         dietaryRestrictions: ['VEGAN'],
         allergies: ['SOY'],
@@ -39,11 +39,11 @@ void main() {
       );
 
       final json = prefs.toJson();
-      expect(json['dietaryRestrictions'], ['VEGAN']);
+      expect(json['dietary_restrictions'], ['VEGAN']);
       expect(json['allergies'], ['SOY']);
-      expect(json['dislikedIngredients'], ['Cilantro']);
-      expect(json['flavourProfile'], ['japanese']);
-      expect(json['nutritionalGoals'], ['LOW_CARB']);
+      expect(json['disliked_ingredients'], ['Cilantro']);
+      expect(json['flavour_profile'], ['japanese']);
+      expect(json['nutritional_goals'], ['LOW_CARB']);
     });
 
     test('round trips through fromJson', () {
