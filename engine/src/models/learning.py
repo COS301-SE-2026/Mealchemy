@@ -11,7 +11,7 @@ class SwipeUpdate(BaseModel):
     cuisine: str
     action: SwipeAction
     signal_scores: ScoreBreakdown
-    swiped_at: datetime
+    swiped_at: datetime | None = None
 
 
 class LearningUpdateRequest(BaseModel):
