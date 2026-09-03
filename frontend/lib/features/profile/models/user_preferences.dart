@@ -14,27 +14,26 @@ class UserPreferences {
   final List<String> nutritionalGoals;
 
   factory UserPreferences.fromJson(Map<String, dynamic> json) {
-    List<String> read(String key) =>
-        (json[key] as List<dynamic>? ?? const [])
-            .map((e) => e as String)
-            .toList();
+    List<String> read(String key) => (json[key] as List<dynamic>? ?? const [])
+        .map((e) => e as String)
+        .toList();
 
     return UserPreferences(
-      dietaryRestrictions: read('dietaryRestrictions'),
+      dietaryRestrictions: read('dietary_restrictions'),
       allergies: read('allergies'),
-      dislikedIngredients: read('dislikedIngredients'),
-      flavourProfile: read('flavourProfile'),
-      nutritionalGoals: read('nutritionalGoals'),
+      dislikedIngredients: read('disliked_ingredients'),
+      flavourProfile: read('flavour_profile'),
+      nutritionalGoals: read('nutritional_goals'),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'dietaryRestrictions': dietaryRestrictions,
+      'dietary_restrictions': dietaryRestrictions,
       'allergies': allergies,
-      'dislikedIngredients': dislikedIngredients,
-      'flavourProfile': flavourProfile,
-      'nutritionalGoals': nutritionalGoals,
+      'disliked_ingredients': dislikedIngredients,
+      'flavour_profile': flavourProfile,
+      'nutritional_goals': nutritionalGoals,
     };
   }
 
