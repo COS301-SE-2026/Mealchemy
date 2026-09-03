@@ -1,60 +1,83 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mealchemy/features/guided_discovery/models/discovery_recipe.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mealchemy/features/recipe/models/recipe.dart';
+import 'package:mealchemy/features/guided_discovery/models/recommendation.dart';
+import 'package:mealchemy/features/guided_discovery/models/signal_scores.dart';
+import 'package:mealchemy/features/guided_discovery/models/swipe.dart';
 import 'package:mealchemy/features/guided_discovery/providers/guided_discovery_provider.dart';
 import 'package:mealchemy/features/guided_discovery/repositories/guided_discovery_repository.dart';
 import 'package:mealchemy/features/guided_discovery/screens/guided_discovery_screen.dart';
 
-//mock repo with predictable recipe data
-class _TestGuidedDiscoveryRepository implements GuidedDiscoveryRepository {
+const _signals = SignalScores(
+  pantryMatch: 0.9,
+  cuisine: 0.8,
+  nutrition: 0.5,
+  freshness: 0.3,
+  novelty: 1.0,
+);
+
+Recommendation _rec({required int id, required String title}) => Recommendation(
+      recipeId: id,
+      cuisineType: 'ITALIAN',
+      score: 0.90,
+      scoreBreakdown: _signals,
+      pantryGapCount: 0,
+      missingIngredients: const [],
+      recipe: Recipe(
+        recipeId: id,
+        title: title,
+        cuisineType: 'ITALIAN',
+        prepTimeMins: 10,
+        cookingTimeMins: 20,
+        servingSize: 2,
+        isCommunityPublished: true,
+      ),
+    );
+
+// Serves a fixed two card deck once then reports the pool empty so prefetch stops.
+class _TestRepo implements GuidedDiscoveryRepository {
+  bool _served = false;
+
   @override
-  Future<List<DiscoveryRecipe>> getDiscoveryRecipes() async {
+  Future<List<Recommendation>> getRecommendations({
+    int batchSize = 10,
+    List<int> excludeRecipeIds = const [],
+  }) async {
+    if (_served) throw const EmptyRecommendationPool();
+    _served = true;
     return [
-      _createRecipe(
-        id: 'recipe-one',
-        title: 'Test Pasta',
-      ),
-      _createRecipe(
-        id: 'recipe-two',
-        title: 'Test Salmon',
-      ),
+      _rec(id: 1, title: 'Test Pasta'),
+      _rec(id: 2, title: 'Test Salmon'),
     ];
   }
-}
 
-//mock repo to simulate API failure
-class _FailingGuidedDiscoveryRepository
-    implements GuidedDiscoveryRepository {
   @override
-  Future<List<DiscoveryRecipe>> getDiscoveryRecipes() {
-    throw Exception('Discovery failure');
+  Future<SwipeResponse> recordSwipe(SwipeRequest request) async {
+    return SwipeResponse(
+      swipeId: 1,
+      recipeId: request.recipeId,
+      cuisineValue: request.cuisineValue,
+      action: request.action,
+      swipedAt: DateTime.now(),
+    );
   }
 }
 
-//creates reusable mock recipe
-DiscoveryRecipe _createRecipe({
-  required String id,
-  required String title,
-}) {
-  return DiscoveryRecipe(
-    id: id,
-    title: title,
-    chefName: 'Chef Test',
-    imageUrl: 'https://example.com/recipe.jpg',
-    matchPercentage: 90,
-    cookTimeMinutes: 30,
-    calories: 450,
-    proteinGrams: 30,
-    carbsGrams: 40,
-    fatGrams: 15,
-    tags: const ['Quick Meals', 'High Protein'],
-    ingredients: const ['Ingredient one', 'Ingredient two'],
-    description: 'A test recipe description.',
-    steps: const ['Prepare ingredients.', 'Cook the recipe.'],
-    matchReason: 'This recipe matches your test preferences.',
-  );
+class _FailingRepo implements GuidedDiscoveryRepository {
+  @override
+  Future<List<Recommendation>> getRecommendations({
+    int batchSize = 10,
+    List<int> excludeRecipeIds = const [],
+  }) {
+    throw Exception('Discovery failure');
+  }
+
+  @override
+  Future<SwipeResponse> recordSwipe(SwipeRequest request) {
+    throw Exception('Discovery failure');
+  }
 }
 
 void main() {
@@ -73,33 +96,27 @@ void main() {
     );
   }
 
-  testWidgets('GuidedDiscoveryScreen renders discovery recipe', (
-    tester,
-  ) async {
+  testWidgets('renders the first recommendation card', (tester) async {
     await tester.binding.setSurfaceSize(const Size(500, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(host(_TestGuidedDiscoveryRepository()));
+    await tester.pumpWidget(host(_TestRepo()));
     await tester.pumpAndSettle();
 
     expect(find.text('Discover'), findsOneWidget);
     expect(find.text('Sizzles'), findsOneWidget);
     expect(find.text('All'), findsOneWidget);
-    expect(find.text('Quick Meals'), findsOneWidget);
     expect(find.text('Test Pasta'), findsOneWidget);
     expect(find.text('90% Match'), findsOneWidget);
     expect(find.text('View Full Recipe ->'), findsOneWidget);
   });
 
-  testWidgets('GuidedDiscoveryScreen likes recipe using action button', (
-    tester,
-  ) async {
+  testWidgets('like button advances to the next card', (tester) async {
     await tester.binding.setSurfaceSize(const Size(500, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(host(_TestGuidedDiscoveryRepository()));
+    await tester.pumpWidget(host(_TestRepo()));
     await tester.pumpAndSettle();
-
     expect(find.text('Test Pasta'), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.favorite));
@@ -109,15 +126,12 @@ void main() {
     expect(find.text('Test Salmon'), findsOneWidget);
   });
 
-  testWidgets('GuidedDiscoveryScreen skips recipe using action button', (
-    tester,
-  ) async {
+  testWidgets('dislike button advances to the next card', (tester) async {
     await tester.binding.setSurfaceSize(const Size(500, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(host(_TestGuidedDiscoveryRepository()));
+    await tester.pumpWidget(host(_TestRepo()));
     await tester.pumpAndSettle();
-
     expect(find.text('Test Pasta'), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.close));
@@ -127,30 +141,42 @@ void main() {
     expect(find.text('Test Salmon'), findsOneWidget);
   });
 
-  testWidgets('GuidedDiscoveryScreen renders error state', (tester) async {
-    await tester.pumpWidget(host(_FailingGuidedDiscoveryRepository()));
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('Discovery failure'), findsOneWidget);
-  });
-
-  testWidgets('GuidedDiscoveryScreen likes recipe when swiped right', (
-    tester,
-  ) async {
+  testWidgets('skip button advances to the next card', (tester) async {
     await tester.binding.setSurfaceSize(const Size(500, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(host(_TestGuidedDiscoveryRepository()));
+    await tester.pumpWidget(host(_TestRepo()));
     await tester.pumpAndSettle();
-
     expect(find.text('Test Pasta'), findsOneWidget);
 
-    await tester.drag(
+    await tester.tap(find.byIcon(Icons.skip_next));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Test Pasta'), findsNothing);
+    expect(find.text('Test Salmon'), findsOneWidget);
+  });
+
+  testWidgets('renders the error state on failure', (tester) async {
+    await tester.pumpWidget(host(_FailingRepo()));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Discovery failure'), findsOneWidget);
+    expect(find.text('Try Again'), findsOneWidget);
+  });
+
+  testWidgets('swiping right advances to the next card', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(500, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(host(_TestRepo()));
+    await tester.pumpAndSettle();
+    expect(find.text('Test Pasta'), findsOneWidget);
+
+    await tester.timedDrag(
       find.text('Test Pasta'),
       const Offset(250, 0),
+      const Duration(milliseconds: 300),
     );
-
-    await tester.pump(const Duration(milliseconds: 200));
     await tester.pumpAndSettle();
 
     expect(find.text('Test Pasta'), findsNothing);

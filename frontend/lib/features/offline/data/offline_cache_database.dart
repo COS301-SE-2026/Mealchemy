@@ -223,7 +223,7 @@ class OfflineCacheDatabase extends _$OfflineCacheDatabase {
         return driftDatabase(
           name: 'mealchemy_offline_cache',
           native: DriftNativeOptions(
-            databaseDirectory: getApplicationCacheDirectory,
+            databaseDirectory: getApplicationDocumentsDirectory,
           ),
         );
       },

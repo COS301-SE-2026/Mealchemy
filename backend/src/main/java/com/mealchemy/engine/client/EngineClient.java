@@ -9,6 +9,7 @@ import com.mealchemy.engine.dto.LearningUpdateRequest;
 /* Import libraries */
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.http.MediaType;
 
 @Component
 public class EngineClient {
@@ -23,13 +24,16 @@ public class EngineClient {
     {
         return engineRestClient.post()
             .uri("/recommendations")
+            .contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON)
             .body(request)
             .retrieve()
             .onStatus(status -> status.value() == 422, (req, res) -> {
                 throw new EmptyPoolException("No recipes remain in the pool after hard-filtering.");
             })
             .onStatus(status -> status.value() == 400, (req, res) -> {
-                throw new IllegalStateException("Engine rejected candidate pool (problematic DTO assembly).");
+                String body = new String(res.getBody().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                throw new IllegalStateException("Engine rejected candidate pool: " + body);
             })
             .body(RecommendationResponse.class);
     }
@@ -38,6 +42,8 @@ public class EngineClient {
     {
         return engineRestClient.post()
             .uri("/learning/update")
+            .contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON)
             .body(request)
             .retrieve()
             .onStatus(status -> status.value() == 409, (req, res) -> {

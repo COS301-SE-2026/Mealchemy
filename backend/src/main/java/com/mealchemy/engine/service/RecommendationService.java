@@ -7,6 +7,7 @@ import java.util.stream.*;
 import org.springframework.web.server.*;
 import org.springframework.http.*;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /* Import classes */
 import com.mealchemy.pantry.model.PantryIngredient;
@@ -231,13 +232,7 @@ public class RecommendationService {
         List<UserCuisineAffinities> affinities = userCuisineAffinitiesRepository.findAllByUserId(userId);
         Map<String, BigDecimal> cuisineAffinityMap = affinities.stream().collect(Collectors.toMap(UserCuisineAffinities::getCuisineValue, UserCuisineAffinities::getAffinityScore));
 
-        PreferenceWeightsRequest weightsRequest = new PreferenceWeightsRequest(
-            weights.getPantryMatch(),
-            weights.getCuisine(),
-            weights.getNutrition(),
-            weights.getFreshness(),
-            weights.getNovelty()
-        );
+        PreferenceWeightsRequest weightsRequest = buildNormalizedWeights(weights);
 
         return new UserStateRequest(
             userId,
@@ -316,4 +311,25 @@ public class RecommendationService {
             ))
             .toList();
     }
+
+    // Helper to ensure weights are normalized
+    private PreferenceWeightsRequest buildNormalizedWeights(UserPreferenceWeights weights) {
+    BigDecimal total = weights.getPantryMatch()
+        .add(weights.getCuisine())
+        .add(weights.getNutrition())
+        .add(weights.getFreshness())
+        .add(weights.getNovelty());
+
+    if (total.compareTo(BigDecimal.ZERO) <= 0) {
+        total = BigDecimal.ONE;
+    }
+
+    BigDecimal pantryMatch = weights.getPantryMatch().divide(total, 10, RoundingMode.HALF_UP);
+    BigDecimal cuisine = weights.getCuisine().divide(total, 10, RoundingMode.HALF_UP);
+    BigDecimal nutrition = weights.getNutrition().divide(total, 10, RoundingMode.HALF_UP);
+    BigDecimal freshness = weights.getFreshness().divide(total, 10, RoundingMode.HALF_UP);
+    BigDecimal novelty = BigDecimal.ONE.subtract(pantryMatch).subtract(cuisine).subtract(nutrition).subtract(freshness);
+
+    return new PreferenceWeightsRequest(pantryMatch, cuisine, nutrition, freshness, novelty);
+}
 }

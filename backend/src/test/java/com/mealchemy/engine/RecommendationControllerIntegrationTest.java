@@ -24,6 +24,7 @@ import com.mealchemy.preference.repository.UserPreferencesRepository;
 import com.mealchemy.preference.repository.UserPreferenceWeightsRepository;
 import com.mealchemy.preference.model.UserCuisineAffinities;
 import com.mealchemy.preference.repository.UserCuisineAffinitiesRepository;
+import com.mealchemy.externallinks.repository.ExternalLinkRepository;
 
 // engine client + dtos
 import com.mealchemy.engine.client.EngineClient;
@@ -76,6 +77,7 @@ public class RecommendationControllerIntegrationTest {
     @Autowired private UserPreferencesRepository userPreferencesRepository;
     @Autowired private UserPreferenceWeightsRepository userPreferenceWeightsRepository;
     @Autowired private UserCuisineAffinitiesRepository userCuisineAffinitiesRepository;
+    @Autowired private ExternalLinkRepository externalLinksRepository;
 
     @MockitoBean private EngineClient engineClient;
 
@@ -91,6 +93,7 @@ public class RecommendationControllerIntegrationTest {
         userPreferencesRepository.deleteAll();
         userPreferenceWeightsRepository.deleteAll();
         userCuisineAffinitiesRepository.deleteAll();
+        externalLinksRepository.deleteAll();
         userRepository.deleteAll();
 
         User user = new User();

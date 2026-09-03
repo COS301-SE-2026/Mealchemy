@@ -109,18 +109,17 @@ class PantryNotifier extends AsyncNotifier<PantryState> {
       return;
     }
 
-    final createdIngredient = await _repository.addPantryIngredient(
+    await _repository.addPantryIngredient(
       ingId: ingId,
       quantity: cleanedQuantity,
       unit: cleanedUnit,
     );
 
-    //add backend created item to current screen
-    state = AsyncData(
-      current.copyWith(
-        ingredients: [...current.ingredients, createdIngredient],
-      ),
-    );
+    //refetch everything (summary, filters, ingredients, categories) so
+    //derived providers like pantrySummaryProvider stay in sync, not just
+    //the ingredients list
+    ref.invalidateSelf();
+    await future;
   }
 
   //removes ingredient from backend first, then from the local screen list

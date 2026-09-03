@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -182,6 +183,7 @@ public class LearningUpdateServiceTest {
         assertEquals(2, sentSwipes.size());
         assertEquals(100, sentSwipes.get(0).recipeId());
         assertEquals("ITALIAN", sentSwipes.get(0).cuisine());
+        assertEquals(swipe1.getSwipedAt(), sentSwipes.get(0).swipedAt());
     }
 
     @Test

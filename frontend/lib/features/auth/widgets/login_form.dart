@@ -71,7 +71,7 @@ class _LoginFormState extends ConsumerState<LoginForm> with ScrollHelper {
     setState(() => _isLoading = false);
 
     if (success) {
-      context.go('/vault');
+      context.go('/dashboard');
     } else {
       final error = ref.read(authProvider).errorMessage;
       setState(() => _authError = error ?? 'Invalid email or password');

@@ -42,7 +42,7 @@ public class UserPreferenceWeights {
     private OffsetDateTime updatedAt;
 
     @Column(name = "state_version", nullable = false)
-    private Integer stateVersion;
+    private Integer stateVersion = 0;
 
     /* Getters */
     

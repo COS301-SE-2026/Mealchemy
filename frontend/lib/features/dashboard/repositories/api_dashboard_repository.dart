@@ -1,4 +1,3 @@
-import 'package:mealchemy/features/dashboard/models/dashboard_recipe_card_data.dart';
 import 'package:mealchemy/features/dashboard/models/trending_recipe_data.dart';
 import 'dashboard_repository.dart';
 
@@ -24,10 +23,6 @@ class ApiDashboardRepository implements DashboardRepository {
     throw UnimplementedError('Dashboard API integration not implemented yet.');
   }
 
-  @override
-  Future<List<DashboardRecipeCardData>> getRecommendedRecipes() {
-    throw UnimplementedError('Dashboard API integration not implemented yet.');
-  }
 
   @override
   Future<List<TrendingRecipeData>> getTrendingRecipes() {

@@ -12,6 +12,7 @@ import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/ingredient_catalogue_item.dart';
 import '../providers/pantry_provider.dart';
+import 'package:flutter/services.dart';
 import '../repositories/ingredient_catalogue_repository.dart';
 
 const double _blurArea = 240;
@@ -755,11 +756,44 @@ class _LabelledDropdown extends StatelessWidget {
   }
 }
 
-class _QuantityStepper extends StatelessWidget {
+class _QuantityStepper extends StatefulWidget {
   const _QuantityStepper({required this.value, required this.onChanged});
 
   final int value;
   final ValueChanged<int> onChanged;
+
+  @override
+  State<_QuantityStepper> createState() => _QuantityStepperState();
+}
+
+class _QuantityStepperState extends State<_QuantityStepper> {
+  late final TextEditingController _controller =
+      TextEditingController(text: '${widget.value}');
+
+  @override
+  void didUpdateWidget(covariant _QuantityStepper oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (int.tryParse(_controller.text) != widget.value) {
+      _controller.text = '${widget.value}';
+      _controller.selection =
+          TextSelection.collapsed(offset: _controller.text.length);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _commit(String text) {
+    final parsed = int.tryParse(text);
+    if (parsed != null && parsed > 0) {
+      widget.onChanged(parsed);
+    } else {
+      _controller.text = '${widget.value}';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -774,21 +808,29 @@ class _QuantityStepper extends StatelessWidget {
         children: [
           _StepperButton(
             icon: Icons.remove,
-            onTap: value > 1 ? () => onChanged(value - 1) : null,
+            onTap: widget.value > 1
+                ? () => widget.onChanged(widget.value - 1)
+                : null,
           ),
           Expanded(
-            child: Center(
-              child: Text(
-                '$value',
-                style: AppTextStyles.title.copyWith(
-                  color: AppColors.textLight,
-                ),
+            child: TextField(
+              controller: _controller,
+              textAlign: TextAlign.center,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              style: AppTextStyles.title.copyWith(color: AppColors.textLight),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                isCollapsed: true,
+                contentPadding: EdgeInsets.zero,
               ),
+              onSubmitted: _commit,
+              onTapOutside: (_) => _commit(_controller.text),
             ),
           ),
           _StepperButton(
             icon: Icons.add,
-            onTap: () => onChanged(value + 1),
+            onTap: () => widget.onChanged(widget.value + 1),
           ),
         ],
       ),

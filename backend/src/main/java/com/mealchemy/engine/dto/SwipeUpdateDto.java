@@ -13,5 +13,6 @@ public record SwipeUpdateDto(
     String cuisine,
     SwipeAction action,
     @JsonProperty("signal_scores") SignalScoresResponse signalScores,
-    Double alpha
+    Double alpha,
+    @JsonProperty("swiped_at") OffsetDateTime swipedAt
 ){}

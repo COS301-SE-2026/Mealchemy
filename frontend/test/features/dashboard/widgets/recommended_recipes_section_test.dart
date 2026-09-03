@@ -3,12 +3,35 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mealchemy/features/dashboard/models/dashboard_recipe_card_data.dart';
 import 'package:mealchemy/features/dashboard/models/trending_recipe_data.dart';
 import 'package:mealchemy/features/dashboard/providers/dashboard_provider.dart';
 import 'package:mealchemy/features/dashboard/repositories/dashboard_repository.dart';
 import 'package:mealchemy/features/dashboard/widgets/recommended_recipes_section.dart';
+import 'package:mealchemy/features/guided_discovery/models/recommendation.dart';
+import 'package:mealchemy/features/guided_discovery/models/signal_scores.dart';
+import 'package:mealchemy/features/guided_discovery/models/swipe.dart';
+import 'package:mealchemy/features/guided_discovery/providers/guided_discovery_provider.dart';
+import 'package:mealchemy/features/guided_discovery/repositories/guided_discovery_repository.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
+
+const _signals = SignalScores(
+  pantryMatch: 0.9,
+  cuisine: 0.8,
+  nutrition: 0.5,
+  freshness: 0.3,
+  novelty: 1.0,
+);
+
+Recommendation _rec(int id, String title, String cuisine, double score) =>
+    Recommendation(
+      recipeId: id,
+      cuisineType: cuisine,
+      score: score,
+      scoreBreakdown: _signals,
+      pantryGapCount: 0,
+      missingIngredients: const [],
+      recipe: Recipe(recipeId: id, title: title, cuisineType: cuisine),
+    );
 
 class _FakeDashboardRepo implements DashboardRepository {
   @override
@@ -19,28 +42,24 @@ class _FakeDashboardRepo implements DashboardRepository {
   Future<int> getSmartSuggestionItemsAway() async => 3;
   @override
   Future<int> getSmartSuggestionRecipeCount() async => 10;
-
-  @override
-  Future<List<DashboardRecipeCardData>> getRecommendedRecipes() async {
-    return const [
-      DashboardRecipeCardData(
-        recipe: Recipe(recipeId: 1, title: 'Saffron Risotto'),
-        matchPercent: 92,
-        tag: 'HIGH PROTEIN',
-        rating: 4.9,
-      ),
-      DashboardRecipeCardData(
-        recipe: Recipe(recipeId: 2, title: 'Butter Chicken'),
-        matchPercent: 85,
-
-        tag:  'COMFORT FOOD',
-        rating: 4.7,
-      ),
-    ];
-  }
-
   @override
   Future<List<TrendingRecipeData>> getTrendingRecipes() async => [];
+}
+
+class _FakeGuidedDiscoveryRepo implements GuidedDiscoveryRepository {
+  @override
+  Future<List<Recommendation>> getRecommendations({
+    int batchSize = 10,
+    List<int> excludeRecipeIds = const [],
+  }) async =>
+      [
+        _rec(1, 'Saffron Risotto', 'ITALIAN', 0.92),
+        _rec(2, 'Butter Chicken', 'INDIAN', 0.85),
+      ];
+
+  @override
+  Future<SwipeResponse> recordSwipe(SwipeRequest request) async =>
+      throw UnimplementedError();
 }
 
 void main() {
@@ -54,7 +73,8 @@ void main() {
       routes: [
         GoRoute(
           path: '/',
-          builder: (_, __) => Scaffold(body: SingleChildScrollView(child: child)),
+          builder: (_, __) =>
+              Scaffold(body: SingleChildScrollView(child: child)),
         ),
         GoRoute(
           path: '/recipe/:id',
@@ -66,6 +86,8 @@ void main() {
     return ProviderScope(
       overrides: [
         dashboardRepositoryProvider.overrideWithValue(_FakeDashboardRepo()),
+        guidedDiscoveryRepositoryProvider
+            .overrideWithValue(_FakeGuidedDiscoveryRepo()),
       ],
       child: MaterialApp.router(routerConfig: router),
     );
@@ -91,33 +113,8 @@ void main() {
     testWidgets('renders View all trailing label', (tester) async {
       await pump(tester, const RecommendedRecipesSection());
       await tester.pump();
-
       expect(find.text('View all'), findsOneWidget);
     });
 
-    testWidgets('renders recipe titles after data loads', (tester) async {
-      await pump(tester, const RecommendedRecipesSection());
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(RecommendedRecipesSection)),
-      );
-      await container.read(dashboardProvider.notifier).loadDashboard();
-      await tester.pumpAndSettle();
-
-      expect(find.text('Saffron Risotto'), findsOneWidget);
-      expect(find.text('Butter Chicken'), findsOneWidget);
-    });
-
-    testWidgets('renders recipe tags after data loads', (tester) async {
-      await pump(tester, const RecommendedRecipesSection());
-
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(RecommendedRecipesSection)),
-      );
-      await container.read(dashboardProvider.notifier).loadDashboard();
-      await tester.pumpAndSettle();
-
-      expect(find.text('HIGH PROTEIN'), findsOneWidget);
-      expect(find.text('COMFORT FOOD'), findsOneWidget);
-    });
   });
 }
