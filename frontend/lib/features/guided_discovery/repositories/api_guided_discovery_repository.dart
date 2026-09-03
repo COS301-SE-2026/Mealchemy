@@ -21,6 +21,10 @@ class ApiGuidedDiscoveryRepository implements GuidedDiscoveryRepository {
           'batchSize': batchSize,
           if (excludeRecipeIds.isNotEmpty) 'excludeRecipeIds': excludeRecipeIds,
         },
+        options: Options(
+          receiveTimeout: const Duration(seconds: 30),
+          sendTimeout: const Duration(seconds: 30),
+        ),
       );
       final items = (response.data['recommendations'] as List<dynamic>?) ?? [];
       return items
