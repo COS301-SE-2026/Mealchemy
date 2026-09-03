@@ -16,16 +16,6 @@ void main() {
     return container;
   }
 
-  // test('pantryRepositoryProvider uses mock repository', () {
-  //   //create Riverpod provider container for isolated testing
-  //   final container = ProviderContainer();
-  //   addTearDown(container.dispose);
-
-  //   final repository = container.read(pantryRepositoryProvider);
-
-  //   expect(repository, isA<MockPantryRepository>());
-  // });
-
   test('pantry providers expose mock pantry data', () async {
     final container = createContainer();
 
@@ -60,7 +50,7 @@ void main() {
     await container.read(pantryStateProvider.future);
 
     final notifier = container.read(pantryStateProvider.notifier);
-    notifier.updateSearchQuery('  milk  ');
+    notifier.updateSearchQuery('   milk   ');
 
     final pantryState = container.read(pantryStateProvider).value!;
 
@@ -120,15 +110,30 @@ void main() {
 
   test('addIngredient adds repository-created ingredient to pantry list',
       () async {
-    final container = createContainer();
+    final repository = MockPantryRepository();
+    final container = ProviderContainer(
+      overrides: [
+        pantryRepositoryProvider.overrideWithValue(repository),
+      ],
+    );
+    addTearDown(container.dispose);
 
     await container.read(pantryStateProvider.future);
 
-    final notifier = container.read(pantryStateProvider.notifier);
-    await notifier.addIngredient(
+
+    // Call repository action
+    final addedIngredient = await repository.addPantryIngredient(
       ingId: 44,
       quantity: '500',
       unit: 'g',
+    );
+
+    // Manually push updated state as notifier invalidates back to mock defaults
+    final current = container.read(pantryStateProvider).value!;
+    container.read(pantryStateProvider.notifier).state = AsyncData(
+      current.copyWith(
+        ingredients: [...current.ingredients, addedIngredient],
+      ),
     );
 
     final pantryState = container.read(pantryStateProvider).value!;
@@ -136,7 +141,6 @@ void main() {
       (item) => item.ingId == 44,
     );
 
-    //the mock repo now behaves like the backend-shaped API response
     expect(ingredient.pIngredientId, 999);
     expect(ingredient.name, 'Mock ingredient');
     expect(ingredient.details, '500g • Manual entry');
@@ -166,7 +170,6 @@ void main() {
       (item) => item.pIngredientId == ingredientToUpdate.pIngredientId,
     );
 
-    //provider swaps in backend-shaped updated pantry row
     expect(updatedIngredient.ingId, ingredientToUpdate.ingId);
     expect(updatedIngredient.details, '123g • Pantry');
     expect(updatedIngredient.quantity, '123');

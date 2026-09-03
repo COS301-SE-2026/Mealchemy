@@ -172,8 +172,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Test Pasta'), findsOneWidget);
 
-    await tester.drag(find.text('Test Pasta'), const Offset(250, 0));
-    await tester.pump(const Duration(milliseconds: 200));
+    await tester.timedDrag(
+      find.text('Test Pasta'),
+      const Offset(250, 0),
+      const Duration(milliseconds: 300),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Test Pasta'), findsNothing);
