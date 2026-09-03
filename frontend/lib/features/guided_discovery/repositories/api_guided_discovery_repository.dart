@@ -27,6 +27,11 @@ class ApiGuidedDiscoveryRepository implements GuidedDiscoveryRepository {
         ),
       );
       final items = (response.data['recommendations'] as List<dynamic>?) ?? [];
+
+      if (items.isEmpty) {
+        throw const EmptyRecommendationPool();
+      }
+
       return items
           .map((e) => Recommendation.fromJson(e as Map<String, dynamic>))
           .toList();
