@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -154,6 +155,7 @@ public class LearningUpdateServiceTest {
         swipe1.setCuisineValue("ITALIAN");
         swipe1.setAction(SwipeAction.LIKED);
         swipe1.setWeightsSnapshot(new SignalScoresResponse(0.9, 0.8, 0.5, 0.3, 1.0));
+        swipe1.setSwipedAt(OffsetDateTime.now());
         swipe1.setFlushed(false);
 
         Swipe swipe2 = new Swipe();
@@ -182,6 +184,7 @@ public class LearningUpdateServiceTest {
         assertEquals(2, sentSwipes.size());
         assertEquals(100, sentSwipes.get(0).recipeId());
         assertEquals("ITALIAN", sentSwipes.get(0).cuisine());
+        assertNotNull(sentSwipes.get(0).swipedAt());
     }
 
     @Test

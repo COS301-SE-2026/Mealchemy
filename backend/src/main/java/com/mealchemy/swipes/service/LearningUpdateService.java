@@ -120,7 +120,8 @@ public class LearningUpdateService {
                 swipe.getCuisineValue(),
                 swipe.getAction(),
                 swipe.getWeightsSnapshot(),
-                null
+                null,
+                swipe.getSwipedAt()
             ))
             .collect(Collectors.toList());
 
