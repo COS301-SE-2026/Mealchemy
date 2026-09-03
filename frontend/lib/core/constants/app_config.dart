@@ -9,6 +9,6 @@ class AppConfig {
   static const bool mockDiscovery = false; 
   static const bool mockShoppinglist = false;
   static const bool mockProfile = false;
-  static const bool mockGuidedDiscovery = true; 
+  static const bool mockGuidedDiscovery = false; 
   static const bool mockDashboard = false;
 }

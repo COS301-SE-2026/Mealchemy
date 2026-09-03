@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mealchemy/features/guided_discovery/models/discovery_recipe.dart';
+import 'package:mealchemy/features/recipe/models/recipe.dart';
+import 'package:mealchemy/features/guided_discovery/models/recommendation.dart';
+import 'package:mealchemy/features/guided_discovery/models/signal_scores.dart';
 import 'package:mealchemy/features/guided_discovery/widgets/recipe_preview_sheet.dart';
 
 void main() {
@@ -10,100 +12,87 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  //sample recipe to verify preview sheet
-  final recipe = DiscoveryRecipe(
-    id: 'test-recipe',
-    title: 'Miso Salmon Rice Bowl',
-    chefName: 'Chef Naomi',
-    imageUrl: 'https://example.com/salmon.jpg',
-    matchPercentage: 89,
-    cookTimeMinutes: 32,
-    calories: 510,
-    proteinGrams: 36,
-    carbsGrams: 42,
-    fatGrams: 20,
-    tags: const ['High Protein', 'Quick Meals'],
-    ingredients: const ['Salmon', 'Rice', 'Miso glaze'],
-    description: 'A balanced rice bowl with savoury miso salmon.',
-    steps: const [
-      'Cook the rice.',
-      'Glaze the salmon.',
-      'Assemble the bowl.',
-    ],
-    matchReason: 'You liked protein-forward recipes.',
+  const signals = SignalScores(
+    pantryMatch: 0.9,
+    cuisine: 0.8,
+    nutrition: 0.5,
+    freshness: 0.3,
+    novelty: 1.0,
   );
 
-  //all recipe info displays
-  testWidgets('RecipePreviewSheet renders recipe preview details', (
-    tester,
-  ) async {
+  final rec = Recommendation(
+    recipeId: 7,
+    cuisineType: 'JAPANESE',
+    score: 0.89,
+    scoreBreakdown: signals,
+    pantryGapCount: 2,
+    missingIngredients: const ['white miso', 'sesame seeds'],
+    recipe: const Recipe(
+      recipeId: 7,
+      title: 'Miso Salmon Rice Bowl',
+      description: 'A balanced rice bowl with savoury miso salmon.',
+      cuisineType: 'JAPANESE',
+      prepTimeMins: 10,
+      cookingTimeMins: 22,
+      servingSize: 2,
+      photoUrl: 'https://example.com/salmon.jpg',
+      isCommunityPublished: true,
+    ),
+  );
+
+  testWidgets('renders preview details for a recommendation', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(500, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: SingleChildScrollView(
-            child: RecipePreviewSheet(recipe: recipe),
-          ),
-        ),
+          body: RecipePreviewSheet(recommendation: rec)),
       ),
     );
-
     await tester.pump();
 
-    //recipe title, chef, description
     expect(find.text('Miso Salmon Rice Bowl'), findsOneWidget);
-    expect(find.textContaining('Chef Naomi'), findsOneWidget);
-    expect(
-      find.text('A balanced rice bowl with savoury miso salmon.'),
-      findsOneWidget,
-    );
+    expect(find.text('Japanese'), findsOneWidget); 
+    expect( find.text('A balanced rice bowl with savoury miso salmon.'),
+            findsOneWidget,);
     expect(find.text('89% Match'), findsOneWidget);
-    expect(find.text('32m'), findsOneWidget);
-    expect(find.text('510'), findsOneWidget);
-    expect(find.text('36g'), findsOneWidget);
-    expect(find.text('High Protein'), findsOneWidget);
-    expect(find.text('Quick Meals'), findsOneWidget);
+    expect(find.text('10m'), findsOneWidget); 
+    expect(find.text('22m'), findsOneWidget); 
+    expect(find.text('32m'), findsOneWidget); 
     expect(find.text('Why this matches you'), findsOneWidget);
-    expect(find.text('You liked protein-forward recipes.'), findsOneWidget);
-    expect(find.text('Ingredients'), findsOneWidget);
-    expect(find.text('Salmon'), findsOneWidget);
-    expect(find.text('Rice'), findsOneWidget);
-    expect(find.text('Mock method'), findsOneWidget);
-    expect(find.text('Cook the rice.'), findsOneWidget);
+    expect(find.text("You're missing 2 items"), findsOneWidget);
+    expect(find.text('white miso'), findsOneWidget);
+    expect(find.text('sesame seeds'), findsOneWidget);
+    expect(find.text('Looks Good'), findsOneWidget);
+    expect(find.text('Close'), findsOneWidget);
   });
 
-    //action of close button
-    testWidgets('RecipePreviewSheet action button closes preview', (tester) async {
+  testWidgets('closes the sheet when Close is tapped', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Builder(
-          builder: (context) {
-            return Scaffold(
-              body: TextButton(
-                onPressed: () {
-                  showModalBottomSheet<void>(
-                    context: context,
-                    isScrollControlled: true,
-                    builder: (_) => RecipePreviewSheet(recipe: recipe),
-                  );
-                },
-                child: const Text('Open Preview'),
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                builder: (_) => RecipePreviewSheet(recommendation: rec),
               ),
-            );
-          },
+              child: const Text('Open Preview'),
+            ),
+          ),
         ),
       ),
     );
 
     await tester.tap(find.text('Open Preview'));
     await tester.pumpAndSettle();
-
     expect(find.text('Miso Salmon Rice Bowl'), findsOneWidget);
-
-    final actionButton = find.text('Looks Good');
-
-    await tester.ensureVisible(actionButton);
+    final closeBtn = find.text('Close');
+    await tester.ensureVisible(closeBtn);
     await tester.pumpAndSettle();
-    await tester.tap(actionButton);
+    await tester.tap(closeBtn);
     await tester.pumpAndSettle();
 
     expect(find.text('Miso Salmon Rice Bowl'), findsNothing);
