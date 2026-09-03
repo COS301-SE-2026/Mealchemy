@@ -12,7 +12,6 @@ import '../widgets/discovery_recipe_card.dart';
 import '../widgets/swipe_action_button.dart';
 import '../widgets/recipe_preview_sheet.dart';
 
-
 //main Guided Discovery swipe screen
 class GuidedDiscoveryScreen extends ConsumerStatefulWidget {
   const GuidedDiscoveryScreen({super.key});
@@ -47,8 +46,7 @@ class _GuidedDiscoveryScreenState extends ConsumerState<GuidedDiscoveryScreen> {
               top: true,
               bottom: false,
               child: discoveryState.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                loading: () => const Center(child: CircularProgressIndicator()),
                 error: (error, stackTrace) => _ErrorState(
                   message: error.toString(),
                   onRetry: notifier.resetDiscovery,
@@ -109,7 +107,8 @@ class _Deck extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: IntrinsicHeight(
+            child: SizedBox(
+              height: constraints.maxHeight,
               child: Column(
                 children: [
                   Expanded(
@@ -124,19 +123,20 @@ class _Deck extends StatelessWidget {
                             recommendation: card,
                             currentIndex: state.currentIndex,
                             totalRecipes: state.deck.length,
-                            onViewRecipe: () => _showRecipePreview(context, card),
+                            onViewRecipe: () =>
+                                _showRecipePreview(context, card),
                           ),
                         ),
                       ),
                     ),
                   ),
                   Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      54,
-                                      12,
-                                      54,
-                                      18,
-                                    ),
+                    padding: const EdgeInsets.fromLTRB(
+                      54,
+                      12,
+                      54,
+                      18,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -206,13 +206,13 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline,
-                color: AppColors.error, size: 40),
+            const Icon(Icons.error_outline, color: AppColors.error, size: 40),
             const SizedBox(height: 12),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: AppTextStyles.body.copyWith(color: AppColors.tertiaryMuted),
+              style:
+                  AppTextStyles.body.copyWith(color: AppColors.tertiaryMuted),
             ),
             const SizedBox(height: 18),
             OutlinedButton(
