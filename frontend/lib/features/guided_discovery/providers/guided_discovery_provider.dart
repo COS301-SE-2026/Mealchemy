@@ -1,212 +1,159 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../core/constants/app_config.dart';
-import '../models/discovery_recipe.dart';
+import 'package:mealchemy/core/providers/api_service_provider.dart';
+import '../models/recommendation.dart';
+import '../models/swipe.dart';
 import '../repositories/guided_discovery_repository.dart';
-import '../repositories/mock_guided_discovery_repository.dart';
+import '../repositories/api_guided_discovery_repository.dart';
 
 final guidedDiscoveryRepositoryProvider =
     Provider<GuidedDiscoveryRepository>((ref) {
-  if (AppConfig.useMockData) {
-    return MockGuidedDiscoveryRepository();
-  }
-
-  //API repo will replace this once the backend endpoint exists
-  return MockGuidedDiscoveryRepository();
+  return ApiGuidedDiscoveryRepository(ref.read(dioProvider));
 });
 
-//state management provider
 final guidedDiscoveryProvider =
     AsyncNotifierProvider<GuidedDiscoveryNotifier, GuidedDiscoveryState>(
   GuidedDiscoveryNotifier.new,
 );
 
-//current state of Guided Discovery flow. tracks recipes, user interactions, filter
+// Deck state for the swipe screen. `deck` is the running list of cards fetched
 class GuidedDiscoveryState {
   const GuidedDiscoveryState({
-    required this.allRecipes,
+    this.deck = const [],
     this.currentIndex = 0,
-    this.likedRecipeIds = const [],
-    this.dislikedRecipeIds = const [],
-    this.selectedFilter = 'All',
+    this.likedCount = 0,
+    this.dislikedCount = 0,
+    this.skippedCount = 0,
+    this.exhausted = false,
+    this.isFetchingMore = false,
   });
 
-  final List<DiscoveryRecipe> allRecipes;
+  final List<Recommendation> deck;
   final int currentIndex;
-  final List<String> likedRecipeIds;
-  final List<String> dislikedRecipeIds;
-  final String selectedFilter;
+  final int likedCount;
+  final int dislikedCount;
+  final int skippedCount;
+  final bool exhausted;
+  final bool isFetchingMore;
 
-  //recipes that match selected filter
-  List<DiscoveryRecipe> get recipes {
-    if (selectedFilter == 'All') return allRecipes;
+  Recommendation? get currentRecipe =>
+      currentIndex < deck.length ? deck[currentIndex] : null;
 
-    return allRecipes.where((recipe) {
-      return recipe.tags.contains(selectedFilter);
-    }).toList();
-  }
+  // Complete once the pool is exhausted and every fetched card is behind us.
+  bool get isComplete => exhausted && currentIndex >= deck.length;
 
-  //returns recipe being displayed to user
-  DiscoveryRecipe? get currentRecipe {
-    if (currentIndex >= recipes.length) return null;
-    return recipes[currentIndex];
-  }
-
-  //shows if all recipes have been reviewed
-  bool get isComplete => currentIndex >= recipes.length;
-
-  //shows user progress through current filtered recipe stack
-  int get totalRecipes => recipes.length;
-
-  //shows how many recipes have been reviewed in current filtered recipe stack
-  int get viewedRecipeCount {
-    if (recipes.isEmpty) return 0;
-    return currentIndex.clamp(0, recipes.length);
-  }
-
-  //recipes user liked
-  List<DiscoveryRecipe> get likedRecipes {
-    return allRecipes.where((recipe) {
-      return likedRecipeIds.contains(recipe.id);
-    }).toList();
-  }
-
-  //recipes user disliked
-  List<DiscoveryRecipe> get dislikedRecipes {
-    return allRecipes.where((recipe) {
-      return dislikedRecipeIds.contains(recipe.id);
-    }).toList();
-  }
-
-  //mock heuristic taste tags based on liked recipes
-  List<String> get topTasteSignals {
-    final tagCounts = <String, int>{};
-
-    for (final recipe in likedRecipes) {
-      for (final tag in recipe.tags) {
-        tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
-      }
-    }
-
-    final sortedTags = tagCounts.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
-    return sortedTags.map((entry) => entry.key).take(3).toList();
-  }
-
-  //mock recommended recipe based on liked recipe tags
-  DiscoveryRecipe? get recommendedRecipe {
-    if (recipes.isEmpty) return null;
-
-    final likedIds = likedRecipeIds.toSet();
-    final dislikedIds = dislikedRecipeIds.toSet();
-    final tasteSignals = topTasteSignals.toSet();
-
-    final unreviewedRecipes = allRecipes.where((recipe) {
-      return !likedIds.contains(recipe.id) && !dislikedIds.contains(recipe.id);
-    }).toList();
-
-    if (unreviewedRecipes.isEmpty) {
-      return likedRecipes.isNotEmpty ? likedRecipes.first : allRecipes.first;
-    }
-
-    unreviewedRecipes.sort((a, b) {
-      final aScore = a.tags.where(tasteSignals.contains).length;
-      final bScore = b.tags.where(tasteSignals.contains).length;
-
-      return bScore.compareTo(aScore);
-    });
-
-    return unreviewedRecipes.first;
-  }
+  int get reviewedCount => likedCount + dislikedCount + skippedCount;
 
   GuidedDiscoveryState copyWith({
-    List<DiscoveryRecipe>? allRecipes,
+    List<Recommendation>? deck,
     int? currentIndex,
-    List<String>? likedRecipeIds,
-    List<String>? dislikedRecipeIds,
-    String? selectedFilter,
+    int? likedCount,
+    int? dislikedCount,
+    int? skippedCount,
+    bool? exhausted,
+    bool? isFetchingMore,
   }) {
     return GuidedDiscoveryState(
-      allRecipes: allRecipes ?? this.allRecipes,
+      deck: deck ?? this.deck,
       currentIndex: currentIndex ?? this.currentIndex,
-      likedRecipeIds: likedRecipeIds ?? this.likedRecipeIds,
-      dislikedRecipeIds: dislikedRecipeIds ?? this.dislikedRecipeIds,
-      selectedFilter: selectedFilter ?? this.selectedFilter,
+      likedCount: likedCount ?? this.likedCount,
+      dislikedCount: dislikedCount ?? this.dislikedCount,
+      skippedCount: skippedCount ?? this.skippedCount,
+      exhausted: exhausted ?? this.exhausted,
+      isFetchingMore: isFetchingMore ?? this.isFetchingMore,
     );
   }
 }
 
-//handles recipe interactions and updates state
 class GuidedDiscoveryNotifier extends AsyncNotifier<GuidedDiscoveryState> {
   late final GuidedDiscoveryRepository _repository;
 
-  //loads initial set of recipe recommendations
+  static const _batchSize = 10;
+  // Fetch the next batch once only this many cards remain ahead of the user.
+  static const _prefetchThreshold = 3;
+
   @override
   Future<GuidedDiscoveryState> build() async {
     _repository = ref.watch(guidedDiscoveryRepositoryProvider);
-
-    final recipes = await _repository.getDiscoveryRecipes();
-
-    return GuidedDiscoveryState(allRecipes: recipes);
+    return _loadInitial();
   }
 
-  //updates filter
-  void selectFilter(String filter) {
+  Future<GuidedDiscoveryState> _loadInitial() async {
+    try {
+      final batch = await _repository.getRecommendations(batchSize: _batchSize);
+      return GuidedDiscoveryState(deck: batch);
+    } on EmptyRecommendationPool {
+      return const GuidedDiscoveryState(exhausted: true);
+    }
+  }
+
+  void likeCurrentRecipe() => _advance(SwipeAction.liked);
+  void dislikeCurrentRecipe() => _advance(SwipeAction.disliked);
+  void skipCurrentRecipe() => _advance(SwipeAction.skipped);
+
+  // Advance the deck immediately, then record the swipe in the bacground so the card never waits on the network.
+  void _advance(SwipeAction action) {
     final current = state.valueOrNull;
-    if (current == null) return;
+    final card = current?.currentRecipe;
+
+    if (current == null || card == null) return;
 
     state = AsyncData(
       current.copyWith(
-        selectedFilter: filter,
-        currentIndex: 0,
-      ),
-    );
+      currentIndex: current.currentIndex + 1,
+      likedCount: action == SwipeAction.liked ? current.likedCount + 1 : null,
+      dislikedCount: action == SwipeAction.disliked ? current.dislikedCount + 1 : null,
+      skippedCount: action == SwipeAction.skipped ? current.skippedCount + 1 : null,
+    ));
+
+    _postSwipe(card, action);
+    _maybePrefetch();
   }
 
-  //like recipe
-  void likeCurrentRecipe() {
+  Future<void> _postSwipe(Recommendation card, SwipeAction action) async {
+    try {
+      await _repository.recordSwipe(SwipeRequest(
+        recipeId: card.recipeId,
+        cuisineValue: card.cuisineType,
+        action: action,
+        signalScores: card.scoreBreakdown,
+      ));
+    } catch (e) {
+      debugPrint('swipe post faled for recipe ${card.recipeId}: $e');
+    }
+  }
+
+  Future<void> _maybePrefetch() async {
     final current = state.valueOrNull;
-    final recipe = current?.currentRecipe;
-    if (current == null || recipe == null) return;
+    if (current == null || current.isFetchingMore || current.exhausted) return;
+    if (current.deck.length - current.currentIndex > _prefetchThreshold) return;
 
-    state = AsyncData(
-      current.copyWith(
-        currentIndex: current.currentIndex + 1,
-        likedRecipeIds: current.likedRecipeIds.contains(recipe.id)
-            ? current.likedRecipeIds
-            : [...current.likedRecipeIds, recipe.id],
-        dislikedRecipeIds:
-            current.dislikedRecipeIds.where((id) => id != recipe.id).toList(),
-      ),
-    );
+    state = AsyncData(current.copyWith(isFetchingMore: true));
+    final seen = current.deck.map((r) => r.recipeId).toList();
+
+    try {
+      final more = await _repository.getRecommendations(
+        batchSize: _batchSize,
+        excludeRecipeIds: seen,
+      );
+      final latest = state.valueOrNull ?? current;
+      state = AsyncData(latest.copyWith(
+        deck: [...latest.deck, ...more],
+        isFetchingMore: false,
+      ));
+    } on EmptyRecommendationPool {
+      final latest = state.valueOrNull ?? current;
+      state =
+          AsyncData(latest.copyWith(exhausted: true, isFetchingMore: false));
+    } catch (e) {
+      debugPrint('prefetch failed: $e');
+      final latest = state.valueOrNull ?? current;
+      state = AsyncData(latest.copyWith(isFetchingMore: false));
+    }
   }
 
-  //dislike recipe
-  void dislikeCurrentRecipe() {
-    final current = state.valueOrNull;
-    final recipe = current?.currentRecipe;
-    if (current == null || recipe == null) return;
-
-    state = AsyncData(
-      current.copyWith(
-        currentIndex: current.currentIndex + 1,
-        dislikedRecipeIds: current.dislikedRecipeIds.contains(recipe.id)
-            ? current.dislikedRecipeIds
-            : [...current.dislikedRecipeIds, recipe.id],
-        likedRecipeIds:
-            current.likedRecipeIds.where((id) => id != recipe.id).toList(),
-      ),
-    );
-  }
-
-  //resets
   Future<void> resetDiscovery() async {
     state = const AsyncLoading();
-
-    state = await AsyncValue.guard(() async {
-      final recipes = await _repository.getDiscoveryRecipes();
-      return GuidedDiscoveryState(allRecipes: recipes);
-    });
+    state = await AsyncValue.guard(_loadInitial);
   }
 }
