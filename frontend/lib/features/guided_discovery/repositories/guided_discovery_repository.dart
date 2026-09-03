@@ -1,6 +1,14 @@
-import '../models/discovery_recipe.dart';
+import '../models/recommendation.dart';
+import '../models/swipe.dart';
 
-//used by mock and api data
+class EmptyRecommendationPool implements Exception {
+  const EmptyRecommendationPool();
+}
 abstract class GuidedDiscoveryRepository {
-  Future<List<DiscoveryRecipe>> getDiscoveryRecipes();
+  // Fetches the next batch of recommendations.
+  Future<List<Recommendation>> getRecommendations({
+    int batchSize,
+    List<int> excludeRecipeIds,
+  });
+  Future<SwipeResponse> recordSwipe(SwipeRequest request);
 }
