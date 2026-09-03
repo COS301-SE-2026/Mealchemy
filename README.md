@@ -51,12 +51,13 @@
 
 | Service | Link |
 |---|---|
-| Backend (production) | [Deployed Backend Production](https://mealchemy-backend-prod-otygypdv7a-ey.a.run.app)
+| Backend (production) | [Deployed Backend Production](https://mealchemy-backend-prod-otygypdv7a-ey.a.run.app)|
 | Backend (staging) | [Deployed Backend Staging](https://mealchemy-backend-staging-otygypdv7a-ey.a.run.app) |
-| Landing page | [Static-Landing-Page](https://mealchemy-firebase.web.app/)
+| UpTime Robot Status Page | [Production Monitor Page](https://stats.uptimerobot.com/wnmHUXyJfN)|
+| Landing page | [Static-Landing-Page](https://mealchemy-firebase.web.app/)|
 | Android app | [Android App download](https://appdistribution.firebase.dev/i/9aea731b3a1ce2f6)|
 | Brand style guide | [Brand Guide](https://cos301-se-2026.github.io/Mealchemy/)|
-| Service Contracts | [OpenAPI/Swagger Schema](https://github.com/orgs/COS301-SE-2026/projects/67) |
+| Service Contracts | [OpenAPI/Swagger Schema](https://mealchemy-backend-staging-otygypdv7a-ey.a.run.app/swagger-ui/index.html#/vault-controller/getVault) |
 
 ---
 
@@ -77,6 +78,8 @@ Note: All documentation is contained within the Wiki
 | [Functional Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Functional-Requirements-Demo-3) | Feature breakdown by subsystem |
 | [Non-Functional Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Non‐Functional-Requirements-Demo-3) | Feature breakdown by subsystem |
 | [Domain Model](https://github.com/COS301-SE-2026/Mealchemy/wiki/Domain-Model-Demo-3) | UML class diagram |
+
+
 
 ### Software Architecture Specifications (SAS)
 
@@ -178,18 +181,29 @@ The Mealchemy repository is a monorepo. Everything lives in one repository under
 ```
 Mealchemy/
 ├── .github/
-│   ├── workflows/          ← CI/CD pipeline and automation workflows
-│   ├── codecov.yml         ← Codecov coverage thresholds and flags
-│   └── labeler.yml         ← PR auto-label rules
-├── backend/                ← Spring Boot Java 21
-├── engine/                 ← Python 3.12 recommendation engine
-├── frontend/               ← Flutter mobile app
-├── infrastructure/         ← Dockerfiles and docker-compose.yml
-├── database/               ← Flyway SQL migration files
-├── design-spec/            ← Brand guide and wireframes (deployed to GitHub Pages)
-├── wiki/                   ← Git submodule pointing at Mealchemy.wiki.git
-├── .env.example            ← Template for local Docker credentials
-├── .secrets.example        ← Template for local act CI secrets
+│   ├── workflows/             ← CI, CD, rollback, documentation, and delivery workflows
+│   ├── codecov.yml            ← Codecov coverage thresholds and flags
+│   └── labeler.yml            ← Pull-request auto-label rules
+├── backend/                   ← Spring Boot Java 21 REST API
+├── database/                  ← Versioned Flyway SQL migrations
+├── design-spec/               ← Brand guide and wireframes deployed to GitHub Pages
+├── diagrams/                  ← Architecture and deployment diagram files
+├── docs/                      ← Local setup and deployment guides
+├── e2e/                       ← Maestro end-to-end mobile tests
+├── engine/                    ← Python 3.12 recommendation engine
+├── frontend/                  ← Flutter mobile application
+├── infrastructure/            ← Dockerfiles, Docker Compose, and cloud provisioning
+├── landing-page/              ← Static landing page deployed to Firebase Hosting
+├── nfr-tests/                 ← Executable non-functional test harness
+│   ├── config/                ← Shared k6 environment and sanitized-summary helpers
+│   ├── performance/           ← k6 load, resilience, and comparison tests
+│   ├── results/               ← Sanitized NFR evidence files
+│   └── security/              ← Authorization matrix and ZAP security tooling
+├── wiki/                      ← Git submodule containing project documentation
+├── .env.example               ← Template for local Docker configuration
+├── .secrets.example           ← Template for local act CI secrets
+├── firebase.json              ← Firebase Hosting deployment configuration
+├── sonar-project.properties   ← SonarCloud analysis configuration
 └── README.md
 ```
 ## Getting Started
@@ -293,4 +307,3 @@ main
     </td>
   </tr>
 </table>
-
