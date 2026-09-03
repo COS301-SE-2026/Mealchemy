@@ -73,13 +73,14 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
   Future<void> loadDashboard() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
+    final recommended = await _loadRecommended();
+
     try {
       final displayName = await _repository.getDisplayName();
       final pantryItemCount = await _repository.getPantryItemCount();
       final itemsAway = await _repository.getSmartSuggestionItemsAway();
       final recipeCount = await _repository.getSmartSuggestionRecipeCount();
       final trending = await _repository.getTrendingRecipes();
-      final recommended = await _loadRecommended();
 
       state = state.copyWith(
         isLoading: false,
@@ -93,7 +94,7 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Failed to load dashboard. Please try again.',
+        recommendedRecipes: recommended,
       );
     }
   }
@@ -106,6 +107,8 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
         batchSize: _dashboardRecommendationCount,
       );
     } on EmptyRecommendationPool {
+      return const [];
+    } catch (_) {
       return const [];
     }
   }
