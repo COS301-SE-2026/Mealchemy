@@ -183,7 +183,7 @@ public class LearningUpdateServiceTest {
         assertEquals(2, sentSwipes.size());
         assertEquals(100, sentSwipes.get(0).recipeId());
         assertEquals("ITALIAN", sentSwipes.get(0).cuisine());
-        assertNotNull(sentSwipes.get(0).swipedAt());
+        assertEquals(swipe1.getSwipedAt(), sentSwipes.get(0).swipedAt());
     }
 
     @Test
