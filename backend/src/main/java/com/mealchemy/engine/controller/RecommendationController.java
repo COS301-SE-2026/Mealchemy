@@ -8,6 +8,7 @@ import java.util.*;
 /* Import classes */
 import com.mealchemy.engine.service.RecommendationService;
 import com.mealchemy.engine.dto.EnrichedRecommendationResponse;
+import com.mealchemy.shared.dto.ErrorResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
