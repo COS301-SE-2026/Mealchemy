@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mealchemy/features/dashboard/models/dashboard_recipe_card_data.dart';
 import 'package:mealchemy/features/dashboard/models/trending_recipe_data.dart';
 import 'package:mealchemy/features/dashboard/providers/dashboard_provider.dart';
 import 'package:mealchemy/features/dashboard/providers/shopping_list_provider.dart';
@@ -25,23 +24,6 @@ class _FakeDashboardRepo implements DashboardRepository {
   Future<int> getSmartSuggestionRecipeCount() async => 10;
   @override
 
-  Future<List<DashboardRecipeCardData>> getRecommendedRecipes() async {
-    return const [
-      DashboardRecipeCardData(
-        recipe: Recipe(recipeId: 1, title: 'Saffron Risotto'),
-        matchPercent: 92,
-        tag: 'HIGH PROTEIN',
-        rating: 4.9,
-      ),
-
-      DashboardRecipeCardData(
-        recipe: Recipe(recipeId: 2, title: 'Butter Chicken'),
-        matchPercent: 85,
-        tag: 'COMFORT FOOD',
-        rating: 4.7,
-      ),
-    ];
-  }
 
   @override
   Future<List<TrendingRecipeData>> getTrendingRecipes() async {
