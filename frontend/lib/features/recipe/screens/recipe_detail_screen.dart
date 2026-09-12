@@ -114,10 +114,22 @@ class _RecipeDetailContent extends StatelessWidget {
               controller: tabController,
               children: [
                 _OverviewTab(
-                  recipe: recipe, ingredients: ingredients, steps: steps, onRefresh: onRefresh, ),
-                _IngredientsTab( recipe: recipe, ingredients: ingredients, onRefresh: onRefresh,),
+                  recipe: recipe,
+                  ingredients: ingredients,
+                  steps: steps,
+                  onRefresh: onRefresh,
+                ),
+                _IngredientsTab(
+                  recipe: recipe,
+                  ingredients: ingredients,
+                  onRefresh: onRefresh,
+                ),
                 _StepsTab(steps: steps, onRefresh: onRefresh),
-                AppRefresh( onRefresh: onRefresh, child: RecipeNutritionTab(recipeId: recipe.recipeId),)              ],
+                AppRefresh(
+                  onRefresh: onRefresh,
+                  child: RecipeNutritionTab(recipeId: recipe.recipeId),
+                )
+              ],
             ),
           ),
         ],
@@ -127,7 +139,9 @@ class _RecipeDetailContent extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
           child: AppButton.primary(
             label: 'Start Cooking',
-            onPressed: () {},
+            onPressed: steps.isEmpty
+                ? null
+                : () => context.push('/recipe/${recipe.recipeId}/cook'),
             leftIcon: Icons.restaurant_menu_outlined,
             isFullWidth: true,
             size: ButtonSize.large,
@@ -136,7 +150,7 @@ class _RecipeDetailContent extends StatelessWidget {
       ),
     );
   }
-} //simulate to start cooking, to still be implemented
+}
 
 class _OverviewTab extends StatelessWidget {
   const _OverviewTab({
@@ -187,7 +201,10 @@ class _OverviewTab extends StatelessWidget {
 }
 
 class _IngredientsTab extends StatelessWidget {
-  const _IngredientsTab({required this.recipe, required this.ingredients, required this.onRefresh});
+  const _IngredientsTab(
+      {required this.recipe,
+      required this.ingredients,
+      required this.onRefresh});
   final Recipe recipe;
   final List<RecipeIngredient> ingredients;
   final Future<void> Function() onRefresh;
