@@ -13,6 +13,7 @@ import '../../features/vault/screens/vault_screen.dart';
 import '../../features/pantry/screens/add_ingredient_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
 import '../../features/recipe/screens/recipe_detail_screen.dart';
+import '../../features/cook_mode/screens/cook_mode_screen.dart';
 import '../../features/recipe/screens/add_recipe_screen.dart';
 import '../../features/discovery/screens/discovery_screen.dart';
 
@@ -78,6 +79,13 @@ final appRouter = GoRouter(
         final id = int.parse(state.pathParameters['id']!);
         final recipe = state.extra as Recipe?;
         return AddRecipeScreen(editRecipeId: id, initialRecipe: recipe);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.cookMode,
+      builder: (context, state) {
+        final id = int.parse(state.pathParameters['id']!);
+        return CookModeScreen(recipeId: id);
       },
     ),
     GoRoute(
