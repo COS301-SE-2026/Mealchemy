@@ -9,6 +9,7 @@ import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
 import 'package:mealchemy/features/recipe/screens/recipe_detail_screen.dart';
 import 'package:mealchemy/features/recipe/providers/recipe_nutrition_provider.dart';
 import 'package:mealchemy/features/recipe/repositories/mock_recipe_nutrition_repository.dart';
+import 'package:mealchemy/core/shared_widgets/atoms/app_button.dart';
 
 const _fixture = Recipe(
   recipeId: 1,
@@ -86,6 +87,11 @@ void main() {
     expect(find.text('Saffron-Infused Risotto'), findsWidgets);
     expect(find.text('30m'), findsOneWidget); // cook time
     expect(find.text('15m'), findsOneWidget); // prep time
+
+    final startCooking = tester.widget<AppButton>(
+      find.widgetWithText(AppButton, 'Start Cooking'),
+    );
+    expect(startCooking.onPressed, isNotNull);
   });
 
   testWidgets('renders ingredient names from the recipe', (tester) async {
@@ -125,6 +131,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300)); // let tabs settle
     expect(tester.takeException(), isNull);
     expect(find.text('Ingredient #42'), findsOneWidget);
+
+    final startCooking = tester.widget<AppButton>(
+      find.widgetWithText(AppButton, 'Start Cooking'),
+    );
+    expect(startCooking.onPressed, isNull);
   });
 
   testWidgets('shows an error state when the recipe fails to load',
