@@ -8,11 +8,20 @@ abstract class ScreenAwakeService {
 }
 
 class WakelockScreenAwakeService implements ScreenAwakeService {
-  @override
-  Future<void> enable() => WakelockPlus.enable();
+  WakelockScreenAwakeService({
+    Future<void> Function()? enableAction,
+    Future<void> Function()? disableAction,
+  })  : _enableAction = enableAction ?? WakelockPlus.enable,
+        _disableAction = disableAction ?? WakelockPlus.disable;
+
+  final Future<void> Function() _enableAction;
+  final Future<void> Function() _disableAction;
 
   @override
-  Future<void> disable() => WakelockPlus.disable();
+  Future<void> enable() => _enableAction();
+
+  @override
+  Future<void> disable() => _disableAction();
 }
 
 final screenAwakeServiceProvider = Provider<ScreenAwakeService>((ref) {
