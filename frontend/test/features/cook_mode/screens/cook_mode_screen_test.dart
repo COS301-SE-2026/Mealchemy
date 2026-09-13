@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mealchemy/features/cook_mode/screens/cook_mode_screen.dart';
+import 'package:mealchemy/features/cook_mode/providers/cook_narration_provider.dart';
+import 'package:mealchemy/features/cook_mode/services/cook_narration_service.dart';
 import 'package:mealchemy/features/cook_mode/services/screen_awake_service.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
@@ -27,11 +29,44 @@ class _FakeScreenAwakeService implements ScreenAwakeService {
   Future<void> disable() async => disableCalls++;
 }
 
-Widget _host(Recipe recipe, _FakeScreenAwakeService service) {
+class _FakeNarrationService implements CookNarrationService {
+  CookNarrationCallbacks? callbacks;
+  final List<String> spoken = [];
+  int stopCalls = 0;
+  Object? initializeError;
+
+  @override
+  Future<int> initialize(CookNarrationCallbacks callbacks) async {
+    if (initializeError != null) throw initializeError!;
+    this.callbacks = callbacks;
+    return 3000;
+  }
+
+  @override
+  Future<void> speak(String text) async {
+    spoken.add(text);
+    callbacks?.onStart();
+  }
+
+  @override
+  Future<void> stop() async => stopCalls++;
+
+  @override
+  Future<void> dispose() async {}
+}
+
+Widget _host(
+  Recipe recipe,
+  _FakeScreenAwakeService screenAwake, {
+  _FakeNarrationService? narration,
+}) {
   return ProviderScope(
     overrides: [
       recipeDetailProvider(recipe.recipeId).overrideWith((ref) async => recipe),
-      screenAwakeServiceProvider.overrideWithValue(service),
+      screenAwakeServiceProvider.overrideWithValue(screenAwake),
+      cookNarrationServiceProvider.overrideWithValue(
+        narration ?? _FakeNarrationService(),
+      ),
     ],
     child: MaterialApp(home: CookModeScreen(recipeId: recipe.recipeId)),
   );
@@ -41,21 +76,78 @@ void main() {
   testWidgets('renders sorted steps and advances to completion',
       (tester) async {
     final service = _FakeScreenAwakeService();
-    await tester.pumpWidget(_host(_recipe, service));
+    final narration = _FakeNarrationService();
+    await tester.pumpWidget(_host(_recipe, service, narration: narration));
     await tester.pumpAndSettle();
 
     expect(find.text('Step 1 of 2'), findsOneWidget);
     expect(find.text('Boil the pasta.'), findsOneWidget);
     expect(service.enableCalls, 1);
+    expect(narration.spoken, ['Boil the pasta.']);
 
     await tester.tap(find.byKey(const Key('cook-next-button')));
     await tester.pumpAndSettle();
     expect(find.text('Step 2 of 2'), findsOneWidget);
     expect(find.text('Toss with the sauce.'), findsOneWidget);
+    expect(narration.spoken.last, 'Toss with the sauce.');
 
     await tester.tap(find.byKey(const Key('cook-next-button')));
     await tester.pumpAndSettle();
     expect(find.text('Ready to serve'), findsOneWidget);
+  });
+
+  testWidgets('highlights the active narration range', (tester) async {
+    final screenAwake = _FakeScreenAwakeService();
+    final narration = _FakeNarrationService();
+    await tester.pumpWidget(
+      _host(_recipe, screenAwake, narration: narration),
+    );
+    await tester.pumpAndSettle();
+
+    narration.callbacks?.onProgress(0, 4, 'Boil');
+    await tester.pump();
+
+    final text = tester.widget<Text>(find.byKey(const Key('cook-step-text')));
+    expect(text.textSpan?.toPlainText(), 'Boil the pasta.');
+    final rootSpan = text.textSpan! as TextSpan;
+    final highlighted = rootSpan.children![1] as TextSpan;
+    expect(highlighted.text, 'Boil');
+    expect(highlighted.style?.backgroundColor, isNotNull);
+  });
+
+  testWidgets('pause and repeat controls call narration', (tester) async {
+    final screenAwake = _FakeScreenAwakeService();
+    final narration = _FakeNarrationService();
+    await tester.pumpWidget(
+      _host(_recipe, screenAwake, narration: narration),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.pause));
+    await tester.pumpAndSettle();
+    expect(find.text('Narration paused'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.replay).first);
+    await tester.pumpAndSettle();
+    expect(narration.spoken.last, 'Boil the pasta.');
+  });
+
+  testWidgets('keeps manual controls available when narration fails',
+      (tester) async {
+    final screenAwake = _FakeScreenAwakeService();
+    final narration = _FakeNarrationService()
+      ..initializeError = StateError('No speech engine');
+    await tester.pumpWidget(
+      _host(_recipe, screenAwake, narration: narration),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Narration unavailable'), findsOneWidget);
+    expect(find.byKey(const Key('cook-next-button')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('cook-next-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('Step 2 of 2'), findsOneWidget);
   });
 
   testWidgets('shows an empty state when the recipe has no steps',
@@ -72,12 +164,16 @@ void main() {
 
   testWidgets('releases wakelock when Cook Mode is removed', (tester) async {
     final service = _FakeScreenAwakeService();
-    await tester.pumpWidget(_host(_recipe, service));
+    final narration = _FakeNarrationService();
+    await tester.pumpWidget(
+      _host(_recipe, service, narration: narration),
+    );
     await tester.pumpAndSettle();
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
 
     expect(service.disableCalls, 1);
+    expect(narration.stopCalls, greaterThan(0));
   });
 }
