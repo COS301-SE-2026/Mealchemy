@@ -11,7 +11,9 @@ import '../../../core/theme/app_typography.dart';
 import '../../recipe/models/recipe.dart';
 import '../../recipe/models/recipe_step.dart';
 import '../../recipe/providers/recipe_provider.dart';
+import '../models/cook_narration_state.dart';
 import '../providers/cook_mode_provider.dart';
+import '../providers/cook_narration_provider.dart';
 import '../services/screen_awake_service.dart';
 
 class CookModeScreen extends ConsumerWidget {
@@ -62,6 +64,7 @@ class _CookModeContent extends ConsumerStatefulWidget {
 
 class _CookModeContentState extends ConsumerState<_CookModeContent> {
   late final ScreenAwakeService _screenAwakeService;
+  late final CookNarrationController _narrationController;
   late final CookModeArgs _args;
 
   @override
@@ -72,7 +75,14 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
       stepCount: widget.steps.length,
     );
     _screenAwakeService = ref.read(screenAwakeServiceProvider);
+    _narrationController = ref.read(
+      cookNarrationControllerProvider(widget.recipe.recipeId).notifier,
+    );
     unawaited(_setScreenAwake(true));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_narrationController.speakStep(widget.steps.first.content));
+    });
   }
 
   Future<void> _setScreenAwake(bool enabled) async {
@@ -89,14 +99,46 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
 
   @override
   void dispose() {
+    unawaited(_narrationController.stop());
     unawaited(_setScreenAwake(false));
     super.dispose();
+  }
+
+  Future<void> _goNext() async {
+    final controller = ref.read(cookModeControllerProvider(_args).notifier);
+    controller.next();
+    final nextState = ref.read(cookModeControllerProvider(_args));
+    if (nextState.isCompleted) {
+      await _narrationController.stop();
+      return;
+    }
+    await _narrationController
+        .speakStep(widget.steps[nextState.currentStepIndex].content);
+  }
+
+  Future<void> _goBack() async {
+    final controller = ref.read(cookModeControllerProvider(_args).notifier);
+    controller.back();
+    final nextState = ref.read(cookModeControllerProvider(_args));
+    await _narrationController
+        .speakStep(widget.steps[nextState.currentStepIndex].content);
+  }
+
+  Future<void> _restart() async {
+    ref.read(cookModeControllerProvider(_args).notifier).restart();
+    await _narrationController.speakStep(widget.steps.first.content);
+  }
+
+  Future<void> _close() async {
+    await _narrationController.stop();
+    if (mounted) context.pop();
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(cookModeControllerProvider(_args));
-    final controller = ref.read(cookModeControllerProvider(_args).notifier);
+    final narration =
+        ref.watch(cookNarrationControllerProvider(widget.recipe.recipeId));
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -105,7 +147,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
           children: [
             _CookModeHeader(
               recipeTitle: widget.recipe.title,
-              onClose: () => context.pop(),
+              onClose: () => unawaited(_close()),
             ),
             if (!state.isCompleted) ...[
               _StepProgress(
@@ -116,20 +158,38 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
               Expanded(
                 child: _StepContent(
                   step: widget.steps[state.currentStepIndex],
+                  narration: narration,
                 ),
+              ),
+              _NarrationControls(
+                narration: narration,
+                onToggle: () {
+                  if (narration.isSpeaking) {
+                    unawaited(_narrationController.pause());
+                  } else if (narration.isPaused) {
+                    unawaited(_narrationController.resume());
+                  } else {
+                    unawaited(
+                      _narrationController.speakStep(
+                        widget.steps[state.currentStepIndex].content,
+                      ),
+                    );
+                  }
+                },
+                onRepeat: () => unawaited(_narrationController.repeat()),
               ),
               _CookControls(
                 canGoBack: state.canGoBack,
                 isLastStep: state.isLastStep,
-                onBack: controller.back,
-                onNext: controller.next,
+                onBack: () => unawaited(_goBack()),
+                onNext: () => unawaited(_goNext()),
               ),
             ] else
               Expanded(
                 child: _CompletionView(
                   recipeTitle: widget.recipe.title,
-                  onCookAgain: controller.restart,
-                  onClose: () => context.pop(),
+                  onCookAgain: () => unawaited(_restart()),
+                  onClose: () => unawaited(_close()),
                 ),
               ),
           ],
@@ -215,9 +275,10 @@ class _StepProgress extends StatelessWidget {
 }
 
 class _StepContent extends StatelessWidget {
-  const _StepContent({required this.step});
+  const _StepContent({required this.step, required this.narration});
 
   final RecipeStep step;
+  final CookNarrationState narration;
 
   @override
   Widget build(BuildContext context) {
@@ -230,19 +291,144 @@ class _StepContent extends StatelessWidget {
             child: Semantics(
               liveRegion: true,
               label: 'Step ${step.stepNr}. ${step.content}',
-              child: Text(
-                step.content,
-                key: const Key('cook-step-text'),
-                textAlign: TextAlign.center,
-                style: AppTextStyles.heading1.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontWeight: FontWeight.w700,
-                  height: 1.35,
+              child: ExcludeSemantics(
+                child: _HighlightedStepText(
+                  text: step.content,
+                  activeStart: narration.stepText == step.content
+                      ? narration.activeStart
+                      : null,
+                  activeEnd: narration.stepText == step.content
+                      ? narration.activeEnd
+                      : null,
                 ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _HighlightedStepText extends StatelessWidget {
+  const _HighlightedStepText({
+    required this.text,
+    required this.activeStart,
+    required this.activeEnd,
+  });
+
+  final String text;
+  final int? activeStart;
+  final int? activeEnd;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = AppTextStyles.heading1.copyWith(
+      color: Theme.of(context).colorScheme.onSurface,
+      fontWeight: FontWeight.w700,
+      height: 1.35,
+    );
+    final start = activeStart;
+    final end = activeEnd;
+    final hasValidRange = start != null &&
+        end != null &&
+        start >= 0 &&
+        end > start &&
+        end <= text.length;
+
+    if (!hasValidRange) {
+      return Text(
+        text,
+        key: const Key('cook-step-text'),
+        textAlign: TextAlign.center,
+        style: style,
+      );
+    }
+
+    return Text.rich(
+      TextSpan(
+        style: style,
+        children: [
+          TextSpan(text: text.substring(0, start)),
+          TextSpan(
+            text: text.substring(start, end),
+            style: style.copyWith(
+              backgroundColor: AppColors.accent.withValues(alpha: 0.38),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          TextSpan(text: text.substring(end)),
+        ],
+      ),
+      key: const Key('cook-step-text'),
+      textAlign: TextAlign.center,
+    );
+  }
+}
+
+class _NarrationControls extends StatelessWidget {
+  const _NarrationControls({
+    required this.narration,
+    required this.onToggle,
+    required this.onRepeat,
+  });
+
+  final CookNarrationState narration;
+  final VoidCallback onToggle;
+  final VoidCallback onRepeat;
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, icon) = switch (narration.status) {
+      CookNarrationStatus.preparing => (
+          'Preparing narration',
+          Icons.more_horiz
+        ),
+      CookNarrationStatus.speaking => ('Reading aloud', Icons.pause),
+      CookNarrationStatus.paused => ('Narration paused', Icons.play_arrow),
+      CookNarrationStatus.completed => ('Read again', Icons.volume_up_outlined),
+      CookNarrationStatus.unavailable => (
+          'Narration unavailable',
+          Icons.volume_off_outlined
+        ),
+      CookNarrationStatus.idle => ('Read step aloud', Icons.volume_up_outlined),
+    };
+    final canControl = !narration.isUnavailable;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Tooltip(
+            message: label,
+            child: AppIconButton.primary(
+              icon: icon,
+              onPressed: canControl ? onToggle : null,
+              size: 52,
+              isLoading: narration.status == CookNarrationStatus.preparing,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: AppTextStyles.bodyBold.copyWith(
+              color: narration.isUnavailable
+                  ? AppColors.error
+                  : Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Tooltip(
+            message: 'Repeat step',
+            child: AppIconButton.ghost(
+              icon: Icons.replay,
+              onPressed: canControl ? onRepeat : null,
+              customColor: AppColors.primary,
+              size: 48,
+            ),
+          ),
+        ],
       ),
     );
   }
