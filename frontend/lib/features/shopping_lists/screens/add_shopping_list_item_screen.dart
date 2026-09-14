@@ -12,18 +12,7 @@ import '../../pantry/models/ingredient_catalogue_item.dart';
 import '../../pantry/providers/pantry_provider.dart';
 import '../providers/shopping_list_provider.dart';
 import '../../pantry/repositories/ingredient_catalogue_repository.dart';
-
-const List<String> _unitOptions = [
-  'g',
-  'kg',
-  'ml',
-  'L',
-  'cups',
-  'tbsp',
-  'tsp',
-  'oz',
-  'pcs',
-];
+import '../../recipe/providers/recipe_provider.dart';
 
 enum _ItemEntryMode {
   catalogue,
@@ -76,6 +65,12 @@ class _AddShoppingListItemScreenState
   @override
   Widget build(BuildContext context) {
     final isReadOnly = ref.watch(offlineReadOnlyProvider);
+    final unitOptions = ref
+            .watch(unitsProvider)
+            .valueOrNull
+            ?.map((unit) => unit.name)
+            .toList() ??
+        const <String>[];
     if (isReadOnly) {
       return Scaffold(
         backgroundColor: AppColors.bgLight,
@@ -198,6 +193,7 @@ class _AddShoppingListItemScreenState
                 Expanded(
                   child: _UnitDropdown(
                     value: _selectedUnit,
+                    units: unitOptions,
                     errorText: _unitError,
                     onChanged: (value) {
                       setState(() {
@@ -666,11 +662,13 @@ class _CategoryLabel extends StatelessWidget {
 class _UnitDropdown extends StatelessWidget {
   const _UnitDropdown({
     required this.value,
+    required this.units,
     required this.errorText,
     required this.onChanged,
   });
 
   final String? value;
+  final List<String> units;
   final String? errorText;
   final ValueChanged<String?> onChanged;
 
@@ -724,7 +722,7 @@ class _UnitDropdown extends StatelessWidget {
               ),
             ),
           ),
-          items: _unitOptions.map((unit) {
+          items: units.map((unit) {
             return DropdownMenuItem<String>(
               value: unit,
               child: Text(unit),
