@@ -123,6 +123,16 @@ class CachedShoppingListRepository implements ShoppingListRepository {
       _remote.deselectAllItems(listId);
 
   @override
+  Future<void> deleteShoppingListItem({
+    required String listId,
+    required String itemId,
+  }) =>
+      _remote.deleteShoppingListItem(
+        listId: listId,
+        itemId: itemId,
+      );
+
+  @override
   Future<void> deleteShoppingListItems({
     required String listId,
     required List<int> itemIds,

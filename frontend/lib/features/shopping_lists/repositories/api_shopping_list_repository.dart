@@ -208,6 +208,16 @@ class ApiShoppingListRepository implements ShoppingListRepository {
   }
 
   @override
+  Future<void> deleteShoppingListItem({
+    required String listId,
+    required String itemId,
+  }) async {
+    await _dio.delete<void>(
+      '/api/shopping-lists/$listId/items/$itemId',
+    );
+  }
+
+  @override
   Future<void> deleteShoppingListItems({
     required String listId,
     required List<int> itemIds,
