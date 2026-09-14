@@ -442,6 +442,37 @@ void main() {
     expect(find.byType(Checkbox), findsNothing);
   });
 
+  testWidgets('ShoppingListDetailScreen deletes one item from its row', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          shoppingListRepositoryProvider.overrideWithValue(
+            _DeleteMenuShoppingListRepository(),
+          ),
+        ],
+        child: const MaterialApp(
+          home: ShoppingListDetailScreen(listId: '1'),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Greek Yogurt'), findsOneWidget);
+    expect(find.text('Fresh Basil'), findsOneWidget);
+
+    await tester.tap(
+      find.byTooltip('Delete Greek Yogurt'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Greek Yogurt'), findsNothing);
+    expect(find.text('Fresh Basil'), findsOneWidget);
+    expect(find.text('Greek Yogurt deleted.'), findsOneWidget);
+  });
+
   testWidgets('ShoppingListDetailScreen opens add item entry screen', (
     tester,
   ) async {
