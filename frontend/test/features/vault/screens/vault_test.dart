@@ -11,6 +11,23 @@ import 'package:mealchemy/features/vault/providers/vault_provider.dart';
 import 'package:mealchemy/features/vault/screens/vault_screen.dart';
 import 'package:mealchemy/features/vault/widgets/vault_folder_list.dart';
 import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
+import 'package:mealchemy/features/external_links/models/link.dart';
+import 'package:mealchemy/features/external_links/providers/link_provider.dart';
+import 'package:mealchemy/features/external_links/repositories/link_repository.dart';
+
+class _FakeLinkRepository implements LinkRepository {
+  const _FakeLinkRepository({
+    this.links = const [],
+  });
+
+  final List<Link> links;
+
+  @override
+  Future<List<Link>> getLinks() async => links;
+
+  @override
+  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
@@ -43,6 +60,8 @@ void main() {
     int cartCount = 0,
     bool sharedMode = false,
     Vault? selected,
+    Map<int, List<Recipe>> recipesByFolder = const {},
+    List<Link> links = const [],
   }) {
     return ProviderScope(
       overrides: [
@@ -51,8 +70,12 @@ void main() {
         selectedVaultProvider.overrideWithValue(selected ?? vault),
         isSharedModeProvider.overrideWith((ref) => sharedMode),
         vaultFoldersProvider.overrideWith((ref, vaultId) async => folders),
-        folderRecipeDisplayProvider
-            .overrideWith((ref, folderId) async => <Recipe>[]),
+        folderRecipeDisplayProvider.overrideWith(
+          (ref, folderId) async => recipesByFolder[folderId] ?? const [],
+        ),
+        linkRepositoryProvider.overrideWithValue(
+          _FakeLinkRepository(links: links),
+        ),
         shoppingListCountProvider.overrideWith((ref) => cartCount),
       ],
       child: MaterialApp.router(
@@ -97,6 +120,55 @@ void main() {
       expect(find.text('MY VAULT'), findsOneWidget); // vault.name.toUpperCase()
       expect(find.text('Breakfast'), findsOneWidget);
       expect(find.text('Dinner'), findsOneWidget);
+    });
+
+    testWidgets('searches recipes and external links across the vault', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildWidget(
+          recipesByFolder: const {
+            1: [
+              Recipe(
+                recipeId: 10,
+                title: 'Berry Pancakes',
+              ),
+            ],
+            2: [
+              Recipe(
+                recipeId: 11,
+                title: 'Beef Stew',
+              ),
+            ],
+          },
+          links: [
+            Link(
+              linkId: 20,
+              name: 'Pancake Guide',
+              url: 'https://example.com/pancakes',
+              createdAt: DateTime(2026, 9, 1),
+            ),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final searchField = find.widgetWithText(
+        TextField,
+        'Search this vault...',
+      );
+
+      expect(searchField, findsOneWidget);
+
+      await tester.enterText(searchField, 'pancake');
+      await tester.pumpAndSettle();
+
+      // Matching content is found even inside collapsed folders.
+      expect(find.text('Berry Pancakes'), findsOneWidget);
+      expect(find.text('Pancake Guide'), findsOneWidget);
+
+      // Unrelated Vault content is filtered out.
+      expect(find.text('Beef Stew'), findsNothing);
     });
 
     testWidgets('renders the add floating action button', (tester) async {
