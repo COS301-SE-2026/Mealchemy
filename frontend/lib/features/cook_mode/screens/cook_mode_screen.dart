@@ -8,12 +8,16 @@ import '../../../core/shared_widgets/atoms/app_button.dart';
 import '../../../core/shared_widgets/atoms/app_icon_button.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../recipe/models/recipe.dart';
 import '../../recipe/models/recipe_step.dart';
 import '../../recipe/providers/recipe_provider.dart';
 import '../models/cook_narration_state.dart';
+import '../models/cook_session.dart';
 import '../providers/cook_mode_provider.dart';
 import '../providers/cook_narration_provider.dart';
+import '../providers/cook_session_provider.dart';
+import '../services/cook_session_store.dart';
 import '../services/screen_awake_service.dart';
 
 class CookModeScreen extends ConsumerWidget {
@@ -65,7 +69,15 @@ class _CookModeContent extends ConsumerStatefulWidget {
 class _CookModeContentState extends ConsumerState<_CookModeContent> {
   late final ScreenAwakeService _screenAwakeService;
   late final CookNarrationController _narrationController;
+  late final CookSessionController _sessionController;
+  late final CookSessionStore _sessionStore;
   late final CookModeArgs _args;
+  late final AppLifecycleListener _lifecycleListener;
+  late final int? _userId;
+  Future<void> _wakeOperation = Future<void>.value();
+  bool _isForeground = true;
+  bool _restoringSession = true;
+  bool _storageWarning = false;
 
   @override
   void initState() {
@@ -78,27 +90,118 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
     _narrationController = ref.read(
       cookNarrationControllerProvider(widget.recipe.recipeId).notifier,
     );
+    _sessionController = ref.read(cookSessionControllerProvider.notifier);
+    _sessionStore = ref.read(cookSessionStoreProvider);
+    _userId = ref.read(activeIdentityProvider);
+    _lifecycleListener = AppLifecycleListener(
+      onInactive: _onBackground,
+      onHide: _onBackground,
+      onPause: _onBackground,
+      onResume: _onForeground,
+    );
     unawaited(_setScreenAwake(true));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      unawaited(_narrationController.speakStep(widget.steps.first.content));
+      unawaited(_restoreSession());
     });
   }
 
-  Future<void> _setScreenAwake(bool enabled) async {
-    try {
-      if (enabled) {
-        await _screenAwakeService.enable();
-      } else {
-        await _screenAwakeService.disable();
+  Future<void> _setScreenAwake(bool enabled) {
+    _wakeOperation = _wakeOperation.then((_) async {
+      try {
+        if (enabled) {
+          await _screenAwakeService.enable();
+        } else {
+          await _screenAwakeService.disable();
+        }
+      } catch (_) {
+        // Cook Mode remains usable when a platform wakelock is unavailable.
       }
+    });
+    return _wakeOperation;
+  }
+
+  Future<void> _restoreSession() async {
+    var stepIndex = 0;
+    final userId = _userId;
+    if (userId != null) {
+      try {
+        final saved = await _sessionStore.read(userId, widget.recipe.recipeId);
+        stepIndex = saved?.matchingStepIndex(widget.steps) ?? 0;
+      } catch (_) {
+        _showStorageWarning();
+      }
+    }
+
+    if (!mounted) return;
+    ref.read(cookModeControllerProvider(_args).notifier).restore(stepIndex);
+    setState(() => _restoringSession = false);
+    unawaited(_recordSession(stepIndex));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _isForeground) {
+        unawaited(
+            _narrationController.speakStep(widget.steps[stepIndex].content));
+      }
+    });
+  }
+
+  Future<void> _recordSession(int stepIndex) async {
+    final userId = _userId;
+    if (userId == null) return;
+    final step = widget.steps[stepIndex];
+    try {
+      await _sessionController.save(
+        userId,
+        CookSession(
+          recipeId: widget.recipe.recipeId,
+          recipeTitle: widget.recipe.title,
+          stepIndex: stepIndex,
+          stepNumber: step.stepNr,
+          stepId: step.stepId,
+          stepText: step.content,
+          stepCount: widget.steps.length,
+          savedAt: DateTime.now(),
+        ),
+      );
     } catch (_) {
-      // Cook Mode remains fully usable when a platform wakelock is unavailable.
+      _showStorageWarning();
     }
   }
 
+  Future<void> _removeSession() async {
+    final userId = _userId;
+    if (userId == null) return;
+    try {
+      await _sessionController.remove(userId, widget.recipe.recipeId);
+    } catch (_) {
+      _showStorageWarning();
+    }
+  }
+
+  void _showStorageWarning() {
+    if (mounted && !_storageWarning) {
+      setState(() => _storageWarning = true);
+    }
+  }
+
+  void _onBackground() {
+    if (!_isForeground) return;
+    _isForeground = false;
+    unawaited(_pauseNarration());
+    unawaited(_setScreenAwake(false));
+  }
+
+  void _onForeground() {
+    if (_isForeground) return;
+    _isForeground = true;
+    unawaited(_setScreenAwake(true));
+  }
+
+  Future<void> _pauseNarration() => _narrationController.pause();
+
   @override
   void dispose() {
+    _lifecycleListener.dispose();
     unawaited(_narrationController.stop());
     unawaited(_setScreenAwake(false));
     super.dispose();
@@ -110,8 +213,10 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
     final nextState = ref.read(cookModeControllerProvider(_args));
     if (nextState.isCompleted) {
       await _narrationController.stop();
+      unawaited(_removeSession());
       return;
     }
+    unawaited(_recordSession(nextState.currentStepIndex));
     await _narrationController
         .speakStep(widget.steps[nextState.currentStepIndex].content);
   }
@@ -120,12 +225,14 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
     final controller = ref.read(cookModeControllerProvider(_args).notifier);
     controller.back();
     final nextState = ref.read(cookModeControllerProvider(_args));
+    unawaited(_recordSession(nextState.currentStepIndex));
     await _narrationController
         .speakStep(widget.steps[nextState.currentStepIndex].content);
   }
 
   Future<void> _restart() async {
     ref.read(cookModeControllerProvider(_args).notifier).restart();
+    unawaited(_recordSession(0));
     await _narrationController.speakStep(widget.steps.first.content);
   }
 
@@ -140,6 +247,10 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
     final narration =
         ref.watch(cookNarrationControllerProvider(widget.recipe.recipeId));
 
+    if (_restoringSession) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -149,6 +260,16 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
               recipeTitle: widget.recipe.title,
               onClose: () => unawaited(_close()),
             ),
+            if (_storageWarning)
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                child: Text(
+                  'Cooking progress could not be saved on this device.',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.body.copyWith(color: AppColors.error),
+                ),
+              ),
             if (!state.isCompleted) ...[
               _StepProgress(
                 currentStep: state.currentStepIndex + 1,
@@ -165,7 +286,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
                 narration: narration,
                 onToggle: () {
                   if (narration.isSpeaking) {
-                    unawaited(_narrationController.pause());
+                    unawaited(_pauseNarration());
                   } else if (narration.isPaused) {
                     unawaited(_narrationController.resume());
                   } else {

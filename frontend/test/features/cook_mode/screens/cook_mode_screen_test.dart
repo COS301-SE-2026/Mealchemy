@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mealchemy/features/auth/providers/auth_provider.dart';
+import 'package:mealchemy/features/cook_mode/models/cook_session.dart';
+import 'package:mealchemy/features/cook_mode/providers/cook_session_provider.dart';
 import 'package:mealchemy/features/cook_mode/screens/cook_mode_screen.dart';
 import 'package:mealchemy/features/cook_mode/providers/cook_narration_provider.dart';
 import 'package:mealchemy/features/cook_mode/services/cook_narration_service.dart';
 import 'package:mealchemy/features/cook_mode/services/screen_awake_service.dart';
+import 'package:mealchemy/features/cook_mode/services/cook_session_store.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
 import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
@@ -55,15 +59,49 @@ class _FakeNarrationService implements CookNarrationService {
   Future<void> dispose() async {}
 }
 
+class _FakeSessionStore implements CookSessionStore {
+  final Map<String, CookSession> sessions = {};
+  bool failRead = false;
+  bool failSave = false;
+
+  String _key(int userId, int recipeId) => '$userId:$recipeId';
+
+  @override
+  Future<CookSession?> read(int userId, int recipeId) async {
+    if (failRead) throw StateError('unreadable');
+    return sessions[_key(userId, recipeId)];
+  }
+
+  @override
+  Future<CookSession?> latest(int userId) async => null;
+
+  @override
+  Future<void> save(int userId, CookSession session) async {
+    if (failSave) throw StateError('unwritable');
+    sessions[_key(userId, session.recipeId)] = session;
+  }
+
+  @override
+  Future<void> remove(int userId, int recipeId) async {
+    sessions.remove(_key(userId, recipeId));
+  }
+}
+
 Widget _host(
   Recipe recipe,
   _FakeScreenAwakeService screenAwake, {
   _FakeNarrationService? narration,
+  _FakeSessionStore? sessions,
+  int? userId,
 }) {
   return ProviderScope(
     overrides: [
+      activeIdentityProvider.overrideWithValue(userId),
       recipeDetailProvider(recipe.recipeId).overrideWith((ref) async => recipe),
       screenAwakeServiceProvider.overrideWithValue(screenAwake),
+      cookSessionStoreProvider.overrideWithValue(
+        sessions ?? _FakeSessionStore(),
+      ),
       cookNarrationServiceProvider.overrideWithValue(
         narration ?? _FakeNarrationService(),
       ),
@@ -175,5 +213,116 @@ void main() {
 
     expect(service.disableCalls, 1);
     expect(narration.stopCalls, greaterThan(0));
+  });
+
+  testWidgets('restores the saved step before speaking', (tester) async {
+    final sessions = _FakeSessionStore();
+    sessions.sessions['12:7'] = CookSession(
+      recipeId: 7,
+      recipeTitle: _recipe.title,
+      stepIndex: 1,
+      stepNumber: 2,
+      stepText: 'Toss with the sauce.',
+      stepCount: 2,
+      savedAt: DateTime.utc(2026, 9, 13),
+    );
+    final narration = _FakeNarrationService();
+    await tester.pumpWidget(_host(
+      _recipe,
+      _FakeScreenAwakeService(),
+      sessions: sessions,
+      narration: narration,
+      userId: 12,
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Step 2 of 2'), findsOneWidget);
+    expect(narration.spoken, ['Toss with the sauce.']);
+  });
+
+  testWidgets('resets a changed saved step to step one', (tester) async {
+    final sessions = _FakeSessionStore();
+    sessions.sessions['12:7'] = CookSession(
+      recipeId: 7,
+      recipeTitle: _recipe.title,
+      stepIndex: 1,
+      stepNumber: 2,
+      stepText: 'Old instruction.',
+      stepCount: 2,
+      savedAt: DateTime.utc(2026, 9, 13),
+    );
+    final narration = _FakeNarrationService();
+    await tester.pumpWidget(_host(
+      _recipe,
+      _FakeScreenAwakeService(),
+      sessions: sessions,
+      narration: narration,
+      userId: 12,
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Step 1 of 2'), findsOneWidget);
+    expect(narration.spoken, ['Boil the pasta.']);
+    expect(sessions.sessions['12:7']?.stepIndex, 0);
+  });
+
+  testWidgets('keeps manual controls when session storage fails',
+      (tester) async {
+    final sessions = _FakeSessionStore()
+      ..failRead = true
+      ..failSave = true;
+    await tester.pumpWidget(_host(
+      _recipe,
+      _FakeScreenAwakeService(),
+      sessions: sessions,
+      userId: 12,
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cooking progress could not be saved on this device.'),
+        findsOneWidget);
+    await tester.tap(find.byKey(const Key('cook-next-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('Step 2 of 2'), findsOneWidget);
+  });
+
+  testWidgets('pauses on background and does not auto-resume speech',
+      (tester) async {
+    final screenAwake = _FakeScreenAwakeService();
+    final narration = _FakeNarrationService();
+    await tester.pumpWidget(_host(
+      _recipe,
+      screenAwake,
+      narration: narration,
+    ));
+    await tester.pumpAndSettle();
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pumpAndSettle();
+    expect(find.text('Narration paused'), findsOneWidget);
+    expect(screenAwake.disableCalls, 1);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(screenAwake.enableCalls, 2);
+    expect(narration.spoken, ['Boil the pasta.']);
+  });
+
+  testWidgets('clears only the completed recipe session', (tester) async {
+    final sessions = _FakeSessionStore();
+    await tester.pumpWidget(_host(
+      _recipe,
+      _FakeScreenAwakeService(),
+      sessions: sessions,
+      userId: 12,
+    ));
+    await tester.pumpAndSettle();
+    expect(sessions.sessions['12:7'], isNotNull);
+
+    await tester.tap(find.byKey(const Key('cook-next-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('cook-next-button')));
+    await tester.pumpAndSettle();
+    expect(sessions.sessions['12:7'], isNull);
   });
 }

@@ -22,6 +22,14 @@ class CookModeController extends StateNotifier<CookModeState> {
   CookModeController({required int stepCount})
       : super(CookModeState(totalSteps: stepCount));
 
+  void restore(int stepIndex) {
+    if (!state.hasSteps) return;
+    state = state.copyWith(
+      currentStepIndex: stepIndex.clamp(0, state.totalSteps - 1),
+      isCompleted: false,
+    );
+  }
+
   void next() {
     if (!state.hasSteps || state.isCompleted) return;
 
