@@ -132,6 +132,14 @@ class _ApiShapedShoppingListRepository implements ShoppingListRepository {
   }
 
   @override
+  Future<void> deleteShoppingListItem({
+    required String listId,
+    required String itemId,
+  }) async {
+    //fake backend accepts delete request
+  }
+
+  @override
   Future<void> deleteShoppingListItems({
     required String listId,
     required List<int> itemIds,
@@ -149,7 +157,7 @@ class _ApiShapedShoppingListRepository implements ShoppingListRepository {
   }
 
   @override
-    @override
+  @override
   Future<ShoppingList> generateFromRecipe({
     required int recipeId,
     required String name,

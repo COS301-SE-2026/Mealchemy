@@ -571,6 +571,19 @@ void main() {
     expect(items.last.name, 'Fresh Basil');
   });
 
+  test('deleteShoppingListItem deletes one item endpoint', () async {
+    await repository.deleteShoppingListItem(
+      listId: '1',
+      itemId: '10',
+    );
+
+    expect(lastRequest?.method, 'DELETE');
+    expect(
+      lastRequest?.path,
+      '/api/shopping-lists/1/items/10',
+    );
+  });
+
   test('deleteShoppingListItems posts batch-delete request', () async {
     await repository.deleteShoppingListItems(
       listId: '1',
