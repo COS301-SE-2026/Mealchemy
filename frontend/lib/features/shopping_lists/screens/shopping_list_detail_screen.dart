@@ -16,18 +16,7 @@ import '../../pantry/providers/pantry_provider.dart';
 import '../models/complete_shop_result.dart';
 import '../../offline/data/offline_cache_store.dart';
 import '../../offline/widgets/cache_freshness_label.dart';
-
-const List<String> _shoppingItemUnitOptions = [
-  'g',
-  'kg',
-  'ml',
-  'L',
-  'cups',
-  'tbsp',
-  'tsp',
-  'oz',
-  'pcs',
-];
+import '../../recipe/providers/recipe_provider.dart';
 
 //detail screen for one shopping list
 class ShoppingListDetailScreen extends ConsumerStatefulWidget {
@@ -73,6 +62,14 @@ class _ShoppingListDetailScreenState
   Widget build(BuildContext context) {
     final shoppingLists = ref.watch(shoppingListsProvider);
     final isReadOnly = ref.watch(offlineReadOnlyProvider);
+    final unitOptions = isReadOnly
+        ? const <String>[]
+        : ref
+                .watch(unitsProvider)
+                .valueOrNull
+                ?.map((unit) => unit.name)
+                .toList() ??
+            const <String>[];
 
     return Scaffold(
       backgroundColor: AppColors.bgLight,
@@ -94,6 +91,7 @@ class _ShoppingListDetailScreenState
           return _ShoppingListDetailContent(
             list: list,
             isReadOnly: isReadOnly,
+            unitOptions: unitOptions,
             onToggleItem: (itemId) async {
               await ref.read(shoppingListsProvider.notifier).toggleItemChecked(
                     listId: list.id,
@@ -177,6 +175,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
   const _ShoppingListDetailContent({
     required this.list,
     required this.isReadOnly,
+    required this.unitOptions,
     required this.onToggleItem,
     required this.onUpdateItem,
     required this.onDeleteItem,
@@ -189,6 +188,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
 
   final ShoppingList list;
   final bool isReadOnly;
+  final List<String> unitOptions;
   final Future<void> Function(String itemId) onToggleItem;
   final Future<void> Function({
     required String itemId,
@@ -387,6 +387,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
                 : () => _showEditShoppingListItemDialog(
                       context: context,
                       item: item,
+                      units: unitOptions,
                       onSave: ({
                         required quantity,
                         required unit,
@@ -602,6 +603,7 @@ class _UpdatePantryButton extends StatelessWidget {
 Future<void> _showEditShoppingListItemDialog({
   required BuildContext context,
   required ShoppingListItem item,
+  required List<String> units,
   required Future<void> Function({
     required String quantity,
     required String unit,
@@ -619,7 +621,7 @@ Future<void> _showEditShoppingListItemDialog({
   String? saveError;
 
   final availableUnits = <String>{
-    ..._shoppingItemUnitOptions,
+    ...units,
     if (selectedUnit != null && selectedUnit.isNotEmpty) selectedUnit,
   }.toList();
 
