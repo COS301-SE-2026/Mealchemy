@@ -6,6 +6,7 @@ import '../../../core/shared_widgets/atoms/app_button.dart';
 import '../../../core/shared_widgets/Molecules/app_refresh.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../cook_mode/providers/cook_session_provider.dart';
 import '../models/recipe.dart';
 import '../models/recipe_ingredient.dart';
 import '../models/recipe_step.dart';
@@ -78,7 +79,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
   }
 }
 
-class _RecipeDetailContent extends StatelessWidget {
+class _RecipeDetailContent extends ConsumerWidget {
   const _RecipeDetailContent({
     required this.recipe,
     required this.tabController,
@@ -92,9 +93,12 @@ class _RecipeDetailContent extends StatelessWidget {
 //ingredients and steps are null on endpoint
 //sorted* guards against null
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ingredients = _sortedIngredients(recipe.ingredients);
     final steps = _sortedSteps(recipe.steps);
+    final session =
+        ref.watch(cookSessionForRecipeProvider(recipe.recipeId)).valueOrNull;
+    final resumeIndex = session?.matchingStepIndex(steps);
     //to make hero stay fixed at top, while scroll
     return Scaffold(
       backgroundColor: AppColors.bgLight,
@@ -138,7 +142,9 @@ class _RecipeDetailContent extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
           child: AppButton.primary(
-            label: 'Start Cooking',
+            label: resumeIndex == null
+                ? 'Start Cooking'
+                : 'Resume Step ${resumeIndex + 1}',
             onPressed: steps.isEmpty
                 ? null
                 : () => context.push('/recipe/${recipe.recipeId}/cook'),

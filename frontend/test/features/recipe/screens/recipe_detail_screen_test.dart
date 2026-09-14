@@ -2,6 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mealchemy/features/auth/providers/auth_provider.dart';
+import 'package:mealchemy/features/cook_mode/models/cook_session.dart';
+import 'package:mealchemy/features/cook_mode/providers/cook_session_provider.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
@@ -42,7 +45,7 @@ const _fixture = Recipe(
 
 Widget _host(Widget child, List<Override> overrides) {
   return ProviderScope(
-    overrides: overrides,
+    overrides: [activeIdentityProvider.overrideWithValue(null), ...overrides],
     child: MaterialApp(home: child),
   );
 }
@@ -92,6 +95,45 @@ void main() {
       find.widgetWithText(AppButton, 'Start Cooking'),
     );
     expect(startCooking.onPressed, isNotNull);
+  });
+
+  testWidgets('offers the matching saved step as the resume action',
+      (tester) async {
+    final saved = CookSession(
+      recipeId: 1,
+      recipeTitle: _fixture.title,
+      stepIndex: 1,
+      stepNumber: 2,
+      stepText: 'Toast the rice.',
+      stepCount: 2,
+      savedAt: DateTime.utc(2026, 9, 13),
+    );
+    await tester.pumpWidget(_host(const RecipeDetailScreen(recipeId: 1), [
+      recipeDetailProvider(1).overrideWith((ref) async => _fixture),
+      cookSessionForRecipeProvider(1).overrideWith((ref) async => saved),
+    ]));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(AppButton, 'Resume Step 2'), findsOneWidget);
+  });
+
+  testWidgets('does not offer resume for a changed saved step', (tester) async {
+    final saved = CookSession(
+      recipeId: 1,
+      recipeTitle: _fixture.title,
+      stepIndex: 1,
+      stepNumber: 2,
+      stepText: 'Old instruction.',
+      stepCount: 2,
+      savedAt: DateTime.utc(2026, 9, 13),
+    );
+    await tester.pumpWidget(_host(const RecipeDetailScreen(recipeId: 1), [
+      recipeDetailProvider(1).overrideWith((ref) async => _fixture),
+      cookSessionForRecipeProvider(1).overrideWith((ref) async => saved),
+    ]));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(AppButton, 'Start Cooking'), findsOneWidget);
   });
 
   testWidgets('renders ingredient names from the recipe', (tester) async {
