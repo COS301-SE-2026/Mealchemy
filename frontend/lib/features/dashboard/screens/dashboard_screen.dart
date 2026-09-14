@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_refresh.dart';
 import 'package:mealchemy/features/dashboard/providers/dashboard_provider.dart';
 import 'package:mealchemy/features/dashboard/widgets/dashboard_welcome_bar.dart';
+import 'package:mealchemy/features/dashboard/widgets/continue_cooking_row.dart';
 import 'package:mealchemy/features/dashboard/widgets/dashboard_cards_row.dart';
 import 'package:mealchemy/features/dashboard/widgets/recommended_recipes_section.dart';
 import 'package:mealchemy/features/dashboard/widgets/trending_recipes_section.dart';
@@ -39,6 +40,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           children: [
             const SizedBox(height: 16),
             const DashboardWelcomeBar(),
+            const ContinueCookingRow(),
             const SizedBox(height: 24),
             const DashboardCardsRow(),
             const SizedBox(height: 28),
