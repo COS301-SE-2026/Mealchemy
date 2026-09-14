@@ -114,6 +114,12 @@ class _ShoppingListDetailScreenState
                     unit: unit,
                   );
             },
+            onDeleteItem: (itemId) async {
+              await ref.read(shoppingListsProvider.notifier).deleteItem(
+                    listId: list.id,
+                    itemId: itemId,
+                  );
+            },
             onSelectAll: () async {
               await ref
                   .read(shoppingListsProvider.notifier)
@@ -173,6 +179,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
     required this.isReadOnly,
     required this.onToggleItem,
     required this.onUpdateItem,
+    required this.onDeleteItem,
     required this.onSelectAll,
     required this.onDeselectAll,
     required this.onCompleteShop,
@@ -188,6 +195,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
     required String quantity,
     required String unit,
   }) onUpdateItem;
+  final Future<void> Function(String itemId) onDeleteItem;
   final Future<void> Function() onSelectAll;
   final Future<void> Function() onDeselectAll;
   final Future<void> Function() onDeleteSelected;
@@ -390,6 +398,18 @@ class _ShoppingListDetailContent extends StatelessWidget {
                         );
                       },
                     ),
+            onDelete: isReadOnly
+                ? null
+                : () async {
+                    await onDeleteItem(item.id);
+
+                    if (!context.mounted) return;
+
+                    _showSnackBar(
+                      context,
+                      '${item.name} deleted.',
+                    );
+                  },
           ),
         );
       }
