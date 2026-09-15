@@ -115,31 +115,31 @@ final appRouter = GoRouter(
       routes: [
         GoRoute(
           path: AppRoutes.dashboard,
-          builder: (context, state) => const DashboardScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const DashboardScreen()),
         ),
         GoRoute(
           path: AppRoutes.vault,
-          builder: (context, state) => const VaultScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const VaultScreen()),
         ),
         GoRoute(
           path: AppRoutes.discovery,
-          builder: (context, state) => const DiscoveryScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const DiscoveryScreen()),
         ),
         GoRoute(
           path: AppRoutes.pantry,
-          builder: (context, state) => const PantryScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const PantryScreen()),
         ),
         GoRoute(
           path: AppRoutes.profile,
-          builder: (context, state) => const ProfileScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const ProfileScreen()),
         ),
         GoRoute(
           path: AppRoutes.shoppingLists,
-          builder: (context, state) => const ShoppingListsScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const ShoppingListsScreen()),
         ),
         GoRoute(
           path: AppRoutes.guidedDiscovery,
-          builder: (context, state) => const GuidedDiscoveryScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const GuidedDiscoveryScreen()),
         ),
       ],
     ),
