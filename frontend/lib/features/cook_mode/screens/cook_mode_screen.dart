@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/shared_widgets/atoms/app_button.dart';
@@ -14,10 +15,13 @@ import '../../recipe/models/recipe_step.dart';
 import '../../recipe/providers/recipe_provider.dart';
 import '../models/cook_narration_state.dart';
 import '../models/cook_session.dart';
+import '../models/cook_voice_command.dart';
 import '../providers/cook_mode_provider.dart';
 import '../providers/cook_narration_provider.dart';
 import '../providers/cook_session_provider.dart';
+import '../providers/cook_voice_provider.dart';
 import '../services/cook_session_store.dart';
+import '../services/cook_voice_service.dart';
 import '../services/screen_awake_service.dart';
 
 class CookModeScreen extends ConsumerWidget {
@@ -71,6 +75,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
   late final CookNarrationController _narrationController;
   late final CookSessionController _sessionController;
   late final CookSessionStore _sessionStore;
+  late final CookVoiceService _voiceService;
   late final CookModeArgs _args;
   late final AppLifecycleListener _lifecycleListener;
   late final int? _userId;
@@ -78,6 +83,13 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
   bool _isForeground = true;
   bool _restoringSession = true;
   bool _storageWarning = false;
+  bool _voiceInitializing = true;
+  bool _voiceAvailable = false;
+  bool _voiceListening = false;
+  bool _voiceSessionActive = false;
+  bool _initialNarrationPending = true;
+  String? _voiceMessage;
+  int _voiceGeneration = 0;
 
   @override
   void initState() {
@@ -92,6 +104,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
     );
     _sessionController = ref.read(cookSessionControllerProvider.notifier);
     _sessionStore = ref.read(cookSessionStoreProvider);
+    _voiceService = ref.read(cookVoiceServiceProvider);
     _userId = ref.read(activeIdentityProvider);
     _lifecycleListener = AppLifecycleListener(
       onInactive: _onBackground,
@@ -137,12 +150,200 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
     ref.read(cookModeControllerProvider(_args).notifier).restore(stepIndex);
     setState(() => _restoringSession = false);
     unawaited(_recordSession(stepIndex));
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _isForeground) {
-        unawaited(
-            _narrationController.speakStep(widget.steps[stepIndex].content));
+    unawaited(_initializeVoice());
+  }
+
+  Future<void> _initializeVoice() async {
+    try {
+      final available = await _voiceService.initialize(CookVoiceCallbacks(
+        onFinalResult: _onVoiceResult,
+        onListeningChanged: _onListeningChanged,
+        onError: _onVoiceError,
+      ));
+      if (!mounted) return;
+      setState(() {
+        _voiceAvailable = available;
+        _voiceMessage = available ? null : 'Voice unavailable on this device.';
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _voiceMessage = 'Voice unavailable on this device.');
+    } finally {
+      if (mounted) {
+        setState(() => _voiceInitializing = false);
+        _maybeStartInitialNarration();
       }
+    }
+  }
+
+  void _maybeStartInitialNarration() {
+    if (!_initialNarrationPending ||
+        _voiceInitializing ||
+        _restoringSession ||
+        !_isForeground) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_initialNarrationPending || !_isForeground) return;
+      _initialNarrationPending = false;
+      final index =
+          ref.read(cookModeControllerProvider(_args)).currentStepIndex;
+      unawaited(_narrationController.speakStep(widget.steps[index].content));
     });
+  }
+
+  void _onListeningChanged(bool listening) {
+    if (!mounted) return;
+    setState(() {
+      _voiceListening = listening;
+      if (listening) _voiceMessage = null;
+    });
+  }
+
+  void _onVoiceError(String message) {
+    if (!mounted || !_isForeground) return;
+    _voiceSessionActive = false;
+    final timedOut = message.contains('error_speech_timeout') ||
+        message.contains('error_no_match');
+    setState(() {
+      _voiceListening = false;
+      _voiceMessage = timedOut
+          ? 'Voice ready'
+          : 'On-device voice unavailable. Tap the mic to try again.';
+    });
+  }
+
+  void _onVoiceResult(CookVoiceResult result) {
+    if (!mounted || !_isForeground || !_voiceSessionActive) return;
+    _voiceSessionActive = false;
+    final command = parseCookVoiceCommand(result.words);
+    if (command == null ||
+        (result.confidence != null && result.confidence! < 0.5)) {
+      setState(() {
+        _voiceMessage = "Didn't catch that. Try next, back, or repeat.";
+      });
+      unawaited(_stopVoiceListening());
+      return;
+    }
+
+    final mode = ref.read(cookModeControllerProvider(_args));
+    if (command == CookVoiceCommand.back && !mode.canGoBack) {
+      setState(() => _voiceMessage = 'Already at the first step.');
+      unawaited(_stopVoiceListening());
+      return;
+    }
+
+    unawaited(_confirmVoiceCommand());
+    unawaited(_runVoiceCommand(command));
+  }
+
+  Future<void> _confirmVoiceCommand() async {
+    try {
+      await SystemSound.play(SystemSoundType.click);
+    } catch (_) {
+      // Audio feedback is optional when the system sound is unavailable.
+    }
+  }
+
+  Future<void> _runVoiceCommand(CookVoiceCommand command) async {
+    switch (command) {
+      case CookVoiceCommand.next:
+        await _goNext();
+      case CookVoiceCommand.back:
+        await _goBack();
+      case CookVoiceCommand.repeat:
+        await _repeatStep();
+    }
+  }
+
+  void _scheduleListening() {
+    if (!_voiceAvailable || !_isForeground || _restoringSession) return;
+    final generation = ++_voiceGeneration;
+    Future<void>.delayed(const Duration(milliseconds: 300), () {
+      if (!mounted || generation != _voiceGeneration || !_isForeground) return;
+      unawaited(_startVoiceListening());
+    });
+  }
+
+  Future<void> _startVoiceListening() async {
+    if (!mounted ||
+        !_voiceAvailable ||
+        !_isForeground ||
+        _restoringSession ||
+        _voiceSessionActive) {
+      return;
+    }
+    final narration = ref.read(
+      cookNarrationControllerProvider(widget.recipe.recipeId),
+    );
+    final mode = ref.read(cookModeControllerProvider(_args));
+    if (mode.isCompleted ||
+        narration.isSpeaking ||
+        narration.status == CookNarrationStatus.preparing ||
+        narration.isPaused) {
+      return;
+    }
+
+    _voiceGeneration++;
+    _voiceSessionActive = true;
+    setState(() => _voiceMessage = null);
+    try {
+      await _voiceService.listen();
+    } catch (_) {
+      if (!mounted) return;
+      _voiceSessionActive = false;
+      setState(() {
+        _voiceListening = false;
+        _voiceMessage = 'Voice unavailable. Tap the mic to try again.';
+      });
+    }
+  }
+
+  Future<void> _stopVoiceListening() async {
+    _voiceGeneration++;
+    _voiceSessionActive = false;
+    try {
+      await _voiceService.stop();
+    } catch (_) {
+      // Manual cooking remains available if the recognizer cannot stop.
+    }
+    if (mounted && _voiceListening) {
+      setState(() => _voiceListening = false);
+    }
+  }
+
+  Future<void> _toggleVoiceListening() async {
+    if (_voiceListening) {
+      await _stopVoiceListening();
+    } else {
+      await _stopVoiceListening();
+      await _startVoiceListening();
+    }
+  }
+
+  Future<void> _repeatStep() async {
+    _initialNarrationPending = false;
+    await _stopVoiceListening();
+    if (!mounted) return;
+    final index = ref.read(cookModeControllerProvider(_args)).currentStepIndex;
+    await _narrationController.speakStep(widget.steps[index].content);
+  }
+
+  Future<void> _toggleNarration(CookNarrationState narration) async {
+    _initialNarrationPending = false;
+    if (narration.isSpeaking) {
+      await _pauseNarration();
+      return;
+    }
+    await _stopVoiceListening();
+    if (!mounted) return;
+    if (narration.isPaused) {
+      await _narrationController.resume();
+    } else {
+      final index =
+          ref.read(cookModeControllerProvider(_args)).currentStepIndex;
+      await _narrationController.speakStep(widget.steps[index].content);
+    }
   }
 
   Future<void> _recordSession(int stepIndex) async {
@@ -187,6 +388,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
   void _onBackground() {
     if (!_isForeground) return;
     _isForeground = false;
+    unawaited(_stopVoiceListening());
     unawaited(_pauseNarration());
     unawaited(_setScreenAwake(false));
   }
@@ -195,12 +397,16 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
     if (_isForeground) return;
     _isForeground = true;
     unawaited(_setScreenAwake(true));
+    _maybeStartInitialNarration();
   }
 
   Future<void> _pauseNarration() => _narrationController.pause();
 
   @override
   void dispose() {
+    _voiceGeneration++;
+    _voiceService.detach();
+    unawaited(_voiceService.stop().catchError((_) {}));
     _lifecycleListener.dispose();
     unawaited(_narrationController.stop());
     unawaited(_setScreenAwake(false));
@@ -208,6 +414,9 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
   }
 
   Future<void> _goNext() async {
+    _initialNarrationPending = false;
+    await _stopVoiceListening();
+    if (!mounted) return;
     final controller = ref.read(cookModeControllerProvider(_args).notifier);
     controller.next();
     final nextState = ref.read(cookModeControllerProvider(_args));
@@ -222,6 +431,9 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
   }
 
   Future<void> _goBack() async {
+    _initialNarrationPending = false;
+    await _stopVoiceListening();
+    if (!mounted) return;
     final controller = ref.read(cookModeControllerProvider(_args).notifier);
     controller.back();
     final nextState = ref.read(cookModeControllerProvider(_args));
@@ -231,18 +443,37 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
   }
 
   Future<void> _restart() async {
+    _initialNarrationPending = false;
+    await _stopVoiceListening();
+    if (!mounted) return;
     ref.read(cookModeControllerProvider(_args).notifier).restart();
     unawaited(_recordSession(0));
     await _narrationController.speakStep(widget.steps.first.content);
   }
 
   Future<void> _close() async {
+    await _stopVoiceListening();
     await _narrationController.stop();
     if (mounted) context.pop();
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<CookNarrationState>(
+      cookNarrationControllerProvider(widget.recipe.recipeId),
+      (previous, next) {
+        if (next.status == CookNarrationStatus.completed &&
+            previous?.status != CookNarrationStatus.completed) {
+          _scheduleListening();
+        } else if (next.status == CookNarrationStatus.preparing ||
+            next.status == CookNarrationStatus.speaking ||
+            next.status == CookNarrationStatus.paused ||
+            next.status == CookNarrationStatus.unavailable) {
+          _voiceGeneration++;
+          if (_voiceSessionActive) unawaited(_stopVoiceListening());
+        }
+      },
+    );
     final state = ref.watch(cookModeControllerProvider(_args));
     final narration =
         ref.watch(cookNarrationControllerProvider(widget.recipe.recipeId));
@@ -284,20 +515,15 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
               ),
               _NarrationControls(
                 narration: narration,
-                onToggle: () {
-                  if (narration.isSpeaking) {
-                    unawaited(_pauseNarration());
-                  } else if (narration.isPaused) {
-                    unawaited(_narrationController.resume());
-                  } else {
-                    unawaited(
-                      _narrationController.speakStep(
-                        widget.steps[state.currentStepIndex].content,
-                      ),
-                    );
-                  }
-                },
-                onRepeat: () => unawaited(_narrationController.repeat()),
+                onToggle: () => unawaited(_toggleNarration(narration)),
+                onRepeat: () => unawaited(_repeatStep()),
+              ),
+              _VoiceControls(
+                isInitializing: _voiceInitializing,
+                isAvailable: _voiceAvailable,
+                isListening: _voiceListening,
+                message: _voiceMessage,
+                onToggle: () => unawaited(_toggleVoiceListening()),
               ),
               _CookControls(
                 canGoBack: state.canGoBack,
@@ -547,6 +773,69 @@ class _NarrationControls extends StatelessWidget {
               onPressed: canControl ? onRepeat : null,
               customColor: AppColors.primary,
               size: 48,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VoiceControls extends StatelessWidget {
+  const _VoiceControls({
+    required this.isInitializing,
+    required this.isAvailable,
+    required this.isListening,
+    required this.message,
+    required this.onToggle,
+  });
+
+  final bool isInitializing;
+  final bool isAvailable;
+  final bool isListening;
+  final String? message;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = isInitializing
+        ? 'Preparing voice'
+        : !isAvailable
+            ? message ?? 'Voice unavailable'
+            : isListening
+                ? 'Listening'
+                : message ?? 'Voice ready';
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Tooltip(
+            message: isListening
+                ? 'Stop listening'
+                : 'Listen for next, back, or repeat',
+            child: AppIconButton.outlined(
+              icon: isAvailable
+                  ? isListening
+                      ? Icons.mic
+                      : Icons.mic_none
+                  : Icons.mic_off,
+              onPressed: isAvailable && !isInitializing ? onToggle : null,
+              size: 48,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.body.copyWith(
+                color: isAvailable
+                    ? Theme.of(context).colorScheme.onSurface
+                    : AppColors.textMuted,
+              ),
             ),
           ),
         ],

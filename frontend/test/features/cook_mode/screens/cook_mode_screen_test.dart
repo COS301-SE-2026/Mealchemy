@@ -9,6 +9,8 @@ import 'package:mealchemy/features/cook_mode/providers/cook_narration_provider.d
 import 'package:mealchemy/features/cook_mode/services/cook_narration_service.dart';
 import 'package:mealchemy/features/cook_mode/services/screen_awake_service.dart';
 import 'package:mealchemy/features/cook_mode/services/cook_session_store.dart';
+import 'package:mealchemy/features/cook_mode/providers/cook_voice_provider.dart';
+import 'package:mealchemy/features/cook_mode/services/cook_voice_service.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
 import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
@@ -87,11 +89,50 @@ class _FakeSessionStore implements CookSessionStore {
   }
 }
 
+class _FakeVoiceService implements CookVoiceService {
+  CookVoiceCallbacks? callbacks;
+  bool available = true;
+  int listenCalls = 0;
+  int stopCalls = 0;
+
+  @override
+  Future<bool> initialize(CookVoiceCallbacks callbacks) async {
+    this.callbacks = callbacks;
+    return available;
+  }
+
+  @override
+  Future<void> listen() async {
+    listenCalls++;
+    callbacks?.onListeningChanged(true);
+  }
+
+  @override
+  Future<void> stop() async {
+    stopCalls++;
+    callbacks?.onListeningChanged(false);
+  }
+
+  @override
+  void detach() => callbacks = null;
+
+  @override
+  Future<void> dispose() async {}
+
+  void complete(String words, {double? confidence}) {
+    callbacks?.onFinalResult(CookVoiceResult(
+      words: words,
+      confidence: confidence,
+    ));
+  }
+}
+
 Widget _host(
   Recipe recipe,
   _FakeScreenAwakeService screenAwake, {
   _FakeNarrationService? narration,
   _FakeSessionStore? sessions,
+  _FakeVoiceService? voice,
   int? userId,
 }) {
   return ProviderScope(
@@ -105,6 +146,7 @@ Widget _host(
       cookNarrationServiceProvider.overrideWithValue(
         narration ?? _FakeNarrationService(),
       ),
+      cookVoiceServiceProvider.overrideWithValue(voice ?? _FakeVoiceService()),
     ],
     child: MaterialApp(home: CookModeScreen(recipeId: recipe.recipeId)),
   );
@@ -324,5 +366,182 @@ void main() {
     await tester.tap(find.byKey(const Key('cook-next-button')));
     await tester.pumpAndSettle();
     expect(sessions.sessions['12:7'], isNull);
+  });
+
+  testWidgets('listens after narration and follows a final next command',
+      (tester) async {
+    final narration = _FakeNarrationService();
+    final voice = _FakeVoiceService();
+    await tester.pumpWidget(_host(
+      _recipe,
+      _FakeScreenAwakeService(),
+      narration: narration,
+      voice: voice,
+    ));
+    await tester.pumpAndSettle();
+    expect(voice.listenCalls, 0);
+
+    narration.callbacks?.onComplete();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(voice.listenCalls, 1);
+    expect(find.text('Listening'), findsOneWidget);
+
+    voice.complete('next step');
+    await tester.pumpAndSettle();
+    expect(find.text('Step 2 of 2'), findsOneWidget);
+    expect(narration.spoken.last, 'Toss with the sauce.');
+  });
+
+  testWidgets('rejects unknown and low-confidence phrases', (tester) async {
+    final narration = _FakeNarrationService();
+    final voice = _FakeVoiceService();
+    await tester.pumpWidget(_host(
+      _recipe,
+      _FakeScreenAwakeService(),
+      narration: narration,
+      voice: voice,
+    ));
+    await tester.pumpAndSettle();
+
+    narration.callbacks?.onComplete();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    voice.complete('not next');
+    await tester.pumpAndSettle();
+    expect(find.text('Step 1 of 2'), findsOneWidget);
+    expect(find.text("Didn't catch that. Try next, back, or repeat."),
+        findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.mic_none));
+    await tester.pumpAndSettle();
+    voice.complete('next', confidence: 0.2);
+    await tester.pumpAndSettle();
+    expect(find.text('Step 1 of 2'), findsOneWidget);
+  });
+
+  testWidgets('repeat and back commands act on the current step',
+      (tester) async {
+    final narration = _FakeNarrationService();
+    final voice = _FakeVoiceService();
+    await tester.pumpWidget(_host(
+      _recipe,
+      _FakeScreenAwakeService(),
+      narration: narration,
+      voice: voice,
+    ));
+    await tester.pumpAndSettle();
+    narration.callbacks?.onComplete();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    voice.complete('repeat');
+    await tester.pumpAndSettle();
+    expect(narration.spoken, ['Boil the pasta.', 'Boil the pasta.']);
+
+    await tester.tap(find.byKey(const Key('cook-next-button')));
+    await tester.pumpAndSettle();
+    narration.callbacks?.onComplete();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    voice.complete('go back');
+    await tester.pumpAndSettle();
+    expect(find.text('Step 1 of 2'), findsOneWidget);
+  });
+
+  testWidgets('mic can re-arm after the listening window ends', (tester) async {
+    final narration = _FakeNarrationService();
+    final voice = _FakeVoiceService();
+    await tester.pumpWidget(_host(
+      _recipe,
+      _FakeScreenAwakeService(),
+      narration: narration,
+      voice: voice,
+    ));
+    await tester.pumpAndSettle();
+    narration.callbacks?.onComplete();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(voice.listenCalls, 1);
+
+    voice.callbacks?.onListeningChanged(false);
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.mic_none));
+    await tester.pumpAndSettle();
+    expect(voice.listenCalls, 2);
+  });
+
+  testWidgets('denied microphone leaves narration and manual cooking usable',
+      (tester) async {
+    final voice = _FakeVoiceService()..available = false;
+    final narration = _FakeNarrationService();
+    await tester.pumpWidget(_host(
+      _recipe,
+      _FakeScreenAwakeService(),
+      narration: narration,
+      voice: voice,
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Voice unavailable on this device.'), findsOneWidget);
+    expect(find.byIcon(Icons.mic_off), findsOneWidget);
+    expect(narration.spoken, ['Boil the pasta.']);
+    await tester.tap(find.byKey(const Key('cook-next-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('Step 2 of 2'), findsOneWidget);
+  });
+
+  testWidgets('on-device recognition failure leaves manual cooking usable',
+      (tester) async {
+    final narration = _FakeNarrationService();
+    final voice = _FakeVoiceService();
+    await tester.pumpWidget(_host(
+      _recipe,
+      _FakeScreenAwakeService(),
+      narration: narration,
+      voice: voice,
+    ));
+    await tester.pumpAndSettle();
+    narration.callbacks?.onComplete();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    voice.callbacks?.onError('error_language_unavailable');
+    await tester.pumpAndSettle();
+    expect(
+      find.text('On-device voice unavailable. Tap the mic to try again.'),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('cook-next-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('Step 2 of 2'), findsOneWidget);
+  });
+
+  testWidgets('backgrounding cancels listening and ignores late commands',
+      (tester) async {
+    final narration = _FakeNarrationService();
+    final voice = _FakeVoiceService();
+    await tester.pumpWidget(_host(
+      _recipe,
+      _FakeScreenAwakeService(),
+      narration: narration,
+      voice: voice,
+    ));
+    await tester.pumpAndSettle();
+    narration.callbacks?.onComplete();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    final stopsBeforeBackground = voice.stopCalls;
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pumpAndSettle();
+    expect(voice.stopCalls, greaterThan(stopsBeforeBackground));
+    voice.complete('next');
+    await tester.pumpAndSettle();
+    expect(find.text('Step 1 of 2'), findsOneWidget);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(voice.listenCalls, 1);
   });
 }
