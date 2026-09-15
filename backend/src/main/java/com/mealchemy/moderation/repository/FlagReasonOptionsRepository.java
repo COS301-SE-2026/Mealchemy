@@ -5,6 +5,7 @@ package com.mealchemy.moderation.repository;
 import com.mealchemy.moderation.model.FlagReasonOptions;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 
@@ -12,6 +13,8 @@ public interface FlagReasonOptionsRepository extends JpaRepository<FlagReasonOpt
     
     // for validation
     boolean existsByValue(String value);
+
+    Optional<FlagReasonOptions> findByValue(String value);
 
     List<FlagReasonOptions> findAllByOrderBySortOrderAsc();
 }
