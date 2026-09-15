@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mealchemy/core/providers/feedback_provider.dart';
+import 'package:mealchemy/core/shared_widgets/atoms/app_toast.dart';
 
 import '../../../core/shared_widgets/Molecules/app_confirm_dialog.dart';
 import '../../../core/shared_widgets/atoms/app_button.dart';
@@ -178,9 +180,11 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     final message = error is RecipePhotoValidationException
         ? error.message
         : 'Could not select the photo. Try again.';
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+     _showToast(message, kind: ToastKind.error, icon: Icons.error_outline);
+  }
+
+  void _showToast(String message, {ToastKind kind = ToastKind.info,  IconData? icon,}) {
+    ref.read(feedbackProvider.notifier).showShort(message, kind: kind, icon: icon);
   }
 
   void _removeSelectedPhoto() {
@@ -263,11 +267,10 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       } catch (_) {
         if (!mounted) return;
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content:
-                Text('Could not upload the photo. Changes were not saved.'),
-          ),
+        _showToast(
+          'Could not upload the photo. Changes were not saved.',
+          kind: ToastKind.error,
+          icon: Icons.error_outline,
         );
         return;
       }
@@ -334,28 +337,25 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     if (!mounted) return;
     setState(() => _isSaving = false);
 
+    // saveFailed && photoFailed
     if (saveFailed && photoFailed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Recipe saved, but some items and the photo did not.'),
-        ),
+      _showToast(
+        'Recipe saved, but some items and the photo did not.',
+        kind: ToastKind.error,
+        icon: Icons.error_outline,
       );
     } else if (saveFailed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Recipe saved, but some items did not.')),
-      );
+      _showToast('Recipe saved, but some items did not.',
+          kind: ToastKind.error,
+          icon: Icons.error_outline);
     } else if (photoFailed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Recipe saved, but the photo did not upload.'),
-        ),
-      );
+      _showToast('Recipe saved, but the photo did not upload.',
+          kind: ToastKind.error,
+          icon: Icons.error_outline);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(widget.isEditing ? 'Changes saved' : 'Recipe saved'),
-        ),
-      );
+      _showToast(widget.isEditing ? 'Changes saved' : 'Recipe saved',
+          kind: ToastKind.success,
+          icon: Icons.check_circle_outline);
     }
 
     ref.read(addRecipeProvider.notifier).reset();
@@ -424,9 +424,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
           ref.invalidate(recipeDetailProvider(widget.editRecipeId!));
         }
       } else if (next.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.errorMessage!)),
-        );
+        _showToast(next.errorMessage!, kind: ToastKind.error, icon: Icons.error_outline);
       }
     });
 
