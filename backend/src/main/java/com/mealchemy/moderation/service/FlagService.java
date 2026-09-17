@@ -73,7 +73,10 @@ public class FlagService {
     // ========== Admin facing ==========
 
     // GET - get all recipes with the specific status flag (default to PENDING is status is empty)
-    public List<FlaggedRecipeResponse> getFlags(FlagStatus status) {
+    public List<FlaggedRecipeResponse> getFlags(FlagStatus status, Integer adminUserId) {
+        // verify admin
+        adminService.requireAdmin(adminUserId);
+
         if (status == null) {
             status = FlagStatus.PENDING;
         }
@@ -93,7 +96,10 @@ public class FlagService {
 
 
     // GET - detailed response of a specific flagged recipe
-    public FlaggedRecipeDetailResponse getFlagDetail(Integer flaggedId) {
+    public FlaggedRecipeDetailResponse getFlagDetail(Integer flaggedId, Integer adminUserId) {
+        // verify admin
+        adminService.requireAdmin(adminUserId);
+
         // find flagged recipe
         FlaggedRecipe flaggedRecipe = flaggedRecipeRepository.findById(flaggedId)
                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Flag not found."));
