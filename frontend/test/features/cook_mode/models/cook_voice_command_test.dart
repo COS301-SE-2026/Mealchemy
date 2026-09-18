@@ -12,6 +12,8 @@ void main() {
     'repeat': CookVoiceCommand.repeat,
     'say that again': CookVoiceCommand.repeat,
     '  REPEAT   THAT  ': CookVoiceCommand.repeat,
+    'start the timer': CookVoiceCommand.startSuggestedTimer,
+    'start suggested timer': CookVoiceCommand.startSuggestedTimer,
     'not next': null,
     'next week': null,
     'add salt': null,
