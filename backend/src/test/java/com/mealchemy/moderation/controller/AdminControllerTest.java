@@ -7,7 +7,7 @@ import com.mealchemy.moderation.dto.UserSummaryResponse;
 import com.mealchemy.recipe.dto.RecipeResponse;
 
 // controller
-import com.mealchemy.moderation.controller.AdminConroller;
+import com.mealchemy.moderation.controller.AdminController;
 
 // import service
 import com.mealchemy.moderation.service.FlagService;
@@ -48,8 +48,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
-@WebMvcTest(AdminConroller.class)
-public class AdminConrollerTest {
+@WebMvcTest(AdminController.class)
+public class AdminControllerTest {
 
     // setup
     @TestConfiguration
@@ -108,9 +108,9 @@ public class AdminConrollerTest {
                 .andExpect(jsonPath("$[0].recipe_id").value(87))
                 .andExpect(jsonPath("$[0].recipe_title").value("Penne Alla Vodka"))
                 .andExpect(jsonPath("$[0].recipe_photo_url").value("https://photoUr.com/penne,jpeg"))
-                .andExpect(jsonPath("$[0].flagged_by_user_id").value(4));
-                .andExpect(jsonPath("$[0].reason_value").value("SPAM_MISLEADING"));
-                .andExpect(jsonPath("$[0].reason_label").value("Spam / misleading"));
+                .andExpect(jsonPath("$[0].flagged_by_user_id").value(4))
+                .andExpect(jsonPath("$[0].reason_value").value("SPAM_MISLEADING"))
+                .andExpect(jsonPath("$[0].reason_label").value("Spam / misleading"))
                 .andExpect(jsonPath("$[0].status").value("PENDING"));
     }
 
@@ -181,7 +181,7 @@ public class AdminConrollerTest {
     @Test
     void getFlaggedRecipeDetails_validToken_returns200() throws Exception {
         // Arrange
-        RecipeResonse mockRecipeResponse = new RecipeResonse(
+        RecipeResponse mockRecipeResponse = new RecipeResponse(
             87,
             9, 
             "Penne Alla Vodka",
@@ -261,11 +261,11 @@ public class AdminConrollerTest {
             4, // userId
             "SPAM_MISLEADING",
             "Spam / misleading",
-            FlagStatus.REVIEWD,
+            FlagStatus.REVIEWED,
             OffsetDateTime.parse("2026-09-17T23:00:00Z")
         );
         
-        when(flagService.dismissFlag(eq(12), anyInt())).thenReturn(List.of(mockResponse));
+        when(flagService.dismissFlag(eq(12), anyInt())).thenReturn(mockResponse);
 
         // Act and assert
         mockMvc.perform(put("/admin/flags/{flaggedId}/dismiss", 12).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
@@ -281,7 +281,7 @@ public class AdminConrollerTest {
         when(flagService.dismissFlag(eq(12), anyInt())).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not an Admin."));
 
         // Act and Assert
-        mockMvc.perform(get("/admin/flags/{flaggedId}", 12).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
+        mockMvc.perform(put("/admin/flags/{flaggedId}/dismiss", 12).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("User is not an Admin."));
     }
@@ -292,7 +292,7 @@ public class AdminConrollerTest {
         when(flagService.dismissFlag(eq(999), anyInt())).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Flag not found."));
 
         // Act and Assert
-        mockMvc.perform(get("/admin/flags/{flaggedId}", 999).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
+        mockMvc.perform(put("/admin/flags/{flaggedId}/dismiss", 999).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Flag not found."));
     }
@@ -318,7 +318,7 @@ public class AdminConrollerTest {
         when(flagService.removeFlaggedRecipe(eq(12), anyInt())).thenReturn(mockResponse);
 
         // Act and assert
-        mockMvc.perform(delete("/admin/flags/{flaggedId}/dismiss", 12).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
+        mockMvc.perform(delete("/admin/flags/{flaggedId}/recipe", 12).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
                 .andExpect(status().isOk())
                 // fields in response object
                 .andExpect(jsonPath("$.flagged_id").value(12))
@@ -331,7 +331,7 @@ public class AdminConrollerTest {
         when(flagService.removeFlaggedRecipe(eq(12), anyInt())).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not an Admin."));
 
         // Act and Assert
-        mockMvc.perform(get("/admin/flags/{flaggedId}/recipe", 12).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
+        mockMvc.perform(delete("/admin/flags/{flaggedId}/recipe", 12).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("User is not an Admin."));
     }
@@ -342,7 +342,7 @@ public class AdminConrollerTest {
         when(flagService.removeFlaggedRecipe(eq(999), anyInt())).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Flag not found."));
 
         // Act and Assert
-        mockMvc.perform(get("/admin/flags/{flaggedId}/recipe", 999).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
+        mockMvc.perform(delete("/admin/flags/{flaggedId}/recipe", 999).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Flag not found."));
     }
@@ -363,13 +363,13 @@ public class AdminConrollerTest {
             List.of("USER")
         );
 
-        when(adminService.findUserByEmail(eq("testuser@email.com")), anyInt()).thenReturn(mockResponse);
+        when(adminService.findUserByEmail(eq("testuser@email.com"), anyInt())).thenReturn(mockResponse);
         
         // Act and assert
         mockMvc.perform(get("/admin/users").param("email", "testuser@email.com").with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
                 .andExpect(status().isOk())
                 // fields in response object
-                .andExpect(jsonPath("$.user_id").value(4))
+                .andExpect(jsonPath("$.user_id").value(1))
                 .andExpect(jsonPath("$.display_name").value("Test User"))
                 .andExpect(jsonPath("$.email").value("testuser@email.com"))
                 .andExpect(jsonPath("$.roles[0]").value("USER"));
@@ -383,9 +383,9 @@ public class AdminConrollerTest {
     }
 
     @Test
-    void findUserByEmail_notAdming_return403() throws Exception {
+    void findUserByEmail_notAdmin_return403() throws Exception {
         // Arrange
-        when(adminService.findUserByEmail(eq("testuser@email.com")), anyInt()).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not and Admin"));
+        when(adminService.findUserByEmail(eq("testuser@email.com"), anyInt())).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not an Admin."));
 
         // Act and assert
         mockMvc.perform(get("/admin/users").param("email", "testuser@email.com").with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
@@ -396,7 +396,7 @@ public class AdminConrollerTest {
     @Test 
     void findUserByEmail_userNotFound_returns404() throws Exception {
         // Arrange
-        when(adminService.findUserByEmail(eq("nobody@email.com")), anyInt()).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found."));
+        when(adminService.findUserByEmail(eq("nobody@email.com"), anyInt())).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found."));
 
         // Act and Assert
         mockMvc.perform(get("/admin/users").param("email", "nobody@email.com").with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
@@ -430,7 +430,7 @@ public class AdminConrollerTest {
     @Test
     void promoteUserToAdmin_notAdming_return403() throws Exception {
         // Arrange
-        when(adminService.promoteToAdmin(eq(4), anyInt())).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not and Admin"));
+        when(adminService.promoteToAdmin(eq(4), anyInt())).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not an Admin."));
 
         // Act and assert
         mockMvc.perform(put("/admin/users/{userId}/promote", 4).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
