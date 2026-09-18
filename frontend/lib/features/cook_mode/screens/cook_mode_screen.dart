@@ -15,14 +15,18 @@ import '../../recipe/models/recipe_step.dart';
 import '../../recipe/providers/recipe_provider.dart';
 import '../models/cook_narration_state.dart';
 import '../models/cook_session.dart';
+import '../models/cook_timer.dart';
 import '../models/cook_voice_command.dart';
 import '../providers/cook_mode_provider.dart';
 import '../providers/cook_narration_provider.dart';
 import '../providers/cook_session_provider.dart';
+import '../providers/cook_timer_provider.dart';
 import '../providers/cook_voice_provider.dart';
+import '../services/cook_duration_parser.dart';
 import '../services/cook_session_store.dart';
 import '../services/cook_voice_service.dart';
 import '../services/screen_awake_service.dart';
+import '../widgets/cook_timer_controls.dart';
 
 class CookModeScreen extends ConsumerWidget {
   const CookModeScreen({super.key, required this.recipeId});
@@ -75,11 +79,13 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
   late final CookNarrationController _narrationController;
   late final CookSessionController _sessionController;
   late final CookSessionStore _sessionStore;
+  late final CookTimerController _timerController;
   late final CookVoiceService _voiceService;
   late final CookModeArgs _args;
   late final AppLifecycleListener _lifecycleListener;
   late final int? _userId;
   Future<void> _wakeOperation = Future<void>.value();
+  Timer? _listenDelay;
   bool _isForeground = true;
   bool _restoringSession = true;
   bool _storageWarning = false;
@@ -104,8 +110,11 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
     );
     _sessionController = ref.read(cookSessionControllerProvider.notifier);
     _sessionStore = ref.read(cookSessionStoreProvider);
-    _voiceService = ref.read(cookVoiceServiceProvider);
     _userId = ref.read(activeIdentityProvider);
+    _timerController = ref.read(
+      cookTimerControllerProvider(_userId).notifier,
+    );
+    _voiceService = ref.read(cookVoiceServiceProvider);
     _lifecycleListener = AppLifecycleListener(
       onInactive: _onBackground,
       onHide: _onBackground,
@@ -216,18 +225,19 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
   void _onVoiceResult(CookVoiceResult result) {
     if (!mounted || !_isForeground || !_voiceSessionActive) return;
     _voiceSessionActive = false;
-    final command = parseCookVoiceCommand(result.words);
+    final command = parseCookVoiceIntent(result.words);
     if (command == null ||
         (result.confidence != null && result.confidence! < 0.5)) {
       setState(() {
-        _voiceMessage = "Didn't catch that. Try next, back, or repeat.";
+        _voiceMessage =
+            "Didn't catch that. Try next, back, repeat, or set a timer.";
       });
       unawaited(_stopVoiceListening());
       return;
     }
 
     final mode = ref.read(cookModeControllerProvider(_args));
-    if (command == CookVoiceCommand.back && !mode.canGoBack) {
+    if (command.type == CookVoiceCommandType.back && !mode.canGoBack) {
       setState(() => _voiceMessage = 'Already at the first step.');
       unawaited(_stopVoiceListening());
       return;
@@ -246,20 +256,64 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
   }
 
   Future<void> _runVoiceCommand(CookVoiceCommand command) async {
-    switch (command) {
-      case CookVoiceCommand.next:
+    switch (command.type) {
+      case CookVoiceCommandType.next:
         await _goNext();
-      case CookVoiceCommand.back:
+      case CookVoiceCommandType.back:
         await _goBack();
-      case CookVoiceCommand.repeat:
+      case CookVoiceCommandType.repeat:
         await _repeatStep();
+      case CookVoiceCommandType.startTimer:
+        await _startTimer(command.duration!, resumeListening: true);
+      case CookVoiceCommandType.startSuggestedTimer:
+        await _startSuggestedTimer(resumeListening: true);
     }
+  }
+
+  Future<void> _startSuggestedTimer({bool resumeListening = false}) async {
+    final mode = ref.read(cookModeControllerProvider(_args));
+    final duration = detectCookStepDuration(
+      widget.steps[mode.currentStepIndex].content,
+    );
+    if (duration == null) {
+      if (mounted) {
+        setState(() {
+          _voiceMessage = 'No clear timer duration was found in this step.';
+        });
+      }
+      return;
+    }
+    await _startTimer(duration, resumeListening: resumeListening);
+  }
+
+  Future<void> _startTimer(
+    Duration duration, {
+    bool resumeListening = false,
+  }) async {
+    await _stopVoiceListening();
+    if (!mounted) return;
+    final mode = ref.read(cookModeControllerProvider(_args));
+    final step = widget.steps[mode.currentStepIndex];
+    await _timerController.start(
+      recipeId: widget.recipe.recipeId,
+      recipeTitle: widget.recipe.title,
+      stepIndex: mode.currentStepIndex,
+      stepNumber: step.stepNr,
+      duration: duration,
+    );
+    if (!mounted) return;
+    setState(() {
+      _voiceMessage = '${formatCookDuration(duration)} timer started.';
+    });
+    if (resumeListening) _scheduleListening();
   }
 
   void _scheduleListening() {
     if (!_voiceAvailable || !_isForeground || _restoringSession) return;
     final generation = ++_voiceGeneration;
-    Future<void>.delayed(const Duration(milliseconds: 300), () {
+    _listenDelay?.cancel();
+    _listenDelay = Timer(const Duration(milliseconds: 300), () {
+      _listenDelay = null;
       if (!mounted || generation != _voiceGeneration || !_isForeground) return;
       unawaited(_startVoiceListening());
     });
@@ -301,6 +355,8 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
 
   Future<void> _stopVoiceListening() async {
     _voiceGeneration++;
+    _listenDelay?.cancel();
+    _listenDelay = null;
     _voiceSessionActive = false;
     try {
       await _voiceService.stop();
@@ -405,6 +461,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
   @override
   void dispose() {
     _voiceGeneration++;
+    _listenDelay?.cancel();
     _voiceService.detach();
     unawaited(_voiceService.stop().catchError((_) {}));
     _lifecycleListener.dispose();
@@ -477,6 +534,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
     final state = ref.watch(cookModeControllerProvider(_args));
     final narration =
         ref.watch(cookNarrationControllerProvider(widget.recipe.recipeId));
+    final timerState = ref.watch(cookTimerControllerProvider(_userId));
 
     if (_restoringSession) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -517,6 +575,8 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
                 narration: narration,
                 onToggle: () => unawaited(_toggleNarration(narration)),
                 onRepeat: () => unawaited(_repeatStep()),
+                onRateChanged: (rate) =>
+                    unawaited(_narrationController.setSpeechRate(rate)),
               ),
               _VoiceControls(
                 isInitializing: _voiceInitializing,
@@ -524,6 +584,14 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
                 isListening: _voiceListening,
                 message: _voiceMessage,
                 onToggle: () => unawaited(_toggleVoiceListening()),
+              ),
+              CookTimerControls(
+                state: timerState,
+                suggestedDuration: detectCookStepDuration(
+                  widget.steps[state.currentStepIndex].content,
+                ),
+                onStart: _startTimer,
+                onCancel: _timerController.cancel,
               ),
               _CookControls(
                 canGoBack: state.canGoBack,
@@ -713,19 +781,37 @@ class _HighlightedStepText extends StatelessWidget {
   }
 }
 
-class _NarrationControls extends StatelessWidget {
+class _NarrationControls extends StatefulWidget {
   const _NarrationControls({
     required this.narration,
     required this.onToggle,
     required this.onRepeat,
+    required this.onRateChanged,
   });
 
   final CookNarrationState narration;
   final VoidCallback onToggle;
   final VoidCallback onRepeat;
+  final ValueChanged<double> onRateChanged;
+
+  @override
+  State<_NarrationControls> createState() => _NarrationControlsState();
+}
+
+class _NarrationControlsState extends State<_NarrationControls> {
+  late double _draftRate = widget.narration.speechRate;
+
+  @override
+  void didUpdateWidget(covariant _NarrationControls oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.narration.speechRate != widget.narration.speechRate) {
+      _draftRate = widget.narration.speechRate;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final narration = widget.narration;
     final (label, icon) = switch (narration.status) {
       CookNarrationStatus.preparing => (
           'Preparing narration',
@@ -743,37 +829,69 @@ class _NarrationControls extends StatelessWidget {
     final canControl = !narration.isUnavailable;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+      child: Column(
         children: [
-          Tooltip(
-            message: label,
-            child: AppIconButton.primary(
-              icon: icon,
-              onPressed: canControl ? onToggle : null,
-              size: 52,
-              isLoading: narration.status == CookNarrationStatus.preparing,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Tooltip(
+                message: label,
+                child: AppIconButton.primary(
+                  icon: icon,
+                  onPressed: canControl ? widget.onToggle : null,
+                  size: 52,
+                  isLoading: narration.status == CookNarrationStatus.preparing,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                label,
+                style: AppTextStyles.bodyBold.copyWith(
+                  color: narration.isUnavailable
+                      ? AppColors.error
+                      : Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Tooltip(
+                message: 'Repeat step',
+                child: AppIconButton.ghost(
+                  icon: Icons.replay,
+                  onPressed: canControl ? widget.onRepeat : null,
+                  customColor: AppColors.primary,
+                  size: 48,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Text(
-            label,
-            style: AppTextStyles.bodyBold.copyWith(
-              color: narration.isUnavailable
-                  ? AppColors.error
-                  : Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Tooltip(
-            message: 'Repeat step',
-            child: AppIconButton.ghost(
-              icon: Icons.replay,
-              onPressed: canControl ? onRepeat : null,
-              customColor: AppColors.primary,
-              size: 48,
-            ),
+          Row(
+            children: [
+              const Icon(Icons.speed, size: 20, color: AppColors.textMuted),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Slider(
+                  key: const Key('narration-speed-slider'),
+                  min: 0.35,
+                  max: 0.65,
+                  divisions: 6,
+                  value: _draftRate,
+                  label: '${(_draftRate * 2).toStringAsFixed(1)}x',
+                  onChanged: canControl
+                      ? (value) => setState(() => _draftRate = value)
+                      : null,
+                  onChangeEnd: canControl ? widget.onRateChanged : null,
+                ),
+              ),
+              SizedBox(
+                width: 38,
+                child: Text(
+                  '${(_draftRate * 2).toStringAsFixed(1)}x',
+                  textAlign: TextAlign.end,
+                  style: AppTextStyles.body,
+                ),
+              ),
+            ],
           ),
         ],
       ),

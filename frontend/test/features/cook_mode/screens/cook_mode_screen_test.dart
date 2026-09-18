@@ -3,12 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mealchemy/features/auth/providers/auth_provider.dart';
 import 'package:mealchemy/features/cook_mode/models/cook_session.dart';
+import 'package:mealchemy/features/cook_mode/models/cook_timer.dart';
 import 'package:mealchemy/features/cook_mode/providers/cook_session_provider.dart';
+import 'package:mealchemy/features/cook_mode/providers/cook_timer_provider.dart';
 import 'package:mealchemy/features/cook_mode/screens/cook_mode_screen.dart';
 import 'package:mealchemy/features/cook_mode/providers/cook_narration_provider.dart';
 import 'package:mealchemy/features/cook_mode/services/cook_narration_service.dart';
 import 'package:mealchemy/features/cook_mode/services/screen_awake_service.dart';
 import 'package:mealchemy/features/cook_mode/services/cook_session_store.dart';
+import 'package:mealchemy/features/cook_mode/services/cook_timer_notification_service.dart';
+import 'package:mealchemy/features/cook_mode/services/cook_timer_store.dart';
 import 'package:mealchemy/features/cook_mode/providers/cook_voice_provider.dart';
 import 'package:mealchemy/features/cook_mode/services/cook_voice_service.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
@@ -127,12 +131,39 @@ class _FakeVoiceService implements CookVoiceService {
   }
 }
 
+class _FakeTimerStore implements CookTimerStore {
+  List<CookTimer> timers = [];
+
+  @override
+  Future<List<CookTimer>> readAll(int userId) async => List.of(timers);
+
+  @override
+  Future<void> saveAll(int userId, List<CookTimer> timers) async {
+    this.timers = List.of(timers);
+  }
+}
+
+class _FakeTimerNotifications implements CookTimerNotificationService {
+  final List<CookTimer> scheduled = [];
+
+  @override
+  Future<CookTimerAlertStatus> schedule(CookTimer timer) async {
+    scheduled.add(timer);
+    return CookTimerAlertStatus.scheduled;
+  }
+
+  @override
+  Future<void> cancel(int notificationId) async {}
+}
+
 Widget _host(
   Recipe recipe,
   _FakeScreenAwakeService screenAwake, {
   _FakeNarrationService? narration,
   _FakeSessionStore? sessions,
   _FakeVoiceService? voice,
+  _FakeTimerStore? timers,
+  _FakeTimerNotifications? timerNotifications,
   int? userId,
 }) {
   return ProviderScope(
@@ -147,6 +178,10 @@ Widget _host(
         narration ?? _FakeNarrationService(),
       ),
       cookVoiceServiceProvider.overrideWithValue(voice ?? _FakeVoiceService()),
+      cookTimerStoreProvider.overrideWithValue(timers ?? _FakeTimerStore()),
+      cookTimerNotificationServiceProvider.overrideWithValue(
+        timerNotifications ?? _FakeTimerNotifications(),
+      ),
     ],
     child: MaterialApp(home: CookModeScreen(recipeId: recipe.recipeId)),
   );
@@ -410,8 +445,12 @@ void main() {
     voice.complete('not next');
     await tester.pumpAndSettle();
     expect(find.text('Step 1 of 2'), findsOneWidget);
-    expect(find.text("Didn't catch that. Try next, back, or repeat."),
-        findsOneWidget);
+    expect(
+      find.text(
+        "Didn't catch that. Try next, back, repeat, or set a timer.",
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byIcon(Icons.mic_none));
     await tester.pumpAndSettle();
@@ -543,5 +582,34 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
     expect(voice.listenCalls, 1);
+  });
+
+  testWidgets('a spoken duration starts a separate cooking timer',
+      (tester) async {
+    final narration = _FakeNarrationService();
+    final voice = _FakeVoiceService();
+    final notifications = _FakeTimerNotifications();
+    await tester.pumpWidget(_host(
+      _recipe,
+      _FakeScreenAwakeService(),
+      narration: narration,
+      voice: voice,
+      timerNotifications: notifications,
+    ));
+    await tester.pumpAndSettle();
+
+    narration.callbacks?.onComplete();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    voice.complete('set a timer for ten minutes');
+    await tester.pumpAndSettle();
+
+    expect(notifications.scheduled, hasLength(1));
+    final timer = notifications.scheduled.single;
+    expect(
+      timer.endsAt.difference(timer.startedAt),
+      const Duration(minutes: 10),
+    );
+    expect(find.textContaining('Weeknight Pasta, step 1'), findsOneWidget);
   });
 }
