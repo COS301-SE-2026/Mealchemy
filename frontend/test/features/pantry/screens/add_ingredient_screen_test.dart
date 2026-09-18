@@ -15,6 +15,16 @@ import 'package:mealchemy/features/pantry/screens/add_ingredient_screen.dart';
 import 'package:mealchemy/features/pantry/widgets/pantry_item_card.dart';
 import 'package:mealchemy/features/pantry/models/ingredient_category.dart';
 import 'package:mealchemy/features/pantry/models/pending_external_ingredient.dart';
+import 'package:mealchemy/features/recipe/models/unit_of_measurement.dart';
+import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
+
+const _testUnits = [
+  UnitOfMeasurement(unitId: 1, name: 'g', system: 'METRIC'),
+  UnitOfMeasurement(unitId: 2, name: 'kg', system: 'METRIC'),
+  UnitOfMeasurement(unitId: 3, name: 'ml', system: 'METRIC'),
+  UnitOfMeasurement(unitId: 4, name: 'L', system: 'METRIC'),
+  UnitOfMeasurement(unitId: 5, name: 'pcs', system: 'GENERAL'),
+];
 
 class _FakeIngredientCatalogueRepository extends IngredientCatalogueRepository {
   _FakeIngredientCatalogueRepository({
@@ -181,6 +191,7 @@ void main() {
     WidgetTester tester, {
     _FakeIngredientCatalogueRepository? ingredientRepository,
     bool isOffline = false,
+    List<UnitOfMeasurement> units = _testUnits,
   }) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 1;
@@ -211,6 +222,7 @@ void main() {
       ProviderScope(
         overrides: [
           offlineReadOnlyProvider.overrideWithValue(isOffline),
+          unitsProvider.overrideWith((ref) async => units),
           pantryRepositoryProvider.overrideWithValue(pantryRepository),
           if (ingredientRepository != null)
             ingredientCatalogueRepositoryProvider
@@ -311,6 +323,29 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('g'), findsOneWidget);
+  });
+
+  testWidgets('AddIngredientScreen uses units from the dynamic provider', (
+    tester,
+  ) async {
+    await pumpAddIngredientScreen(
+      tester,
+      units: const [
+        UnitOfMeasurement(
+          unitId: 90,
+          name: 'dynamic-unit',
+          system: 'GENERAL',
+        ),
+      ],
+    );
+
+    await tester.tap(
+      find.byType(DropdownButtonFormField<String>).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('dynamic-unit'), findsOneWidget);
+    expect(find.text('cups'), findsNothing);
   });
 
   testWidgets('AddIngredientScreen searches catalogue and selects ingredient', (

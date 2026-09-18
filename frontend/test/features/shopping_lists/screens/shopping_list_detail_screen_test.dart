@@ -17,6 +17,16 @@ import 'package:mealchemy/features/shopping_lists/repositories/shopping_list_rep
 import 'package:mealchemy/features/shopping_lists/repositories/mock_shopping_list_repository.dart';
 import 'package:mealchemy/features/pantry/providers/pantry_provider.dart';
 import 'package:mealchemy/features/pantry/repositories/mock_pantry_repository.dart';
+import 'package:mealchemy/features/recipe/models/unit_of_measurement.dart';
+import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
+
+const _testUnits = [
+  UnitOfMeasurement(unitId: 1, name: 'g', system: 'METRIC'),
+  UnitOfMeasurement(unitId: 2, name: 'kg', system: 'METRIC'),
+  UnitOfMeasurement(unitId: 3, name: 'ml', system: 'METRIC'),
+  UnitOfMeasurement(unitId: 4, name: 'L', system: 'METRIC'),
+  UnitOfMeasurement(unitId: 5, name: 'pcs', system: 'GENERAL'),
+];
 
 class _DeleteMenuShoppingListRepository implements ShoppingListRepository {
   @override
@@ -81,6 +91,14 @@ class _DeleteMenuShoppingListRepository implements ShoppingListRepository {
   Future<List<ShoppingListItem>> deselectAllItems(String listId) async {
     final list = await getShoppingListById(listId);
     return list!.items.map((item) => item.copyWith(checked: false)).toList();
+  }
+
+  @override
+  Future<void> deleteShoppingListItem({
+    required String listId,
+    required String itemId,
+  }) async {
+    //fake backend accepts delete request
   }
 
   @override
@@ -209,11 +227,13 @@ void main() {
     WidgetTester tester, {
     String listId = 'general-list',
     bool isOffline = false,
+    List<UnitOfMeasurement> units = _testUnits,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           offlineReadOnlyProvider.overrideWithValue(isOffline),
+          unitsProvider.overrideWith((ref) async => units),
           shoppingListRepositoryProvider.overrideWithValue(
             MockShoppingListRepository(),
           ),
@@ -289,12 +309,45 @@ void main() {
     expect(find.text('12.5 kg'), findsOneWidget);
   });
 
+  testWidgets('ShoppingListDetailScreen uses dynamic units when editing', (
+    tester,
+  ) async {
+    await pumpShoppingListDetailScreen(
+      tester,
+      units: const [
+        UnitOfMeasurement(
+          unitId: 90,
+          name: 'dynamic-unit',
+          system: 'GENERAL',
+        ),
+      ],
+    );
+
+    await tester.tap(find.byIcon(Icons.edit_outlined).first);
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byType(DropdownButtonFormField<String>),
+    );
+    await tester.pumpAndSettle();
+
+    // The item’s current unit remains available for a safe edit.
+    expect(find.text('g'), findsWidgets);
+
+    // New choices come from the backend-driven provider.
+    expect(find.text('dynamic-unit'), findsOneWidget);
+
+    // A unit from the old static list must not appear.
+    expect(find.text('cups'), findsNothing);
+  });
+
   testWidgets('ShoppingListDetailScreen shows item update failure', (
     tester,
   ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          unitsProvider.overrideWith((ref) async => _testUnits),
           shoppingListRepositoryProvider.overrideWithValue(
             _FailingUpdateShoppingListRepository(),
           ),
@@ -383,6 +436,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          unitsProvider.overrideWith((ref) async => _testUnits),
           shoppingListRepositoryProvider.overrideWithValue(
             _DeleteMenuShoppingListRepository(),
           ),
@@ -409,6 +463,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          unitsProvider.overrideWith((ref) async => _testUnits),
           shoppingListRepositoryProvider.overrideWithValue(
             _DeleteMenuShoppingListRepository(),
           ),
@@ -432,6 +487,38 @@ void main() {
 
     expect(find.text('2 selected items deleted.'), findsOneWidget);
     expect(find.byType(Checkbox), findsNothing);
+  });
+
+  testWidgets('ShoppingListDetailScreen deletes one item from its row', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          unitsProvider.overrideWith((ref) async => _testUnits),
+          shoppingListRepositoryProvider.overrideWithValue(
+            _DeleteMenuShoppingListRepository(),
+          ),
+        ],
+        child: const MaterialApp(
+          home: ShoppingListDetailScreen(listId: '1'),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Greek Yogurt'), findsOneWidget);
+    expect(find.text('Fresh Basil'), findsOneWidget);
+
+    await tester.tap(
+      find.byTooltip('Delete Greek Yogurt'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Greek Yogurt'), findsNothing);
+    expect(find.text('Fresh Basil'), findsOneWidget);
+    expect(find.text('Greek Yogurt deleted.'), findsOneWidget);
   });
 
   testWidgets('ShoppingListDetailScreen opens add item entry screen', (
@@ -460,6 +547,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          unitsProvider.overrideWith((ref) async => _testUnits),
           shoppingListRepositoryProvider.overrideWithValue(
             MockShoppingListRepository(),
           ),
@@ -574,6 +662,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          unitsProvider.overrideWith((ref) async => _testUnits),
           shoppingListRepositoryProvider.overrideWithValue(repository),
         ],
         child: MaterialApp.router(
@@ -607,6 +696,7 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
+          unitsProvider.overrideWith((ref) async => _testUnits),
           shoppingListRepositoryProvider.overrideWithValue(
             MockShoppingListRepository(),
           ),
@@ -714,6 +804,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          unitsProvider.overrideWith((ref) async => _testUnits),
           shoppingListRepositoryProvider.overrideWithValue(
             MockShoppingListRepository(),
           ),

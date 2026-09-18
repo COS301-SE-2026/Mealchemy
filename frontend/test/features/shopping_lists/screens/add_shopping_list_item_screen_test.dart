@@ -15,6 +15,8 @@ import 'package:mealchemy/features/shopping_lists/repositories/mock_shopping_lis
 import 'package:mealchemy/features/shopping_lists/screens/add_shopping_list_item_screen.dart';
 import 'package:mealchemy/features/pantry/models/ingredient_category.dart';
 import 'package:mealchemy/features/pantry/models/pending_external_ingredient.dart';
+import 'package:mealchemy/features/recipe/models/unit_of_measurement.dart';
+import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
 
 class _FakeIngredientCatalogueRepository extends IngredientCatalogueRepository {
   _FakeIngredientCatalogueRepository({
@@ -171,6 +173,13 @@ void main() {
     bool catalogueRequiresCategory = false,
     bool shoppingShouldFail = false,
     bool isOffline = false,
+    List<UnitOfMeasurement> units = const [
+      UnitOfMeasurement(unitId: 1, name: 'g', system: 'METRIC'),
+      UnitOfMeasurement(unitId: 2, name: 'kg', system: 'METRIC'),
+      UnitOfMeasurement(unitId: 3, name: 'ml', system: 'METRIC'),
+      UnitOfMeasurement(unitId: 4, name: 'L', system: 'METRIC'),
+      UnitOfMeasurement(unitId: 5, name: 'pcs', system: 'GENERAL'),
+    ],
   }) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 1;
@@ -213,6 +222,7 @@ void main() {
       ProviderScope(
         overrides: [
           offlineReadOnlyProvider.overrideWithValue(isOffline),
+          unitsProvider.overrideWith((ref) async => units),
           shoppingListRepositoryProvider.overrideWithValue(
             shoppingRepository,
           ),
@@ -305,6 +315,29 @@ void main() {
     expect(find.text('Quantity'), findsNWidgets(2));
     expect(find.text('Unit'), findsOneWidget);
     expect(find.text('Add Item'), findsOneWidget);
+  });
+
+  testWidgets('uses units returned by the dynamic units provider', (
+    tester,
+  ) async {
+    await pumpEntryScreen(
+      tester,
+      units: const [
+        UnitOfMeasurement(
+          unitId: 90,
+          name: 'dynamic-unit',
+          system: 'GENERAL',
+        ),
+      ],
+    );
+
+    await tester.tap(
+      find.byType(DropdownButtonFormField<String>),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('dynamic-unit'), findsOneWidget);
+    expect(find.text('cups'), findsNothing);
   });
 
   testWidgets('blocks direct offline entry', (tester) async {
