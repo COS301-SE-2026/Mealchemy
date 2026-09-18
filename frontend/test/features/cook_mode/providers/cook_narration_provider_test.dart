@@ -3,12 +3,14 @@ import 'package:mealchemy/features/cook_mode/models/cook_narration_state.dart';
 import 'package:mealchemy/features/cook_mode/providers/cook_narration_provider.dart';
 import 'package:mealchemy/features/cook_mode/services/cook_narration_service.dart';
 
-class _FakeNarrationService implements CookNarrationService {
+class _FakeNarrationService
+    implements CookNarrationService, CookNarrationRateService {
   _FakeNarrationService({this.maxInputLength = 3000});
 
   final int maxInputLength;
   CookNarrationCallbacks? callbacks;
   final List<String> spoken = [];
+  final List<double> speechRates = [];
   int stopCalls = 0;
   Object? initializeError;
   Object? stopError;
@@ -30,6 +32,11 @@ class _FakeNarrationService implements CookNarrationService {
   Future<void> stop() async {
     stopCalls++;
     if (stopError != null) throw stopError!;
+  }
+
+  @override
+  Future<void> setSpeechRate(double rate) async {
+    speechRates.add(rate);
   }
 
   @override
@@ -95,6 +102,20 @@ void main() {
 
     expect(service.spoken.last, 'Stir gently.');
     expect(controller.state.resumeOffset, 0);
+  });
+
+  test('changes speed and restarts active speech from the highlighted word',
+      () async {
+    final service = _FakeNarrationService();
+    final controller = CookNarrationController(service);
+
+    await controller.speakStep('Stir the sauce gently.');
+    service.callbacks?.onProgress(9, 14, 'sauce');
+    await controller.setSpeechRate(0.6);
+
+    expect(controller.state.speechRate, 0.6);
+    expect(service.speechRates, [0.6]);
+    expect(service.spoken.last, 'sauce gently.');
   });
 
   test('empty text completes without asking the engine to speak', () async {

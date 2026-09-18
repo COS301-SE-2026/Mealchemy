@@ -26,7 +26,12 @@ abstract class CookNarrationService {
   Future<void> dispose();
 }
 
-class FlutterTtsCookNarrationService implements CookNarrationService {
+abstract interface class CookNarrationRateService {
+  Future<void> setSpeechRate(double rate);
+}
+
+class FlutterTtsCookNarrationService
+    implements CookNarrationService, CookNarrationRateService {
   FlutterTtsCookNarrationService({FlutterTts? flutterTts})
       : _flutterTts = flutterTts ?? FlutterTts();
 
@@ -74,6 +79,11 @@ class FlutterTtsCookNarrationService implements CookNarrationService {
   @override
   Future<void> stop() async {
     await _flutterTts.stop();
+  }
+
+  @override
+  Future<void> setSpeechRate(double rate) async {
+    await _flutterTts.setSpeechRate(rate);
   }
 
   @override

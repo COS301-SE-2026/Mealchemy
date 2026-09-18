@@ -102,6 +102,9 @@ void main() {
     expect(progressEnd, 6);
     expect(progressWord, 'step');
     expect(error, 'engine error');
+
+    await service.setSpeechRate(0.6);
+    expect(flutterTts.speechRates, [0.5, 0.6]);
   });
 
   test('uses a safe input-length fallback when the query is unsupported',

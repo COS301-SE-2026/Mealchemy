@@ -65,6 +65,29 @@ class CookNarrationController extends StateNotifier<CookNarrationState> {
     await _speakFrom(state.stepText, 0);
   }
 
+  Future<void> setSpeechRate(double requestedRate) async {
+    final rate = requestedRate.clamp(0.35, 0.65).toDouble();
+    final wasSpeaking = state.isSpeaking;
+    final restartOffset = state.activeStart ?? state.resumeOffset;
+    state = state.copyWith(speechRate: rate, clearError: true);
+
+    final CookNarrationRateService? rateService = switch (_service) {
+      CookNarrationRateService service => service,
+      _ => null,
+    };
+    if (rateService == null) return;
+
+    try {
+      await rateService.setSpeechRate(rate);
+      if (wasSpeaking && mounted && state.stepText.isNotEmpty) {
+        await _speakFrom(state.stepText, restartOffset);
+      }
+    } catch (error) {
+      if (!mounted) return;
+      state = state.copyWith(errorMessage: error.toString());
+    }
+  }
+
   Future<void> stop() async {
     final operation = ++_operation;
     await _stopIgnoringFailure();
@@ -79,6 +102,7 @@ class CookNarrationController extends StateNotifier<CookNarrationState> {
   }
 
   Future<void> _speakFrom(String text, int requestedOffset) async {
+    final speechRate = state.speechRate;
     final operation = ++_operation;
     await _stopIgnoringFailure();
     if (operation != _operation || !mounted) return;
@@ -88,6 +112,7 @@ class CookNarrationController extends StateNotifier<CookNarrationState> {
       status: CookNarrationStatus.preparing,
       stepText: text,
       resumeOffset: offset,
+      speechRate: speechRate,
     );
 
     try {

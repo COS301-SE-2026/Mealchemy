@@ -14,6 +14,7 @@ class CookNarrationState {
     this.activeStart,
     this.activeEnd,
     this.resumeOffset = 0,
+    this.speechRate = 0.5,
     this.errorMessage,
   });
 
@@ -22,6 +23,7 @@ class CookNarrationState {
   final int? activeStart;
   final int? activeEnd;
   final int resumeOffset;
+  final double speechRate;
   final String? errorMessage;
 
   bool get isSpeaking => status == CookNarrationStatus.speaking;
@@ -34,6 +36,7 @@ class CookNarrationState {
     int? activeStart,
     int? activeEnd,
     int? resumeOffset,
+    double? speechRate,
     String? errorMessage,
     bool clearActiveRange = false,
     bool clearError = false,
@@ -44,6 +47,7 @@ class CookNarrationState {
       activeStart: clearActiveRange ? null : activeStart ?? this.activeStart,
       activeEnd: clearActiveRange ? null : activeEnd ?? this.activeEnd,
       resumeOffset: resumeOffset ?? this.resumeOffset,
+      speechRate: speechRate ?? this.speechRate,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
     );
   }
