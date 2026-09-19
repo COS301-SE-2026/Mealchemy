@@ -12,13 +12,13 @@ class CookStepStage extends StatelessWidget {
     super.key,
     required this.step,
     required this.narration,
-    required this.activeTimer,
+    required this.activeTimers,
     required this.now,
   });
 
   final RecipeStep step;
   final CookNarrationState narration;
-  final CookTimer? activeTimer;
+  final List<CookTimer> activeTimers;
   final DateTime now;
 
   @override
@@ -46,9 +46,24 @@ class CookStepStage extends StatelessWidget {
                   ),
                 ),
               ),
-              if (activeTimer != null) ...[
+              if (activeTimers.isNotEmpty) ...[
                 const SizedBox(height: 40),
-                CookActiveTimer(timer: activeTimer!, now: now),
+                Wrap(
+                  key: const Key('cook-active-timer-group'),
+                  alignment: WrapAlignment.center,
+                  runAlignment: WrapAlignment.center,
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: activeTimers
+                      .map(
+                        (timer) => CookActiveTimer(
+                          timer: timer,
+                          now: now,
+                          compact: activeTimers.length > 1,
+                        ),
+                      )
+                      .toList(),
+                ),
               ],
             ],
           ),

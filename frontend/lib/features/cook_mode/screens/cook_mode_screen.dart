@@ -624,7 +624,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
     final narration =
         ref.watch(cookNarrationControllerProvider(widget.recipe.recipeId));
     final timerState = ref.watch(cookTimerControllerProvider(_userId));
-    final activeTimer = timerState.activeTimers.firstOrNull;
+    final activeTimers = timerState.activeTimers;
 
     if (_restoringSession) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -663,7 +663,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
                 child: CookStepStage(
                   step: widget.steps[state.currentStepIndex],
                   narration: narration,
-                  activeTimer: activeTimer,
+                  activeTimers: activeTimers,
                   now: timerState.now,
                 ),
               ),

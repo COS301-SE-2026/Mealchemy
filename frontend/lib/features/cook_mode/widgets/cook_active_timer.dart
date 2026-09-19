@@ -9,10 +9,12 @@ class CookActiveTimer extends StatelessWidget {
     super.key,
     required this.timer,
     required this.now,
+    this.compact = false,
   });
 
   final CookTimer timer;
   final DateTime now;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -23,22 +25,24 @@ class CookActiveTimer extends StatelessWidget {
         : (remaining.inMilliseconds / total.inMilliseconds)
             .clamp(0.0, 1.0)
             .toDouble();
+    final dimension = compact ? 124.0 : 164.0;
+    final ringDimension = dimension - 10;
 
     return Semantics(
       label: '${formatCookTimerClock(remaining)} remaining on ${timer.label}',
       liveRegion: true,
       child: ExcludeSemantics(
         child: SizedBox.square(
-          key: const Key('cook-active-timer'),
-          dimension: 164,
+          key: Key('cook-active-timer-${timer.notificationId}'),
+          dimension: dimension,
           child: Stack(
             alignment: Alignment.center,
             children: [
               SizedBox.square(
-                dimension: 154,
+                dimension: ringDimension,
                 child: CircularProgressIndicator(
                   value: progress,
-                  strokeWidth: 5,
+                  strokeWidth: compact ? 4 : 5,
                   strokeCap: StrokeCap.round,
                   backgroundColor: AppColors.accent.withValues(alpha: 0.16),
                   valueColor: const AlwaysStoppedAnimation(AppColors.accent),
@@ -47,23 +51,35 @@ class CookActiveTimer extends StatelessWidget {
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.timer_outlined,
                     color: AppColors.primary,
-                    size: 26,
+                    size: compact ? 20 : 26,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    formatCookTimerClock(remaining),
-                    key: const Key('cook-active-timer-clock'),
-                    style: AppTextStyles.heading1.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontWeight: FontWeight.w700,
+                  SizedBox(height: compact ? 5 : 8),
+                  SizedBox(
+                    width: compact ? 88 : 126,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        formatCookTimerClock(remaining),
+                        key: Key(
+                          'cook-active-timer-clock-${timer.notificationId}',
+                        ),
+                        style: (compact
+                                ? AppTextStyles.heading2
+                                : AppTextStyles.heading1)
+                            .copyWith(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: compact ? 2 : 4),
                   Text(
-                    'Cooking timer',
+                    'Step ${timer.stepNumber}',
+                    key: Key('cook-active-timer-step-${timer.notificationId}'),
                     style: AppTextStyles.caption.copyWith(
                       color: AppColors.textMuted,
                     ),

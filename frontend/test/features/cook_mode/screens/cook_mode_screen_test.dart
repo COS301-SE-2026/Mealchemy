@@ -653,7 +653,7 @@ void main() {
       timer.endsAt.difference(timer.startedAt),
       const Duration(minutes: 10),
     );
-    expect(find.byKey(const Key('cook-active-timer')), findsOneWidget);
+    expect(find.byKey(const Key('cook-active-timer-group')), findsOneWidget);
     expect(find.text('10:00'), findsOneWidget);
   });
 }
