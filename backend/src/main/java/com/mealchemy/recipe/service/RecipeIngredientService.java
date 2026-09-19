@@ -44,6 +44,9 @@ public class RecipeIngredientService
     // Retrieve all ingredients relating to a specific recipe
     public List<RecipeIngredientResponse> getAllIngredientsByRecipeId(Integer recipeId, Integer userId)
     {
+        recipeRepository.findAccessibleByIdAndUserId(recipeId, userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
+        
         PreferredUnit preferredUnit = userProfileRepository.findByUserId(userId).map(UserProfile::getPreferredUnit)
                                                                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User profile not found."));
 

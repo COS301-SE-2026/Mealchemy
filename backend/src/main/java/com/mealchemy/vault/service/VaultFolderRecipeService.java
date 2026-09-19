@@ -87,8 +87,9 @@ public class VaultFolderRecipeService {
         Vault vaultForCheck = vaultFolderForReturn.getVault();
         isOwnerOrMember(vaultForCheck, userId);
 
-        Recipe recipeForReturn = recipeRepository.findById(request.recipeId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
-
+        Recipe recipeForReturn = recipeRepository.findAccessibleByIdAndUserId(request.recipeId(), userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
+            
         User userForReturn = userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found."));
 
         VaultFolderRecipe vaultFolderRecipeForReturn = mapRequestToEntity(vaultFolderForReturn, recipeForReturn, userForReturn);

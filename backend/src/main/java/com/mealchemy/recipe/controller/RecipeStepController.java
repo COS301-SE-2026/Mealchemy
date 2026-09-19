@@ -48,9 +48,9 @@ public class RecipeStepController
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/recipe/{recipeId}")
-    public List<RecipeStepResponse> getAllStepsByRecipeId(@PathVariable Integer recipeId)
+    public List<RecipeStepResponse> getAllStepsByRecipeId(@PathVariable Integer recipeId, @AuthenticationPrincipal String userId)
     {
-        return recipeStepService.getAllStepsByRecipeId(recipeId);
+        return recipeStepService.getAllStepsByRecipeId(recipeId, Integer.parseInt(userId));
     }
 
 

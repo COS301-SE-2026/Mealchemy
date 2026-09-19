@@ -33,8 +33,11 @@ public class RecipeStepService {
     }
 
     // Retrieve all steps relating to a specific recipe
-    public List<RecipeStepResponse> getAllStepsByRecipeId(Integer recipeId)
+    public List<RecipeStepResponse> getAllStepsByRecipeId(Integer recipeId, Integer userId)
     {
+        recipeRepository.findAccessibleByIdAndUserId(recipeId, userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
+        
         return recipeStepRepository.findByRecipe_RecipeIdOrderByStepNrAsc(recipeId).stream().map(RecipeStepResponse::from).collect(Collectors.toList());
     }
 

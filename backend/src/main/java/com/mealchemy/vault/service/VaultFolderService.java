@@ -53,7 +53,8 @@ public class VaultFolderService {
 
         isOwnerOrMember(vaultForCheck, userId);
 
-        VaultFolder vaultFolderForReturn = vaultFolderRepository.findByFolderName(name).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
+        VaultFolder vaultFolderForReturn = vaultFolderRepository.findByVault_VaultIdAndFolderName(vaultId, name)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
 
         return VaultFolderResponse.from(vaultFolderForReturn);
     }
@@ -73,7 +74,8 @@ public class VaultFolderService {
 
         isOwnerOrMember(vaultForCheck, userId);
         
-        VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
+        VaultFolder vaultFolderForReturn = vaultFolderRepository.findByVault_VaultIdAndFolderId(vaultId, id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
         return VaultFolderResponse.from(vaultFolderForReturn);
     }
 
