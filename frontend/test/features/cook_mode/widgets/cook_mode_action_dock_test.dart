@@ -41,6 +41,19 @@ void main() {
     expect(find.text('Next'), findsOneWidget);
   });
 
+  testWidgets('keeps every action button the same size', (tester) async {
+    await tester.pumpWidget(_host(voiceEnabled: true));
+
+    final actions = find.descendant(
+      of: find.byType(CookModeActionDock),
+      matching: find.byType(InkWell),
+    );
+    expect(actions, findsNWidgets(4));
+    for (final element in actions.evaluate()) {
+      expect(tester.getSize(find.byWidget(element.widget)), const Size(52, 52));
+    }
+  });
+
   testWidgets('highlights the persistent voice-mode action', (tester) async {
     var taps = 0;
     await tester.pumpWidget(_host(

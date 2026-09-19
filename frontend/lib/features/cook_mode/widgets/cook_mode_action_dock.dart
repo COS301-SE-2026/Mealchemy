@@ -81,7 +81,6 @@ class CookModeActionDock extends StatelessWidget {
                       : 'Turn on voice mode',
                   onPressed: isVoiceInitializing ? null : onVoiceMode,
                   isSelected: isVoiceModeEnabled,
-                  isProminent: true,
                   isLoading: isVoiceInitializing,
                 ),
               ),
@@ -110,7 +109,6 @@ class _DockAction extends StatelessWidget {
     required this.tooltip,
     required this.onPressed,
     this.isSelected = false,
-    this.isProminent = false,
     this.isLoading = false,
   });
 
@@ -119,13 +117,11 @@ class _DockAction extends StatelessWidget {
   final String tooltip;
   final VoidCallback? onPressed;
   final bool isSelected;
-  final bool isProminent;
   final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     final enabled = onPressed != null;
-    final diameter = isProminent ? 68.0 : 52.0;
     final foreground = !enabled
         ? AppColors.textMuted
         : isSelected
@@ -153,7 +149,7 @@ class _DockAction extends StatelessWidget {
                 customBorder: const CircleBorder(),
                 onTap: onPressed,
                 child: SizedBox.square(
-                  dimension: diameter,
+                  dimension: 52,
                   child: isLoading
                       ? Padding(
                           padding: const EdgeInsets.all(18),
@@ -162,8 +158,7 @@ class _DockAction extends StatelessWidget {
                             color: foreground,
                           ),
                         )
-                      : Icon(icon,
-                          color: foreground, size: isProminent ? 34 : 26),
+                      : Icon(icon, color: foreground, size: 26),
                 ),
               ),
             ),
