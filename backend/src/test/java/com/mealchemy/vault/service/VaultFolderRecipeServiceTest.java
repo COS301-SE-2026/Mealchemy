@@ -224,7 +224,7 @@ public class VaultFolderRecipeServiceTest
     void createVaultFolderRecipe_returnsNewVaultFolderRecipe_whenFoundAndOwner()
     {
         when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
-        when(recipeRepository.findById(request.recipeId())).thenReturn(Optional.of(recipe));
+        when(recipeRepository.findAccessibleByIdAndUserId(request.recipeId(), 1)).thenReturn(Optional.of(recipe));        
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
         when(vaultFolderRecipeRepository.save(any(VaultFolderRecipe.class))).thenReturn(folderRecipe);
 
@@ -239,7 +239,7 @@ public class VaultFolderRecipeServiceTest
     void createVaultFolderRecipe_returnsNewVaultFolderRecipe_whenFoundAndMember()
     {
         when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
-        when(recipeRepository.findById(request.recipeId())).thenReturn(Optional.of(recipe));
+        when(recipeRepository.findAccessibleByIdAndUserId(request.recipeId(), 3)).thenReturn(Optional.of(recipe));
         when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(true);
         when(userRepository.findById(3)).thenReturn(Optional.of(user));
         when(vaultFolderRecipeRepository.save(any(VaultFolderRecipe.class))).thenReturn(folderRecipe);
@@ -278,7 +278,7 @@ public class VaultFolderRecipeServiceTest
     void createVaultFolderRecipe_throwsException_whenRecipeNotFound()
     {
         when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
-        when(recipeRepository.findById(request.recipeId())).thenReturn(Optional.empty());
+        when(recipeRepository.findAccessibleByIdAndUserId(request.recipeId(), 1)).thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.createVaultFolderRecipe(request, 1, 1));
 
@@ -290,7 +290,7 @@ public class VaultFolderRecipeServiceTest
     void createVaultFolderRecipe_throwsException_whenUserNotFound()
     {
         when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
-        when(recipeRepository.findById(request.recipeId())).thenReturn(Optional.of(recipe));
+        when(recipeRepository.findAccessibleByIdAndUserId(request.recipeId(), 1)).thenReturn(Optional.of(recipe));
         when(userRepository.findById(1)).thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.createVaultFolderRecipe(request, 1, 1));

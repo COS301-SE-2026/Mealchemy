@@ -104,7 +104,7 @@ public class VaultFolderServiceTest
     void getVaultFolderByVaultId_throwsException_whenVaultNotFound()
     {
         when(vaultRepository.findById(99)).thenReturn(Optional.empty());
-
+        
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.getVaultFolderByVaultId(99, 1));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
@@ -128,7 +128,7 @@ public class VaultFolderServiceTest
     {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
         when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 1)).thenReturn(false);
-        when(vaultFolderRepository.findByFolderName("General")).thenReturn(Optional.of(folder));
+        when(vaultFolderRepository.findByVault_VaultIdAndFolderName(1, "General")).thenReturn(Optional.of(folder));
 
         VaultFolderResponse result = vaultFolderService.getVaultFolderByName("General", 1, 1);
 
@@ -141,7 +141,7 @@ public class VaultFolderServiceTest
     {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
         when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(true);
-        when(vaultFolderRepository.findByFolderName("General")).thenReturn(Optional.of(folder));
+        when(vaultFolderRepository.findByVault_VaultIdAndFolderName(1, "General")).thenReturn(Optional.of(folder));
         
         VaultFolderResponse result = vaultFolderService.getVaultFolderByName("General", 1, 3);
 
@@ -177,7 +177,7 @@ public class VaultFolderServiceTest
     {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
         when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 1)).thenReturn(false);
-        when(vaultFolderRepository.findByFolderName("General")).thenReturn(Optional.empty());
+        when(vaultFolderRepository.findByVault_VaultIdAndFolderName(1, "General")).thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.getVaultFolderByName("General", 1, 1));
 
@@ -188,7 +188,7 @@ public class VaultFolderServiceTest
     @Test
     void getVaultFolderById_returnsFolder_whenFoundAndOwner()
     {
-        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultFolderRepository.findByVault_VaultIdAndFolderId(1, 1)).thenReturn(Optional.of(folder));
         when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 1)).thenReturn(false);
         when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
 
@@ -201,7 +201,7 @@ public class VaultFolderServiceTest
     @Test
     void getVaultFolderById_returnsFolder_whenFoundAndMember()
     {
-        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultFolderRepository.findByVault_VaultIdAndFolderId(1, 1)).thenReturn(Optional.of(folder));
         when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(true);
         when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
 
@@ -237,7 +237,7 @@ public class VaultFolderServiceTest
     @Test
     void getVaultFolderById_throwsException_whenFolderNotFound()
     {
-        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultFolderRepository.findByVault_VaultIdAndFolderId(1, 3)).thenReturn(Optional.empty());
         when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 1)).thenReturn(false);
         when(vaultFolderRepository.findById(3)).thenReturn(Optional.empty());
 

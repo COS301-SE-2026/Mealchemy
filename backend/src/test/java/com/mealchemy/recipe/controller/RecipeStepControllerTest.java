@@ -66,7 +66,7 @@ public class RecipeStepControllerTest {
     @Test
     void getAllStepsByRecipeId_returns200_withList() throws Exception
     {
-        when(recipeStepService.getAllStepsByRecipeId(1)).thenReturn(List.of(response));
+        when(recipeStepService.getAllStepsByRecipeId(1, 1)).thenReturn(List.of(response));
 
         mockMvc.perform(get("/steps/recipe/1")).andExpect(status().isOk()).andExpect(jsonPath("$[0].content").value("Break the eggs."));
     }
@@ -74,7 +74,7 @@ public class RecipeStepControllerTest {
     @Test
     void getAllStepsByRecipeId_returns200_withEmptyList() throws Exception
     {
-        when(recipeStepService.getAllStepsByRecipeId(99)).thenReturn(List.of());
+        when(recipeStepService.getAllStepsByRecipeId(99, 1)).thenReturn(List.of());
 
         mockMvc.perform(get("/steps/recipe/99")).andExpect(status().isOk()).andExpect(jsonPath("$").isEmpty());
     }

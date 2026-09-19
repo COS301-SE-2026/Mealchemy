@@ -134,6 +134,16 @@ public class RecipeStepControllerIntegrationTest {
                 .andExpect(jsonPath("$", hasSize(0)));
     }
 
+    @Test
+    void getStepsByRecipeId_returns404_whenRecipeNotAccessible() throws Exception {
+        saveStepRow(recipe, 1, "First step.");
+
+        mockMvc.perform(get("/steps/recipe/{recipeId}", recipe.getRecipeId())
+                .with(authentication(authAs(otherUser.getUserId()))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Recipe not found."));
+    }
+
     // POST /steps/recipe/{recipeId}/step/create
 
     @Test
