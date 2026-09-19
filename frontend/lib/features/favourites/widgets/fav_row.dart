@@ -10,6 +10,7 @@ import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
 import '../models/favourite.dart';
 import '../providers/fav_provider.dart';
 
+//single favourite as its own card
 class FavRow extends ConsumerWidget {
   const FavRow({
     super.key,
@@ -52,63 +53,82 @@ class FavRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: SizedBox(
-              width: 40,
-              height: 40,
-              child: RecipeNetworkImage(
-                photoUrl: fav.recipe.photoUrl,
-                placeholder: const DecoratedBox(
-                  decoration: BoxDecoration(gradient: AppColors.brand),
-                  child: Icon(
-                    Icons.restaurant_rounded,
-                    color: AppColors.textDark,
-                    size: 18,
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: AppColors.surfaceWhite,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: () => context.push('/recipe/${fav.recipeId}'),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    width: 56,
+                    height: 56,
+                    child: RecipeNetworkImage(
+                      photoUrl: fav.recipe.photoUrl,
+                      placeholder: const DecoratedBox(
+                        decoration: BoxDecoration(gradient: AppColors.brand),
+                        child: Icon(
+                          Icons.restaurant_rounded,
+                          color: AppColors.textDark,
+                          size: 22,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        fav.recipe.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.title.copyWith(
+                          color: AppColors.textLight,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.primaryLight,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: mutationsEnabled ? () => _remove(ref) : null,
+                  tooltip: mutationsEnabled
+                      ? 'Remove from favourites'
+                      : 'Unavailable offline',
+                  icon: Icon(
+                    Icons.favorite,
+                    size: 18,
+                    color:
+                        mutationsEnabled ? AppColors.error : AppColors.textMuted,
+                  ),
+                  constraints: const BoxConstraints(),
+                  padding: const EdgeInsets.all(6),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => context.push('/recipe/${fav.recipeId}'),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    fav.recipe.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.textLight,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.tertiaryMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (mutationsEnabled)
-            IconButton(
-              icon: const Icon(Icons.favorite, size: 18),
-              color: AppColors.error,
-              onPressed: () => _remove(ref),
-            ),
-        ],
+        ),
       ),
     );
   }

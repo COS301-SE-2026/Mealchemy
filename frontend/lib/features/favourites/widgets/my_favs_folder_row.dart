@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/connectivity/network_status_provider.dart';
-import '../../../core/shared_widgets/atoms/app_card.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../providers/fav_provider.dart';
@@ -29,7 +28,6 @@ class _MyFavsFolderRowState extends ConsumerState<MyFavsFolderRow> {
         Material(
           color: Colors.transparent,
           child: InkWell(
-
             onTap: () => setState(() => _isExpanded = !_isExpanded),
             borderRadius: BorderRadius.circular(16),
             child: Padding(
@@ -46,7 +44,6 @@ class _MyFavsFolderRowState extends ConsumerState<MyFavsFolderRow> {
                           'Favourites',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          
                           style: AppTextStyles.title.copyWith(
                             color: AppColors.textLight,
                             fontSize: 17,
@@ -87,42 +84,37 @@ class _MyFavsFolderRowState extends ConsumerState<MyFavsFolderRow> {
               : CrossFadeState.showFirst,
           firstChild: const SizedBox(width: double.infinity),
           secondChild: Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: AppCard.light(
-              borderRadius: 16,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              child: favsAsync.when(
-                loading: () => const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (_, __) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text(
-                    'Unable to load favourites.',
-                    style:
-                        AppTextStyles.caption.copyWith(color: AppColors.error),
-                  ),
-                ),
-                data: (favs) => favs.isEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Text(
-                          'No favourites yet.',
-                          style: AppTextStyles.caption
-                              .copyWith(color: AppColors.textMuted),
-                        ),
-                      )
-                    : Column(
-                        children: [
-                          for (final fav in favs)
-                            FavRow(
-                              fav: fav,
-                              mutationsEnabled: !isReadOnly,
-                            ),
-                        ],
-                      ),
+            padding: const EdgeInsets.only(left: 8, bottom: 8),
+            child: favsAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.all(12),
+                child: Center(child: CircularProgressIndicator()),
               ),
+              error: (_, __) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  'Unable to load favourites.',
+                  style: AppTextStyles.caption.copyWith(color: AppColors.error),
+                ),
+              ),
+              data: (favs) => favs.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        'No favourites yet.',
+                        style: AppTextStyles.caption
+                            .copyWith(color: AppColors.textMuted),
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        for (final fav in favs)
+                          FavRow(
+                            fav: fav,
+                            mutationsEnabled: !isReadOnly,
+                          ),
+                      ],
+                    ),
             ),
           ),
         ),

@@ -13,12 +13,12 @@ class Favourite {
   final DateTime createdAt;
   final Recipe recipe;
 
-  factory Favourite.fromJson(Map<String, dynamic> json) {
-    return Favourite(
-      favouriteId: json['favourite_id'] as int,
-      recipeId: json['recipe_id'] as int,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      recipe: Recipe.fromJson(json['recipe'] as Map<String, dynamic>),
-    );
-  }
+factory Favourite.fromJson(Map<String, dynamic> json) {
+  return Favourite(
+    favouriteId: json['recipe_id'] as int,
+    recipeId: json['recipe_id'] as int,
+    createdAt: DateTime.parse(json['liked_at'] as String),
+    recipe: Recipe.fromJson(json['recipe'] as Map<String, dynamic>),
+  );
+}
 }
