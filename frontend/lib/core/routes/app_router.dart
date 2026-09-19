@@ -85,7 +85,10 @@ final appRouter = GoRouter(
       path: AppRoutes.cookMode,
       builder: (context, state) {
         final id = int.parse(state.pathParameters['id']!);
-        return CookModeScreen(recipeId: id);
+        final stepIndex = int.tryParse(
+          state.uri.queryParameters['step'] ?? '',
+        );
+        return CookModeScreen(recipeId: id, initialStepIndex: stepIndex);
       },
     ),
     GoRoute(
