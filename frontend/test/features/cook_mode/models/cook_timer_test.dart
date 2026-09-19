@@ -40,4 +40,14 @@ void main() {
     expect(formatCookDuration(const Duration(minutes: 4, seconds: 9)), '4m 9s');
     expect(formatCookDuration(const Duration(seconds: 45)), '45s');
   });
+
+  test('formats countdown clocks with stable zero padding', () {
+    expect(formatCookTimerClock(const Duration(minutes: 20)), '20:00');
+    expect(
+        formatCookTimerClock(const Duration(minutes: 4, seconds: 9)), '04:09');
+    expect(
+      formatCookTimerClock(const Duration(hours: 1, minutes: 2, seconds: 3)),
+      '01:02:03',
+    );
+  });
 }
