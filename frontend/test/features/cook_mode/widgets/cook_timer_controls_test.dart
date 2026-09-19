@@ -20,7 +20,7 @@ void main() {
       ),
     ));
 
-    expect(find.text('Start 20m'), findsOneWidget);
+    expect(find.text('Start 20m timer'), findsOneWidget);
     await tester.tap(find.byKey(const Key('start-suggested-timer')));
     await tester.pump();
 
@@ -54,7 +54,7 @@ void main() {
       ),
     ));
 
-    expect(find.textContaining('5m'), findsOneWidget);
+    expect(find.text('1 active timer'), findsOneWidget);
     await tester.tap(find.byKey(const Key('manage-cook-timers')));
     await tester.pumpAndSettle();
     expect(find.text('Pasta, step 2'), findsOneWidget);

@@ -25,38 +25,52 @@ class CookTimerControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activeTimers = state.activeTimers;
-    final nextTimer = activeTimers.firstOrNull;
-    final summary = nextTimer == null
-        ? 'No active timers'
-        : '${formatCookDuration(nextTimer.remainingAt(state.now))} · ${nextTimer.label}';
+    final activeCount = activeTimers.length;
+    final summary = activeCount == 0
+        ? 'Add a cooking timer'
+        : '$activeCount active ${activeCount == 1 ? 'timer' : 'timers'}';
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Divider(height: 1),
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
+          padding: const EdgeInsets.fromLTRB(18, 2, 10, 2),
           child: Row(
             children: [
-              const Icon(Icons.timer_outlined, color: AppColors.primary),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  summary,
-                  key: const Key('cook-timer-summary'),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.bodyBold.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
+              const Icon(
+                Icons.timer_outlined,
+                size: 20,
+                color: AppColors.primary,
               ),
+              const SizedBox(width: 6),
               if (suggestedDuration != null)
-                TextButton(
-                  key: const Key('start-suggested-timer'),
-                  onPressed: () => unawaited(onStart(suggestedDuration!)),
-                  child:
-                      Text('Start ${formatCookDuration(suggestedDuration!)}'),
+                Expanded(
+                  child: TextButton(
+                    key: const Key('start-suggested-timer'),
+                    onPressed: () => unawaited(onStart(suggestedDuration!)),
+                    style: TextButton.styleFrom(
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      minimumSize: const Size(0, 36),
+                    ),
+                    child: Text(
+                      'Start ${formatCookDuration(suggestedDuration!)} timer',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                )
+              else
+                Expanded(
+                  child: Text(
+                    summary,
+                    key: const Key('cook-timer-summary'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.textMuted,
+                    ),
+                  ),
                 ),
               IconButton(
                 key: const Key('manage-cook-timers'),
@@ -64,6 +78,7 @@ class CookTimerControls extends StatelessWidget {
                 onPressed: () => _showTimerSheet(context, activeTimers),
                 icon: const Icon(Icons.more_time),
                 color: AppColors.primary,
+                visualDensity: VisualDensity.compact,
               ),
             ],
           ),
