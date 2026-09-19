@@ -9,6 +9,9 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+
+import com.mealchemy.shared.enums.VaultMemberRole;
+
 /* Import classes */
 
 import com.mealchemy.auth.model.User;
@@ -35,6 +38,10 @@ public class VaultMember {
     @Column(name = "joined_at", nullable = false)
     private OffsetDateTime joinedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private VaultMemberRole role = VaultMemberRole.EDITOR;
+
     /* Getters */
 
     public int getId()
@@ -57,6 +64,11 @@ public class VaultMember {
         return joinedAt;
     }
 
+    public VaultMemberRole getRole()
+    {
+        return role;
+    }
+
     /* Setters */
 
     public void setVault(Vault vaultIn)
@@ -68,4 +80,10 @@ public class VaultMember {
     {
         user = userIn;
     }
+
+    public void setRole(VaultMemberRole roleIn)
+    {
+        role = roleIn;
+    }
+
 }
