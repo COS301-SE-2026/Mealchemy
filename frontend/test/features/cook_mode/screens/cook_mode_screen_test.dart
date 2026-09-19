@@ -96,11 +96,13 @@ class _FakeSessionStore implements CookSessionStore {
 class _FakeVoiceService implements CookVoiceService {
   CookVoiceCallbacks? callbacks;
   bool available = true;
+  int initializeCalls = 0;
   int listenCalls = 0;
   int stopCalls = 0;
 
   @override
   Future<bool> initialize(CookVoiceCallbacks callbacks) async {
+    initializeCalls++;
     this.callbacks = callbacks;
     return available;
   }
@@ -128,6 +130,10 @@ class _FakeVoiceService implements CookVoiceService {
       words: words,
       confidence: confidence,
     ));
+  }
+
+  void soundLevel(double level) {
+    callbacks?.onSoundLevel(level);
   }
 }
 
@@ -230,7 +236,8 @@ void main() {
     expect(highlighted.style?.backgroundColor, isNotNull);
   });
 
-  testWidgets('pause and repeat controls call narration', (tester) async {
+  testWidgets('pause, resume, and replay controls call narration',
+      (tester) async {
     final screenAwake = _FakeScreenAwakeService();
     final narration = _FakeNarrationService();
     await tester.pumpWidget(
@@ -240,9 +247,15 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.pause));
     await tester.pumpAndSettle();
-    expect(find.text('Narration paused'), findsOneWidget);
+    expect(find.text('Resume'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.replay).first);
+    await tester.tap(find.byIcon(Icons.play_arrow));
+    await tester.pumpAndSettle();
+    narration.callbacks?.onComplete();
+    await tester.pump();
+    expect(find.text('Replay'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.volume_up_outlined));
     await tester.pumpAndSettle();
     expect(narration.spoken.last, 'Boil the pasta.');
   });
@@ -257,7 +270,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Narration unavailable'), findsOneWidget);
+    expect(find.text('Unavailable'), findsOneWidget);
     expect(find.byKey(const Key('cook-next-button')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('cook-next-button')));
@@ -376,7 +389,7 @@ void main() {
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     await tester.pumpAndSettle();
-    expect(find.text('Narration paused'), findsOneWidget);
+    expect(find.text('Resume'), findsOneWidget);
     expect(screenAwake.disableCalls, 1);
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
@@ -403,7 +416,7 @@ void main() {
     expect(sessions.sessions['12:7'], isNull);
   });
 
-  testWidgets('listens after narration and follows a final next command',
+  testWidgets('voice mode is manual by default and stays on across commands',
       (tester) async {
     final narration = _FakeNarrationService();
     final voice = _FakeVoiceService();
@@ -414,18 +427,34 @@ void main() {
       voice: voice,
     ));
     await tester.pumpAndSettle();
+    expect(voice.initializeCalls, 0);
     expect(voice.listenCalls, 0);
+    expect(find.text('Speak'), findsOneWidget);
 
     narration.callbacks?.onComplete();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
+    expect(voice.listenCalls, 0);
+
+    await tester.tap(find.byKey(const Key('cook-voice-mode-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(voice.initializeCalls, 1);
     expect(voice.listenCalls, 1);
-    expect(find.text('Listening'), findsOneWidget);
+    expect(find.text('Voice on'), findsOneWidget);
+    expect(find.text('Listening...'), findsOneWidget);
+    expect(find.byKey(const Key('cook-voice-sound-bars')), findsOneWidget);
 
     voice.complete('next step');
     await tester.pumpAndSettle();
     expect(find.text('Step 2 of 2'), findsOneWidget);
     expect(narration.spoken.last, 'Toss with the sauce.');
+    expect(find.text('Voice on'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('cook-voice-mode-button')));
+    await tester.pump();
+    expect(find.text('Speak'), findsOneWidget);
+    expect(find.byKey(const Key('cook-voice-sound-bars')), findsNothing);
   });
 
   testWidgets('rejects unknown and low-confidence phrases', (tester) async {
@@ -441,9 +470,11 @@ void main() {
 
     narration.callbacks?.onComplete();
     await tester.pump();
+    await tester.tap(find.byKey(const Key('cook-voice-mode-button')));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
     voice.complete('not next');
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(find.text('Step 1 of 2'), findsOneWidget);
     expect(
       find.text(
@@ -452,10 +483,9 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.tap(find.byIcon(Icons.mic_none));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 350));
     voice.complete('next', confidence: 0.2);
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(find.text('Step 1 of 2'), findsOneWidget);
   });
 
@@ -471,6 +501,8 @@ void main() {
     ));
     await tester.pumpAndSettle();
     narration.callbacks?.onComplete();
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('cook-voice-mode-button')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
 
@@ -500,13 +532,14 @@ void main() {
     await tester.pumpAndSettle();
     narration.callbacks?.onComplete();
     await tester.pump();
+    await tester.tap(find.byKey(const Key('cook-voice-mode-button')));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
     expect(voice.listenCalls, 1);
 
     voice.callbacks?.onListeningChanged(false);
     await tester.pump();
-    await tester.tap(find.byIcon(Icons.mic_none));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 350));
     expect(voice.listenCalls, 2);
   });
 
@@ -522,6 +555,9 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
+    expect(voice.initializeCalls, 0);
+    await tester.tap(find.byKey(const Key('cook-voice-mode-button')));
+    await tester.pumpAndSettle();
     expect(find.text('Voice unavailable on this device.'), findsOneWidget);
     expect(find.byIcon(Icons.mic_off), findsOneWidget);
     expect(narration.spoken, ['Boil the pasta.']);
@@ -543,12 +579,14 @@ void main() {
     await tester.pumpAndSettle();
     narration.callbacks?.onComplete();
     await tester.pump();
+    await tester.tap(find.byKey(const Key('cook-voice-mode-button')));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
 
     voice.callbacks?.onError('error_language_unavailable');
     await tester.pumpAndSettle();
     expect(
-      find.text('On-device voice unavailable. Tap the mic to try again.'),
+      find.text('On-device voice unavailable. Tap Speak to try again.'),
       findsOneWidget,
     );
     await tester.tap(find.byKey(const Key('cook-next-button')));
@@ -569,6 +607,8 @@ void main() {
     await tester.pumpAndSettle();
     narration.callbacks?.onComplete();
     await tester.pump();
+    await tester.tap(find.byKey(const Key('cook-voice-mode-button')));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
     final stopsBeforeBackground = voice.stopCalls;
 
@@ -580,8 +620,9 @@ void main() {
     expect(find.text('Step 1 of 2'), findsOneWidget);
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-    await tester.pumpAndSettle();
-    expect(voice.listenCalls, 1);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(voice.listenCalls, 2);
   });
 
   testWidgets('a spoken duration starts a separate cooking timer',
@@ -600,6 +641,8 @@ void main() {
 
     narration.callbacks?.onComplete();
     await tester.pump();
+    await tester.tap(find.byKey(const Key('cook-voice-mode-button')));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
     voice.complete('set a timer for ten minutes');
     await tester.pumpAndSettle();
@@ -610,6 +653,7 @@ void main() {
       timer.endsAt.difference(timer.startedAt),
       const Duration(minutes: 10),
     );
-    expect(find.textContaining('Weeknight Pasta, step 1'), findsOneWidget);
+    expect(find.byKey(const Key('cook-active-timer')), findsOneWidget);
+    expect(find.text('10:00'), findsOneWidget);
   });
 }

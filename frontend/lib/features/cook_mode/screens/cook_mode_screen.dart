@@ -26,7 +26,10 @@ import '../services/cook_duration_parser.dart';
 import '../services/cook_session_store.dart';
 import '../services/cook_voice_service.dart';
 import '../services/screen_awake_service.dart';
+import '../widgets/cook_mode_action_dock.dart';
+import '../widgets/cook_step_stage.dart';
 import '../widgets/cook_timer_controls.dart';
+import '../widgets/cook_voice_indicator.dart';
 
 class CookModeScreen extends ConsumerWidget {
   const CookModeScreen({super.key, required this.recipeId});
@@ -89,12 +92,17 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
   bool _isForeground = true;
   bool _restoringSession = true;
   bool _storageWarning = false;
-  bool _voiceInitializing = true;
+  bool _voiceInitializing = false;
+  bool _voiceInitialized = false;
   bool _voiceAvailable = false;
+  bool _voiceModeEnabled = false;
   bool _voiceListening = false;
   bool _voiceSessionActive = false;
   bool _initialNarrationPending = true;
   String? _voiceMessage;
+  double _voiceSoundLevel = 0;
+  double _minimumSoundLevel = double.infinity;
+  double _maximumSoundLevel = double.negativeInfinity;
   int _voiceGeneration = 0;
 
   @override
@@ -159,37 +167,43 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
     ref.read(cookModeControllerProvider(_args).notifier).restore(stepIndex);
     setState(() => _restoringSession = false);
     unawaited(_recordSession(stepIndex));
-    unawaited(_initializeVoice());
+    _maybeStartInitialNarration();
   }
 
   Future<void> _initializeVoice() async {
+    if (_voiceInitializing || _voiceInitialized) return;
+    setState(() => _voiceInitializing = true);
     try {
       final available = await _voiceService.initialize(CookVoiceCallbacks(
         onFinalResult: _onVoiceResult,
         onListeningChanged: _onListeningChanged,
+        onSoundLevel: _onSoundLevel,
         onError: _onVoiceError,
       ));
       if (!mounted) return;
       setState(() {
+        _voiceInitialized = available;
         _voiceAvailable = available;
-        _voiceMessage = available ? null : 'Voice unavailable on this device.';
+        _voiceInitializing = false;
+        if (!available) {
+          _voiceModeEnabled = false;
+          _voiceMessage = 'Voice unavailable on this device.';
+        }
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _voiceMessage = 'Voice unavailable on this device.');
-    } finally {
-      if (mounted) {
-        setState(() => _voiceInitializing = false);
-        _maybeStartInitialNarration();
-      }
+      setState(() {
+        _voiceInitializing = false;
+        _voiceInitialized = false;
+        _voiceAvailable = false;
+        _voiceModeEnabled = false;
+        _voiceMessage = 'Voice unavailable on this device.';
+      });
     }
   }
 
   void _maybeStartInitialNarration() {
-    if (!_initialNarrationPending ||
-        _voiceInitializing ||
-        _restoringSession ||
-        !_isForeground) {
+    if (!_initialNarrationPending || _restoringSession || !_isForeground) {
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -203,10 +217,31 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
 
   void _onListeningChanged(bool listening) {
     if (!mounted) return;
+    final shouldResume = !listening &&
+        _voiceListening &&
+        _voiceSessionActive &&
+        _voiceModeEnabled;
+    if (shouldResume) _voiceSessionActive = false;
     setState(() {
       _voiceListening = listening;
-      if (listening) _voiceMessage = null;
+      if (listening) {
+        _voiceMessage = null;
+      } else {
+        _voiceSoundLevel = 0;
+      }
     });
+    if (shouldResume) _scheduleListening();
+  }
+
+  void _onSoundLevel(double level) {
+    if (!mounted || !_voiceListening || !level.isFinite) return;
+    if (level < _minimumSoundLevel) _minimumSoundLevel = level;
+    if (level > _maximumSoundLevel) _maximumSoundLevel = level;
+    final range = _maximumSoundLevel - _minimumSoundLevel;
+    final normalized = range < 1
+        ? 0.35
+        : ((level - _minimumSoundLevel) / range).clamp(0.0, 1.0).toDouble();
+    setState(() => _voiceSoundLevel = normalized);
   }
 
   void _onVoiceError(String message) {
@@ -216,10 +251,17 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
         message.contains('error_no_match');
     setState(() {
       _voiceListening = false;
-      _voiceMessage = timedOut
-          ? 'Voice ready'
-          : 'On-device voice unavailable. Tap the mic to try again.';
+      _voiceSoundLevel = 0;
+      if (timedOut) {
+        _voiceMessage = null;
+      } else {
+        _voiceModeEnabled = false;
+        _voiceAvailable = false;
+        _voiceInitialized = false;
+        _voiceMessage = 'On-device voice unavailable. Tap Speak to try again.';
+      }
     });
+    if (timedOut && _voiceModeEnabled) _scheduleListening();
   }
 
   void _onVoiceResult(CookVoiceResult result) {
@@ -232,14 +274,14 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
         _voiceMessage =
             "Didn't catch that. Try next, back, repeat, or set a timer.";
       });
-      unawaited(_stopVoiceListening());
+      unawaited(_restartVoiceListening());
       return;
     }
 
     final mode = ref.read(cookModeControllerProvider(_args));
     if (command.type == CookVoiceCommandType.back && !mode.canGoBack) {
       setState(() => _voiceMessage = 'Already at the first step.');
-      unawaited(_stopVoiceListening());
+      unawaited(_restartVoiceListening());
       return;
     }
 
@@ -309,12 +351,23 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
   }
 
   void _scheduleListening() {
-    if (!_voiceAvailable || !_isForeground || _restoringSession) return;
+    if (!_voiceModeEnabled ||
+        !_voiceInitialized ||
+        !_voiceAvailable ||
+        !_isForeground ||
+        _restoringSession) {
+      return;
+    }
     final generation = ++_voiceGeneration;
     _listenDelay?.cancel();
     _listenDelay = Timer(const Duration(milliseconds: 300), () {
       _listenDelay = null;
-      if (!mounted || generation != _voiceGeneration || !_isForeground) return;
+      if (!mounted ||
+          generation != _voiceGeneration ||
+          !_isForeground ||
+          !_voiceModeEnabled) {
+        return;
+      }
       unawaited(_startVoiceListening());
     });
   }
@@ -322,6 +375,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
   Future<void> _startVoiceListening() async {
     if (!mounted ||
         !_voiceAvailable ||
+        !_voiceModeEnabled ||
         !_isForeground ||
         _restoringSession ||
         _voiceSessionActive) {
@@ -340,7 +394,12 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
 
     _voiceGeneration++;
     _voiceSessionActive = true;
-    setState(() => _voiceMessage = null);
+    _minimumSoundLevel = double.infinity;
+    _maximumSoundLevel = double.negativeInfinity;
+    setState(() {
+      _voiceMessage = null;
+      _voiceSoundLevel = 0;
+    });
     try {
       await _voiceService.listen();
     } catch (_) {
@@ -348,7 +407,10 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
       _voiceSessionActive = false;
       setState(() {
         _voiceListening = false;
-        _voiceMessage = 'Voice unavailable. Tap the mic to try again.';
+        _voiceModeEnabled = false;
+        _voiceAvailable = false;
+        _voiceInitialized = false;
+        _voiceMessage = 'Voice unavailable. Tap Speak to try again.';
       });
     }
   }
@@ -364,16 +426,42 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
       // Manual cooking remains available if the recognizer cannot stop.
     }
     if (mounted && _voiceListening) {
-      setState(() => _voiceListening = false);
+      setState(() {
+        _voiceListening = false;
+        _voiceSoundLevel = 0;
+      });
     }
   }
 
-  Future<void> _toggleVoiceListening() async {
-    if (_voiceListening) {
+  Future<void> _restartVoiceListening() async {
+    await _stopVoiceListening();
+    if (mounted && _voiceModeEnabled) _scheduleListening();
+  }
+
+  Future<void> _toggleVoiceMode() async {
+    if (_voiceModeEnabled) {
+      setState(() {
+        _voiceModeEnabled = false;
+        _voiceMessage = null;
+      });
       await _stopVoiceListening();
-    } else {
-      await _stopVoiceListening();
-      await _startVoiceListening();
+      return;
+    }
+
+    setState(() {
+      _voiceModeEnabled = true;
+      _voiceMessage = null;
+    });
+    if (!_voiceInitialized) await _initializeVoice();
+    if (!mounted || !_voiceModeEnabled || !_voiceAvailable) return;
+
+    final narration = ref.read(
+      cookNarrationControllerProvider(widget.recipe.recipeId),
+    );
+    if (!narration.isSpeaking &&
+        !narration.isPaused &&
+        narration.status != CookNarrationStatus.preparing) {
+      _scheduleListening();
     }
   }
 
@@ -454,6 +542,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
     _isForeground = true;
     unawaited(_setScreenAwake(true));
     _maybeStartInitialNarration();
+    if (_voiceModeEnabled) _scheduleListening();
   }
 
   Future<void> _pauseNarration() => _narrationController.pause();
@@ -535,6 +624,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
     final narration =
         ref.watch(cookNarrationControllerProvider(widget.recipe.recipeId));
     final timerState = ref.watch(cookTimerControllerProvider(_userId));
+    final activeTimer = timerState.activeTimers.firstOrNull;
 
     if (_restoringSession) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -548,6 +638,10 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
             _CookModeHeader(
               recipeTitle: widget.recipe.title,
               onClose: () => unawaited(_close()),
+              speechRate: narration.speechRate,
+              canAdjustSpeechRate: !narration.isUnavailable,
+              onSpeechRateChanged: (rate) =>
+                  unawaited(_narrationController.setSpeechRate(rate)),
             ),
             if (_storageWarning)
               Padding(
@@ -566,24 +660,17 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
                 progress: state.progress,
               ),
               Expanded(
-                child: _StepContent(
+                child: CookStepStage(
                   step: widget.steps[state.currentStepIndex],
                   narration: narration,
+                  activeTimer: activeTimer,
+                  now: timerState.now,
                 ),
               ),
-              _NarrationControls(
-                narration: narration,
-                onToggle: () => unawaited(_toggleNarration(narration)),
-                onRepeat: () => unawaited(_repeatStep()),
-                onRateChanged: (rate) =>
-                    unawaited(_narrationController.setSpeechRate(rate)),
-              ),
-              _VoiceControls(
-                isInitializing: _voiceInitializing,
-                isAvailable: _voiceAvailable,
+              CookVoiceIndicator(
                 isListening: _voiceListening,
+                soundLevel: _voiceSoundLevel,
                 message: _voiceMessage,
-                onToggle: () => unawaited(_toggleVoiceListening()),
               ),
               CookTimerControls(
                 state: timerState,
@@ -593,10 +680,18 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
                 onStart: _startTimer,
                 onCancel: _timerController.cancel,
               ),
-              _CookControls(
+              CookModeActionDock(
+                narration: narration,
                 canGoBack: state.canGoBack,
                 isLastStep: state.isLastStep,
+                isVoiceModeEnabled: _voiceModeEnabled,
+                isVoiceInitializing: _voiceInitializing,
+                isVoiceUnavailable: !_voiceInitializing &&
+                    (_voiceMessage?.toLowerCase().contains('unavailable') ??
+                        false),
                 onBack: () => unawaited(_goBack()),
+                onNarration: () => unawaited(_toggleNarration(narration)),
+                onVoiceMode: () => unawaited(_toggleVoiceMode()),
                 onNext: () => unawaited(_goNext()),
               ),
             ] else
@@ -615,10 +710,21 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
 }
 
 class _CookModeHeader extends StatelessWidget {
-  const _CookModeHeader({required this.recipeTitle, required this.onClose});
+  const _CookModeHeader({
+    required this.recipeTitle,
+    required this.onClose,
+    required this.speechRate,
+    required this.canAdjustSpeechRate,
+    required this.onSpeechRateChanged,
+  });
 
   final String recipeTitle;
   final VoidCallback onClose;
+  final double speechRate;
+  final bool canAdjustSpeechRate;
+  final ValueChanged<double> onSpeechRateChanged;
+
+  static const _speechRates = [0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65];
 
   @override
   Widget build(BuildContext context) {
@@ -642,6 +748,41 @@ class _CookModeHeader extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: AppTextStyles.title.copyWith(
                 color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ),
+          PopupMenuButton<double>(
+            key: const Key('narration-speed-menu'),
+            tooltip: 'Narration speed',
+            enabled: canAdjustSpeechRate,
+            initialValue: speechRate,
+            onSelected: onSpeechRateChanged,
+            itemBuilder: (context) => _speechRates
+                .map(
+                  (rate) => CheckedPopupMenuItem<double>(
+                    value: rate,
+                    checked: rate == speechRate,
+                    child: Text('${(rate * 2).toStringAsFixed(1)}x'),
+                  ),
+                )
+                .toList(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.speed, size: 18),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${(speechRate * 2).toStringAsFixed(1)}x',
+                    style: AppTextStyles.caption.copyWith(
+                      color: canAdjustSpeechRate
+                          ? Theme.of(context).colorScheme.onSurface
+                          : AppColors.textMuted,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -684,326 +825,6 @@ class _StepProgress extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _StepContent extends StatelessWidget {
-  const _StepContent({required this.step, required this.narration});
-
-  final RecipeStep step;
-  final CookNarrationState narration;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) => SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: constraints.maxHeight - 48),
-          child: Center(
-            child: Semantics(
-              liveRegion: true,
-              label: 'Step ${step.stepNr}. ${step.content}',
-              child: ExcludeSemantics(
-                child: _HighlightedStepText(
-                  text: step.content,
-                  activeStart: narration.stepText == step.content
-                      ? narration.activeStart
-                      : null,
-                  activeEnd: narration.stepText == step.content
-                      ? narration.activeEnd
-                      : null,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HighlightedStepText extends StatelessWidget {
-  const _HighlightedStepText({
-    required this.text,
-    required this.activeStart,
-    required this.activeEnd,
-  });
-
-  final String text;
-  final int? activeStart;
-  final int? activeEnd;
-
-  @override
-  Widget build(BuildContext context) {
-    final style = AppTextStyles.heading1.copyWith(
-      color: Theme.of(context).colorScheme.onSurface,
-      fontWeight: FontWeight.w700,
-      height: 1.35,
-    );
-    final start = activeStart;
-    final end = activeEnd;
-    final hasValidRange = start != null &&
-        end != null &&
-        start >= 0 &&
-        end > start &&
-        end <= text.length;
-
-    if (!hasValidRange) {
-      return Text(
-        text,
-        key: const Key('cook-step-text'),
-        textAlign: TextAlign.center,
-        style: style,
-      );
-    }
-
-    return Text.rich(
-      TextSpan(
-        style: style,
-        children: [
-          TextSpan(text: text.substring(0, start)),
-          TextSpan(
-            text: text.substring(start, end),
-            style: style.copyWith(
-              backgroundColor: AppColors.accent.withValues(alpha: 0.38),
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          TextSpan(text: text.substring(end)),
-        ],
-      ),
-      key: const Key('cook-step-text'),
-      textAlign: TextAlign.center,
-    );
-  }
-}
-
-class _NarrationControls extends StatefulWidget {
-  const _NarrationControls({
-    required this.narration,
-    required this.onToggle,
-    required this.onRepeat,
-    required this.onRateChanged,
-  });
-
-  final CookNarrationState narration;
-  final VoidCallback onToggle;
-  final VoidCallback onRepeat;
-  final ValueChanged<double> onRateChanged;
-
-  @override
-  State<_NarrationControls> createState() => _NarrationControlsState();
-}
-
-class _NarrationControlsState extends State<_NarrationControls> {
-  late double _draftRate = widget.narration.speechRate;
-
-  @override
-  void didUpdateWidget(covariant _NarrationControls oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.narration.speechRate != widget.narration.speechRate) {
-      _draftRate = widget.narration.speechRate;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final narration = widget.narration;
-    final (label, icon) = switch (narration.status) {
-      CookNarrationStatus.preparing => (
-          'Preparing narration',
-          Icons.more_horiz
-        ),
-      CookNarrationStatus.speaking => ('Reading aloud', Icons.pause),
-      CookNarrationStatus.paused => ('Narration paused', Icons.play_arrow),
-      CookNarrationStatus.completed => ('Read again', Icons.volume_up_outlined),
-      CookNarrationStatus.unavailable => (
-          'Narration unavailable',
-          Icons.volume_off_outlined
-        ),
-      CookNarrationStatus.idle => ('Read step aloud', Icons.volume_up_outlined),
-    };
-    final canControl = !narration.isUnavailable;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Tooltip(
-                message: label,
-                child: AppIconButton.primary(
-                  icon: icon,
-                  onPressed: canControl ? widget.onToggle : null,
-                  size: 52,
-                  isLoading: narration.status == CookNarrationStatus.preparing,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                label,
-                style: AppTextStyles.bodyBold.copyWith(
-                  color: narration.isUnavailable
-                      ? AppColors.error
-                      : Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Tooltip(
-                message: 'Repeat step',
-                child: AppIconButton.ghost(
-                  icon: Icons.replay,
-                  onPressed: canControl ? widget.onRepeat : null,
-                  customColor: AppColors.primary,
-                  size: 48,
-                ),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              const Icon(Icons.speed, size: 20, color: AppColors.textMuted),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Slider(
-                  key: const Key('narration-speed-slider'),
-                  min: 0.35,
-                  max: 0.65,
-                  divisions: 6,
-                  value: _draftRate,
-                  label: '${(_draftRate * 2).toStringAsFixed(1)}x',
-                  onChanged: canControl
-                      ? (value) => setState(() => _draftRate = value)
-                      : null,
-                  onChangeEnd: canControl ? widget.onRateChanged : null,
-                ),
-              ),
-              SizedBox(
-                width: 38,
-                child: Text(
-                  '${(_draftRate * 2).toStringAsFixed(1)}x',
-                  textAlign: TextAlign.end,
-                  style: AppTextStyles.body,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VoiceControls extends StatelessWidget {
-  const _VoiceControls({
-    required this.isInitializing,
-    required this.isAvailable,
-    required this.isListening,
-    required this.message,
-    required this.onToggle,
-  });
-
-  final bool isInitializing;
-  final bool isAvailable;
-  final bool isListening;
-  final String? message;
-  final VoidCallback onToggle;
-
-  @override
-  Widget build(BuildContext context) {
-    final label = isInitializing
-        ? 'Preparing voice'
-        : !isAvailable
-            ? message ?? 'Voice unavailable'
-            : isListening
-                ? 'Listening'
-                : message ?? 'Voice ready';
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Tooltip(
-            message: isListening
-                ? 'Stop listening'
-                : 'Listen for next, back, or repeat',
-            child: AppIconButton.outlined(
-              icon: isAvailable
-                  ? isListening
-                      ? Icons.mic
-                      : Icons.mic_none
-                  : Icons.mic_off,
-              onPressed: isAvailable && !isInitializing ? onToggle : null,
-              size: 48,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.body.copyWith(
-                color: isAvailable
-                    ? Theme.of(context).colorScheme.onSurface
-                    : AppColors.textMuted,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CookControls extends StatelessWidget {
-  const _CookControls({
-    required this.canGoBack,
-    required this.isLastStep,
-    required this.onBack,
-    required this.onNext,
-  });
-
-  final bool canGoBack;
-  final bool isLastStep;
-  final VoidCallback onBack;
-  final VoidCallback onNext;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-        child: Row(
-          children: [
-            Tooltip(
-              message: 'Previous step',
-              child: AppIconButton.outlined(
-                icon: Icons.arrow_back,
-                onPressed: canGoBack ? onBack : null,
-                size: 56,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: AppButton.primary(
-                key: const Key('cook-next-button'),
-                label: isLastStep ? 'Finish' : 'Next step',
-                onPressed: onNext,
-                rightIcon: isLastStep ? Icons.check : Icons.arrow_forward,
-                isFullWidth: true,
-                size: ButtonSize.large,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
