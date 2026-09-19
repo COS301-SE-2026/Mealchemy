@@ -133,7 +133,7 @@ public class AdminControllerTest {
         when(flagService.getFlags(eq(FlagStatus.REVIEWED), anyInt())).thenReturn(List.of(mockResponse));
 
         // Act and assert
-        mockMvc.perform(get("/admin/flags").with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
+        mockMvc.perform(get("/admin/flags").param("status", "REVIEWED").with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
                 .andExpect(status().isOk())
                 // fields in response object
                 .andExpect(jsonPath("$[0].flagged_id").value(13))
@@ -187,7 +187,8 @@ public class AdminControllerTest {
             "Penne Alla Vodka",
             "Weeknigh favourite",
             "ITALIAN",
-            30,
+            30, // prep time
+            20, // cook time
             4,
             "https://photoUr.com/penne,jpeg",
             null,

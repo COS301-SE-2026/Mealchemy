@@ -99,7 +99,7 @@ public class AdminServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
 
@@ -113,7 +113,7 @@ public class AdminServiceTest {
         when(userProfileRepository.findByUserId(4)).thenReturn(Optional.of(regularUserProfile));
 
         // Act
-        UserSummaryResponse response = adminService.findByEmail("regularUser@email.com", 1);
+        UserSummaryResponse response = adminService.findUserByEmail("regularUser@email.com", 1);
 
         // Assert
         assertEquals(4, response.userId());
@@ -173,7 +173,7 @@ public class AdminServiceTest {
         assertTrue(response.roles().contains("ADMIN"));
         verify(userRepository).save(regularUser);
     }
-    
+
     @Test
     void promoteToAdmin_notAdmin_throwsForbidden() {
         // Arrange

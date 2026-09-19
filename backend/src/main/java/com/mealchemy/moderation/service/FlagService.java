@@ -118,6 +118,7 @@ public class FlagService {
             recipe.getDescription(),
             recipe.getCuisineType(),
             recipe.getPrepTimeMins(),
+            recipe.getCookingTimeMins(),
             recipe.getServingSize(),
             recipe.getPhotoUrl(),
             recipe.getVideoUrl(),
@@ -125,7 +126,7 @@ public class FlagService {
             recipe.getIsCommunityPublished(),
             recipe.getCreatedAt(),
             recipe.getUpdatedAt(),
-            recipe.getParentRecipeId()
+            recipe.getParentRecipe() == null ? null : recipe.getParentRecipe().getRecipeId()
         );
 
         // build detailed response
