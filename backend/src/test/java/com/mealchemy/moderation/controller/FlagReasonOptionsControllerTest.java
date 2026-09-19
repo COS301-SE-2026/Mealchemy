@@ -1,15 +1,13 @@
-// unit testing for nutritionalGoalOptionsController
-
-package com.mealchemy.nutritionalgoals;
+package com.mealchemy.moderation;
 
 // dtos
-import com.mealchemy.nutritionalgoals.dto.NutritionalGoalOptionsResponse;
+import com.mealchemy.moderation.dto.FlagReasonOptionsResponse;
 
 // controller
-import com.mealchemy.nutritionalgoals.controller.NutritionalGoalOptionsController;
+import com.mealchemy.moderation.controller.FlagReasonOptionsController;
 
 // import service
-import com.mealchemy.nutritionalgoals.service.NutritionalGoalOptionsService;
+import com.mealchemy.moderation.service.FlagReasonOptionsService;
 
 import com.mealchemy.config.JwtUtil;
 
@@ -34,8 +32,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
-@WebMvcTest(NutritionalGoalOptionsController.class)
-public class NutritionalGoalOptionsControllerTest {
+@WebMvcTest(FlagReasonOptionsController.class)
+public class FlagReasonOptionsControllerTest {
 
     // setup
     @TestConfiguration
@@ -56,39 +54,41 @@ public class NutritionalGoalOptionsControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private NutritionalGoalOptionsService nutritionalGoalOptionsService;
+    private FlagReasonOptionsService flagReasonOptionsService;
 
     @MockitoBean
     private JwtUtil jwtUtil;
 
-    // ========== GET Testing (GET /nutritionalgoals/all) ==========
+
+    // ========== GET Testing (GET /flagreasons) ==========
 
     @Test
-    void getAllNutritionalGoalOptions_return200() throws Exception {
+    void getAllFlagValueOptions_return200() throws Exception {
         // Arrange - mock response
-        NutritionalGoalOptionsResponse highProtein = new NutritionalGoalOptionsResponse(
-            1, 
-            "HIGH_PROTEIN", 
-            "High Protein"
+        FlagReasonOptionsResponse flag1 = new FlagReasonOptionsResponse(
+            "INAPPROPRIATE_LANGUAGE",
+            "Inappropriate language"
         );
 
-        NutritionalGoalOptionsResponse lowCarb = new NutritionalGoalOptionsResponse(
-            2, 
-            "LOW_CARB", 
-            "Low Carb"
+        FlagReasonOptionsResponse flag2 = new FlagReasonOptionsResponse(
+            "SPAM_MISLEADING", 
+            "Spam / misleading"
         );
 
+        FlagReasonOptionsResponse flag3 = new FlagReasonOptionsResponse(
+            "UNSAFE_INSTRUCTIONS", 
+            "Unsafe or dangerous instructions"
+        );
 
-        when(nutritionalGoalOptionsService.getAllNutritionalGoalOptions()).thenReturn(List.of(highProtein, lowCarb));
-
+        when(flagReasonOptionsService.getAllFlagReasonOptions()).thenReturn(List.of(flag1, flag2, flag3));
 
         // Act and assert
-        mockMvc.perform(get("/nutritionalgoals/all").with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
+        mockMvc.perform(get("/flagreasons/all").with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
                 .andExpect(status().isOk())
                 // fields in response object
-                .andExpect(jsonPath("$[0].value").value("HIGH_PROTEIN"))
-                .andExpect(jsonPath("$[0].label").value("High Protein"))
-                .andExpect(jsonPath("$[1].value").value("LOW_CARB"))
-                .andExpect(jsonPath("$[1].label").value("Low Carb"));
+                .andExpect(jsonPath("$[0].value").value("INAPPROPRIATE_LANGUAGE"))
+                .andExpect(jsonPath("$[0].label").value("Inappropriate language"))
+                .andExpect(jsonPath("$[2].value").value("UNSAFE_INSTRUCTIONS"))
+                .andExpect(jsonPath("$[2].label").value("Unsafe or dangerous instructions"));
     }
 }
