@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -30,7 +31,27 @@ class FlutterLocalNotificationsCookTimerService
   static const _channelName = 'Cooking timers';
 
   final FlutterLocalNotificationsPlugin _plugin;
+  final StreamController<CookTimerDestination> _tapController =
+      StreamController<CookTimerDestination>.broadcast();
   bool _initialized = false;
+
+  Stream<CookTimerDestination> get taps => _tapController.stream;
+
+  Future<CookTimerDestination?> initializeTapHandling() async {
+    if (kIsWeb) return null;
+
+    try {
+      await _initialize();
+      final launchDetails = await _plugin.getNotificationAppLaunchDetails();
+      if (launchDetails?.didNotificationLaunchApp != true) return null;
+
+      return CookTimerDestination.fromPayload(
+        launchDetails?.notificationResponse?.payload,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
 
   Future<void> _initialize() async {
     if (_initialized) return;
@@ -49,6 +70,7 @@ class FlutterLocalNotificationsCookTimerService
           requestSoundPermission: false,
         ),
       ),
+      onDidReceiveNotificationResponse: _onNotificationResponse,
     );
     _initialized = true;
   }
@@ -91,7 +113,10 @@ class FlutterLocalNotificationsCookTimerService
           ),
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        payload: 'cook_timer:${timer.notificationId}',
+        payload: CookTimerDestination(
+          recipeId: timer.recipeId,
+          stepIndex: timer.stepIndex,
+        ).toPayload(),
       );
       return CookTimerAlertStatus.scheduled;
     } catch (_) {
@@ -152,5 +177,16 @@ class FlutterLocalNotificationsCookTimerService
     if (kIsWeb) return;
     await _initialize();
     await _plugin.cancel(id: notificationId);
+  }
+
+  void _onNotificationResponse(NotificationResponse response) {
+    final destination = CookTimerDestination.fromPayload(response.payload);
+    if (destination != null && !_tapController.isClosed) {
+      _tapController.add(destination);
+    }
+  }
+
+  void dispose() {
+    _tapController.close();
   }
 }

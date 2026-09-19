@@ -32,9 +32,14 @@ import '../widgets/cook_timer_controls.dart';
 import '../widgets/cook_voice_indicator.dart';
 
 class CookModeScreen extends ConsumerWidget {
-  const CookModeScreen({super.key, required this.recipeId});
+  const CookModeScreen({
+    super.key,
+    required this.recipeId,
+    this.initialStepIndex,
+  });
 
   final int recipeId;
+  final int? initialStepIndex;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -61,17 +66,26 @@ class CookModeScreen extends ConsumerWidget {
             onClose: () => context.pop(),
           );
         }
-        return _CookModeContent(recipe: recipe, steps: steps);
+        return _CookModeContent(
+          recipe: recipe,
+          steps: steps,
+          initialStepIndex: initialStepIndex,
+        );
       },
     );
   }
 }
 
 class _CookModeContent extends ConsumerStatefulWidget {
-  const _CookModeContent({required this.recipe, required this.steps});
+  const _CookModeContent({
+    required this.recipe,
+    required this.steps,
+    this.initialStepIndex,
+  });
 
   final Recipe recipe;
   final List<RecipeStep> steps;
+  final int? initialStepIndex;
 
   @override
   ConsumerState<_CookModeContent> createState() => _CookModeContentState();
@@ -152,9 +166,12 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
   }
 
   Future<void> _restoreSession() async {
-    var stepIndex = 0;
+    final requestedStepIndex = widget.initialStepIndex;
+    var stepIndex = requestedStepIndex == null
+        ? 0
+        : requestedStepIndex.clamp(0, widget.steps.length - 1).toInt();
     final userId = _userId;
-    if (userId != null) {
+    if (requestedStepIndex == null && userId != null) {
       try {
         final saved = await _sessionStore.read(userId, widget.recipe.recipeId);
         stepIndex = saved?.matchingStepIndex(widget.steps) ?? 0;

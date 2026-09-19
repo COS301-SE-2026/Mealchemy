@@ -206,9 +206,16 @@ final cookTimerStoreProvider = Provider<CookTimerStore>((ref) {
   return FileCookTimerStore();
 });
 
+final flutterCookTimerNotificationServiceProvider =
+    Provider<FlutterLocalNotificationsCookTimerService>((ref) {
+  final service = FlutterLocalNotificationsCookTimerService();
+  ref.onDispose(service.dispose);
+  return service;
+});
+
 final cookTimerNotificationServiceProvider =
     Provider<CookTimerNotificationService>((ref) {
-  return FlutterLocalNotificationsCookTimerService();
+  return ref.watch(flutterCookTimerNotificationServiceProvider);
 });
 
 final cookTimerControllerProvider = StateNotifierProvider.autoDispose

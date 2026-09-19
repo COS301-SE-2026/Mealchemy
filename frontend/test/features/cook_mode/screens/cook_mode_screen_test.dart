@@ -171,6 +171,7 @@ Widget _host(
   _FakeTimerStore? timers,
   _FakeTimerNotifications? timerNotifications,
   int? userId,
+  int? initialStepIndex,
 }) {
   return ProviderScope(
     overrides: [
@@ -189,7 +190,12 @@ Widget _host(
         timerNotifications ?? _FakeTimerNotifications(),
       ),
     ],
-    child: MaterialApp(home: CookModeScreen(recipeId: recipe.recipeId)),
+    child: MaterialApp(
+      home: CookModeScreen(
+        recipeId: recipe.recipeId,
+        initialStepIndex: initialStepIndex,
+      ),
+    ),
   );
 }
 
@@ -323,6 +329,34 @@ void main() {
       sessions: sessions,
       narration: narration,
       userId: 12,
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Step 2 of 2'), findsOneWidget);
+    expect(narration.spoken, ['Toss with the sauce.']);
+  });
+
+  testWidgets('an explicit route step overrides saved progress',
+      (tester) async {
+    final sessions = _FakeSessionStore();
+    sessions.sessions['12:7'] = CookSession(
+      recipeId: 7,
+      recipeTitle: _recipe.title,
+      stepIndex: 0,
+      stepNumber: 1,
+      stepText: 'Boil the pasta.',
+      stepCount: 2,
+      savedAt: DateTime.utc(2026, 9, 13),
+    );
+    final narration = _FakeNarrationService();
+
+    await tester.pumpWidget(_host(
+      _recipe,
+      _FakeScreenAwakeService(),
+      sessions: sessions,
+      narration: narration,
+      userId: 12,
+      initialStepIndex: 1,
     ));
     await tester.pumpAndSettle();
 

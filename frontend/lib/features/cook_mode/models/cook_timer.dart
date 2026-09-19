@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class CookTimer {
   const CookTimer({
     required this.notificationId,
@@ -46,6 +48,46 @@ class CookTimer {
       startedAt: DateTime.parse(json['startedAt'] as String).toUtc(),
       endsAt: DateTime.parse(json['endsAt'] as String).toUtc(),
     );
+  }
+}
+
+class CookTimerDestination {
+  const CookTimerDestination({
+    required this.recipeId,
+    required this.stepIndex,
+  });
+
+  final int recipeId;
+  final int stepIndex;
+
+  String toPayload() => jsonEncode({
+        'type': 'cook_timer',
+        'recipeId': recipeId,
+        'stepIndex': stepIndex,
+      });
+
+  static CookTimerDestination? fromPayload(String? payload) {
+    if (payload == null || payload.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(payload);
+      if (decoded is! Map<String, dynamic> || decoded['type'] != 'cook_timer') {
+        return null;
+      }
+      final recipeId = decoded['recipeId'];
+      final stepIndex = decoded['stepIndex'];
+      if (recipeId is! int ||
+          recipeId <= 0 ||
+          stepIndex is! int ||
+          stepIndex < 0) {
+        return null;
+      }
+      return CookTimerDestination(
+        recipeId: recipeId,
+        stepIndex: stepIndex,
+      );
+    } catch (_) {
+      return null;
+    }
   }
 }
 

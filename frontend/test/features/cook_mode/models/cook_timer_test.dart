@@ -50,4 +50,21 @@ void main() {
       '01:02:03',
     );
   });
+
+  test('round-trips a notification destination payload', () {
+    const destination = CookTimerDestination(recipeId: 7, stepIndex: 1);
+
+    final restored = CookTimerDestination.fromPayload(
+      destination.toPayload(),
+    );
+
+    expect(restored?.recipeId, 7);
+    expect(restored?.stepIndex, 1);
+  });
+
+  test('rejects malformed and legacy notification payloads', () {
+    expect(CookTimerDestination.fromPayload(null), isNull);
+    expect(CookTimerDestination.fromPayload('cook_timer:42'), isNull);
+    expect(CookTimerDestination.fromPayload('{invalid json'), isNull);
+  });
 }
