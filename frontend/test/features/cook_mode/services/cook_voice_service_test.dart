@@ -5,6 +5,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 
 class _FakeSpeechToText extends Fake implements SpeechToText {
   SpeechResultListener? resultListener;
+  SpeechSoundLevelChange? soundLevelListener;
   @override
   SpeechStatusListener? statusListener;
   SpeechListenOptions? options;
@@ -40,6 +41,7 @@ class _FakeSpeechToText extends Fake implements SpeechToText {
     SpeechListenOptions? listenOptions,
   }) async {
     resultListener = onResult;
+    soundLevelListener = onSoundLevelChange;
     options = listenOptions;
     statusListener?.call(SpeechToText.listeningStatus);
   }
@@ -63,9 +65,11 @@ void main() {
     final service = SpeechToTextCookVoiceService(speech: speech);
     final results = <CookVoiceResult>[];
     final listening = <bool>[];
+    final soundLevels = <double>[];
     final available = await service.initialize(CookVoiceCallbacks(
       onFinalResult: results.add,
       onListeningChanged: listening.add,
+      onSoundLevel: soundLevels.add,
       onError: (_) {},
     ));
     expect(available, isTrue);
@@ -74,6 +78,8 @@ void main() {
     expect(speech.options?.onDevice, isTrue);
     expect(speech.options?.partialResults, isFalse);
     expect(listening.last, isTrue);
+    speech.soundLevelListener?.call(4.2);
+    expect(soundLevels, [4.2]);
     speech.resultListener?.call(_result('next', ResultType.partial));
     expect(results, isEmpty);
     speech.resultListener?.call(_result('next', ResultType.finalResult));
@@ -88,6 +94,7 @@ void main() {
     await service.initialize(CookVoiceCallbacks(
       onFinalResult: results.add,
       onListeningChanged: (_) {},
+      onSoundLevel: (_) {},
       onError: (_) {},
     ));
     await service.listen();
@@ -106,6 +113,7 @@ void main() {
       await service.initialize(CookVoiceCallbacks(
         onFinalResult: (_) {},
         onListeningChanged: (_) {},
+        onSoundLevel: (_) {},
         onError: (_) {},
       )),
       isFalse,

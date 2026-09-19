@@ -14,11 +14,13 @@ class CookVoiceCallbacks {
   const CookVoiceCallbacks({
     required this.onFinalResult,
     required this.onListeningChanged,
+    required this.onSoundLevel,
     required this.onError,
   });
 
   final void Function(CookVoiceResult result) onFinalResult;
   final void Function(bool listening) onListeningChanged;
+  final void Function(double level) onSoundLevel;
   final void Function(String message) onError;
 }
 
@@ -86,6 +88,10 @@ class SpeechToTextCookVoiceService implements CookVoiceService {
             words: result.recognizedWords,
             confidence: result.hasConfidenceRating ? result.confidence : null,
           ));
+        },
+        onSoundLevelChange: (level) {
+          if (generation != _generation) return;
+          _callbacks?.onSoundLevel(level);
         },
         listenOptions: SpeechListenOptions(
           onDevice: true,
