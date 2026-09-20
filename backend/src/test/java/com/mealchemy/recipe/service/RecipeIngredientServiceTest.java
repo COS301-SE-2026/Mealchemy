@@ -164,8 +164,8 @@ public class RecipeIngredientServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.createRecipeIngredient(request, 1, 99));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of this recipe can modify its ingredients.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
     }
 
     @Test
@@ -214,8 +214,8 @@ public class RecipeIngredientServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.updateRecipeIngredient(1, request, 1, 99));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of this recipe can modify its ingredients.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
     }
 
     @Test
@@ -239,8 +239,8 @@ public class RecipeIngredientServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.updateRecipeIngredient(1, request, 1, 1));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Ingredient must be part of the recipe.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Ingredient not found.", ex.getReason());
     }
 
     @Test
@@ -286,8 +286,8 @@ public class RecipeIngredientServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.deleteRecipeIngredient(1, 1, 99));
         
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of this recipe can modify its ingredients.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
     }
 
     @Test
@@ -311,7 +311,7 @@ public class RecipeIngredientServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.deleteRecipeIngredient(1, 1, 1));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Ingredient must be part of the recipe.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Ingredient not found.", ex.getReason());
     }
 }
