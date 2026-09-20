@@ -213,16 +213,16 @@ public class RecipeIngredientControllerIntegrationTest {
     }
 
     @Test
-    void createIngredient_returns403_whenNotOwner() throws Exception {
+    void createIngredient_returns404_whenNotOwner() throws Exception {
         RecipeIngredientRequest request = ingredientRequest(ingId, "cups", 1);
 
         mockMvc.perform(post("/ingredients/recipe/{recipeId}/ingredient/create", recipe.getRecipeId())
-                        .with(authentication(authAs(otherUser.getUserId())))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Only the owner of this recipe can modify its ingredients."));
+                .with(authentication(authAs(otherUser.getUserId())))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Recipe not found."));
     }
 
     @Test
@@ -287,17 +287,17 @@ public class RecipeIngredientControllerIntegrationTest {
     }
 
     @Test
-    void updateIngredient_returns403_whenNotOwner() throws Exception {
+    void updateIngredient_returns404_whenNotOwner() throws Exception {
         RecipeIngredient row = saveIngredientRow(recipe, ingId, "cups", 1);
         RecipeIngredientRequest request = ingredientRequest(otherIngId, "grams", 1);
 
         mockMvc.perform(put("/ingredients/recipe/{recipeId}/ingredient/{id}/edit", recipe.getRecipeId(), row.getIngredientId())
-                        .with(authentication(authAs(otherUser.getUserId())))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Only the owner of this recipe can modify its ingredients."));
+                .with(authentication(authAs(otherUser.getUserId())))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Recipe not found."));
     }
 
     @Test
@@ -314,19 +314,19 @@ public class RecipeIngredientControllerIntegrationTest {
     }
 
     @Test
-    void updateIngredient_returns403_whenIngredientBelongsToDifferentRecipe() throws Exception {
+    void updateIngredient_returns404_whenIngredientBelongsToDifferentRecipe() throws Exception {
 
         Recipe otherRecipe = saveRecipe(owner, "Other Recipe");
         RecipeIngredient rowOnOther = saveIngredientRow(otherRecipe, ingId, "cups", 1);
         RecipeIngredientRequest request = ingredientRequest(otherIngId, "grams", 1);
 
         mockMvc.perform(put("/ingredients/recipe/{recipeId}/ingredient/{id}/edit", recipe.getRecipeId(), rowOnOther.getIngredientId())
-                        .with(authentication(authAs(owner.getUserId())))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Ingredient must be part of the recipe."));
+                .with(authentication(authAs(owner.getUserId())))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Ingredient not found."));
     }
 
     @Test
@@ -369,14 +369,14 @@ public class RecipeIngredientControllerIntegrationTest {
     }
 
     @Test
-    void deleteIngredient_returns403_whenNotOwner() throws Exception {
+    void deleteIngredient_returns404_whenNotOwner() throws Exception {
         RecipeIngredient row = saveIngredientRow(recipe, ingId, "cups", 1);
 
         mockMvc.perform(delete("/ingredients/recipe/{recipeId}/ingredient/{id}/delete", recipe.getRecipeId(), row.getIngredientId())
-                        .with(authentication(authAs(otherUser.getUserId())))
-                        .with(csrf()))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Only the owner of this recipe can modify its ingredients."));
+                .with(authentication(authAs(otherUser.getUserId())))
+                .with(csrf()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Recipe not found."));
 
         org.junit.jupiter.api.Assertions.assertTrue(
                 recipeIngredientRepository.findById(row.getIngredientId()).isPresent()
@@ -393,15 +393,15 @@ public class RecipeIngredientControllerIntegrationTest {
     }
 
     @Test
-    void deleteIngredient_returns403_whenIngredientBelongsToDifferentRecipe() throws Exception {
+    void deleteIngredient_returns404_whenIngredientBelongsToDifferentRecipe() throws Exception {
         Recipe otherRecipe = saveRecipe(owner, "Other Recipe");
         RecipeIngredient rowOnOther = saveIngredientRow(otherRecipe, ingId, "cups", 1);
 
         mockMvc.perform(delete("/ingredients/recipe/{recipeId}/ingredient/{id}/delete", recipe.getRecipeId(), rowOnOther.getIngredientId())
-                        .with(authentication(authAs(owner.getUserId())))
-                        .with(csrf()))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Ingredient must be part of the recipe."));
+                .with(authentication(authAs(owner.getUserId())))
+                .with(csrf()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Ingredient not found."));
 
         org.junit.jupiter.api.Assertions.assertTrue(
                 recipeIngredientRepository.findById(rowOnOther.getIngredientId()).isPresent()
