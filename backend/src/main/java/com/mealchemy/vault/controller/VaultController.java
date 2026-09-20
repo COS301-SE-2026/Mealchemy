@@ -57,8 +57,7 @@ public class VaultController
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Vault retrieved successfully", content = @Content(schema = @Schema(implementation = VaultResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller is not the owner or a member of this vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Vault not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Vault not found, or the caller is not its owner or a member", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}")
@@ -99,12 +98,12 @@ public class VaultController
 
 
     // Put
-    @Operation(summary = "Update a vault", description = "Updates a vaults type and name. Only the owner may edit a vault, and it cannot be changed to type PRIVATE.")
+    @Operation(summary = "Update a vault", description = "Updates a vault's type and name. Only the owner may edit a vault, and a shared vault cannot be changed to type PRIVATE. A private vault can be renamed, but its type always stays PRIVATE.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Vault updated successfully", content = @Content(schema = @Schema(implementation = VaultResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller does not own this vault, or requested vaultTpe is PRIVATE, which is not allowed", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Vault not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "403", description = "Requested vaultType is PRIVATE, which is not allowed on a shared vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Vault not found, or not owned by the caller", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/{id}")
@@ -119,8 +118,8 @@ public class VaultController
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Vault deleted successfully"),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller does not own this vault, or the vault is PRIVATE and cannot be deleted", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Vault not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "403", description = "The vault is PRIVATE and cannot be deleted", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Vault not found, or not owned by the caller", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/{id}")
