@@ -7,6 +7,7 @@ public enum NotificationType {
     MEMBER_REMOVED,
     ROLE_CHANGED,
     RECIPE_ADDED,
+    RECIPE_EDITED,
     RECIPE_REMOVED,
     FOLDER_CREATED,
     RECIPE_LOCK_STOLEN

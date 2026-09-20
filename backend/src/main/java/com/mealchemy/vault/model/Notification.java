@@ -5,6 +5,7 @@ package com.mealchemy.vault.model;
 import jakarta.persistence.*;
 import java.util.*;
 import java.time.OffsetDateTime;
+import org.hibernate.type.SqlTypes;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -33,8 +34,9 @@ public class Notification {
     @JoinColumn(name = "actor_user_id") // some events may not have an explicit actor
     private User actor;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "notification_type", nullable = false)
+    @Enumerated(EnumType.STRING) // serilize by name
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)  
+    @Column(name = "notification_type", nullable = false, columnDefinition = "notification_type_enum")
     private NotificationType type;
 
     @Column(name = "is_read", nullable = false)

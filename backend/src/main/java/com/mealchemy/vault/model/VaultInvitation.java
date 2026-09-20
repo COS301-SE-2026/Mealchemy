@@ -5,6 +5,7 @@ package com.mealchemy.vault.model;
 import jakarta.persistence.*;
 import java.util.*;
 import java.time.OffsetDateTime;
+import org.hibernate.type.SqlTypes;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -37,8 +38,9 @@ public class VaultInvitation {
     @JoinColumn(name = "invited_by_user_id", nullable = false)
     private User invitedBy;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "invitation_status", nullable = false)
+    @Enumerated(EnumType.STRING) // serilize by name
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "invitation_status", nullable = false, columnDefinition = "invitation_status_enum")
     private InvitationStatus status = InvitationStatus.PENDING;
 
     @CreationTimestamp
