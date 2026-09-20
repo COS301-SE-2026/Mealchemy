@@ -188,9 +188,9 @@ public class VaultFolderServiceTest
     @Test
     void getVaultFolderById_returnsFolder_whenFoundAndOwner()
     {
-        when(vaultFolderRepository.findByVault_VaultIdAndFolderId(1, 1)).thenReturn(Optional.of(folder));
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
         when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 1)).thenReturn(false);
-        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
+        when(vaultFolderRepository.findByVault_VaultIdAndFolderId(1, 1)).thenReturn(Optional.of(folder));
 
         VaultFolderResponse result = vaultFolderService.getVaultFolderById(1, 1, 1);
 
@@ -201,9 +201,10 @@ public class VaultFolderServiceTest
     @Test
     void getVaultFolderById_returnsFolder_whenFoundAndMember()
     {
-        when(vaultFolderRepository.findByVault_VaultIdAndFolderId(1, 1)).thenReturn(Optional.of(folder));
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
         when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(true);
-        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
+        when(vaultFolderRepository.findByVault_VaultIdAndFolderId(1, 1)).thenReturn(Optional.of(folder));
+
 
         VaultFolderResponse result = vaultFolderService.getVaultFolderById(1, 1, 3);
 
@@ -237,9 +238,9 @@ public class VaultFolderServiceTest
     @Test
     void getVaultFolderById_throwsException_whenFolderNotFound()
     {
-        when(vaultFolderRepository.findByVault_VaultIdAndFolderId(1, 3)).thenReturn(Optional.empty());
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
         when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 1)).thenReturn(false);
-        when(vaultFolderRepository.findById(3)).thenReturn(Optional.empty());
+        when(vaultFolderRepository.findByVault_VaultIdAndFolderId(1, 3)).thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.getVaultFolderById(3, 1, 1));
 
