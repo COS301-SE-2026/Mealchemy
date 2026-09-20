@@ -235,6 +235,37 @@ public class VaultServiceTest
     }
 
     @Test
+    void updateVault_keepsTypePrivate_whenStoredVaultIsPrivateAndRequestIsShared()
+    {
+        vault.setVaultType(VaultType.PRIVATE);
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultRepository.save(any(Vault.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        VaultRequest renameRequest = new VaultRequest(VaultType.SHARED, "Renamed Private");
+
+        VaultResponse result = vaultService.updateVault(1, renameRequest, 1);
+
+        assertEquals("Renamed Private", result.name());
+        assertEquals(VaultType.PRIVATE, vault.getVaultType());
+        verify(vaultRepository, times(1)).save(vault);
+    }
+
+    @Test
+    void updateVault_allowsRename_whenStoredVaultIsPrivateAndRequestIsPrivate()
+    {
+        vault.setVaultType(VaultType.PRIVATE);
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultRepository.save(any(Vault.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        VaultRequest renameRequest = new VaultRequest(VaultType.PRIVATE, "Renamed Private");
+
+        VaultResponse result = vaultService.updateVault(1, renameRequest, 1);
+
+        assertEquals("Renamed Private", result.name());
+        assertEquals(VaultType.PRIVATE, vault.getVaultType());
+    }
+
+    @Test
     void updateVault_throwsException_whenNotFound()
     {
         when(vaultRepository.findById(99)).thenReturn(Optional.empty());
