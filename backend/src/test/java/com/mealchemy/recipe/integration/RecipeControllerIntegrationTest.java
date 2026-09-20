@@ -337,13 +337,13 @@ public class RecipeControllerIntegrationTest {
     }
 
     @Test
-    void getRecipeById_returns403_whenPrivateRecipeIsNotAccessible() throws Exception {
+    void getRecipeById_returns404_whenPrivateRecipeIsNotAccessible() throws Exception {
         Recipe recipe = saveRecipe(otherUser, "Private Recipe");
 
         mockMvc.perform(get("/recipes/single/{id}", recipe.getRecipeId())
-                        .with(authentication(authAs(owner.getUserId()))))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("You do not have permission to view this recipe."));
+                .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Recipe not found."));
     }
 
     @Test
@@ -371,16 +371,16 @@ public class RecipeControllerIntegrationTest {
     }
 
     @Test
-    void getRecipeById_returns403_whenUserIsNotSharedVaultMember() throws Exception {
+    void getRecipeById_returns404_whenUserIsNotSharedVaultMember() throws Exception {
         Vault sharedVault = saveVault(otherUser, VaultType.SHARED, "Shared Vault");
         VaultFolder sharedFolder = saveFolder(sharedVault, "Shared Folder");
         Recipe recipe = saveRecipe(otherUser, "Shared Recipe");
         addRecipeToFolder(recipe, sharedFolder);
 
         mockMvc.perform(get("/recipes/single/{id}", recipe.getRecipeId())
-                        .with(authentication(authAs(owner.getUserId()))))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("You do not have permission to view this recipe."));
+                .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Recipe not found."));
     }
 
     // POST /recipes/create
@@ -462,17 +462,17 @@ public class RecipeControllerIntegrationTest {
     }
 
     @Test
-    void createRecipe_returns403_whenFolderNotInCallersPrivateVault() throws Exception {
+    void createRecipe_returns404_whenFolderNotInCallersPrivateVault() throws Exception {
 
         RecipeRequest request = recipeRequest("Not Yours", validCuisine, privateFolder.getFolderId());
 
         mockMvc.perform(post("/recipes/create")
-                        .with(authentication(authAs(otherUser.getUserId())))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Recipes can only be added to a folder in your private vault."));
+                .with(authentication(authAs(otherUser.getUserId())))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Folder not found."));
     }
 
     // POST /recipes/{sourceId}/copy
@@ -670,17 +670,17 @@ public class RecipeControllerIntegrationTest {
     }
 
     @Test
-    void updateRecipe_returns403_whenNotOwner() throws Exception {
+    void updateRecipe_returns404_whenNotOwner() throws Exception {
         Recipe recipe = saveRecipe(owner, "Owner's Recipe");
         RecipeRequest request = recipeRequest("Hijacked", validCuisine, null);
 
         mockMvc.perform(put("/recipes/edit/{id}", recipe.getRecipeId())
-                        .with(authentication(authAs(otherUser.getUserId())))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Only the owner of this recipe can edit it."));
+                .with(authentication(authAs(otherUser.getUserId())))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Recipe not found."));
     }
 
     @Test
@@ -747,14 +747,14 @@ public class RecipeControllerIntegrationTest {
     }
 
     @Test
-    void deleteRecipe_returns403_whenNotOwner() throws Exception {
+    void deleteRecipe_returns404_whenNotOwner() throws Exception {
         Recipe recipe = saveRecipe(owner, "Owner's Recipe");
 
         mockMvc.perform(delete("/recipes/delete/{id}", recipe.getRecipeId())
-                        .with(authentication(authAs(otherUser.getUserId())))
-                        .with(csrf()))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Only the owner of this recipe can delete it."));
+                .with(authentication(authAs(otherUser.getUserId())))
+                .with(csrf()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Recipe not found."));
 
         // Row still there.
         org.junit.jupiter.api.Assertions.assertTrue(
