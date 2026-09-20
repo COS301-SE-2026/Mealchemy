@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mealchemy/core/routes/app_router.dart';
 import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/features/admin/providers/admin_access_provider.dart';
+import 'package:mealchemy/features/admin/providers/admin_queue_provider.dart';
 import 'package:mealchemy/features/admin/screens/admin_screen.dart';
 import 'package:mealchemy/features/admin/widgets/admin_profile_entry.dart';
 
@@ -21,6 +22,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            adminQueueProvider.overrideWith((ref, status) async => []),
             adminAccessProvider.overrideWith((ref) async => access),
           ],
           child: const MaterialApp(
@@ -54,6 +56,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            adminQueueProvider.overrideWith((ref, status) async => []),
             adminAccessProvider.overrideWith((ref) async => access),
           ],
           child: MaterialApp.router(routerConfig: router),
@@ -93,6 +96,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          adminQueueProvider.overrideWith((ref, status) async => []),
           adminAccessProvider.overrideWith((ref) async {
             checks++;
             if (checks == 1) return AdminAccess.allowed;
@@ -145,6 +149,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          adminQueueProvider.overrideWith((ref, status) async => []),
           adminAccessProvider.overrideWith((ref) async {
             checks++;
             return checks == 1 ? AdminAccess.unavailable : AdminAccess.allowed;
