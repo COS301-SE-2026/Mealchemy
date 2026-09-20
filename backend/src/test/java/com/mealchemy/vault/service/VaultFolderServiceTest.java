@@ -315,7 +315,7 @@ public class VaultFolderServiceTest
     void updateVaultFolder_updatesFolder_whenFoundAndOwner()
     {
         when(vaultRepository.findById(request.vaultId())).thenReturn(Optional.of(vault));
-        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
+        when(vaultFolderRepository.findByVault_VaultIdAndFolderId(1, 1)).thenReturn(Optional.of(folder));
         when(vaultFolderRepository.save(any(VaultFolder.class))).thenReturn(folder);
 
         VaultFolderRequest updateRequest = new VaultFolderRequest(1, "Updated General");
@@ -355,7 +355,7 @@ public class VaultFolderServiceTest
     void updateVaultFolder_throwsException_whenFolderNotFound()
     {
         when(vaultRepository.findById(request.vaultId())).thenReturn(Optional.of(vault));
-        when(vaultFolderRepository.findById(99)).thenReturn(Optional.empty());       
+        when(vaultFolderRepository.findByVault_VaultIdAndFolderId(1, 99)).thenReturn(Optional.empty());        
         
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.updateVaultFolder(99, request, 1));
 
@@ -367,11 +367,25 @@ public class VaultFolderServiceTest
     void deleteVaultFolder_callsDeleteById_whenFoundAndOwner()
     {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultFolderRepository.findByVault_VaultIdAndFolderId(1, 1)).thenReturn(Optional.of(folder));
         doNothing().when(vaultFolderRepository).deleteById(1);
 
         vaultFolderService.deleteVaultFolder(1, 1, 1);
 
         verify(vaultFolderRepository, times(1)).deleteById(1);
+    }
+
+    @Test
+    void deleteVaultFolder_throwsException_whenFolderNotFound()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultFolderRepository.findByVault_VaultIdAndFolderId(1, 99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.deleteVaultFolder(99, 1, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Folder not found.", ex.getReason());
+        verify(vaultFolderRepository, never()).deleteById(any());
     }
 
     @Test
