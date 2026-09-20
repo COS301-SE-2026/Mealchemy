@@ -11,6 +11,7 @@ import 'package:mealchemy/features/profile/models/user_profile.dart';
 import 'package:mealchemy/features/profile/providers/profile_provider.dart';
 import 'package:mealchemy/features/profile/repositories/profile_repository.dart';
 import 'package:mealchemy/features/profile/screens/profile_screen.dart';
+import 'package:mealchemy/features/admin/providers/admin_access_provider.dart';
 
 class _FakeRepo implements ProfileRepository {
   @override
@@ -69,7 +70,12 @@ Widget _host(ProfileRepository repo) {
   );
 
   return ProviderScope(
-    overrides: [profileRepositoryProvider.overrideWithValue(repo)],
+    overrides: [
+      profileRepositoryProvider.overrideWithValue(repo),
+      adminAccessProvider.overrideWith(
+        (ref) async => AdminAccess.forbidden,
+      ),
+    ],
     child: MaterialApp.router(routerConfig: router),
   );
 }
