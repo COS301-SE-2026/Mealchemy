@@ -110,7 +110,7 @@ public class RecipePhotoServiceTest
     }
 
     @Test
-    void createPhotoUploadUrl_throws403_whenUserDoesNotOwnRecipe()
+    void createPhotoUploadUrl_throws404_whenUserDoesNotOwnRecipe()
     {
         RecipePhotoUploadRequest request = new RecipePhotoUploadRequest("image/png", 2048L);
         when(recipeRepository.findById(10)).thenReturn(Optional.of(recipe));
@@ -120,9 +120,9 @@ public class RecipePhotoServiceTest
             () -> recipePhotoService.createPhotoUploadUrl(10, request, 2)
         );
 
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
         assertEquals(
-            "Only the owner of this recipe can upload a photo.",
+            "Recipe not found.",
             exception.getReason()
         );
     }
