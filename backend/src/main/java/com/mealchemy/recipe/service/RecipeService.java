@@ -75,19 +75,9 @@ public class RecipeService
     // Modified to find accessible recipe, returns it when acess allowed, checkif reciepe exists if acess fails, returns 403 if exists but not allowed access, returns 404 when it doesnt exist.
     public RecipeResponse getRecipeById(Integer id, Integer userId)
     {
-        Optional<Recipe> accessibleRecipe = recipeRepository.findAccessibleByIdAndUserId(id, userId);
+        Recipe recipeForReturn = recipeRepository.findAccessibleByIdAndUserId(id, userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
-        if (accessibleRecipe.isEmpty())
-        {
-            if (recipeRepository.existsById(id))
-            {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to view this recipe.");
-            }
-
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
-        }
-
-        Recipe recipeForReturn = accessibleRecipe.get();
         return RecipeResponse.from(recipeForReturn);
     }
 
@@ -165,7 +155,7 @@ public class RecipeService
         
         if (!recipeForReturn.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can edit it.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
         }
 
         if (!flavourProfileOptionsRepository.existsByValue(request.cuisineType()))
@@ -247,7 +237,7 @@ public class RecipeService
 
         if (!recipeForDeletion.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can delete it.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
         }
 
         recipeRepository.deleteById(id);
@@ -360,7 +350,7 @@ public class RecipeService
 
     if (!vault.getOwnerId().equals(ownerId) || !vault.getVaultType().equals(VaultType.PRIVATE))
     {
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Recipes can only be added to a folder in your private vault.");
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found.");
     }
 }
 }
