@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../core/routes/app_routes.dart';
+import '../../../core/shared_widgets/atoms/app_button.dart';
 
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
@@ -10,9 +14,11 @@ class AdminFlagCard extends StatelessWidget {
   const AdminFlagCard({
     super.key,
     required this.flag,
+    this.showOpenButton = true,
   });
 
   final FlaggedRecipe flag;
+  final bool showOpenButton;
 
   @override
   Widget build(BuildContext context) {
@@ -97,6 +103,20 @@ class AdminFlagCard extends StatelessWidget {
               color: AppColors.textMuted,
             ),
           ),
+          if (showOpenButton) ...[
+            const SizedBox(height: 16),
+            AppButton.outlined(
+              label: 'View report',
+              rightIcon: Icons.chevron_right,
+              isFullWidth: true,
+              onPressed: () => context.push(
+                AppRoutes.adminFlagDetail.replaceFirst(
+                  ':id',
+                  '${flag.flaggedId}',
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
