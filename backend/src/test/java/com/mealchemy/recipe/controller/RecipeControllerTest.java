@@ -123,13 +123,13 @@ public class RecipeControllerTest {
     }
 
     @Test
-    void getRecipeById_returns403_whenNotAccessible() throws Exception
+    void getRecipeById_returns404_whenNotAccessible() throws Exception
     {
-        when(recipeService.getRecipeById(1, 1)).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to view this recipe."));
+        when(recipeService.getRecipeById(1, 1)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         mockMvc.perform(get("/recipes/single/1"))
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.message").value("You do not have permission to view this recipe."));
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message").value("Recipe not found."));
     }
 
     @Test
