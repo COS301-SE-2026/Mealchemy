@@ -244,6 +244,28 @@ public class VaultControllerIntegrationTest {
     }
 
     @Test
+    void updateVault_keepsTypePrivate_whenStoredVaultIsPrivate() throws Exception {
+        ownedVault.setVaultType(VaultType.PRIVATE);
+        vaultRepository.save(ownedVault);
+
+        VaultRequest request = new VaultRequest(VaultType.SHARED, "Renamed Private");
+
+        mockMvc.perform(put("/vaults/{id}", ownedVault.getVaultId())
+                .with(authentication(authAs(owner)))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name", is("Renamed Private")))
+                .andExpect(jsonPath("$.vaultType", is("PRIVATE")));
+
+        Vault updated = vaultRepository.findById(ownedVault.getVaultId())
+                .orElseThrow(() -> new IllegalStateException("Vault disappeared"));
+        org.junit.jupiter.api.Assertions.assertEquals(VaultType.PRIVATE, updated.getVaultType());
+        org.junit.jupiter.api.Assertions.assertEquals("Renamed Private", updated.getName());
+    }
+
+    @Test
     void updateVault_returns404_whenVaultDoesNotExist() throws Exception {
         VaultRequest request = new VaultRequest(VaultType.SHARED, "Renamed Vault");
 
