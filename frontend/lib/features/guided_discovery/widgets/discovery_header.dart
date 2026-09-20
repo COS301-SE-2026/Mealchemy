@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/routes/app_routes.dart';
 import '../../../core/shared_widgets/atoms/app_chip.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
@@ -54,7 +56,7 @@ class DiscoveryHeader extends StatelessWidget {
                 ),
               ),
               IconButton(
-                onPressed: () {},
+                onPressed: ()=> context.push(AppRoutes.recommendationSettings),
                 icon: const Icon(
                   Icons.tune,
                   color: AppColors.textLight,
