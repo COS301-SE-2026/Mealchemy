@@ -91,13 +91,18 @@ public class VaultService
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found.");
         }
 
-        if(request.vaultType().equals(VaultType.PRIVATE))
+        boolean isPrivate = vaultForReturn.getVaultType().equals(VaultType.PRIVATE);
+
+        if(!isPrivate && request.vaultType().equals(VaultType.PRIVATE))
         {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Users only get one private vault.");
         }
 
         vaultForReturn.setOwnerId(ownerId);
-        vaultForReturn.setVaultType(request.vaultType());
+        if (!isPrivate)
+        {
+            vaultForReturn.setVaultType(request.vaultType());
+        }   
         vaultForReturn.setName(request.name());
 
         return VaultResponse.from(vaultRepository.save(vaultForReturn));
