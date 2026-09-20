@@ -103,12 +103,9 @@ public class VaultFolderRecipeService {
 
         isOwner(vaultFolderRecipeForReturn.getFolder().getVault(), userId, "No record found.");
 
-        VaultFolder vaultFolderForCheck = vaultFolderRepository.findById(request.folderId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "New folder not found."));
-
-        if(!vaultFolderForCheck.getVault().getVaultId().equals(vaultFolderRecipeForReturn.getFolder().getVault().getVaultId()))
-        {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Recipes can only moved between folders in the same vault.");
-        }
+        Integer currentVaultId = vaultFolderRecipeForReturn.getFolder().getVault().getVaultId();
+        VaultFolder vaultFolderForCheck = vaultFolderRepository.findByVault_VaultIdAndFolderId(currentVaultId, request.folderId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "New folder not found."));
 
         vaultFolderRecipeForReturn.setFolder(vaultFolderForCheck);
 
