@@ -89,12 +89,12 @@ public class VaultFolderRecipeControllerTest {
     }
 
     @Test
-    void getFoldersByRecipeId_returns403_whenNotRecipeOwner() throws Exception
+    void getFoldersByRecipeId_returns404_whenNotRecipeOwner() throws Exception
     {
         when(vaultFolderRecipeService.getFoldersByRecipeId(1, 1))
-            .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the recipe owner can see where it has been added."));
+            .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
-        mockMvc.perform(get("/recipefolders/folders/1")).andExpect(status().isForbidden()).andExpect(jsonPath("$.message").value("Only the recipe owner can see where it has been added."));
+        mockMvc.perform(get("/recipefolders/folders/1")).andExpect(status().isNotFound()).andExpect(jsonPath("$.message").value("Recipe not found."));
     }
 
     @Test
@@ -127,17 +127,17 @@ public class VaultFolderRecipeControllerTest {
     }
 
     @Test
-    void createVaultFolderRecipe_returns403_whenNotOwnerOrMember() throws Exception
+    void createVaultFolderRecipe_returns404_whenNotOwnerOrMember() throws Exception
     {
         when(vaultFolderRecipeService.createVaultFolderRecipe(any(VaultFolderRecipeRequest.class), eq(1), eq(1)))
-            .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault member/owner can can interact with folders/recipe relationships."));
+            .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
 
         mockMvc.perform(post("/recipefolders/folder/1")
             .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.message").value("Only a vault member/owner can can interact with folders/recipe relationships."));
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message").value("Folder not found."));
     }
 
     @Test
@@ -179,11 +179,11 @@ public class VaultFolderRecipeControllerTest {
     @Test
     void deleteVaultFolderRecipe_returns403_whenNotOwnerOrMemberWhoAdded() throws Exception
     {
-        doThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault member who added the recipe/vault owner can delete the folders."))
+        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "No record found."))
             .when(vaultFolderRecipeService).deleteVaultFolderRecipe(1, 1);
 
         mockMvc.perform(delete("/recipefolders/1").with(csrf()))
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.message").value("Only a vault member who added the recipe/vault owner can delete the folders."));
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message").value("No record found."));
     }
 }
