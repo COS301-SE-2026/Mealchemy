@@ -59,8 +59,7 @@ public class RecipeStepController
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Step created successfully", content = @Content(schema = @Schema(implementation = RecipeStepResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller does not own this recipe", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Recipe not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Recipe not found, or not owned by the calle", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/recipe/{recipeId}/step/create")
@@ -75,8 +74,7 @@ public class RecipeStepController
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Step line updated successfully", content = @Content(schema = @Schema(implementation = RecipeStepResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller does not own this recipe, or the step line does not belong to the specified recipe", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Recipe not found, or step not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Recipe not found or not owned by the caller, or step not found or not part of the specified recipe", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/recipe/{recipeId}/step/{id}/edit")
@@ -93,8 +91,7 @@ public class RecipeStepController
         @ApiResponse(responseCode = "200", description = "Steps reordered successfully", content = @Content(array = @ArraySchema(schema = @Schema(implementation = RecipeStepResponse.class)))),
         @ApiResponse(responseCode = "400", description = "Submitted step IDs do not exactly match the recipe's existing step IDs", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller does not own this recipe", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Recipe not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Recipe not found, or not owned by the caller", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/recipe/{recipeId}/reorder")
@@ -110,8 +107,7 @@ public class RecipeStepController
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Step deleted successfully"),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller does not own this recipe, or the step does not belong to the specified recipe", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Recipe not found, or step not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Recipe not found or not owned by the caller, or step not found or not part of the specified recipe", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/recipe/{recipeId}/step/{id}/delete")
