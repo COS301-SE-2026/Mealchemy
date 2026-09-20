@@ -51,7 +51,7 @@ public class VaultFolderRecipeService {
         VaultFolder vaultFolderForCheck = vaultFolderRepository.findById(folderId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
         Vault vaultForCheck = vaultFolderForCheck.getVault();
 
-        isOwnerOrMember(vaultForCheck, userId);
+        isOwnerOrMember(vaultForCheck, userId, "Folder not found.");
 
         return vaultFolderRecipeRepository.findByFolder_FolderId(folderId).stream().map(VaultFolderRecipeResponse::from).collect(Collectors.toList());
     }
@@ -63,7 +63,7 @@ public class VaultFolderRecipeService {
 
         if (!recipeForCheck.getOwnerId().equals(userId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the recipe owner can see where it has been added.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
         }
 
         return vaultFolderRecipeRepository.findByRecipe_RecipeId(recipeId).stream().map(VaultFolderRecipeResponse::from).collect(Collectors.toList());
@@ -75,7 +75,7 @@ public class VaultFolderRecipeService {
         VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No record found."));
         Vault vaultForCheck = vaultFolderRecipeForReturn.getFolder().getVault();
         
-        isOwnerOrMember(vaultForCheck, userId);
+        isOwnerOrMember(vaultForCheck, userId, "Folder not found.");
         
         return VaultFolderRecipeResponse.from(vaultFolderRecipeForReturn);
     }
@@ -85,7 +85,7 @@ public class VaultFolderRecipeService {
     {
         VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(folderId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
         Vault vaultForCheck = vaultFolderForReturn.getVault();
-        isOwnerOrMember(vaultForCheck, userId);
+        isOwnerOrMember(vaultForCheck, userId, "Folder not found.");
 
         Recipe recipeForReturn = recipeRepository.findAccessibleByIdAndUserId(request.recipeId(), userId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
@@ -101,7 +101,7 @@ public class VaultFolderRecipeService {
     {
         VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No record found."));
 
-        isOwner(vaultFolderRecipeForReturn.getFolder().getVault(), userId);
+        isOwner(vaultFolderRecipeForReturn.getFolder().getVault(), userId, "No record found.");
 
         VaultFolder vaultFolderForCheck = vaultFolderRepository.findById(request.folderId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "New folder not found."));
 
@@ -120,7 +120,7 @@ public class VaultFolderRecipeService {
     {
         VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No record found."));
 
-        canDelete(vaultFolderRecipeForReturn.getFolder().getVault(), vaultFolderRecipeForReturn.getAddedBy().getUserId(), userId);
+        canDelete(vaultFolderRecipeForReturn.getFolder().getVault(), vaultFolderRecipeForReturn.getAddedBy().getUserId(), userId, "No record found.");
 
         vaultFolderRecipeRepository.deleteById(id);
     }
@@ -139,7 +139,7 @@ public class VaultFolderRecipeService {
     }
 
     /* Helpers */
-    private void isOwnerOrMember(Vault vault, Integer userId)
+    private void isOwnerOrMember(Vault vault, Integer userId, String notFoundMessage)
     {
         boolean isMember = vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(vault.getVaultId(), userId);
 
@@ -147,19 +147,19 @@ public class VaultFolderRecipeService {
 
         if (!isOwner && !isMember)
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault member/owner can can interact with folders/recipe relationships.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, notFoundMessage);
         }
     }
 
-    private void isOwner(Vault vault, Integer ownerId)
+    private void isOwner(Vault vault, Integer ownerId, String notFoundMessage)
     {
         if (!vault.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault owner can interact with folders/recipe relationships.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, notFoundMessage);
         }
     }
 
-    private void canDelete(Vault vault, Integer addedByUserId, Integer userId)
+    private void canDelete(Vault vault, Integer addedByUserId, Integer userId, String notFoundMessage)
     {
         boolean isMember = vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(vault.getVaultId(), userId);
 
@@ -169,7 +169,7 @@ public class VaultFolderRecipeService {
 
         if (!isOwner && !(isMember && isPersonWhoAdded))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault member who added the recipe/vault owner can delete the folders.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, notFoundMessage);
         }
     }
 }
