@@ -102,8 +102,8 @@ public class VaultServiceTest
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultService.getVault(1, 3));
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only a vault member/owner can view it.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Vault not found.", ex.getReason());
     }
 
     @Test
@@ -252,8 +252,8 @@ public class VaultServiceTest
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultService.updateVault(1, request, 2));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Vault can only be edited by the owner.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Vault not found.", ex.getReason());
     }
 
     @Test
@@ -287,8 +287,8 @@ public class VaultServiceTest
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultService.deleteVault(1, 2));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Vaults can only be deleted be the owner.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Vault not found.", ex.getReason());
     } 
 
     @Test
