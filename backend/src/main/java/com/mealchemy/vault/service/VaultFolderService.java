@@ -97,9 +97,9 @@ public class VaultFolderService {
         
         isOwner(vaultForCheck, ownerId);
 
-        VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
-        
-        vaultFolderForReturn.setVault(vaultForCheck);
+        VaultFolder vaultFolderForReturn = vaultFolderRepository.findByVault_VaultIdAndFolderId(request.vaultId(), id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
+
         vaultFolderForReturn.setFolderName(request.folderName());
 
         return VaultFolderResponse.from(vaultFolderRepository.save(vaultFolderForReturn));
@@ -111,6 +111,9 @@ public class VaultFolderService {
         Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
         
         isOwner(vaultForCheck, ownerId);
+
+        vaultFolderRepository.findByVault_VaultIdAndFolderId(vaultId, id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
 
         vaultFolderRepository.deleteById(id);
     }
