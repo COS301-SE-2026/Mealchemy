@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/screens/login_screen.dart';
+import '../../features/admin/screens/admin_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/pantry/screens/pantry_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
@@ -107,6 +108,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.help,
       builder: (context, state) => const HelpScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.admin,
+      builder: (context, state) => const AdminScreen(),
     ),
 
     // main destinations header + bottom nav supplied once by AppShell.
