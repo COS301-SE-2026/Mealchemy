@@ -143,8 +143,8 @@ public class RecipeStepServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.createRecipeStep(request, 1, 99));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of this recipe can modify its steps.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
     }
 
     @Test
@@ -179,8 +179,8 @@ public class RecipeStepServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.updateRecipeStep(1, request, 1, 99));
         
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of this recipe can modify its steps.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
     }
 
     @Test
@@ -204,8 +204,8 @@ public class RecipeStepServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.updateRecipeStep(1, request, 1, 1));
         
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Step must be part of the recipe.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Step not found.", ex.getReason());
     }
 
     @Test
@@ -238,8 +238,8 @@ public class RecipeStepServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.deleteRecipeStep(1, 1, 99));
         
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of this recipe can modify its steps.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
     }
 
     @Test
@@ -263,8 +263,8 @@ public class RecipeStepServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.deleteRecipeStep(1, 1, 1));
         
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Step must be part of the recipe.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Step not found.", ex.getReason());
     }
 
     @Test
@@ -291,8 +291,8 @@ public class RecipeStepServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.reorderSteps(1, reorderRequest, 99));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of the recipe can manipulate the order of the steps.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
     }
 
     @Test
