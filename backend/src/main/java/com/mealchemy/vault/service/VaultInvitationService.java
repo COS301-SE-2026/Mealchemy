@@ -72,17 +72,20 @@ public class VaultInvitationService
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Email not found."));
 
         // can't invite yourself
-        if (invitedUser.getUserId().equals(ownerId)) {
+        if (invitedUser.getUserId().equals(ownerId)) 
+        {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot invite yourself.");
         }
 
         // user already in vault
-        if (vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(vaultId, invitedUser.getUserId())) {
+        if (vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(vaultId, invitedUser.getUserId())) 
+        {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "User already a member of this vault.");
         }
 
         // if a pending invitation already exists for this user for this vault
-        if (vaultInvitationRepository.existsByVault_VaultIdAndInvitedUser_UserIdAndStatus(vaultId, invitedUser.getUserId(), InvitationStatus.PENDING)) {
+        if (vaultInvitationRepository.existsByVault_VaultIdAndInvitedUser_UserIdAndStatus(vaultId, invitedUser.getUserId(), InvitationStatus.PENDING)) 
+        {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "User already has a pending invitation for vault.");
         }
 
@@ -107,7 +110,8 @@ public class VaultInvitationService
 
 
     // GET - Get all the invitations for a specific vault (owners view)
-    public List<VaultInvitationResponse> getVaultInvitations(Integer vaultId, Integer ownerId) {
+    public List<VaultInvitationResponse> getVaultInvitations(Integer vaultId, Integer ownerId) 
+    {
         // check vault exists
         Vault selectedVault = vaultRepository.findById(vaultId)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
@@ -144,11 +148,13 @@ public class VaultInvitationService
                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault invitation not found."));
 
         // check user is the invitee
-        if (!invite.getInvitedUser().getUserId().equals(userId)) {
+        if (!invite.getInvitedUser().getUserId().equals(userId)) 
+        {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User not the intended recipient.");
         }
 
-        if (!invite.getStatus().equals(InvitationStatus.PENDING)) {
+        if (!invite.getStatus().equals(InvitationStatus.PENDING)) 
+        {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Invitation has the wrong status.");
         }
 
@@ -178,11 +184,13 @@ public class VaultInvitationService
                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault invitation not found."));
 
         // check user is the invitee
-        if (!invite.getInvitedUser().getUserId().equals(userId)) {
+        if (!invite.getInvitedUser().getUserId().equals(userId)) 
+        {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User not the intended recipient.");
         }
 
-        if (!invite.getStatus().equals(InvitationStatus.PENDING)) {
+        if (!invite.getStatus().equals(InvitationStatus.PENDING))
+        {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Invitation has the wrong status.");
         }
 
@@ -195,7 +203,6 @@ public class VaultInvitationService
         // TODO: Notification - invitation declined
 
         return VaultInvitationResponse.from(saved);
-
     }
 
 

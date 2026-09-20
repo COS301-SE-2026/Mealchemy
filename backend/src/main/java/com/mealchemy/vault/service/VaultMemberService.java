@@ -113,7 +113,8 @@ public class VaultMemberService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of the vault can change a member's role.");
         }
 
-        if (request.role() == VaultMemberRole.OWNER) {
+        if (request.role() == VaultMemberRole.OWNER) 
+        {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only one owner per vault.");
         }
 
