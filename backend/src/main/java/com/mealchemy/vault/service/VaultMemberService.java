@@ -15,10 +15,12 @@ import com.mealchemy.auth.model.User;
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.dto.VaultMemberRequest;
 import com.mealchemy.vault.dto.VaultMemberResponse;
+import com.mealchemy.vault.dto.VaultMemberRoleRequest;
 import com.mealchemy.vault.repository.VaultMemberRepository;
 import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.auth.repository.UserRepository;
 import com.mealchemy.shared.enums.VaultType;
+import com.mealchemy.shared.enums.VaultMemberRole;
 
 @Service
 public class VaultMemberService {
@@ -50,6 +52,12 @@ public class VaultMemberService {
 
         List<VaultMemberResponse> vaultMembersForReturn = vaultMemberRepository.findByVault_VaultId(vaultId).stream().map(VaultMemberResponse::from).collect(Collectors.toList());
        
+        // include owner is vault member list - therefor prepend owner
+        User owner = userRepository.findById(vaultForCheck.getOwnerId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault owner not found."));
+
+        vaultMembersForReturn.add(0, VaultMemberResponse.forOwner(vaultForCheck, owner));
+
         return vaultMembersForReturn;
     }
 
@@ -90,6 +98,37 @@ public class VaultMemberService {
         VaultMember rowToRemove = vaultMemberRepository.findByVault_VaultIdAndUser_UserId(vaultId, userToRemove.getUserId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "VaultMember row not found."));
 
         vaultMemberRepository.delete(rowToRemove);
+    }
+
+    // Change shared vault member's role
+    public VaultMemberResponse changeRole(Integer vaultId, Integer targetUserId, VaultMemberRoleRequest request, Integer ownerId)
+    {
+        // check vault exists
+        Vault vaultForCheck = vaultRepository.findById(vaultId)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
+
+        // check owner
+        if (!vaultForCheck.getOwnerId().equals(ownerId))
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of the vault can change a member's role.");
+        }
+
+        if (request.role() == VaultMemberRole.OWNER) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only one owner per vault.");
+        }
+
+        VaultMember selectedMember = vaultMemberRepository.findByVault_VaultIdAndUser_UserId(vaultId, targetUserId)
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault member not found."));
+        
+        // owner is not in members table (implicit via vault ownerId)
+        
+        selectedMember.setRole(request.role());
+        VaultMember saved = vaultMemberRepository.save(selectedMember);
+        
+        // TODO: Notification role changed
+
+        return VaultMemberResponse.from(saved);
+        
     }
 
     /* Mapping functions */
