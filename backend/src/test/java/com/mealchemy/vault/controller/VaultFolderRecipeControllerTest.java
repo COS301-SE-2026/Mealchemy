@@ -154,17 +154,17 @@ public class VaultFolderRecipeControllerTest {
     }
 
     @Test
-    void updateVaultFolderRecipe_returns403_whenFoldersFromDifferentVaults() throws Exception
+    void updateVaultFolderRecipe_returns404_whenFoldersFromDifferentVaults() throws Exception
     {
         when(vaultFolderRecipeService.updateVaultFolderRecipe(eq(1), any(VaultFolderRecipeMoveRequest.class), eq(1)))
-            .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Recipes can only moved between folders in the same vault."));
+            .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "New folder not found."));
 
         mockMvc.perform(put("/recipefolders/1")
             .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(moveRequest)))
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.message").value("Recipes can only moved between folders in the same vault."));
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message").value("New folder not found."));
     }
 
     @Test
