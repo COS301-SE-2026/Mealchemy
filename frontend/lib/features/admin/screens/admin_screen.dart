@@ -7,6 +7,9 @@ import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../providers/admin_access_provider.dart';
 import '../widgets/admin_access_message.dart';
+import '../widgets/admin_queue_section.dart';
+import '../providers/admin_queue_provider.dart';
+import '../../../core/shared_widgets/Molecules/app_refresh.dart';
 
 class AdminScreen extends ConsumerWidget {
   const AdminScreen({super.key});
@@ -41,14 +44,31 @@ class AdminScreen extends ConsumerWidget {
         ],
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            if (access == AdminAccess.allowed)
-              const _AdminContent()
-            else
-              AdminAccessMessage(access: access),
-          ],
+        child: AppRefresh(
+          onRefresh: () async {
+            if (access != AdminAccess.allowed) {
+              ref.invalidate(adminAccessProvider);
+              return;
+            }
+
+            final status = ref.read(adminQueueStatusProvider);
+            try {
+              ref.invalidate(adminQueueProvider(status));
+              await ref.read(adminQueueProvider(status).future);
+            } catch (_) {
+              //queue renders the resulting error state
+            }
+          },
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(20),
+            children: [
+              if (access == AdminAccess.allowed)
+                const _AdminContent()
+              else
+                AdminAccessMessage(access: access),
+            ],
+          ),
         ),
       ),
     );
@@ -84,6 +104,8 @@ class _AdminContent extends StatelessWidget {
             color: AppColors.textMuted,
           ),
         ),
+        const SizedBox(height: 28),
+        const AdminQueueSection(),
       ],
     );
   }
