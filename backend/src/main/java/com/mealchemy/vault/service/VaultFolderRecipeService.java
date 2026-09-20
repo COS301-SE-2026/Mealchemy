@@ -75,7 +75,7 @@ public class VaultFolderRecipeService {
         VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No record found."));
         Vault vaultForCheck = vaultFolderRecipeForReturn.getFolder().getVault();
         
-        isOwnerOrMember(vaultForCheck, userId, "Folder not found.");
+        isOwnerOrMember(vaultForCheck, userId, "No record found.");
         
         return VaultFolderRecipeResponse.from(vaultFolderRecipeForReturn);
     }

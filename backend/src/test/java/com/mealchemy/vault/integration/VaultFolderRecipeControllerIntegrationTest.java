@@ -392,16 +392,20 @@ public class VaultFolderRecipeControllerIntegrationTest {
     }
 
     @Test
-    void updateVaultFolderRecipe_returns403_whenMovingBetweenDifferentVaults() throws Exception {
+    void updateVaultFolderRecipe_returns404_whenMovingBetweenDifferentVaults() throws Exception {
         VaultFolderRecipeMoveRequest request = new VaultFolderRecipeMoveRequest(folderInOtherVault.getFolderId());
 
         mockMvc.perform(put("/recipefolders/{id}", vaultFolderRecipe.getId())
-                        .with(authentication(authAs(owner)))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message", is("Recipes can only moved between folders in the same vault.")));
+                .with(authentication(authAs(owner)))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", is("New folder not found.")));
+
+        VaultFolderRecipe unchanged = vaultFolderRecipeRepository.findById(vaultFolderRecipe.getId())
+            .orElseThrow(() -> new IllegalStateException("Record disappeared"));
+        org.junit.jupiter.api.Assertions.assertEquals(folderInOwnerVault.getFolderId(), unchanged.getFolder().getFolderId());
     }
 
     /* deleteVaultFolderRecipe */

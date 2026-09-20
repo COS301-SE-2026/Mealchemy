@@ -154,7 +154,7 @@ public class VaultFolderRecipeControllerTest {
     }
 
     @Test
-    void updateVaultFolderRecipe_returns404_whenFoldersFromDifferentVaults() throws Exception
+    void updateVaultFolderRecipe_returns404_whenNewFolderNotFound() throws Exception
     {
         when(vaultFolderRecipeService.updateVaultFolderRecipe(eq(1), any(VaultFolderRecipeMoveRequest.class), eq(1)))
             .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "New folder not found."));
@@ -177,7 +177,7 @@ public class VaultFolderRecipeControllerTest {
     }
 
     @Test
-    void deleteVaultFolderRecipe_returns403_whenNotOwnerOrMemberWhoAdded() throws Exception
+    void deleteVaultFolderRecipe_returns404_whenNotOwnerOrMemberWhoAdded() throws Exception
     {
         doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "No record found."))
             .when(vaultFolderRecipeService).deleteVaultFolderRecipe(1, 1);
