@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/admin/screens/admin_screen.dart';
+import '../../features/admin/screens/admin_flag_detail_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/pantry/screens/pantry_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
@@ -112,6 +113,21 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.admin,
       builder: (context, state) => const AdminScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.adminFlagDetail,
+      builder: (context, state) {
+        final id = int.tryParse(state.pathParameters['id'] ?? '');
+
+        if (id == null || id <= 0) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Report')),
+            body: const Center(child: Text('Invalid report ID.')),
+          );
+        }
+
+        return AdminFlagDetailScreen(flaggedId: id);
+      },
     ),
 
     // main destinations header + bottom nav supplied once by AppShell.
