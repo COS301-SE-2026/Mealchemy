@@ -144,11 +144,11 @@ public class VaultControllerIntegrationTest {
     }
 
     @Test
-    void getVault_returns403_whenNotOwnerOrMember() throws Exception {
+    void getVault_returns404_whenNotOwnerOrMember() throws Exception {
         mockMvc.perform(get("/vaults/{id}", ownedVault.getVaultId())
-                        .with(authentication(authAs(otherUser))))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message", is("Only a vault member/owner can view it.")));
+                .with(authentication(authAs(otherUser))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", is("Vault not found.")));
     }
 
     /* getAccessibleVaults */
@@ -257,16 +257,16 @@ public class VaultControllerIntegrationTest {
     }
 
     @Test
-    void updateVault_returns403_whenAuthenticatedUserIsNotOwner() throws Exception {
+    void updateVault_returns404_whenAuthenticatedUserIsNotOwner() throws Exception {
         VaultRequest request = new VaultRequest(VaultType.SHARED, "Renamed Vault");
 
         mockMvc.perform(put("/vaults/{id}", ownedVault.getVaultId())
-                        .with(authentication(authAs(otherUser)))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message", is("Vault can only be edited by the owner.")));
+                .with(authentication(authAs(otherUser)))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", is("Vault not found.")));
     }
 
     @Test
@@ -297,12 +297,12 @@ public class VaultControllerIntegrationTest {
     }
 
     @Test
-    void deleteVault_returns403_whenAuthenticatedUserIsNotOwner() throws Exception {
+    void deleteVault_returns404_whenAuthenticatedUserIsNotOwner() throws Exception {
         mockMvc.perform(delete("/vaults/{id}", ownedVault.getVaultId())
-                        .with(authentication(authAs(otherUser)))
-                        .with(csrf()))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message", is("Vaults can only be deleted be the owner.")));
+                .with(authentication(authAs(otherUser)))
+                .with(csrf()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", is("Vault not found.")));
 
         org.junit.jupiter.api.Assertions.assertTrue(
                 vaultRepository.findById(ownedVault.getVaultId()).isPresent()
