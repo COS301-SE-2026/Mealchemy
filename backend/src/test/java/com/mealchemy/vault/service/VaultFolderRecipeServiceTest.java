@@ -303,7 +303,7 @@ public class VaultFolderRecipeServiceTest
     void updateVaultFolderRecipe_returnsUpdatedVaultFolderRecipe_whenFoundAndOwner()
     {
         when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
-        when(vaultFolderRepository.findById(1)).thenReturn(Optional.of(folder));
+        when(vaultFolderRepository.findByVault_VaultIdAndFolderId(1, 1)).thenReturn(Optional.of(folder));
         when(vaultFolderRecipeRepository.save(any(VaultFolderRecipe.class))).thenReturn(folderRecipe);
 
         VaultFolderRecipeResponse result = vaultFolderRecipeService.updateVaultFolderRecipe(1, moveRequest, 1);
@@ -339,34 +339,12 @@ public class VaultFolderRecipeServiceTest
     void updateVaultFolderRecipe_throwsException_whenNewFolderNotFound()
     {
         when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
-        when(vaultFolderRepository.findById(moveRequest.folderId())).thenReturn(Optional.empty());
+        when(vaultFolderRepository.findByVault_VaultIdAndFolderId(1, moveRequest.folderId())).thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.updateVaultFolderRecipe(1, moveRequest, 1));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("New folder not found.", ex.getReason());
-    }
-
-    @Test
-    void updateVaultFolderRecipe_throwsException_whenNewFolderFromDifferentVault()
-    {
-        Vault differentVault = new Vault();
-        differentVault.setOwnerId(2);
-        ReflectionTestUtils.setField(differentVault, "vaultId", 2);
-
-        VaultFolder newFolder = new VaultFolder();
-        newFolder.setVault(differentVault);
-        ReflectionTestUtils.setField(newFolder, "folderId", 3);
-
-        VaultFolderRecipeMoveRequest moveRequestLocal = new VaultFolderRecipeMoveRequest(3);
-
-        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
-        when(vaultFolderRepository.findById(moveRequestLocal.folderId())).thenReturn(Optional.of(newFolder));
-
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderRecipeService.updateVaultFolderRecipe(1, moveRequestLocal, 1));
-
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Recipes can only moved between folders in the same vault.", ex.getReason());
     }
 
     @Test
