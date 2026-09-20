@@ -51,7 +51,7 @@ public class VaultService
 
         if (!isOwner && !isMember)
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault member/owner can view it.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found.");
         }
 
         return VaultResponse.from(vaultForReturn);
@@ -88,7 +88,7 @@ public class VaultService
 
         if (!vaultForReturn.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Vault can only be edited by the owner.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found.");
         }
 
         if(request.vaultType().equals(VaultType.PRIVATE))
@@ -110,7 +110,7 @@ public class VaultService
 
         if (!vaultToCheck.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Vaults can only be deleted be the owner.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found.");
         }
 
         if (vaultToCheck.getVaultType().equals(VaultType.PRIVATE))
