@@ -1,5 +1,3 @@
-
-Preferenceweightsservice · JAVA
 package com.mealchemy.preference.service;
  
 /* Import classes */
