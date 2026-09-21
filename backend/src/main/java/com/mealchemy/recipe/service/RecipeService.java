@@ -343,14 +343,14 @@ public class RecipeService
     }
 
     private void validateFolderIsInPrivateVault(Integer folderId, Integer ownerId)
-{
-    VaultFolder folder = vaultFolderRepository.findById(folderId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
-
-    Vault vault = folder.getVault();
-
-    if (!vault.getOwnerId().equals(ownerId) || !vault.getVaultType().equals(VaultType.PRIVATE))
     {
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found.");
+        VaultFolder folder = vaultFolderRepository.findById(folderId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
+
+        Vault vault = folder.getVault();
+
+        if (!vault.getOwnerId().equals(ownerId) || !vault.getVaultType().equals(VaultType.PRIVATE))
+        {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found.");
+        }
     }
-}
 }

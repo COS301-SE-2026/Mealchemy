@@ -39,4 +39,32 @@ public class PreferenceWeightsService {
     public PreferenceWeightsService(UserPreferenceWeightsRepository userPreferenceWeightsRepository) {
         this.userPreferenceWeightsRepository = userPreferenceWeightsRepository;
     }
+
+    // Get request for weights, creates defaults if not set
+    public UserPreferenceWeightsResponse getWeights(Integer userId) {
+        UserPreferenceWeights weights = userPreferenceWeightsRepository.findByUserId(userId)
+                                        .orElseGet(() -> createDefaultWeights(userId));
+ 
+        return toResponse(weights);
+    }
+
+    /* Helper functions */
+
+    private UserPreferenceWeights createDefaultWeights(Integer userId) {
+        UserPreferenceWeights weights = new UserPreferenceWeights();
+        weights.setUserId(userId);
+        weights.setPantryMatch(DEFAULT_PANTRY_MATCH);
+        weights.setCuisine(DEFAULT_CUISINE);
+        weights.setNutrition(DEFAULT_NUTRITION);
+        weights.setFreshness(DEFAULT_FRESHNESS);
+        weights.setNovelty(DEFAULT_NOVELTY);
+        weights.setStateVersion(0);
+ 
+        try {
+            return userPreferenceWeightsRepository.save(weights);
+        } catch (DataIntegrityViolationException e) {
+            return userPreferenceWeightsRepository.findByUserId(userId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not create default weights"));
+        }
+    }
 }
