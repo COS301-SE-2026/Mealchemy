@@ -21,5 +21,16 @@ void main() {
       ];
       expect(routes.toSet().length, routes.length);
     });
+
+    test('builds a Cook Mode location without a step by default', () {
+      expect(AppRoutes.cookModeLocation(7), '/recipe/7/cook');
+    });
+
+    test('builds a Cook Mode location for a specific step', () {
+      expect(
+        AppRoutes.cookModeLocation(7, stepIndex: 2),
+        '/recipe/7/cook?step=2',
+      );
+    });
   });
 }

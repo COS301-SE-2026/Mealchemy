@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_refresh.dart';
+import 'package:mealchemy/features/auth/providers/auth_provider.dart';
+import 'package:mealchemy/features/cook_mode/providers/cook_timer_provider.dart';
 import 'package:mealchemy/features/dashboard/providers/dashboard_provider.dart';
 import 'package:mealchemy/features/dashboard/widgets/dashboard_welcome_bar.dart';
+import 'package:mealchemy/features/dashboard/widgets/continue_cooking_row.dart';
+import 'package:mealchemy/features/dashboard/widgets/dashboard_active_timers.dart';
 import 'package:mealchemy/features/dashboard/widgets/dashboard_cards_row.dart';
 import 'package:mealchemy/features/dashboard/widgets/recommended_recipes_section.dart';
 import 'package:mealchemy/features/dashboard/widgets/trending_recipes_section.dart';
@@ -30,6 +36,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final userId = ref.watch(activeIdentityProvider);
+    final timerState = ref.watch(cookTimerControllerProvider(userId));
+
     return AppRefresh(
       onRefresh: () => ref.read(dashboardProvider.notifier).loadDashboard(),
       child: SingleChildScrollView(
@@ -39,6 +48,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           children: [
             const SizedBox(height: 16),
             const DashboardWelcomeBar(),
+            const ContinueCookingRow(),
+            DashboardActiveTimers(
+              timers: timerState.activeTimers,
+              now: timerState.now,
+              onTimerTap: (timer) => context.push(
+                AppRoutes.cookModeLocation(
+                  timer.recipeId,
+                  stepIndex: timer.stepIndex,
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
             const DashboardCardsRow(),
             const SizedBox(height: 28),
