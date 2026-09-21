@@ -46,6 +46,37 @@ public class PreferenceWeightsService {
         return toResponse(weights);
     }
 
+    // Put upsert function for weights
+    public UserPreferenceWeightsResponse updateWeights(Integer userId, UserPreferenceWeightsRequest request) {
+        validate(request);
+ 
+        UserPreferenceWeights weights = userPreferenceWeightsRepository.findByUserId(userId).orElse(null);
+ 
+        if (weights == null) {
+            weights = new UserPreferenceWeights();
+            weights.setUserId(userId);
+            weights.setStateVersion(0);
+        } else {
+            int currentVersion = weights.getStateVersion() == null ? 0 : weights.getStateVersion();
+            weights.setStateVersion(currentVersion + 1);
+        }
+ 
+        weights.setPantryMatch(request.pantryMatch().setScale(SCALE, RoundingMode.HALF_UP));
+        weights.setCuisine(request.cuisine().setScale(SCALE, RoundingMode.HALF_UP));
+        weights.setNutrition(request.nutrition().setScale(SCALE, RoundingMode.HALF_UP));
+        weights.setFreshness(request.freshness().setScale(SCALE, RoundingMode.HALF_UP));
+        weights.setNovelty(request.novelty().setScale(SCALE, RoundingMode.HALF_UP));
+ 
+        UserPreferenceWeights saved;
+        try {
+            saved = userPreferenceWeightsRepository.save(weights);
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not save weights, please retry");
+        }
+ 
+        return toResponse(saved);
+    }
+
     /* Helper functions */
 
     private UserPreferenceWeights createDefaultWeights(Integer userId) {
@@ -64,5 +95,35 @@ public class PreferenceWeightsService {
             return userPreferenceWeightsRepository.findByUserId(userId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not create default weights"));
         }
+    }
+
+    private void validate(UserPreferenceWeightsRequest request) {
+        BigDecimal[] values = { request.pantryMatch(), request.cuisine(), request.nutrition(), request.freshness(), request.novelty() };
+ 
+        if (Arrays.asList(values).contains(null)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "All five weights are required");
+        }
+ 
+        BigDecimal sum = BigDecimal.ZERO;
+        for (BigDecimal value : values) {
+            if (value.compareTo(BigDecimal.ZERO) < 0 || value.compareTo(BigDecimal.ONE) > 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Each weight must be between 0 and 1");
+            }
+            sum = sum.add(value);
+        }
+ 
+        if (sum.subtract(BigDecimal.ONE).abs().compareTo(SUM_TOLERANCE) > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Weights must sum to 1.0 (within 0.001)");
+        }
+    }
+ 
+    private UserPreferenceWeightsResponse toResponse(UserPreferenceWeights weights) {
+        return new UserPreferenceWeightsResponse(
+            weights.getPantryMatch(),
+            weights.getCuisine(),
+            weights.getNutrition(),
+            weights.getFreshness(),
+            weights.getNovelty()
+        );
     }
 }
