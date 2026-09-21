@@ -3,7 +3,6 @@ package com.mealchemy.preference.dto;
 /* Import libraries */
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
 import java.math.BigDecimal;
 
 /* Import classes */
