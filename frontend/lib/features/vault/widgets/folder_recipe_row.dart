@@ -5,6 +5,7 @@ import '../../../core/theme/app_typography.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
 import '../../../core/shared_widgets/Molecules/app_confirm_dialog.dart';
+import 'package:mealchemy/features/recipe/widgets/report_recipe_button.dart';
 
 //single recipe row inside a vault folder
 class FolderRecipeRow extends StatelessWidget {
@@ -90,6 +91,8 @@ class FolderRecipeRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
+                if (recipe.isCommunityPublished)
+                  ReportRecipeButton(recipe: recipe),
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [

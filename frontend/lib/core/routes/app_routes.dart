@@ -8,6 +8,9 @@ class AppRoutes {
   static const String vault = '/vault';
   static const String recipeEdit = '/recipe/:id/edit';
   static const String profile = '/profile';
+  static const String admin = '/admin';
+  static const String adminUsers = '/admin/users';
+  static const String adminFlagDetail = '/admin/flags/:id';
   static const String addIngredient = '/pantry/add';
   static const String showcase = '/component_showcase';
   static const String signup = '/signup';
