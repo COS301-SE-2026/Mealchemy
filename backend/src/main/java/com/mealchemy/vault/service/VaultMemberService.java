@@ -84,7 +84,7 @@ public class VaultMemberService {
     }
 
     // Delete to remove a vaultMember
-    public void removeVaultMember(Integer vaultId, VaultMemberRequest request, Integer ownerId)
+    public void removeVaultMember(Integer vaultId, Integer targetUserId, Integer ownerId)
     {
         Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
 
@@ -93,9 +93,7 @@ public class VaultMemberService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of the vault can remove a member.");
         }
 
-        User userToRemove = userRepository.findByEmail(request.email()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found."));
-
-        VaultMember rowToRemove = vaultMemberRepository.findByVault_VaultIdAndUser_UserId(vaultId, userToRemove.getUserId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "VaultMember row not found."));
+        VaultMember rowToRemove = vaultMemberRepository.findByVault_VaultIdAndUser_UserId(vaultId, targetUserId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "VaultMember row not found."));
 
         vaultMemberRepository.delete(rowToRemove);
     }

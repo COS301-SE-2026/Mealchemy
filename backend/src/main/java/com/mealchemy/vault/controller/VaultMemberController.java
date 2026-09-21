@@ -79,10 +79,10 @@ public class VaultMemberController {
         @ApiResponse(responseCode = "404", description = "Vault not found, or no user is registed with the given email, or the user is not a member of this vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @DeleteMapping("/{vaultId}/members/delete")
-    public ResponseEntity<Void> removeVaultMember(@PathVariable Integer vaultId, @Valid @RequestBody VaultMemberRequest request, @AuthenticationPrincipal String ownerId)
+    @DeleteMapping("/{vaultId}/members/{userId}")
+    public ResponseEntity<Void> removeVaultMember(@PathVariable Integer vaultId, @PathVariable Integer userId, @AuthenticationPrincipal String ownerId)
     {
-        vaultMemberService.removeVaultMember(vaultId, request, Integer.parseInt(ownerId));
+        vaultMemberService.removeVaultMember(vaultId, userId, Integer.parseInt(ownerId));
         return ResponseEntity.noContent().build();
     }
 

@@ -16,6 +16,7 @@ public record VaultMemberResponse(
     Integer id,
     Integer vaultId,
     Integer userId,
+    String email,
     OffsetDateTime joinedAt,
     VaultMemberRole role
 )
@@ -26,6 +27,7 @@ public record VaultMemberResponse(
             vaultMember.getId(),
             vaultMember.getVault().getVaultId(),
             vaultMember.getUser().getUserId(),
+            vaultMember.getUser().getEmail(),
             vaultMember.getJoinedAt(),
             vaultMember.getRole()
         );
@@ -38,6 +40,7 @@ public record VaultMemberResponse(
             null,
             vault.getVaultId(),
             owner.getUserId(),
+            owner.getEmail(),
             vault.getCreatedAt(), // owner joined vault upon creation
             VaultMemberRole.OWNER
         );
