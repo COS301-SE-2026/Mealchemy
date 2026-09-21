@@ -176,7 +176,7 @@ public class VaultInvitationService
         return VaultMemberResponse.from(savedMember);
     }
 
-    // PUT - User declines a PENDING invitation
+    // POST - User declines a PENDING invitation
     @Transactional
     public VaultInvitationResponse declineInvitation(Integer invitationId, Integer userId) 
     {
