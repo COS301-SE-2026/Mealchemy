@@ -22,7 +22,6 @@ import '../services/recipe_photo_picker.dart';
 import '../widgets/ingredient_editor_row.dart';
 import '../widgets/recipe_photo_selector.dart';
 import '../widgets/step_editor_row.dart';
-import '../models/unit_of_measurement.dart';
 
 class AddRecipeScreen extends ConsumerStatefulWidget {
   const AddRecipeScreen({
@@ -180,7 +179,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     final message = error is RecipePhotoValidationException
         ? error.message
         : 'Could not select the photo. Try again.';
-     _showToast(message, kind: ToastKind.error, icon: Icons.error_outline);
+    _showToast(message, kind: ToastKind.error, icon: Icons.error_outline);
   }
 
   void _showToast(String message, {ToastKind kind = ToastKind.info,  IconData? icon,}) {
@@ -476,20 +475,14 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     }
 
     final cuisinesState = ref.watch(cuisineTypesProvider);
-    final unitsState = ref.watch(unitsProvider);
     final submissionState = ref.watch(addRecipeProvider);
 
     Widget body = cuisinesState.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => const _AddRecipeError(),
-      data: (cuisines) => unitsState.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => const _AddRecipeError(),
-        data: (units) => _buildForm(
-          cuisines,
-          units,
-          submissionState.isSubmitting || _isSaving,
-        ),
+      data: (cuisines) => _buildForm(
+        cuisines,
+        submissionState.isSubmitting || _isSaving,
       ),
     );
 
@@ -503,14 +496,9 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
           return cuisinesState.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, _) => const _AddRecipeError(),
-            data: (cuisines) => unitsState.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => const _AddRecipeError(),
-              data: (units) => _buildForm(
-                cuisines,
-                units,
-                submissionState.isSubmitting || _isSaving,
-              ),
+            data: (cuisines) => _buildForm(
+              cuisines,
+              submissionState.isSubmitting || _isSaving,
             ),
           );
         },
@@ -532,8 +520,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     );
   }
 
-  Widget _buildForm(
-      List<String> cuisines, List<UnitOfMeasurement> units, bool isSubmitting) {
+  Widget _buildForm(List<String> cuisines, bool isSubmitting) {
     return ListView(
       controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
@@ -668,7 +655,6 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
             key: ValueKey(_ingredientRows[i]),
             selectedItem: _ingredientRows[i].item,
             quantityController: _ingredientRows[i].quantity,
-            units: units,
             selectedUnit: _ingredientRows[i].unit,
             onUnitChanged: (u) => setState(() => _ingredientRows[i].unit = u),
             onItemSelected: (item) =>
