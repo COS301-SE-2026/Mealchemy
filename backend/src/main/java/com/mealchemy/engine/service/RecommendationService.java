@@ -307,6 +307,11 @@ public class RecommendationService {
     // get all recommended recipes 
     public EnrichedRecommendationResponse getRecommendations(Integer userId, Integer batchSize, List<Integer> excludeRecipeIds, Integer seed, RecommendationFilters filters)
     {
+        if (batchSize != null && batchSize <= 0)
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "batchSize must be greater than 0.");
+        }
+
         List<String> requiredTags = validateAndResolveFIlters(filters);
 
         UserStateRequest userState = buildUserState(userId);
