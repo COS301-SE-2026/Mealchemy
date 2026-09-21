@@ -10,6 +10,8 @@ import '../providers/admin_access_provider.dart';
 import '../providers/admin_flag_detail_provider.dart';
 import '../widgets/admin_access_message.dart';
 import '../widgets/admin_flag_review_content.dart';
+import '../widgets/admin_moderation_actions.dart';
+import '../providers/admin_moderation_provider.dart';
 
 class AdminFlagDetailScreen extends ConsumerWidget {
   const AdminFlagDetailScreen({
@@ -59,6 +61,7 @@ class _ReviewBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final provider = adminFlagDetailProvider(flaggedId);
     final review = ref.watch(provider);
+    final operation = ref.watch(adminModerationProvider(flaggedId));
 
     void retry() => ref.invalidate(provider);
 
@@ -97,14 +100,23 @@ class _ReviewBody extends ConsumerWidget {
               ],
             );
     } else {
-      content = AdminFlagReviewContent(
-        review: review.requireValue,
-        onRetry: retry,
+      content = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AdminFlagReviewContent(
+            review: review.requireValue,
+            onRetry: retry,
+          ),
+          AdminModerationActions(
+            flag: review.requireValue.detail.flag,
+          ),
+        ],
       );
     }
 
     return AppRefresh(
       onRefresh: () async {
+        if (operation.isSubmitting) return;
         ref.invalidate(provider);
         try {
           await ref.read(provider.future);
@@ -115,7 +127,29 @@ class _ReviewBody extends ConsumerWidget {
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(20),
-        children: [content],
+        children: [
+          if (operation.isSubmitting) ...[
+            const LinearProgressIndicator(),
+            const SizedBox(height: 12),
+            const Text('Submitting moderation action…'),
+            const SizedBox(height: 20),
+          ],
+          if (operation.message != null) ...[
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                operation.message!,
+                style: AppTextStyles.bodyBold.copyWith(
+                  color: operation.isError
+                      ? Theme.of(context).colorScheme.error
+                      : Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+          content,
+        ],
       ),
     );
   }

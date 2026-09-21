@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mealchemy/core/routes/app_router.dart';
 import 'package:mealchemy/core/routes/app_routes.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
+import 'package:mealchemy/features/admin/providers/admin_moderation_provider.dart';
 import 'package:mealchemy/features/admin/models/admin_models.dart';
 import 'package:mealchemy/features/admin/providers/admin_access_provider.dart';
 import 'package:mealchemy/features/admin/providers/admin_flag_detail_provider.dart';
@@ -43,12 +45,22 @@ AdminFlagReview _review({bool ingredientsFail = false}) => AdminFlagReview(
       ]),
     );
 
+const _testSession = (
+  userId: 7,
+  token: 'test-token',
+  restoring: false,
+  hasValidCredential: true,
+  network: NetworkStatus.online,
+);
+
 Widget _host(
   Future<AdminFlagReview> Function() load, {
   AdminAccess access = AdminAccess.allowed,
 }) =>
     ProviderScope(
       overrides: [
+        adminAccessContextProvider.overrideWithValue(_testSession),
+        adminModerationEnabledProvider.overrideWithValue(false),
         adminAccessProvider.overrideWith((ref) async => access),
         adminFlagDetailProvider.overrideWith((ref, id) => load()),
       ],
@@ -194,6 +206,8 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          adminAccessContextProvider.overrideWithValue(_testSession),
+          adminModerationEnabledProvider.overrideWithValue(false),
           adminAccessProvider.overrideWith(
             (ref) async => AdminAccess.allowed,
           ),
@@ -227,6 +241,8 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          adminAccessContextProvider.overrideWithValue(_testSession),
+          adminModerationEnabledProvider.overrideWithValue(false),
           adminFlagDetailProvider.overrideWith((ref, id) async {
             calls++;
             return _review();
