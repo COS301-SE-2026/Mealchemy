@@ -9,18 +9,21 @@ import '../models/vault_folder.dart';
 import '../models/vault_folder_recipe.dart';
 import '../providers/vault_repository_provider.dart';
 import '../models/vault_member.dart';
+import '../../external_links/models/link.dart';
+import '../../external_links/providers/link_provider.dart';
 
 // Vaults provider
 final vaultsProvider = FutureProvider<List<Vault>>((ref) async {
   final auth = ref.watch(authProvider);
-  debugPrint('vault: userId=${auth.userId} loggedIn=${auth.isLoggedIn} mock=${AppConfig.useMockData}');
+  debugPrint(
+      'vault: userId=${auth.userId} loggedIn=${auth.isLoggedIn} mock=${AppConfig.useMockData}');
   if (auth.userId == null) return [];
   return ref.watch(vaultRepositoryProvider).getMyVaults();
 });
 
-
 // Vault folders provider
-final vaultFoldersProvider = FutureProvider.family<List<VaultFolder>, int>((ref, vaultId) {
+final vaultFoldersProvider =
+    FutureProvider.family<List<VaultFolder>, int>((ref, vaultId) {
   return ref.watch(vaultRepositoryProvider).getFolders(vaultId);
 });
 
@@ -36,7 +39,7 @@ final folderRecipeDisplayProvider =
   final folderRecipes = await ref.watch(folderRecipesProvider(folderId).future);
   final recipeRepository = ref.watch(recipeRepositoryProvider);
 
-    final results = await Future.wait(
+  final results = await Future.wait(
     folderRecipes.map((fr) async {
       try {
         return await recipeRepository.getRecipeById(fr.recipeId);
@@ -49,7 +52,7 @@ final folderRecipeDisplayProvider =
   return results.whereType<Recipe>().toList();
 });
 
-//Selecting a vault 
+//Selecting a vault
 
 final selectedVaultIdProvider = StateProvider<int?>((ref) => null);
 final isSharedModeProvider = StateProvider<bool>((ref) => false);
@@ -65,8 +68,7 @@ final selectedVaultProvider = Provider<Vault?>((ref) {
     return vaults.first;
   }
 
-  final shared =
-      vaults.where((v) => v.vaultType == VaultTypes.shared).toList();
+  final shared = vaults.where((v) => v.vaultType == VaultTypes.shared).toList();
   if (shared.isEmpty) return null;
 
   final selectedId = ref.watch(selectedVaultIdProvider);
@@ -113,4 +115,100 @@ final deleteFolderRecipeProvider =
     ref.invalidate(recipesProvider);
     ref.invalidate(folderRecipesProvider(folderId));
   };
+});
+
+final vaultSearchQueryProvider = StateProvider<String>((ref) => '');
+
+typedef VaultSearchRequest = ({
+  int vaultId,
+  bool includeLinks,
+  String query,
+});
+
+class VaultRecipeSearchResult {
+  const VaultRecipeSearchResult({
+    required this.folder,
+    required this.recipe,
+  });
+
+  final VaultFolder folder;
+  final Recipe recipe;
+}
+
+class VaultSearchResults {
+  const VaultSearchResults({
+    required this.recipes,
+    required this.links,
+  });
+
+  final List<VaultRecipeSearchResult> recipes;
+  final List<Link> links;
+
+  bool get isEmpty => recipes.isEmpty && links.isEmpty;
+}
+
+final vaultSearchResultsProvider =
+    FutureProvider.family<VaultSearchResults, VaultSearchRequest>((
+  ref,
+  request,
+) async {
+  final query = request.query.trim().toLowerCase();
+
+  if (query.isEmpty) {
+    return const VaultSearchResults(
+      recipes: [],
+      links: [],
+    );
+  }
+
+  final folders = await ref.watch(
+    vaultFoldersProvider(request.vaultId).future,
+  );
+
+  final recipeResults = <VaultRecipeSearchResult>[];
+
+  await Future.wait(
+    folders.map((folder) async {
+      final recipes = await ref.watch(
+        folderRecipeDisplayProvider(folder.folderId).future,
+      );
+
+      final folderMatches = folder.folderName.toLowerCase().contains(query);
+
+      for (final recipe in recipes) {
+        final recipeMatches = [
+          recipe.title,
+          recipe.description,
+          recipe.cuisineType,
+        ].whereType<String>().any(
+              (value) => value.toLowerCase().contains(query),
+            );
+
+        if (folderMatches || recipeMatches) {
+          recipeResults.add(
+            VaultRecipeSearchResult(
+              folder: folder,
+              recipe: recipe,
+            ),
+          );
+        }
+      }
+    }),
+  );
+
+  var linkResults = <Link>[];
+
+  if (request.includeLinks) {
+    final links = await ref.watch(linksProvider.future);
+
+    linkResults = links.where((link) {
+      return link.name.toLowerCase().contains(query) ||
+          link.url.toLowerCase().contains(query);
+    }).toList();
+  }
+
+  return VaultSearchResults(
+    recipes: recipeResults,
+    links: linkResults,
+  );
 });

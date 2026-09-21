@@ -8,6 +8,7 @@ import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/features/dashboard/models/trending_recipe_data.dart';
 import 'package:mealchemy/features/dashboard/providers/dashboard_provider.dart';
 import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
+import 'package:mealchemy/features/recipe/widgets/report_recipe_button.dart';
 
 class TrendingRecipesSection extends ConsumerWidget {
   const TrendingRecipesSection({super.key});
@@ -148,11 +149,14 @@ class _TrendingTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Icon(
-              Icons.chevron_right,
-              color: AppColors.textMuted,
-              size: 20,
-            ),
+            if (data.recipe.isCommunityPublished)
+              ReportRecipeButton(recipe: data.recipe)
+            else
+              Icon(
+                Icons.chevron_right,
+                color: AppColors.textMuted,
+                size: 20,
+              ),
           ],
         ),
       ),

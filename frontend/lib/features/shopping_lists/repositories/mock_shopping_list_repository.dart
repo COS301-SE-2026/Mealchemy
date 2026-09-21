@@ -340,6 +340,14 @@ class MockShoppingListRepository implements ShoppingListRepository {
   }
 
   @override
+  Future<void> deleteShoppingListItem({
+    required String listId,
+    required String itemId,
+  }) async {
+    //mock accepts delete request and provider state performs removal
+  }
+
+  @override
   Future<void> deleteShoppingListItems({
     required String listId,
     required List<int> itemIds,
@@ -396,8 +404,8 @@ class MockShoppingListRepository implements ShoppingListRepository {
       items: const [],
     );
   }
-  
-    @override
+
+  @override
   Future<ShoppingList> addRecipeToExistingList({
     required String listId,
     required int recipeId,
@@ -414,5 +422,4 @@ class MockShoppingListRepository implements ShoppingListRepository {
           items: [],
         );
   }
-  
 }

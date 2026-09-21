@@ -14,23 +14,10 @@ import '../models/ingredient_catalogue_item.dart';
 import '../providers/pantry_provider.dart';
 import 'package:flutter/services.dart';
 import '../repositories/ingredient_catalogue_repository.dart';
+import '../../recipe/providers/recipe_provider.dart';
 
 const double _blurArea = 240;
 const double _sheetTop = 212;
-
-//units for the unit dropdown
-//need to be made dynamic in the future to support custom units and unit conversion
-const List<String> _unitOptions = [
-  'g',
-  'kg',
-  'ml',
-  'L',
-  'cups',
-  'tbsp',
-  'tsp',
-  'oz',
-  'pcs',
-];
 
 class AddIngredientScreen extends ConsumerWidget {
   const AddIngredientScreen({super.key});
@@ -128,6 +115,12 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
   Widget build(BuildContext context) {
     final hasName = _nameController.text.trim().isNotEmpty;
     final hasUnit = _selectedUnit != null;
+    final unitOptions = ref
+            .watch(unitsProvider)
+            .valueOrNull
+            ?.map((unit) => unit.name)
+            .toList() ??
+        const <String>[];
 
     return Stack(
       children: [
@@ -233,7 +226,7 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
                         label: 'Unit',
                         hint: 'e.g. oz',
                         value: _selectedUnit,
-                        options: _unitOptions,
+                        options: unitOptions,
                         onChanged: (value) =>
                             setState(() => _selectedUnit = value),
                       ),
