@@ -21,6 +21,12 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Arrays;
 
+/* 
+ *
+ *  Note: Don't make fuctions transactional, or it will break 
+ *
+*/ 
+
 @Service
 public class PreferenceWeightsService {
     private static final BigDecimal DEFAULT_PANTRY_MATCH = new BigDecimal("0.40");
