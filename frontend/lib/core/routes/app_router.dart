@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/admin/screens/admin_screen.dart';
+import '../../features/admin/screens/admin_users_screen.dart';
 import '../../features/admin/screens/admin_flag_detail_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/pantry/screens/pantry_screen.dart';
@@ -113,6 +114,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.admin,
       builder: (context, state) => const AdminScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.adminUsers,
+      builder: (context, state) => const AdminUsersScreen(),
     ),
     GoRoute(
       path: AppRoutes.adminFlagDetail,
