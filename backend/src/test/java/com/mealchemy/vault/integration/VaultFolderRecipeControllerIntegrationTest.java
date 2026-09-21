@@ -261,7 +261,7 @@ public class VaultFolderRecipeControllerIntegrationTest {
 
     @Test
     void createVaultFolderRecipe_createsRecord_whenAuthenticatedUserIsOwner() throws Exception {
-        Recipe secondRecipe = saveRecipe(recipeOwner, "Second Recipe");
+        Recipe secondRecipe = saveRecipe(owner, "Second Recipe");        
         VaultFolderRecipeRequest request = new VaultFolderRecipeRequest(folderInOwnerVault.getFolderId(), secondRecipe.getRecipeId());
 
         mockMvc.perform(post("/recipefolders/folder/{folderId}", folderInOwnerVault.getFolderId())

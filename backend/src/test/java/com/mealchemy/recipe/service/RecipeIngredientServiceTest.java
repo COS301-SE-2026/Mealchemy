@@ -101,6 +101,7 @@ public class RecipeIngredientServiceTest {
     {
         when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(recipeIngredient));
         when(ingredientCatalogueRepository.findAllById(List.of(1))).thenReturn(List.of(existingIngredientCatalogue));
+        when(recipeRepository.findAccessibleByIdAndUserId(1, 1)).thenReturn(Optional.of(recipe));
 
         List<RecipeIngredientResponse> result = recipeIngredientService.getAllIngredientsByRecipeId(1, 1);
 
@@ -113,6 +114,7 @@ public class RecipeIngredientServiceTest {
     void getAllIngredientsByRecipeId_returnsEmptyList_whenNoneFound()
     {
         when(recipeIngredientRepository.findByRecipe_RecipeId(99)).thenReturn(List.of());
+        when(recipeRepository.findAccessibleByIdAndUserId(99, 1)).thenReturn(Optional.of(recipe));
 
         List<RecipeIngredientResponse> result = recipeIngredientService.getAllIngredientsByRecipeId(99, 1);
 
@@ -138,7 +140,8 @@ public class RecipeIngredientServiceTest {
     void getAllIngredientsByRecipeId_returnsUnknownIngredient_whenOrphaned()
     {
         when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(recipeIngredient));
-        when(ingredientCatalogueRepository.findAllById(List.of(1))).thenReturn(List.of()); // orphaned - not found
+        when(ingredientCatalogueRepository.findAllById(List.of(1))).thenReturn(List.of());
+        when(recipeRepository.findAccessibleByIdAndUserId(1, 1)).thenReturn(Optional.of(recipe));
 
         List<RecipeIngredientResponse> result = recipeIngredientService.getAllIngredientsByRecipeId(1, 1);
 

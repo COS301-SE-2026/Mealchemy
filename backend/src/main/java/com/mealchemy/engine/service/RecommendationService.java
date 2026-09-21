@@ -148,7 +148,7 @@ public class RecommendationService {
     }
 
     // Helper function to build the candidate pool
-    private CandidatePoolResult buildCandidatePool(Integer userId)
+    private CandidatePoolResult buildCandidatePool(Integer userId, RecommendationFilters filters)
     {
         List<Recipe> recipes = recipeRepository.findByIsCommunityPublishedTrue().stream()
                 .filter(recipe -> matchesTimeFilters(recipe, filters))
@@ -312,7 +312,7 @@ public class RecommendationService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "batchSize must be greater than 0.");
         }
 
-        List<String> requiredTags = validateAndResolveFIlters(filters);
+        List<String> requiredTags = validateAndResolveFilters(filters);
 
         UserStateRequest userState = buildUserState(userId);
 

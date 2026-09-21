@@ -133,7 +133,7 @@ public class VaultFolderController
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Folder deleted successfully"),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-\        @ApiResponse(responseCode = "404", description = "Vault not found or not owned by the caller, or folder not found in that vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Vault not found or not owned by the caller, or folder not found in that vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/vault/{vaultId}/folder/{id}")

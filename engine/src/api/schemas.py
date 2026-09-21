@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field, field_validator
 from src.models.recipe import CandidatePoolEntry
 from src.models.user_state import UserState
 
+
 class RecommendationRequest(BaseModel):
     user_state: UserState
     candidate_pool: list[CandidatePoolEntry] = Field(min_length=1)
@@ -19,4 +20,4 @@ class RecommendationRequest(BaseModel):
         stripped = [tag.strip() for tag in value]
         if any(not tag for tag in stripped):
             raise ValueError("required_tags must not contain blank values.")
-        return stripped 
+        return stripped
