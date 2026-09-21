@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routes/app_routes.dart';
+import '../../../core/shared_widgets/atoms/app_button.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../providers/admin_access_provider.dart';
@@ -103,6 +104,14 @@ class _AdminContent extends StatelessWidget {
           style: AppTextStyles.body.copyWith(
             color: AppColors.textMuted,
           ),
+        ),
+        const SizedBox(height: 20),
+        AppButton.outlined(
+          label: 'Manage admins',
+          leftIcon: Icons.manage_accounts_outlined,
+          rightIcon: Icons.chevron_right,
+          isFullWidth: true,
+          onPressed: () => context.push(AppRoutes.adminUsers),
         ),
         const SizedBox(height: 28),
         const AdminQueueSection(),
