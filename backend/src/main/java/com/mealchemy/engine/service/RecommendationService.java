@@ -48,6 +48,8 @@ import com.mealchemy.nutritionalcalculator.dto.RecipeNutritionResponse;
 import com.mealchemy.nutritionalcalculator.dto.RecipeNutritionValues;
 import com.mealchemy.engine.dto.NutritionRequest;
 import com.mealchemy.swipes.repository.SwipeRepository;
+import com.mealchemy.tags.repository.TagsRepository;
+import com.mealchemy.engine.dto.RecommendationFilters;
 
 @Service
 public class RecommendationService {
@@ -62,6 +64,7 @@ public class RecommendationService {
     private final EngineClient engineClient;
     private final NutritionalCalculatorService nutritionalCalculatorService;
     private final SwipeRepository swipeRepository;
+    private final TagsRepository tagsRepository;
 
     private record CandidatePoolResult(
         List<CandidatePoolEntryRequest> pool,
@@ -73,7 +76,7 @@ public class RecommendationService {
         UserCuisineAffinitiesRepository userCuisineAffinitiesRepository, UserPreferencesRepository userPreferencesRepository,
         UserPreferenceWeightsRepository userPreferenceWeightsRepository, RecipeRepository recipeRepository, 
         RecipeTagsRepository recipeTagsRepository, EngineClient engineClient, NutritionalCalculatorService nutritionalCalculatorService,
-        SwipeRepository swipeRepository)
+        SwipeRepository swipeRepository, TagsRepository tagsRepository)
     {
         this.pantryIngredientRepository = pantryIngredientRepository;
         this.ingredientCatalogueRepository = ingredientCatalogueRepository;
@@ -86,6 +89,7 @@ public class RecommendationService {
         this.engineClient = engineClient;
         this.nutritionalCalculatorService = nutritionalCalculatorService;
         this.swipeRepository = swipeRepository;
+        this.tagsRepository = tagsRepository;
     }
 
     // Helper function to build the pantry entries object
@@ -146,7 +150,9 @@ public class RecommendationService {
     // Helper function to build the candidate pool
     private CandidatePoolResult buildCandidatePool(Integer userId)
     {
-        List<Recipe> recipes = recipeRepository.findByIsCommunityPublishedTrue();
+        List<Recipe> recipes = recipeRepository.findByIsCommunityPublishedTrue().stream()
+                .filter(recipe -> matchesTimeFilters(recipe, filters))
+                .toList();
 
         Map<Integer, Recipe> recipeById = recipes.stream()
             .collect(Collectors.toMap(Recipe::getRecipeId, r -> r));
@@ -161,6 +167,57 @@ public class RecommendationService {
         )).toList();
 
         return new CandidatePoolResult(pool, recipeById);
+    }
+
+    // Helper function to determine if it matches the time filters
+    private boolean matchesTimeFilters(Recipe recipe, RecommendationFilters filters)
+    {
+        if (filters.maxCookingTimeMins() != null && recipe.getCookingTimeMins() > filters.maxCookingTimeMins())
+        {
+            return false;
+        }
+
+        if (filters.maxTotalTimeMins() != null && recipe.getPrepTimeMins() + recipe.getCookingTimeMins() > filters.maxTotalTimeMins())
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    // Helper function to validate the filters and resolve requested dietary tags to their canonical names
+    private List<String> validateAndResolveFilters(RecommendationFilters filters)
+    {
+        if (filters.maxCookingTimeMins() != null && filters.maxCookingTimeMins() <= 0)
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "maxCookingTimeMins must be greater than 0.");
+        }
+
+        if (filters.maxTotalTimeMins() != null && filters.maxTotalTimeMins() <= 0)
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "maxTotalTimeMins must be greater than 0.");
+        }
+
+        if (filters.dietaryTags() == null || filters.dietaryTags().isEmpty())
+        {
+            return null;
+        }
+
+        Map<String, String> canonicalByLowerName = tagsRepository.findAll().stream()
+            .filter(tag -> Boolean.TRUE.equals(tag.getIsDietary()))
+            .collect(Collectors.toMap(tag -> tag.getTagName().toLowerCase(Locale.ROOT), Tags::getTagName, (a, b) -> a));
+
+        return filters.dietaryTags().stream()
+            .map(requested -> {
+                String canonical = canonicalByLowerName.get(requested.trim().toLowerCase(Locale.ROOT));
+                if (canonical == null)
+                {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown dietary tag: " + requested + ".");
+                }
+                return canonical;
+            })
+            .distinct()
+            .toList();
     }
 
     // Helper function to build the butrition request object
@@ -248,18 +305,27 @@ public class RecommendationService {
     }
 
     // get all recommended recipes 
-    public EnrichedRecommendationResponse getRecommendations(Integer userId, Integer batchSize, List<Integer> excludeRecipeIds, Integer seed)
+    public EnrichedRecommendationResponse getRecommendations(Integer userId, Integer batchSize, List<Integer> excludeRecipeIds, Integer seed, RecommendationFilters filters)
     {
+        List<String> requiredTags = validateAndResolveFIlters(filters);
+
         UserStateRequest userState = buildUserState(userId);
 
-        CandidatePoolResult candidatePoolResult = buildCandidatePool(userId);
+        CandidatePoolResult candidatePoolResult = buildCandidatePool(userId, filters);
+
+        // If returned pool is empty here already, don't even go to the engine
+        if (candidatePoolResult.pool().isEmpty())
+        {
+            return EnrichedRecommendationResponse.empty();
+        }
 
         RecommendationRequest request = new RecommendationRequest(
             userState,
             candidatePoolResult.pool(),
             batchSize,
             excludeRecipeIds,
-            seed
+            seed,
+            requiredTags
         );
 
         RecommendationResponse engineResponse;
