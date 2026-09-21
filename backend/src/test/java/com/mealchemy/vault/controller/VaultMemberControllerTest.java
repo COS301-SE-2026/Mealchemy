@@ -33,6 +33,8 @@ import com.mealchemy.vault.dto.VaultMemberResponse;
 import com.mealchemy.vault.service.VaultMemberService;
 import com.mealchemy.config.WithMockJwtUser;
 
+import com.mealchemy.shared.enums.VaultMemberRole;
+
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(VaultMemberController.class)
 @WithMockJwtUser(userId = "1")
@@ -55,7 +57,7 @@ public class VaultMemberControllerTest {
     @BeforeEach
     void setUp()
     {
-        response = new VaultMemberResponse(1, 1, 2, OffsetDateTime.now());
+        response = new VaultMemberResponse(1, 1, 2, OffsetDateTime.now(), VaultMemberRole.EDITOR);
 
         request = new VaultMemberRequest("testUser@gmail.com");
     }
