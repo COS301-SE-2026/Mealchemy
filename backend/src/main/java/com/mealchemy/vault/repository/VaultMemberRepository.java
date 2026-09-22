@@ -4,6 +4,8 @@ package com.mealchemy.vault.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import java.util.*;
 
 /* Import classes */
@@ -25,7 +27,7 @@ public interface VaultMemberRepository extends JpaRepository<VaultMember, Intege
     @Query("""
             SELECT DISTINCT member
             FROM VaultMember member
-            Where member.user.userId =: userId
+            Where member.user.userId = :userId
                 AND EXISTS (
                     SELECT folderRecipe.id
                     FROM VaultFolderRecipe folderRecipe
@@ -33,6 +35,6 @@ public interface VaultMemberRepository extends JpaRepository<VaultMember, Intege
                     AND folderRecipe.folder.vault = member.vault
                 )
     """)
-    Optional<VaultMember> findVaultMemberShipForRecipe(@Param("recipeId") Integer recipeId, @Param("userId") Integer userId);
+    Optional<VaultMember> findVaultMembershipForRecipe(@Param("recipeId") Integer recipeId, @Param("userId") Integer userId);
 
 }
