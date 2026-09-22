@@ -123,3 +123,25 @@ class TestRecommendExcludeRecipeIds:
             recommend(
                 candidate_pool, user_state, exclude_recipe_ids=[101, 102, 103, 104, 105], seed=1
             )
+
+
+class TestRecommendRequiredTags:
+    def test_only_recipes_with_the_required_tag_are_recommended(
+        self, recipe_factory, user_state_factory
+    ):
+        vegetarian = recipe_factory(recipe_id=1, dietary_tags=["VEGETARIAN"])
+        plain = recipe_factory(recipe_id=2, dietary_tags=[])
+        user_state = user_state_factory()
+
+        result = recommend([vegetarian, plain], user_state, seed=1, required_tags=["vegetarian"])
+
+        assert result.total_recipes_considered == 2
+        assert result.total_candidates_after_filter == 1
+        assert [item.recipe_id for item in result.recommendations] == [1]
+
+    def test_required_tag_no_recipe_carries_raises_empty_pool_error(self, user_state_factory):
+        candidate_pool = load_small_pool()
+        user_state = user_state_factory()
+
+        with pytest.raises(EmptyPoolError):
+            recommend(candidate_pool, user_state, seed=1, required_tags=["HALAL"])

@@ -183,6 +183,46 @@ class TestRecommendationsEmptyPool:
         assert response.json()["error_code"] == "EMPTY_POOL"
 
 
+class TestRecommendationsRequiredTags:
+    def test_matching_required_tag_returns_200_with_the_recipe(self):
+        body = _valid_request_body()
+        body["candidate_pool"][0]["dietary_tags"] = ["VEGETARIAN"]
+        body["required_tags"] = ["vegetarian"]
+
+        response = client.post("/recommendations", json=body)
+
+        assert response.status_code == 200
+        assert response.json()["recommendations"][0]["recipe_id"] == 1
+
+    def test_required_tag_no_recipe_carries_returns_422_empty_pool(self):
+        body = _valid_request_body()
+        body["required_tags"] = ["VEGETARIAN"]
+
+        response = client.post("/recommendations", json=body)
+
+        assert response.status_code == 422
+        assert response.json()["error_code"] == "EMPTY_POOL"
+
+    @pytest.mark.parametrize("value", [None, []])
+    def test_null_or_empty_required_tags_behaves_like_omitted(self, value):
+        body = _valid_request_body()
+        body["required_tags"] = value
+
+        response = client.post("/recommendations", json=body)
+
+        assert response.status_code == 200
+        assert len(response.json()["recommendations"]) == 1
+
+    def test_blank_required_tag_returns_400_invalid_candidate(self):
+        body = _valid_request_body()
+        body["required_tags"] = ["   "]
+
+        response = client.post("/recommendations", json=body)
+
+        assert response.status_code == 400
+        assert response.json()["error_code"] == "INVALID_CANDIDATE"
+
+
 class TestLearningUpdateHappyPath:
     def test_valid_request_returns_200_with_expected_shape(self):
         response = client.post("/learning/update", json=_valid_learning_update_body())

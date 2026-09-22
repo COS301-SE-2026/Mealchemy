@@ -5,9 +5,13 @@ import com.mealchemy.config.JwtUtil;
 import com.mealchemy.preference.controller.PreferenceController;
 import com.mealchemy.preference.dto.PreferenceRequest;
 import com.mealchemy.preference.dto.PreferenceResponse;
+import com.mealchemy.preference.dto.UserPreferenceWeightsRequest;
+import com.mealchemy.preference.dto.UserPreferenceWeightsResponse;
 import com.mealchemy.preference.service.PreferenceService;
+import com.mealchemy.preference.service.PreferenceWeightsService;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -22,12 +26,17 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -55,6 +64,9 @@ public class PreferenceControllerTest {
 
     @MockitoBean
     private PreferenceService preferenceService;
+
+    @MockitoBean
+    private PreferenceWeightsService preferenceWeightsService;
 
     @MockitoBean
     private JwtUtil jwtUtil;
@@ -157,5 +169,193 @@ public class PreferenceControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.message").value("Preferences not found"));
+    }
+
+    // ========== Get Weights Testing ==========
+
+    @Test
+    void getUserPreferenceWeights_withValidToken_returns200() throws Exception {
+        // Arrange
+        UserPreferenceWeightsResponse mockResponse = new UserPreferenceWeightsResponse(
+            new BigDecimal("0.4000"),
+            new BigDecimal("0.2500"),
+            new BigDecimal("0.1000"),
+            new BigDecimal("0.1500"),
+            new BigDecimal("0.1000")
+        );
+
+        when(preferenceWeightsService.getWeights(anyInt())).thenReturn(mockResponse);
+
+        // Act and Assert
+        mockMvc.perform(get("/user/preferences/weights")
+                .with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.pantry_match").value(0.4))
+            .andExpect(jsonPath("$.cuisine").value(0.25))
+            .andExpect(jsonPath("$.nutrition").value(0.1))
+            .andExpect(jsonPath("$.freshness").value(0.15))
+            .andExpect(jsonPath("$.novelty").value(0.1));
+    }
+
+    @Test
+    void getUserPreferenceWeights_passesUserIdFromTokenToService() throws Exception {
+        // Arrange
+        when(preferenceWeightsService.getWeights(anyInt())).thenReturn(new UserPreferenceWeightsResponse(
+            new BigDecimal("0.4000"), new BigDecimal("0.2500"), new BigDecimal("0.1000"),
+            new BigDecimal("0.1500"), new BigDecimal("0.1000")
+        ));
+
+        // Act
+        mockMvc.perform(get("/user/preferences/weights")
+                .with(authentication(new UsernamePasswordAuthenticationToken("42", null, List.of()))))
+            .andExpect(status().isOk());
+
+        // Assert
+        verify(preferenceWeightsService).getWeights(42);
+    }
+
+    @Test
+    void getUserPreferenceWeights_whenServiceFails_returns500() throws Exception {
+        // Arrange
+        when(preferenceWeightsService.getWeights(anyInt()))
+            .thenThrow(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not create default weights"));
+
+        // Act and Assert
+        mockMvc.perform(get("/user/preferences/weights")
+                .with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))
+            .andExpect(status().isInternalServerError())
+            .andExpect(jsonPath("$.message").value("Could not create default weights"));
+    }
+
+    // ========== Update Weights Testing ==========
+
+    @Test
+    void updateUserPreferenceWeights_withValidRequest_returns200() throws Exception {
+        // Arrange
+        UserPreferenceWeightsRequest request = new UserPreferenceWeightsRequest(
+            new BigDecimal("0.50"),
+            new BigDecimal("0.20"),
+            new BigDecimal("0.10"),
+            new BigDecimal("0.10"),
+            new BigDecimal("0.10")
+        );
+
+        UserPreferenceWeightsResponse mockResponse = new UserPreferenceWeightsResponse(
+            new BigDecimal("0.5000"),
+            new BigDecimal("0.2000"),
+            new BigDecimal("0.1000"),
+            new BigDecimal("0.1000"),
+            new BigDecimal("0.1000")
+        );
+
+        when(preferenceWeightsService.updateWeights(anyInt(), any(UserPreferenceWeightsRequest.class)))
+            .thenReturn(mockResponse);
+
+        // Act and Assert
+        mockMvc.perform(put("/user/preferences/weights")
+                .with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.pantry_match").value(0.5))
+            .andExpect(jsonPath("$.cuisine").value(0.2))
+            .andExpect(jsonPath("$.nutrition").value(0.1))
+            .andExpect(jsonPath("$.freshness").value(0.1))
+            .andExpect(jsonPath("$.novelty").value(0.1));
+    }
+
+    @Test
+    void updateUserPreferenceWeights_mapsSnakeCaseBodyAndUserIdToService() throws Exception {
+        // Arrange 
+        String json = """
+            {"pantry_match": 0.40, "cuisine": 0.25, "nutrition": 0.10, "freshness": 0.15, "novelty": 0.10}
+            """;
+
+        when(preferenceWeightsService.updateWeights(anyInt(), any(UserPreferenceWeightsRequest.class)))
+            .thenReturn(new UserPreferenceWeightsResponse(
+                new BigDecimal("0.4000"), new BigDecimal("0.2500"), new BigDecimal("0.1000"),
+                new BigDecimal("0.1500"), new BigDecimal("0.1000")
+            ));
+
+        // Act
+        mockMvc.perform(put("/user/preferences/weights")
+                .with(authentication(new UsernamePasswordAuthenticationToken("42", null, List.of())))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+            .andExpect(status().isOk());
+
+        // Assert
+        ArgumentCaptor<UserPreferenceWeightsRequest> captor = ArgumentCaptor.forClass(UserPreferenceWeightsRequest.class);
+        verify(preferenceWeightsService).updateWeights(eq(42), captor.capture());
+
+        UserPreferenceWeightsRequest received = captor.getValue();
+        assertEquals(0, new BigDecimal("0.40").compareTo(received.pantryMatch()));
+        assertEquals(0, new BigDecimal("0.25").compareTo(received.cuisine()));
+        assertEquals(0, new BigDecimal("0.10").compareTo(received.nutrition()));
+        assertEquals(0, new BigDecimal("0.15").compareTo(received.freshness()));
+        assertEquals(0, new BigDecimal("0.10").compareTo(received.novelty()));
+    }
+
+    @Test
+    void updateUserPreferenceWeights_whenServiceRejectsValues_returns400() throws Exception {
+        // Arrange
+        UserPreferenceWeightsRequest request = new UserPreferenceWeightsRequest(
+            new BigDecimal("0.90"),
+            new BigDecimal("0.20"),
+            new BigDecimal("0.10"),
+            new BigDecimal("0.10"),
+            new BigDecimal("0.10")
+        );
+
+        when(preferenceWeightsService.updateWeights(anyInt(), any(UserPreferenceWeightsRequest.class)))
+            .thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Weights must sum to 1.0 (within 0.001)"));
+
+        // Act and Assert
+        mockMvc.perform(put("/user/preferences/weights")
+                .with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("Weights must sum to 1.0 (within 0.001)"));
+    }
+
+    @Test
+    void updateUserPreferenceWeights_withNonNumericValue_returns400() throws Exception {
+        // Arrange
+        String json = """
+            {"pantry_match": "abc", "cuisine": 0.25, "nutrition": 0.10, "freshness": 0.15, "novelty": 0.10}
+            """;
+
+        // Act and Assert
+        mockMvc.perform(put("/user/preferences/weights")
+                .with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+            .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(preferenceWeightsService);
+    }
+
+    @Test
+    void updateUserPreferenceWeights_whenServiceFails_returns500() throws Exception {
+        // Arrange
+        UserPreferenceWeightsRequest request = new UserPreferenceWeightsRequest(
+            new BigDecimal("0.50"),
+            new BigDecimal("0.20"),
+            new BigDecimal("0.10"),
+            new BigDecimal("0.10"),
+            new BigDecimal("0.10")
+        );
+
+        when(preferenceWeightsService.updateWeights(anyInt(), any(UserPreferenceWeightsRequest.class)))
+            .thenThrow(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not save weights, please retry"));
+
+        // Act and Assert
+        mockMvc.perform(put("/user/preferences/weights")
+                .with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isInternalServerError())
+            .andExpect(jsonPath("$.message").value("Could not save weights, please retry"));
     }
 }

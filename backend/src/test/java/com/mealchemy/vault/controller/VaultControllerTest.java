@@ -86,11 +86,11 @@ public class VaultControllerTest {
     }
  
     @Test
-    void getVault_returns403_whenNotOwnerOrMember() throws Exception
+    void getVault_returns404_whenNotOwnerOrMember() throws Exception
     {
-        when(vaultService.getVault(1, 1)).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault member/owner can view it."));
- 
-        mockMvc.perform(get("/vaults/1")).andExpect(status().isForbidden()).andExpect(jsonPath("$.message").value("Only a vault member/owner can view it."));
+        when(vaultService.getVault(1, 1)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
+
+        mockMvc.perform(get("/vaults/1")).andExpect(status().isNotFound()).andExpect(jsonPath("$.message").value("Vault not found."));
     }
  
     @Test

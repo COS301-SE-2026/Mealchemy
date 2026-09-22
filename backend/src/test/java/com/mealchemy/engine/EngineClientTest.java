@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withBadRequest;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 
 class EngineClientTest {
 
@@ -45,6 +46,10 @@ class EngineClientTest {
     }
 
     private RecommendationRequest minimalRecommendationRequest() {
+        return recommendationRequestWithRequiredTags(null);
+    }
+
+    private RecommendationRequest recommendationRequestWithRequiredTags(List<String> requiredTags) {
         PreferenceWeightsRequest weights = new PreferenceWeightsRequest(
             new BigDecimal("0.30"), new BigDecimal("0.20"), new BigDecimal("0.20"),
             new BigDecimal("0.15"), new BigDecimal("0.15")
@@ -52,7 +57,7 @@ class EngineClientTest {
         UserStateRequest userState = new UserStateRequest(
             1, List.of(), List.of(), List.of(), List.of(), weights, Map.of(), List.of(), List.of()
         );
-        return new RecommendationRequest(userState, List.of(), 10, List.of(), null);
+        return new RecommendationRequest(userState, List.of(), 10, List.of(), null, requiredTags);
     }
 
     private LearningUpdateRequest minimalLearningUpdateRequest() {
@@ -74,6 +79,20 @@ class EngineClientTest {
 
         assertThrows(EmptyPoolException.class,
             () -> engineClient.getRecommendations(minimalRecommendationRequest()));
+    }
+
+    @Test
+    void getRecommendations_sendsRequiredTagsAsSnakeCaseField() {
+        mockServer.expect(requestTo(BASE_URL + "/recommendations"))
+                .andExpect(jsonPath("$.required_tags[0]").value("VEGETARIAN"))
+                .andRespond(withStatus(HttpStatus.OK)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"recommendations\":[],\"cuisine_allocation\":{},"
+                    + "\"total_candidates_after_filter\":0,\"total_recipes_considered\":0}"));
+
+        engineClient.getRecommendations(recommendationRequestWithRequiredTags(List.of("VEGETARIAN")));
+
+        mockServer.verify();
     }
 
     @Test

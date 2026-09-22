@@ -15,6 +15,7 @@ import com.mealchemy.engine.dto.RecommendationResponse;
 import com.mealchemy.engine.dto.SignalScoresResponse;
 import com.mealchemy.engine.client.EmptyPoolException;
 import com.mealchemy.engine.client.EngineClient;
+import com.mealchemy.engine.dto.RecommendationFilters;
 
 // models
 import com.mealchemy.pantry.model.PantryIngredient;
@@ -39,6 +40,7 @@ import com.mealchemy.preference.repository.UserPreferenceWeightsRepository;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.tags.repository.RecipeTagsRepository;
 import com.mealchemy.swipes.repository.SwipeRepository;
+import com.mealchemy.tags.repository.TagsRepository;
 
 // nutrition
 import com.mealchemy.nutritionalcalculator.service.NutritionalCalculatorService;
@@ -67,6 +69,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
@@ -87,6 +90,7 @@ public class RecommendationServiceTest {
     @Mock private EngineClient engineClient;
     @Mock private NutritionalCalculatorService nutritionalCalculatorService;
     @Mock private SwipeRepository swipeRepository;
+    @Mock private TagsRepository tagsRepository;
 
     @InjectMocks
     private RecommendationService recommendationService;
@@ -172,7 +176,7 @@ public class RecommendationServiceTest {
         when(engineClient.getRecommendations(any(RecommendationRequest.class))).thenReturn(engineResponse);
 
         // Act
-        EnrichedRecommendationResponse response = recommendationService.getRecommendations(USER_ID, 10, List.of(), null);
+        EnrichedRecommendationResponse response = recommendationService.getRecommendations(USER_ID, 10, List.of(), null, RecommendationFilters.none());
 
         // Assert
         assertEquals(1, response.recommendations().size());
@@ -191,7 +195,7 @@ public class RecommendationServiceTest {
         when(engineClient.getRecommendations(captor.capture())).thenReturn(engineResponse);
 
         // Act
-        recommendationService.getRecommendations(USER_ID, 15, List.of(200, 201), 42);
+        recommendationService.getRecommendations(USER_ID, 15, List.of(200, 201), 42, RecommendationFilters.none());
 
         // Assert
         RecommendationRequest sent = captor.getValue();
@@ -208,7 +212,7 @@ public class RecommendationServiceTest {
         when(engineClient.getRecommendations(captor.capture())).thenReturn(engineResponse);
 
         // Act
-        recommendationService.getRecommendations(USER_ID, 10, List.of(), null);
+        recommendationService.getRecommendations(USER_ID, 10, List.of(), null, RecommendationFilters.none());
 
         // Assert
         CandidatePoolEntryRequest candidate = captor.getValue().candidatePool().get(0);
@@ -229,7 +233,7 @@ public class RecommendationServiceTest {
         // Act
         ResponseStatusException ex = assertThrows(
             ResponseStatusException.class,
-            () -> recommendationService.getRecommendations(USER_ID, 10, List.of(), null)
+            () -> recommendationService.getRecommendations(USER_ID, 10, List.of(), null, RecommendationFilters.none())
         );
 
         // Assert
@@ -250,7 +254,7 @@ public class RecommendationServiceTest {
         when(engineClient.getRecommendations(captor.capture())).thenReturn(engineResponse);
 
         // Act
-        recommendationService.getRecommendations(USER_ID, 10, List.of(), null);
+        recommendationService.getRecommendations(USER_ID, 10, List.of(), null, RecommendationFilters.none());
 
         // Assert
         PreferenceWeightsRequest sentWeights = captor.getValue().userState().preferenceWeights();
@@ -269,7 +273,7 @@ public class RecommendationServiceTest {
         // Act
         ResponseStatusException ex = assertThrows(
             ResponseStatusException.class,
-            () -> recommendationService.getRecommendations(USER_ID, 10, List.of(), null)
+            () -> recommendationService.getRecommendations(USER_ID, 10, List.of(), null, RecommendationFilters.none())
         );
 
         // Assert
@@ -285,7 +289,7 @@ public class RecommendationServiceTest {
             .thenThrow(new EmptyPoolException("No recipes remain in the pool after hard-filtering."));
 
         // Act
-        EnrichedRecommendationResponse response = recommendationService.getRecommendations(USER_ID, 10, List.of(), null);
+        EnrichedRecommendationResponse response = recommendationService.getRecommendations(USER_ID, 10, List.of(), null, RecommendationFilters.none());
 
         // Assert
         assertTrue(response.recommendations().isEmpty());
@@ -308,7 +312,7 @@ public class RecommendationServiceTest {
         when(engineClient.getRecommendations(any(RecommendationRequest.class))).thenReturn(engineResponse);
 
         // Act
-        EnrichedRecommendationResponse response = recommendationService.getRecommendations(USER_ID, 10, List.of(), null);
+        EnrichedRecommendationResponse response = recommendationService.getRecommendations(USER_ID, 10, List.of(), null, RecommendationFilters.none());
 
         // Assert 
         assertTrue(response.recommendations().isEmpty());
@@ -334,7 +338,7 @@ public class RecommendationServiceTest {
         when(engineClient.getRecommendations(captor.capture())).thenReturn(engineResponse);
 
         // Act
-        recommendationService.getRecommendations(USER_ID, 10, List.of(), null);
+        recommendationService.getRecommendations(USER_ID, 10, List.of(), null, RecommendationFilters.none());
 
         // Assert 
         assertTrue(captor.getValue().userState().pantry().isEmpty());
@@ -363,7 +367,7 @@ public class RecommendationServiceTest {
         when(engineClient.getRecommendations(captor.capture())).thenReturn(engineResponse);
 
         // Act
-        recommendationService.getRecommendations(USER_ID, 10, List.of(), null);
+        recommendationService.getRecommendations(USER_ID, 10, List.of(), null, RecommendationFilters.none());
 
         // Assert
         assertTrue(captor.getValue().userState().pantry().isEmpty());
@@ -396,7 +400,7 @@ public class RecommendationServiceTest {
         when(engineClient.getRecommendations(captor.capture())).thenReturn(engineResponse);
 
         // Act
-        recommendationService.getRecommendations(USER_ID, 10, List.of(), null);
+        recommendationService.getRecommendations(USER_ID, 10, List.of(), null, RecommendationFilters.none());
 
         // Assert
         CandidatePoolEntryRequest candidate = captor.getValue().candidatePool().get(0);
@@ -420,7 +424,7 @@ public class RecommendationServiceTest {
         when(engineClient.getRecommendations(captor.capture())).thenReturn(engineResponse);
 
         // Act
-        recommendationService.getRecommendations(USER_ID, 10, List.of(), null);
+        recommendationService.getRecommendations(USER_ID, 10, List.of(), null, RecommendationFilters.none());
 
         // Assert 
         CandidatePoolEntryRequest candidate = captor.getValue().candidatePool().get(0);
@@ -438,7 +442,7 @@ public class RecommendationServiceTest {
         when(engineClient.getRecommendations(captor.capture())).thenReturn(engineResponse);
 
         // Act
-        recommendationService.getRecommendations(USER_ID, 10, List.of(), null);
+        recommendationService.getRecommendations(USER_ID, 10, List.of(), null, RecommendationFilters.none());
 
         // Assert
         CandidatePoolEntryRequest candidate = captor.getValue().candidatePool().get(0);
@@ -463,12 +467,193 @@ public class RecommendationServiceTest {
         when(engineClient.getRecommendations(captor.capture())).thenReturn(engineResponse);
 
         // Act
-        recommendationService.getRecommendations(USER_ID, 10, List.of(), null);
+        recommendationService.getRecommendations(USER_ID, 10, List.of(), null, RecommendationFilters.none());
 
         // Assert
         List<SwipeHistoryEntryRequest> history = captor.getValue().userState().swipeHistory();
         assertEquals(1, history.size());
         assertEquals(50, history.get(0).recipeId());
         assertEquals(SwipeAction.LIKED, history.get(0).action());
+    }
+
+    // ========== Filters ==========
+
+    private Recipe recipeWithTimes(int recipeId, int prepMins, int cookingMins) {
+        Recipe r = new Recipe();
+        ReflectionTestUtils.setField(r, "recipeId", recipeId);
+        r.setOwnerId(USER_ID);
+        r.setTitle("Recipe " + recipeId);
+        r.setDescription("A test recipe.");
+        r.setCuisineType("MEDITERRANEAN");
+        r.setPrepTimeMins(prepMins);
+        r.setCookingTimeMins(cookingMins);
+        r.setServingSize(2);
+        r.setIsCommunityPublished(true);
+        r.setIngredients(List.of(recipeIngredient));
+        return r;
+    }
+
+    private Tags tag(String name, boolean dietary) {
+        Tags t = new Tags();
+        t.setTagName(name);
+        t.setIsActive(true);
+        t.setIsDietary(dietary);
+        return t;
+    }
+
+    @Test
+    void getRecommendations_maxCookingTimeMins_excludesSlowerRecipes() {
+        // Arrange
+        Recipe slow = recipeWithTimes(101, 5, 45);
+        when(recipeRepository.findByIsCommunityPublishedTrue()).thenReturn(List.of(recipe, slow));
+
+        ArgumentCaptor<RecommendationRequest> captor = ArgumentCaptor.forClass(RecommendationRequest.class);
+        when(engineClient.getRecommendations(captor.capture()))
+            .thenReturn(RecommendationResponse.from(List.of(), Map.of(), 0, 1));
+
+        // Act
+        recommendationService.getRecommendations(USER_ID, 10, List.of(), null, new RecommendationFilters(30, null, null));
+
+        // Assert
+        List<CandidatePoolEntryRequest> pool = captor.getValue().candidatePool();
+        assertEquals(1, pool.size());
+        assertEquals(100, pool.get(0).recipeId());
+    }
+
+    @Test
+    void getRecommendations_maxTotalTimeMins_usesPrepPlusCookingAndIsInclusive() {
+        // Arrange
+        Recipe longer = recipeWithTimes(101, 20, 20);
+        when(recipeRepository.findByIsCommunityPublishedTrue()).thenReturn(List.of(recipe, longer));
+
+        ArgumentCaptor<RecommendationRequest> captor = ArgumentCaptor.forClass(RecommendationRequest.class);
+        when(engineClient.getRecommendations(captor.capture()))
+            .thenReturn(RecommendationResponse.from(List.of(), Map.of(), 0, 1));
+
+        // Act
+        recommendationService.getRecommendations(USER_ID, 10, List.of(), null, new RecommendationFilters(null, 10, null));
+
+        // Assert
+        List<CandidatePoolEntryRequest> pool = captor.getValue().candidatePool();
+        assertEquals(1, pool.size());
+        assertEquals(100, pool.get(0).recipeId());
+    }
+
+    @Test
+    void getRecommendations_whenNoRecipeMatchesFilters_returnsEmptyWithoutCallingEngine() {
+        // Act
+        EnrichedRecommendationResponse response = recommendationService.getRecommendations(
+            USER_ID, 10, List.of(), null, new RecommendationFilters(null, 5, null));
+
+        // Assert
+        assertTrue(response.recommendations().isEmpty());
+        assertEquals(0, response.totalRecipesConsidered());
+        verifyNoInteractions(engineClient);
+    }
+
+    @Test
+    void getRecommendations_dietaryTags_resolvedToCanonicalNamesAndSentToEngine() {
+        // Arrange
+        when(tagsRepository.findAll()).thenReturn(List.of(
+            tag("VEGETARIAN", true), tag("DIABETES_Friendly", true), tag("QUICK", false)
+        ));
+
+        ArgumentCaptor<RecommendationRequest> captor = ArgumentCaptor.forClass(RecommendationRequest.class);
+        when(engineClient.getRecommendations(captor.capture()))
+            .thenReturn(RecommendationResponse.from(List.of(), Map.of(), 0, 1));
+
+        // Act
+        recommendationService.getRecommendations(USER_ID, 10, List.of(), null,
+            new RecommendationFilters(null, null, List.of("vegetarian", " diabetes_friendly ", "VEGETARIAN")));
+
+        // Assert
+        assertEquals(List.of("VEGETARIAN", "DIABETES_Friendly"), captor.getValue().requiredTags());
+    }
+
+    @Test
+    void getRecommendations_unknownDietaryTag_throwsBadRequestWithoutCallingEngine() {
+        // Arrange
+        when(tagsRepository.findAll()).thenReturn(List.of(tag("VEGETARIAN", true)));
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> recommendationService.getRecommendations(USER_ID, 10, List.of(), null,
+                new RecommendationFilters(null, null, List.of("VEGGIE")))
+        );
+
+        // Assert
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("Unknown dietary tag: VEGGIE.", ex.getReason());
+        verifyNoInteractions(engineClient);
+    }
+
+    @Test
+    void getRecommendations_nonDietaryTag_throwsBadRequest() {
+        // Arrange
+        when(tagsRepository.findAll()).thenReturn(List.of(tag("QUICK", false)));
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> recommendationService.getRecommendations(USER_ID, 10, List.of(), null,
+                new RecommendationFilters(null, null, List.of("QUICK")))
+        );
+
+        // Assert
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("Unknown dietary tag: QUICK.", ex.getReason());
+    }
+
+    @Test
+    void getRecommendations_nonPositiveTimeFilter_throwsBadRequest() {
+        ResponseStatusException cooking = assertThrows(
+            ResponseStatusException.class,
+            () -> recommendationService.getRecommendations(USER_ID, 10, List.of(), null,
+                new RecommendationFilters(0, null, null))
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, cooking.getStatusCode());
+        assertEquals("maxCookingTimeMins must be greater than 0.", cooking.getReason());
+
+        ResponseStatusException total = assertThrows(
+            ResponseStatusException.class,
+            () -> recommendationService.getRecommendations(USER_ID, 10, List.of(), null,
+                new RecommendationFilters(null, -5, null))
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, total.getStatusCode());
+        assertEquals("maxTotalTimeMins must be greater than 0.", total.getReason());
+    }
+
+    @Test
+    void getRecommendations_withoutFilters_sendsNullRequiredTagsAndSkipsTagLookup() {
+        // Arrange
+        ArgumentCaptor<RecommendationRequest> captor = ArgumentCaptor.forClass(RecommendationRequest.class);
+        when(engineClient.getRecommendations(captor.capture()))
+            .thenReturn(RecommendationResponse.from(List.of(), Map.of(), 0, 1));
+
+        // Act
+        recommendationService.getRecommendations(USER_ID, 10, List.of(), null, RecommendationFilters.none());
+
+        // Assert
+        assertNull(captor.getValue().requiredTags());
+        verifyNoInteractions(tagsRepository);
+    }
+    
+    @Test
+    void getRecommendations_nonPositiveBatchSize_throwsBadRequestWithoutCallingEngine() {
+        ResponseStatusException zero = assertThrows(
+            ResponseStatusException.class,
+            () -> recommendationService.getRecommendations(USER_ID, 0, List.of(), null, RecommendationFilters.none())
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, zero.getStatusCode());
+        assertEquals("batchSize must be greater than 0.", zero.getReason());
+
+        ResponseStatusException negative = assertThrows(
+            ResponseStatusException.class,
+            () -> recommendationService.getRecommendations(USER_ID, -3, List.of(), null, RecommendationFilters.none())
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, negative.getStatusCode());
+
+        verifyNoInteractions(engineClient);
     }
 }

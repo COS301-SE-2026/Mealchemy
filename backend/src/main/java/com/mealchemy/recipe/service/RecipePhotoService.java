@@ -99,8 +99,8 @@ public class RecipePhotoService
         if (!recipe.getOwnerId().equals(ownerId))
         {
             throw new ResponseStatusException(
-                HttpStatus.FORBIDDEN,
-                "Only the owner of this recipe can upload a photo."
+            HttpStatus.NOT_FOUND,
+            "Recipe not found."
             );
         }
 

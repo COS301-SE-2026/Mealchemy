@@ -9,6 +9,7 @@ import '../../../core/theme/app_typography.dart';
 import '../providers/profile_provider.dart';
 import '../widgets/information_section.dart';
 import '../widgets/preferences_section.dart';
+import '../../admin/widgets/admin_profile_entry.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -25,6 +26,7 @@ class ProfileScreen extends ConsumerWidget {
         PreferencesSection(),
         SizedBox(height: 32),
         _SaveBar(),
+        AdminProfileEntry(),
       ],
     );
   }
