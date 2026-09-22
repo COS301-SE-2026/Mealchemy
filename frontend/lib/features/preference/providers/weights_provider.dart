@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/providers/api_service_provider.dart';
 import '../models/preference_weights.dart';
-import '../repositories/mock_weights_repository.dart';
+import '../repositories/api_weights_repository.dart';
 import '../repositories/weights_repository.dart';
 
 final weightsRepositoryProvider = Provider<WeightsRepository>((ref) {
-  return MockWeightsRepository();
-  // return ApiWeightsRepository(ref.read(dioProvider));
+ return ApiWeightsRepository(ref.read(dioProvider));
 });
 
 final weightsProvider =
