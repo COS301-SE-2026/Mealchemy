@@ -69,12 +69,12 @@ public class VaultMemberControllerTest {
     }
 
     @Test
-    void getVaultMembersByVaultId_returns403_whenNotOwnerOrMember() throws Exception
+    void getVaultMembersByVaultId_returns404_whenNotOwnerOrMember() throws Exception
     {
         when(vaultMemberService.getVaultMembersByVaultId(1, 1))
-            .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a member/owner of the vault can view its members."));
+            .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
 
-        mockMvc.perform(get("/vault/1/members/all")).andExpect(status().isForbidden()).andExpect(jsonPath("$.message").value("Only a member/owner of the vault can view its members."));
+        mockMvc.perform(get("/vault/1/members/all")).andExpect(status().isNotFound()).andExpect(jsonPath("$.message").value("Vault not found."));
     }
 
     @Test
@@ -129,16 +129,16 @@ public class VaultMemberControllerTest {
     }
 
     @Test
-    void removeVaultMember_returns404_whenMemberRowNotFound() throws Exception
+    void removeVaultMember_returns400_whenMemberRowNotFound() throws Exception
     {
-        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "VaultMember row not found."))
+        doThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to remove member."))
             .when(vaultMemberService).removeVaultMember(eq(1), any(VaultMemberRequest.class), eq(1));
 
         mockMvc.perform(delete("/vault/1/members/delete")
             .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.message").value("VaultMember row not found."));
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("Unable to remove member."));
     }
 }

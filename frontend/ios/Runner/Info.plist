@@ -30,6 +30,10 @@
 	<string>Mealchemy uses the camera to add photos to your recipes.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Mealchemy uses your photo library to add photos to your recipes.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Mealchemy uses the microphone to hear cooking commands while you cook.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Mealchemy recognizes short cooking commands on your device.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -173,30 +173,48 @@ class ApiShoppingListRepository implements ShoppingListRepository {
 
   @override
   Future<List<ShoppingListItem>> selectAllItems(String listId) async {
-    final response = await _dio.put<List<dynamic>>(
+    final response = await _dio.put<Map<String, dynamic>>(
       '/api/shopping-lists/$listId/items/select-all',
     );
 
-    final data = response.data ?? [];
+    final data = response.data ?? {};
+    final items = data['items'] as List<dynamic>? ?? [];
 
-    //backend sends updated items back
-    return data
-        .map((item) => ShoppingListItem.fromJson(item as Map<String, dynamic>))
+    return items
+        .map(
+          (item) => ShoppingListItem.fromJson(
+            item as Map<String, dynamic>,
+          ),
+        )
         .toList();
   }
 
   @override
   Future<List<ShoppingListItem>> deselectAllItems(String listId) async {
-    final response = await _dio.put<List<dynamic>>(
+    final response = await _dio.put<Map<String, dynamic>>(
       '/api/shopping-lists/$listId/items/deselect-all',
     );
 
-    final data = response.data ?? [];
+    final data = response.data ?? {};
+    final items = data['items'] as List<dynamic>? ?? [];
 
-    //same idea as select all
-    return data
-        .map((item) => ShoppingListItem.fromJson(item as Map<String, dynamic>))
+    return items
+        .map(
+          (item) => ShoppingListItem.fromJson(
+            item as Map<String, dynamic>,
+          ),
+        )
         .toList();
+  }
+
+  @override
+  Future<void> deleteShoppingListItem({
+    required String listId,
+    required String itemId,
+  }) async {
+    await _dio.delete<void>(
+      '/api/shopping-lists/$listId/items/$itemId',
+    );
   }
 
   @override

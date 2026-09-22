@@ -150,7 +150,6 @@ public class RecipeServiceTest {
     void getRecipeById_throwsException_whenNotFound()
     {
         when(recipeRepository.findAccessibleByIdAndUserId(99, 1)).thenReturn(Optional.empty());
-        when(recipeRepository.existsById(99)).thenReturn(false);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.getRecipeById(99, 1));
 
@@ -162,12 +161,11 @@ public class RecipeServiceTest {
     void getRecipeById_throwsException_whenRecipeIsNotAccessible()
     {
         when(recipeRepository.findAccessibleByIdAndUserId(1, 2)).thenReturn(Optional.empty());
-        when(recipeRepository.existsById(1)).thenReturn(true);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.getRecipeById(1, 2));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("You do not have permission to view this recipe.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
     }
 
     @Test
@@ -251,8 +249,8 @@ public class RecipeServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.createRecipe(request, 1));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Recipes can only be added to a folder in your private vault.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Folder not found.", ex.getReason());
     }
 
     @Test
@@ -265,8 +263,8 @@ public class RecipeServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.createRecipe(request, 1));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Recipes can only be added to a folder in your private vault.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Folder not found.", ex.getReason());
     }
 
     @Test
@@ -546,8 +544,8 @@ public class RecipeServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.updateRecipe(1, updateRequest, 99));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of this recipe can edit it.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
     }
 
     @Test
@@ -604,7 +602,7 @@ public class RecipeServiceTest {
         
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.deleteRecipe(1, 3));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of this recipe can delete it.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
     }
 }

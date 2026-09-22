@@ -44,6 +44,9 @@ public class RecipeIngredientService
     // Retrieve all ingredients relating to a specific recipe
     public List<RecipeIngredientResponse> getAllIngredientsByRecipeId(Integer recipeId, Integer userId)
     {
+        recipeRepository.findAccessibleByIdAndUserId(recipeId, userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
+        
         PreferredUnit preferredUnit = userProfileRepository.findByUserId(userId).map(UserProfile::getPreferredUnit)
                                                                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User profile not found."));
 
@@ -70,7 +73,7 @@ public class RecipeIngredientService
 
         if (!recipeToCheck.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its ingredients.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
         }
 
         IngredientCatalogue ingredientCatalogue = ingredientCatalogueRepository.findById(request.ingId())
@@ -95,7 +98,7 @@ public class RecipeIngredientService
 
         if (!recipeToCheck.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its ingredients.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
         }
 
         RecipeIngredient recipeIngredientForReturn = recipeIngredientRepository.findById(id)
@@ -103,7 +106,7 @@ public class RecipeIngredientService
         
         if (!recipeIngredientForReturn.getRecipe().getRecipeId().equals(recipeId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Ingredient must be part of the recipe.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found.");
         }
 
         IngredientCatalogue ingredientCatalogue = ingredientCatalogueRepository.findById(request.ingId())
@@ -134,14 +137,14 @@ public class RecipeIngredientService
 
         if (!recipeToCheck.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its ingredients.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
         }
 
         RecipeIngredient recipeIngredientForReturn = recipeIngredientRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found."));
         
         if (!recipeIngredientForReturn.getRecipe().getRecipeId().equals(recipeId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Ingredient must be part of the recipe.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found.");
         }
 
         recipeIngredientRepository.deleteById(id);

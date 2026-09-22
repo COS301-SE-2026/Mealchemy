@@ -132,6 +132,14 @@ class _ApiShapedShoppingListRepository implements ShoppingListRepository {
   }
 
   @override
+  Future<void> deleteShoppingListItem({
+    required String listId,
+    required String itemId,
+  }) async {
+    //fake backend accepts delete request
+  }
+
+  @override
   Future<void> deleteShoppingListItems({
     required String listId,
     required List<int> itemIds,
@@ -149,7 +157,7 @@ class _ApiShapedShoppingListRepository implements ShoppingListRepository {
   }
 
   @override
-    @override
+  @override
   Future<ShoppingList> generateFromRecipe({
     required int recipeId,
     required String name,
@@ -309,6 +317,32 @@ void main() {
 
     expect(list.items, isNotEmpty);
     expect(list.items.every((item) => item.checked), isFalse);
+  });
+  test('shoppingListsProvider deletes one item from a list', () async {
+    final container = ProviderContainer(
+      overrides: [
+        shoppingListRepositoryProvider.overrideWithValue(
+          _ApiShapedShoppingListRepository(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(shoppingListsProvider.future);
+
+    final notifier = container.read(shoppingListsProvider.notifier);
+
+    await notifier.deleteItem(
+      listId: '1',
+      itemId: '10',
+    );
+
+    final updatedState = container.read(shoppingListsProvider).value!;
+    final list = updatedState.getListById('1')!;
+
+    expect(list.items, hasLength(1));
+    expect(list.items.any((item) => item.itemId == 10), isFalse);
+    expect(list.items.single.itemId, 11);
   });
 
   //deletes checked API-shaped items from one shopping list

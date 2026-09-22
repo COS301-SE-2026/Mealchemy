@@ -66,7 +66,7 @@ public class RecipeStepControllerTest {
     @Test
     void getAllStepsByRecipeId_returns200_withList() throws Exception
     {
-        when(recipeStepService.getAllStepsByRecipeId(1)).thenReturn(List.of(response));
+        when(recipeStepService.getAllStepsByRecipeId(1, 1)).thenReturn(List.of(response));
 
         mockMvc.perform(get("/steps/recipe/1")).andExpect(status().isOk()).andExpect(jsonPath("$[0].content").value("Break the eggs."));
     }
@@ -74,7 +74,7 @@ public class RecipeStepControllerTest {
     @Test
     void getAllStepsByRecipeId_returns200_withEmptyList() throws Exception
     {
-        when(recipeStepService.getAllStepsByRecipeId(99)).thenReturn(List.of());
+        when(recipeStepService.getAllStepsByRecipeId(99, 1)).thenReturn(List.of());
 
         mockMvc.perform(get("/steps/recipe/99")).andExpect(status().isOk()).andExpect(jsonPath("$").isEmpty());
     }
@@ -105,17 +105,17 @@ public class RecipeStepControllerTest {
     }
 
     @Test
-    void createRecipeStep_returns403_whenNotOwner() throws Exception
+    void createRecipeStep_returns404_whenNotOwner() throws Exception
     {
         when(recipeStepService.createRecipeStep(any(RecipeStepRequest.class), eq(1), eq(1)))
-            .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its steps."));
+            .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         mockMvc.perform(post("/steps/recipe/1/step/create")
             .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.message").value("Only the owner of this recipe can modify its steps."));
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message").value("Recipe not found."));
     }
 
     @Test
@@ -182,13 +182,13 @@ public class RecipeStepControllerTest {
     }
 
     @Test
-    void deleteRecipeStep_returns403_whenNotOwner() throws Exception
+    void deleteRecipeStep_returns404_whenNotOwner() throws Exception
     {
-        doThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its steps."))
+        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."))
             .when(recipeStepService).deleteRecipeStep(1, 1, 1);
 
         mockMvc.perform(delete("/steps/recipe/1/step/1/delete").with(csrf()))
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.message").value("Only the owner of this recipe can modify its steps."));
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message").value("Recipe not found."));
     }
 }

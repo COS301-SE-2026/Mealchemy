@@ -105,6 +105,7 @@ services:
       context: ..
       dockerfile: infrastructure/Dockerfile.engine
     environment:
+      HOST: "0.0.0.0"
       BACKEND_URL: http://backend:8080
     ports:
       - "8001:8000"

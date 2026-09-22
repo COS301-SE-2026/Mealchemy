@@ -10,6 +10,11 @@ def passes_dietary_restrictions(dietary_tags: list[str], dietary_restrictions: l
     return all(restriction in dietary_tags for restriction in dietary_restrictions)
 
 
+def passes_required_tags(dietary_tags: list[str], required_tags: set[str]) -> bool:
+    recipe_tags = {tag.casefold() for tag in dietary_tags}
+    return {tag.casefold() for tag in required_tags} <= recipe_tags
+
+
 def passes_dislike_time_check(recipe_id: int, swipe_history: list[SwipeHistoryEntry]) -> bool:
     now = datetime.now(UTC)
 
@@ -30,13 +35,16 @@ def hard_filter(
     candidate_pool: list[CandidatePoolEntry],
     user_state: UserState,
     exclude_recipe_ids: list[int] | None = None,
+    required_tags: list[str] | None = None,
 ) -> list[CandidatePoolEntry]:
     exclude_set = set(exclude_recipe_ids or [])
+    required_set = set(required_tags or [])
 
     survivors = [
         recipe
         for recipe in candidate_pool
         if recipe.recipe_id not in exclude_set
+        and passes_required_tags(recipe.dietary_tags, required_set)
         and allergen_check(recipe.ingredients, user_state.allergies)
         and passes_dietary_restrictions(recipe.dietary_tags, user_state.dietary_restrictions)
         and passes_dislike_time_check(recipe.recipe_id, user_state.swipe_history)

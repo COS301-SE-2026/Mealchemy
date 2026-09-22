@@ -123,13 +123,13 @@ public class RecipeControllerTest {
     }
 
     @Test
-    void getRecipeById_returns403_whenNotAccessible() throws Exception
+    void getRecipeById_returns404_whenNotAccessible() throws Exception
     {
-        when(recipeService.getRecipeById(1, 1)).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to view this recipe."));
+        when(recipeService.getRecipeById(1, 1)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         mockMvc.perform(get("/recipes/single/1"))
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.message").value("You do not have permission to view this recipe."));
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message").value("Recipe not found."));
     }
 
     @Test
@@ -246,7 +246,7 @@ public class RecipeControllerTest {
     }
 
     @Test
-    void createPhotoUploadUrl_returns403_whenUserDoesNotOwnRecipe() throws Exception
+    void createPhotoUploadUrl_returns404_whenUserDoesNotOwnRecipe() throws Exception
     {
         RecipePhotoUploadRequest photoRequest = new RecipePhotoUploadRequest(
             "image/jpeg",
@@ -257,17 +257,17 @@ public class RecipeControllerTest {
             any(RecipePhotoUploadRequest.class),
             eq(1)
         )).thenThrow(new ResponseStatusException(
-            HttpStatus.FORBIDDEN,
-            "Only the owner of this recipe can upload a photo."
+            HttpStatus.NOT_FOUND,
+            "Recipe not found."
         ));
 
         mockMvc.perform(post("/recipes/1/photo-upload-url")
             .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(photoRequest)))
-            .andExpect(status().isForbidden())
+            .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.message").value(
-                "Only the owner of this recipe can upload a photo."
+                "Recipe not found."
             ));
     }
 

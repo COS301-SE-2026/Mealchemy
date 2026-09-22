@@ -167,13 +167,6 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  const units = [
-    UnitOfMeasurement(unitId: 1, name: 'g', system: 'METRIC'),
-    UnitOfMeasurement(unitId: 2, name: 'kg', system: 'METRIC'),
-    UnitOfMeasurement(unitId: 3, name: 'L', system: 'METRIC'),
-    UnitOfMeasurement(unitId: 4, name: 'pcs', system: null),
-  ];
-
   Future<_ScreenHarness> pumpEntryScreen(
     WidgetTester tester, {
     bool catalogueShouldFail = false,
@@ -181,6 +174,13 @@ void main() {
     bool catalogueRequiresCategory = false,
     bool shoppingShouldFail = false,
     bool isOffline = false,
+    List<UnitOfMeasurement> units = const [
+      UnitOfMeasurement(unitId: 1, name: 'g', system: 'METRIC'),
+      UnitOfMeasurement(unitId: 2, name: 'kg', system: 'METRIC'),
+      UnitOfMeasurement(unitId: 3, name: 'ml', system: 'METRIC'),
+      UnitOfMeasurement(unitId: 4, name: 'L', system: 'METRIC'),
+      UnitOfMeasurement(unitId: 5, name: 'pcs', system: 'GENERAL'),
+    ],
   }) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 1;
@@ -320,6 +320,29 @@ void main() {
     expect(find.text('Quantity'), findsNWidgets(2));
     expect(find.text('Unit'), findsOneWidget);
     expect(find.text('Add Item'), findsOneWidget);
+  });
+
+  testWidgets('uses units returned by the dynamic units provider', (
+    tester,
+  ) async {
+    await pumpEntryScreen(
+      tester,
+      units: const [
+        UnitOfMeasurement(
+          unitId: 90,
+          name: 'dynamic-unit',
+          system: 'GENERAL',
+        ),
+      ],
+    );
+
+    await tester.tap(
+      find.byType(DropdownButtonFormField<String>),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('dynamic-unit'), findsOneWidget);
+    expect(find.text('cups'), findsNothing);
   });
 
   testWidgets('blocks direct offline entry', (tester) async {

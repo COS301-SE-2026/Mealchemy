@@ -16,11 +16,12 @@ def recommend(
     batch_size: int | None = None,
     exclude_recipe_ids: list[int] | None = None,
     seed: int | None = None,
+    required_tags: list[str] | None = None,
 ) -> RecommendationResult:
     effective_batch_size = batch_size or DEFAULT_BATCH_SIZE
     total_recipes_considered = len(candidate_pool)
 
-    safe_pool = hard_filter(candidate_pool, user_state, exclude_recipe_ids)
+    safe_pool = hard_filter(candidate_pool, user_state, exclude_recipe_ids, required_tags)
     total_candidates_after_filter = len(safe_pool)
 
     if not safe_pool:
