@@ -9,6 +9,8 @@ import 'package:mealchemy/features/vault/models/vault_folder.dart';
 import 'package:mealchemy/features/vault/models/vault_folder_recipe.dart';
 import 'package:mealchemy/features/vault/models/vault_member.dart';
 import 'package:mealchemy/features/vault/repositories/vault_repository.dart';
+import 'package:mealchemy/features/vault/models/vault_invitation.dart';
+import 'package:mealchemy/features/vault/repositories/api_vault_repository.dart';
 
 void main() {
   late OfflineCacheDatabase database;
@@ -226,7 +228,7 @@ void main() {
     expect(await repository.getFoldersForRecipe(9), hasLength(1));
     expect(await repository.getMembers(7), hasLength(1));
     expect((await repository.addMember(7, 'chef@example.test')).userId, 11);
-    await repository.removeMember(7, 'chef@example.test');
+    await repository.removeMember(7, 11);
 
     expect(
       remote.calls,
@@ -245,6 +247,104 @@ void main() {
         'addMember',
         'removeMember',
       ]),
+    );
+  });
+
+  test('collaboration operations use remote endpoints through cache wrapper',
+      () async {
+    final requests = <RequestOptions>[];
+    Object? responseData;
+
+    final dio = Dio();
+    addTearDown(() => dio.close(force: true));
+
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          requests.add(options);
+
+          handler.resolve(
+            Response<dynamic>(
+              requestOptions: options,
+              statusCode: options.method == 'DELETE' ? 204 : 200,
+              data: responseData,
+            ),
+          );
+        },
+      ),
+    );
+
+    final repository = CachedVaultRepository(
+      remote: ApiVaultRepository(dio),
+      cache: cache,
+      viewerUserId: 11,
+    );
+
+    final invitation = <String, dynamic>{
+      'invitationId': 12,
+      'vaultId': 7,
+      'vaultName': 'Dinner',
+      'invitedEmail': 'chef@example.test',
+      'invitedByEmail': 'owner@example.test',
+      'status': 'PENDING',
+      'createdAt': '2026-09-21T10:00:00Z',
+      'expiresAt': '2026-09-28T10:00:00Z',
+      'respondedAt': null,
+    };
+
+    final member = <String, dynamic>{
+      'id': 3,
+      'vaultId': 7,
+      'userId': 11,
+      'email': 'chef@example.test',
+      'joinedAt': '2026-09-21T10:05:00Z',
+      'role': 'VIEWER',
+    };
+
+    responseData = invitation;
+    expect(
+      (await repository.createInvitation(7, 'chef@example.test')).invitationId,
+      12,
+    );
+
+    responseData = [invitation];
+    expect(await repository.getVaultInvitations(7), hasLength(1));
+    expect(await repository.getMyInvitations(), hasLength(1));
+
+    responseData = member;
+    expect(
+      (await repository.acceptInvitation(12)).role,
+      VaultMemberRole.viewer,
+    );
+
+    responseData = {...invitation, 'status': 'DECLINED'};
+    expect(
+      (await repository.declineInvitation(12)).status,
+      VaultInvitationStatus.declined,
+    );
+
+    responseData = {...member, 'role': 'EDITOR'};
+    expect(
+      (await repository.changeMemberRole(7, 11, VaultMemberRole.editor)).role,
+      VaultMemberRole.editor,
+    );
+
+    responseData = null;
+    await repository.cancelInvitation(12);
+    await repository.removeMember(7, 11);
+
+    expect(
+      requests.map((request) => '${request.method} ${request.path}').toList(),
+      [
+        'POST /vault/7/invitations',
+        'GET /vault/7/invitations',
+        'GET /invitations/me',
+        'POST /invitations/12/accept',
+        'POST /invitations/12/decline',
+        'PATCH /vault/7/members/11/role',
+        'DELETE /invitations/12',
+        'DELETE /vault/7/members/11',
+      ],
     );
   });
 }
@@ -333,7 +433,7 @@ class _VaultRepositoryStub implements VaultRepository {
           int folderRecipeId, int targetFolderId) =>
       throw UnimplementedError();
   @override
-  Future<void> removeMember(int vaultId, String email) =>
+  Future<void> removeMember(int vaultId, int userId) =>
       throw UnimplementedError();
   @override
   Future<void> removeRecipeFromFolder(int folderRecipId) =>
@@ -342,6 +442,12 @@ class _VaultRepositoryStub implements VaultRepository {
   Future<VaultFolder> renameFolder(
           int folderId, int vaultId, String folderName) =>
       throw UnimplementedError();
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    throw UnimplementedError(
+      '${invocation.memberName} was not configured for this test.',
+    );
+  }
 }
 
 class _RecordingVaultRepository implements VaultRepository {
@@ -437,7 +543,7 @@ class _RecordingVaultRepository implements VaultRepository {
   }
 
   @override
-  Future<void> removeMember(int vaultId, String email) async {
+  Future<void> removeMember(int vaultId, int userId) async {
     calls.add('removeMember');
   }
 
@@ -450,11 +556,20 @@ class _RecordingVaultRepository implements VaultRepository {
   @override
   Future<List<VaultFolderRecipe>> getFolderRecipes(int folderId) async =>
       const [];
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    throw UnimplementedError(
+      '${invocation.memberName} was not configured for this test.',
+    );
+  }
 }
 
 VaultMember _member() => VaultMember(
       id: 3,
       vaultId: 7,
       userId: 11,
+      email: 'chef@example.test',
       joinedAt: DateTime.utc(2026, 1, 3),
+      role: VaultMemberRole.viewer,
     );
