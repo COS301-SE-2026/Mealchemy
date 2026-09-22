@@ -155,13 +155,13 @@ public class VaultFolderControllerIntegrationTest {
     }
 
     @Test
-    void getVaultFolderByVaultId_returns403_whenNotOwnerOrMember() throws Exception {
+    void getVaultFolderByVaultId_returns404_whenNotOwnerOrMember() throws Exception {
         newFolder(sharedVault, "General");
 
         mockMvc.perform(get("/folders/vault/{vaultId}", sharedVault.getVaultId())
                 .with(authentication(authAs(outsider.getUserId()))))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Only a vault member/owner can view the folders."));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Vault not found."));
     }
 
     @Test

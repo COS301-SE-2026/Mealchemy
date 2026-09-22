@@ -157,7 +157,7 @@ public class VaultMemberControllerIntegrationTest {
     }
 
     @Test
-    void addVaultMember_returns403_whenNotOwner() throws Exception {
+    void addVaultMember_returns404_whenNotOwner() throws Exception {
         VaultMemberRequest request = new VaultMemberRequest(member.getEmail());
 
         mockMvc.perform(post("/vault/{vaultId}/members/create", sharedVault.getVaultId())
@@ -165,8 +165,8 @@ public class VaultMemberControllerIntegrationTest {
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Only the owner of the vault can add a new member."));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Vault not found."));
     }
 
     @Test
@@ -189,7 +189,7 @@ public class VaultMemberControllerIntegrationTest {
     }
 
     @Test
-    void addVaultMember_returns404_whenUserNotFound() throws Exception {
+    void addVaultMember_returns400_whenUserNotFound() throws Exception {
         VaultMemberRequest request = new VaultMemberRequest("doesnotexist@gmail.com");
 
         mockMvc.perform(post("/vault/{vaultId}/members/create", sharedVault.getVaultId())
@@ -197,8 +197,8 @@ public class VaultMemberControllerIntegrationTest {
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("User not found."));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Unable to add member."));
     }
 
     @Test
@@ -234,8 +234,8 @@ public class VaultMemberControllerIntegrationTest {
         mockMvc.perform(delete("/vault/{vaultId}/members/{userId}", sharedVault.getVaultId(), member.getUserId())
                         .with(authentication(authAs(outsider.getUserId())))
                         .with(csrf()))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Only the owner of the vault can remove a member."));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Vault not found."));
     }
 
     @Test
