@@ -4,6 +4,7 @@ import '../models/vault.dart';
 import '../models/vault_folder.dart';
 import '../models/vault_folder_recipe.dart';
 import '../models/vault_member.dart';
+import '../models/vault_invitation.dart';
 
 class ApiVaultRepository implements VaultRepository {
   final Dio _dio;
@@ -13,7 +14,7 @@ class ApiVaultRepository implements VaultRepository {
   // Vaults
   @override
   Future<List<Vault>> getMyVaults() async {
-    final response = await _dio.get('/vaults/owner/vaults');
+    final response = await _dio.get('/vaults/accessible');
     return (response.data as List).map((json) => Vault.fromJson(json)).toList();
   }
 
@@ -84,7 +85,8 @@ class ApiVaultRepository implements VaultRepository {
   }
 
   @override
-  Future<VaultFolderRecipe> addRecipeToFolder( int folderId, int recipeId) async {
+  Future<VaultFolderRecipe> addRecipeToFolder(
+      int folderId, int recipeId) async {
     final response = await _dio.post('/recipefolders/folder/$folderId', data: {
       'folderId': folderId,
       'recipeId': recipeId,
@@ -93,7 +95,8 @@ class ApiVaultRepository implements VaultRepository {
   }
 
   @override
-  Future<VaultFolderRecipe> moveRecipe( int folderRecipeId, int targetFolderId) async {
+  Future<VaultFolderRecipe> moveRecipe(
+      int folderRecipeId, int targetFolderId) async {
     final response = await _dio.put('/recipefolders/$folderRecipeId', data: {
       'folderId': targetFolderId,
     });
@@ -123,14 +126,101 @@ class ApiVaultRepository implements VaultRepository {
   }
 
   @override
-  Future<void> removeMember(int vaultId, String email) async {
-    await _dio.delete('/vault/$vaultId/members/delete', data: {
-      'email': email,
-    });
+  Future<void> removeMember(int vaultId, int userId) async {
+    await _dio.delete('/vault/$vaultId/members/$userId');
   }
 
   @override
   Future<void> deleteVault(int vaultId) async {
     await _dio.delete('/vaults/$vaultId');
+  }
+
+  @override
+  Future<VaultMember> changeMemberRole(
+    int vaultId,
+    int userId,
+    VaultMemberRole role,
+  ) async {
+    if (role == VaultMemberRole.owner) {
+      throw ArgumentError('OWNER cannot be assigned to a member.');
+    }
+
+    final response = await _dio.patch<dynamic>(
+      '/vault/$vaultId/members/$userId/role',
+      data: {'role': role.apiValue},
+    );
+
+    return VaultMember.fromJson(_responseObject(response));
+  }
+
+  @override
+  Future<VaultInvitation> createInvitation(
+    int vaultId,
+    String email,
+  ) async {
+    final trimmedEmail = email.trim();
+
+    if (trimmedEmail.isEmpty) {
+      throw ArgumentError('An email address is required.');
+    }
+
+    final response = await _dio.post<dynamic>(
+      '/vault/$vaultId/invitations',
+      data: {'email': trimmedEmail},
+    );
+
+    return VaultInvitation.fromJson(_responseObject(response));
+  }
+
+  @override
+  Future<List<VaultInvitation>> getVaultInvitations(int vaultId) async {
+    final response = await _dio.get<dynamic>(
+      '/vault/$vaultId/invitations',
+    );
+
+    return _invitationList(response);
+  }
+
+  @override
+  Future<List<VaultInvitation>> getMyInvitations() async {
+    final response = await _dio.get<dynamic>('/invitations/me');
+    return _invitationList(response);
+  }
+
+  @override
+  Future<VaultMember> acceptInvitation(int invitationId) async {
+    final response = await _dio.post<dynamic>(
+      '/invitations/$invitationId/accept',
+    );
+
+    return VaultMember.fromJson(_responseObject(response));
+  }
+
+  @override
+  Future<VaultInvitation> declineInvitation(int invitationId) async {
+    final response = await _dio.post<dynamic>(
+      '/invitations/$invitationId/decline',
+    );
+
+    return VaultInvitation.fromJson(_responseObject(response));
+  }
+
+  @override
+  Future<void> cancelInvitation(int invitationId) async {
+    await _dio.delete('/invitations/$invitationId');
+  }
+
+  Map<String, dynamic> _responseObject(Response<dynamic> response) {
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  List<VaultInvitation> _invitationList(Response<dynamic> response) {
+    return (response.data as List)
+        .map(
+          (item) => VaultInvitation.fromJson(
+            Map<String, dynamic>.from(item as Map),
+          ),
+        )
+        .toList();
   }
 }
