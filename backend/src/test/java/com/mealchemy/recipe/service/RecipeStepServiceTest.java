@@ -81,9 +81,10 @@ public class RecipeStepServiceTest {
     @Test
     void getAllStepsByRecipeId_returnsListOfSteps_whenFound()
     {
+        when(recipeRepository.findAccessibleByIdAndUserId(1, 1)).thenReturn(Optional.of(recipe));
         when(recipeStepRepository.findByRecipe_RecipeIdOrderByStepNrAsc(1)).thenReturn(List.of(recipeStep, recipeStep2, recipeStep3));
 
-        List<RecipeStepResponse> result = recipeStepService.getAllStepsByRecipeId(1);
+        List<RecipeStepResponse> result = recipeStepService.getAllStepsByRecipeId(1, 1);
 
         assertEquals(3, result.size());
         assertEquals(1, result.get(0).stepNr());
@@ -92,11 +93,23 @@ public class RecipeStepServiceTest {
     @Test
     void getAllStepsByRecipeId_returnsEmptyList_whenNoneFound()
     {
+        when(recipeRepository.findAccessibleByIdAndUserId(99, 1)).thenReturn(Optional.of(recipe));
         when(recipeStepRepository.findByRecipe_RecipeIdOrderByStepNrAsc(99)).thenReturn(List.of());
 
-        List<RecipeStepResponse> result = recipeStepService.getAllStepsByRecipeId(99);
+        List<RecipeStepResponse> result = recipeStepService.getAllStepsByRecipeId(99, 1);
 
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getAllStepsByRecipeId_throwsException_whenRecipeNotAccessible()
+    {
+        when(recipeRepository.findAccessibleByIdAndUserId(1, 99)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.getAllStepsByRecipeId(1, 99));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
     }
 
     @Test
@@ -130,8 +143,8 @@ public class RecipeStepServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.createRecipeStep(request, 1, 99));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of this recipe can modify its steps.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
     }
 
     @Test
@@ -166,8 +179,8 @@ public class RecipeStepServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.updateRecipeStep(1, request, 1, 99));
         
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of this recipe can modify its steps.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
     }
 
     @Test
@@ -191,8 +204,8 @@ public class RecipeStepServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.updateRecipeStep(1, request, 1, 1));
         
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Step must be part of the recipe.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Step not found.", ex.getReason());
     }
 
     @Test
@@ -225,8 +238,8 @@ public class RecipeStepServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.deleteRecipeStep(1, 1, 99));
         
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of this recipe can modify its steps.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
     }
 
     @Test
@@ -250,8 +263,8 @@ public class RecipeStepServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.deleteRecipeStep(1, 1, 1));
         
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Step must be part of the recipe.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Step not found.", ex.getReason());
     }
 
     @Test
@@ -278,8 +291,8 @@ public class RecipeStepServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.reorderSteps(1, reorderRequest, 99));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of the recipe can manipulate the order of the steps.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
     }
 
     @Test

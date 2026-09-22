@@ -53,7 +53,8 @@ public class VaultFolderService {
 
         isOwnerOrMember(vaultForCheck, userId);
 
-        VaultFolder vaultFolderForReturn = vaultFolderRepository.findByFolderName(name).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
+        VaultFolder vaultFolderForReturn = vaultFolderRepository.findByVault_VaultIdAndFolderName(vaultId, name)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
 
         return VaultFolderResponse.from(vaultFolderForReturn);
     }
@@ -73,7 +74,8 @@ public class VaultFolderService {
 
         isOwnerOrMember(vaultForCheck, userId);
         
-        VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
+        VaultFolder vaultFolderForReturn = vaultFolderRepository.findByVault_VaultIdAndFolderId(vaultId, id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
         return VaultFolderResponse.from(vaultFolderForReturn);
     }
 
@@ -95,9 +97,9 @@ public class VaultFolderService {
         
         isOwner(vaultForCheck, ownerId);
 
-        VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
-        
-        vaultFolderForReturn.setVault(vaultForCheck);
+        VaultFolder vaultFolderForReturn = vaultFolderRepository.findByVault_VaultIdAndFolderId(request.vaultId(), id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
+
         vaultFolderForReturn.setFolderName(request.folderName());
 
         return VaultFolderResponse.from(vaultFolderRepository.save(vaultFolderForReturn));
@@ -109,6 +111,9 @@ public class VaultFolderService {
         Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
         
         isOwner(vaultForCheck, ownerId);
+
+        vaultFolderRepository.findByVault_VaultIdAndFolderId(vaultId, id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
 
         vaultFolderRepository.deleteById(id);
     }
@@ -134,7 +139,7 @@ public class VaultFolderService {
 
         if (!isOwner && !isMember)
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault member/owner can view the folders.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found.");
         }
     }
 
@@ -142,7 +147,7 @@ public class VaultFolderService {
     {
         if (!vault.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault owner can modify folders.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found.");
         }
     }
 }

@@ -42,6 +42,7 @@ def novelty_score(recipe_id: int, swipe_history: list[SwipeHistoryEntry]) -> flo
 
     return NEUTRAL_SIGNAL_VALUE
 
+
 # Although not used in the main pipeline this isn't dead code and is left in for unit testing
 def pantry_coverage_score(recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]) -> float:
     if not recipe_ingredients:
@@ -50,23 +51,28 @@ def pantry_coverage_score(recipe_ingredients: list[Ingredient], pantry: list[Pan
     owned_ids, _ = pantry_ingredient_match(recipe_ingredients, pantry)
     return len(owned_ids) / len(recipe_ingredients)
 
+
 def cuisine_affinity_score(cuisine: str, cuisine_affinities: dict[str, float]) -> float:
     return cuisine_affinities.get(cuisine, NEUTRAL_SIGNAL_VALUE)
+
 
 def _score_high_protein(nutrition: Nutrition) -> float:
     if nutrition.protein_g is None:
         return NEUTRAL_SIGNAL_VALUE
     return 1.0 if nutrition.protein_g >= NUTRITION_HIGH_PROTEIN_MIN_G else 0.0
 
+
 def _score_low_carb(nutrition: Nutrition) -> float:
     if nutrition.carbs_g is None:
         return NEUTRAL_SIGNAL_VALUE
     return 1.0 if nutrition.carbs_g <= NUTRITION_LOW_CARB_MAX_G else 0.0
 
+
 _GOAL_SCORERS = {
     "HIGH_PROTEIN": _score_high_protein,
     "LOW_CARB": _score_low_carb,
 }
+
 
 def nutrition_score(recipe: CandidatePoolEntry, user_state: UserState) -> float:
     if recipe.nutrition is None:
@@ -78,6 +84,7 @@ def nutrition_score(recipe: CandidatePoolEntry, user_state: UserState) -> float:
 
     goal_scores = [_GOAL_SCORERS[goal](recipe.nutrition) for goal in relevant_goals]
     return sum(goal_scores) / len(goal_scores)
+
 
 def freshness_score(recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]) -> float:
     owned_ids, _ = pantry_ingredient_match(recipe_ingredients, pantry)

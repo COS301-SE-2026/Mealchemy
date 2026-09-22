@@ -114,8 +114,8 @@ public class VaultMemberServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.getVaultMembersByVaultId(1, 3));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only a member/owner of the vault can view its members.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Vault not found.", ex.getReason());
     }
 
     @Test
@@ -150,8 +150,8 @@ public class VaultMemberServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.addVaultMember(1, request, 3));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of the vault can add a new member.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Vault not found.", ex.getReason());
     }
 
     @Test
@@ -174,8 +174,8 @@ public class VaultMemberServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.addVaultMember(1, request, 1));
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-        assertEquals("User not found.", ex.getReason());
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("Unable to add member.", ex.getReason());
     }
 
     @Test
@@ -209,8 +209,8 @@ public class VaultMemberServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.removeVaultMember(1, request, 3));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of the vault can remove a member.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Vault not found.", ex.getReason());
     }
 
     @Test
@@ -221,8 +221,8 @@ public class VaultMemberServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.removeVaultMember(1, request, 1));
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-        assertEquals("User not found.", ex.getReason());
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("Unable to remove member.", ex.getReason());
     }
 
     @Test
@@ -234,7 +234,7 @@ public class VaultMemberServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.removeVaultMember(1, request, 1));
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-        assertEquals("VaultMember row not found.", ex.getReason());
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("Unable to remove member.", ex.getReason());
     }
 }
