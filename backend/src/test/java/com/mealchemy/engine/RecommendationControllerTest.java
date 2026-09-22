@@ -9,6 +9,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -29,6 +31,7 @@ import com.mealchemy.engine.dto.EnrichedRecommendationResponse;
 import com.mealchemy.engine.dto.EnrichedRecommendationItem;
 import com.mealchemy.engine.dto.SignalScoresResponse;
 import com.mealchemy.recipe.dto.RecipeResponse;
+import com.mealchemy.engine.dto.RecommendationFilters;
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(RecommendationController.class)
@@ -68,7 +71,7 @@ public class RecommendationControllerTest {
     @Test
     void getRecommendations_returns200_withEnrichedList() throws Exception
     {
-        when(recommendationService.getRecommendations(eq(1), isNull(), isNull(), isNull())).thenReturn(response);
+        when(recommendationService.getRecommendations(eq(1), isNull(), isNull(), isNull(), eq(RecommendationFilters.none()))).thenReturn(response);
 
         mockMvc.perform(get("/discovery/recommendations"))
             .andExpect(status().isOk())
@@ -81,7 +84,7 @@ public class RecommendationControllerTest {
     void getRecommendations_returns200_withEmptyPool() throws Exception
     {
         EnrichedRecommendationResponse empty = EnrichedRecommendationResponse.empty();
-        when(recommendationService.getRecommendations(eq(1), isNull(), isNull(), isNull())).thenReturn(empty);
+        when(recommendationService.getRecommendations(eq(1), isNull(), isNull(), isNull(), eq(RecommendationFilters.none()))).thenReturn(empty);
 
         mockMvc.perform(get("/discovery/recommendations"))
             .andExpect(status().isOk())
@@ -92,7 +95,7 @@ public class RecommendationControllerTest {
     @Test
     void getRecommendations_passesBatchSizeQueryParamThrough() throws Exception
     {
-        when(recommendationService.getRecommendations(eq(1), eq(15), isNull(), isNull())).thenReturn(response);
+        when(recommendationService.getRecommendations(eq(1), eq(15), isNull(), isNull(), eq(RecommendationFilters.none()))).thenReturn(response);
 
         mockMvc.perform(get("/discovery/recommendations").param("batchSize", "15"))
             .andExpect(status().isOk())
@@ -102,7 +105,7 @@ public class RecommendationControllerTest {
     @Test
     void getRecommendations_passesExcludeRecipeIdsQueryParamThrough() throws Exception
     {
-        when(recommendationService.getRecommendations(eq(1), isNull(), eq(List.of(200, 201)), isNull())).thenReturn(response);
+        when(recommendationService.getRecommendations(eq(1), isNull(), eq(List.of(200, 201)), isNull(), eq(RecommendationFilters.none()))).thenReturn(response);
 
         mockMvc.perform(get("/discovery/recommendations")
             .param("excludeRecipeIds", "200", "201"))
@@ -113,7 +116,7 @@ public class RecommendationControllerTest {
     @Test
     void getRecommendations_passesSeedQueryParamThrough() throws Exception
     {
-        when(recommendationService.getRecommendations(eq(1), isNull(), isNull(), eq(42))).thenReturn(response);
+        when(recommendationService.getRecommendations(eq(1), isNull(), isNull(), eq(42), eq(RecommendationFilters.none()))).thenReturn(response);
 
         mockMvc.perform(get("/discovery/recommendations").param("seed", "42"))
             .andExpect(status().isOk())
@@ -125,5 +128,38 @@ public class RecommendationControllerTest {
     {
         mockMvc.perform(get("/discovery/recommendations").param("batchSize", "not-a-number"))
             .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getRecommendations_passesFilterQueryParamsThrough() throws Exception
+    {
+        RecommendationFilters expected = new RecommendationFilters(30, 45, List.of("VEGETARIAN", "GLUTEN_FREE"));
+        when(recommendationService.getRecommendations(eq(1), isNull(), isNull(), isNull(), eq(expected))).thenReturn(response);
+
+        mockMvc.perform(get("/discovery/recommendations")
+            .param("maxCookingTimeMins", "30")
+            .param("maxTotalTimeMins", "45")
+            .param("dietaryTags", "VEGETARIAN", "GLUTEN_FREE"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.recommendations[0].recipeId").value(100));
+    }
+
+    @Test
+    void getRecommendations_returns400_whenMaxCookingTimeIsNotAnInteger() throws Exception
+    {
+        mockMvc.perform(get("/discovery/recommendations").param("maxCookingTimeMins", "soon"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getRecommendations_returns400_whenServiceRejectsFilter() throws Exception
+    {
+        RecommendationFilters badTag = new RecommendationFilters(null, null, List.of("QUICK"));
+        when(recommendationService.getRecommendations(eq(1), isNull(), isNull(), isNull(), eq(badTag)))
+            .thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown dietary tag: QUICK."));
+
+        mockMvc.perform(get("/discovery/recommendations").param("dietaryTags", "QUICK"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("Unknown dietary tag: QUICK."));
     }
 }

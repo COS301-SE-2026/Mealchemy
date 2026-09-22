@@ -21,6 +21,7 @@ def post_recommendations(request: RecommendationRequest) -> Response:
             batch_size=request.batch_size,
             exclude_recipe_ids=request.exclude_recipe_ids,
             seed=request.seed,
+            required_tags=request.required_tags,
         )
     except EmptyPoolError as e:
         error = ErrorResponse(error_code=ERROR_CODE_EMPTY_POOL, message=str(e))

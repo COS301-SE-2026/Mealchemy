@@ -58,6 +58,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -241,5 +242,59 @@ public class RecommendationControllerIntegrationTest {
         org.junit.jupiter.api.Assertions.assertEquals("MEDITERRANEAN", candidate.cuisine());
         org.junit.jupiter.api.Assertions.assertEquals(List.of("VEGAN"), candidate.dietaryTags());
         org.junit.jupiter.api.Assertions.assertEquals(1, req.userState().pantry().size());
+    }
+
+    @Test
+    void getRecommendations_dietaryTagParam_resolvedToCanonicalNameAndSentToEngine() throws Exception {
+        when(engineClient.getRecommendations(any(RecommendationRequest.class)))
+            .thenAnswer(invocation -> {
+                RecommendationRequest req = invocation.getArgument(0);
+                org.junit.jupiter.api.Assertions.assertEquals(List.of("VEGAN"), req.requiredTags());
+                return RecommendationResponse.from(List.of(), Map.of(), 0, 1);
+            });
+
+        mockMvc.perform(get("/discovery/recommendations")
+                .param("dietaryTags", "vegan")
+                .with(authentication(authAsTestUser())))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void getRecommendations_returns400_whenDietaryTagUnknown() throws Exception {
+        mockMvc.perform(get("/discovery/recommendations")
+                .param("dietaryTags", "NOT_A_TAG")
+                .with(authentication(authAsTestUser())))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message", is("Unknown dietary tag: NOT_A_TAG.")));
+    }
+
+    @Test
+    void getRecommendations_returns200_withEmptyList_whenTimeFilterExcludesEveryRecipe() throws Exception {
+        mockMvc.perform(get("/discovery/recommendations")
+                .param("maxTotalTimeMins", "5")
+                .with(authentication(authAsTestUser())))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.recommendations").isEmpty())
+            .andExpect(jsonPath("$.totalRecipesConsidered", is(0)));
+
+        verifyNoInteractions(engineClient);
+    }
+
+    @Test
+    void getRecommendations_returns400_whenMaxCookingTimeNotPositive() throws Exception {
+        mockMvc.perform(get("/discovery/recommendations")
+                .param("maxCookingTimeMins", "0")
+                .with(authentication(authAsTestUser())))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message", is("maxCookingTimeMins must be greater than 0.")));
+    }
+
+    @Test
+    void getRecommendations_returns400_whenBatchSizeNotPositive() throws Exception {
+        mockMvc.perform(get("/discovery/recommendations")
+                .param("batchSize", "0")
+                .with(authentication(authAsTestUser())))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message", is("batchSize must be greater than 0.")));
     }
 }

@@ -60,8 +60,7 @@ public class RecipeIngredientController
         @ApiResponse(responseCode = "200", description = "Ingredient line created successfully", content = @Content(schema = @Schema(implementation = RecipeIngredientResponse.class))),
         @ApiResponse(responseCode = "400", description = "The supplied ingredient does not exist in the catalogue", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller does not own this recipe", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Recipe not found, or user profile not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Recipe not found or not owned by the caller, or user profile not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/recipe/{recipeId}/ingredient/create")
@@ -78,8 +77,7 @@ public class RecipeIngredientController
         @ApiResponse(responseCode = "200", description = "Ingredient line updated successfully", content = @Content(schema = @Schema(implementation = RecipeIngredientResponse.class))),
         @ApiResponse(responseCode = "400", description = "The supplied ingredient does not exist in the catalogue", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller does not own this recipe, or the ingredient line does not belong to the specified recipe", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Recipe not found, ingredient line not found, or user profile not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Recipe not found or not owned by the caller, ingredient line not found or not part of the specified recipe, or user profile not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/recipe/{recipeId}/ingredient/{id}/edit")
@@ -95,8 +93,7 @@ public class RecipeIngredientController
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Ingredient line deleted successfully"),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller does not own this recipe, or the ingredient line does not belong to the specified recipe", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Recipe not found, or ingredient line not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Recipe not found or not owned by the caller, or ingredient line not found or not part of the specified recipe", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/recipe/{recipeId}/ingredient/{id}/delete")

@@ -33,8 +33,11 @@ public class RecipeStepService {
     }
 
     // Retrieve all steps relating to a specific recipe
-    public List<RecipeStepResponse> getAllStepsByRecipeId(Integer recipeId)
+    public List<RecipeStepResponse> getAllStepsByRecipeId(Integer recipeId, Integer userId)
     {
+        recipeRepository.findAccessibleByIdAndUserId(recipeId, userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
+        
         return recipeStepRepository.findByRecipe_RecipeIdOrderByStepNrAsc(recipeId).stream().map(RecipeStepResponse::from).collect(Collectors.toList());
     }
 
@@ -45,7 +48,7 @@ public class RecipeStepService {
 
         if(!recipeToCheck.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its steps.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
         }
 
         RecipeStep recipeStepForReturn = mapRequestToEntity(request, recipeToCheck);
@@ -60,14 +63,14 @@ public class RecipeStepService {
 
         if(!recipeToCheck.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its steps.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
         }
 
         RecipeStep recipeStepForReturn = recipeStepRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Step not found."));
 
         if(!recipeStepForReturn.getRecipe().getRecipeId().equals(recipeId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Step must be part of the recipe.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Step not found.");
         }
 
         recipeStepForReturn.setStepNr(request.stepNr());
@@ -83,14 +86,14 @@ public class RecipeStepService {
 
         if (!recipeToCheck.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its steps.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
         }
 
         RecipeStep recipeStepForReturn = recipeStepRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Step not found."));
 
         if (!recipeStepForReturn.getRecipe().getRecipeId().equals(recipeId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Step must be part of the recipe.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Step not found.");
         }
 
         recipeStepRepository.deleteById(id);
@@ -104,7 +107,7 @@ public class RecipeStepService {
         
         if (!recipeToCheck.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of the recipe can manipulate the order of the steps.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
         }
 
         List<RecipeStep> existingSteps = recipeStepRepository.findByRecipe_RecipeIdOrderByStepNrAsc(recipeId);
