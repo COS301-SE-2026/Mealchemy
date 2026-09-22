@@ -18,4 +18,21 @@ public interface VaultMemberRepository extends JpaRepository<VaultMember, Intege
     boolean existsByVault_VaultIdAndUser_UserId(Integer vaultId, Integer userId);
     Optional<VaultMember> findByVault_VaultIdAndUser_UserId(Integer vaultId, Integer userId);
     List<VaultMember> findByUser_UserId(Integer userId);
+
+    // for collaborative vaults
+
+    // is user also a member of whichever vault the recipe is shared in
+    @Query("""
+            SELECT DISTINCT member
+            FROM VaultMember member
+            Where member.user.userId =: userId
+                AND EXISTS (
+                    SELECT folderRecipe.id
+                    FROM VaultFolderRecipe folderRecipe
+                    WHERE folderRecipe.recipe.recipeId = :recipeId
+                    AND folderRecipe.folder.vault = member.vault
+                )
+    """)
+    Optional<VaultMember> findVaultMemberShipForRecipe(@Param("recipeId") Integer recipeId, @Param("userId") Integer userId);
+
 }
