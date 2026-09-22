@@ -18,6 +18,7 @@ import '../models/unit_of_measurement.dart';
 import '../repositories/api_recipe_repository.dart';
 import '../repositories/mock_recipe_repository.dart';
 import '../repositories/recipe_repository.dart';
+import '../../profile/providers/profile_provider.dart';
 
 final remoteRecipeRepositoryProvider = Provider<RecipeRepository>((ref) {
   return ApiRecipeRepository(ref.read(dioProvider));
@@ -222,6 +223,16 @@ final addRecipeProvider =
 final unitsProvider = FutureProvider<List<UnitOfMeasurement>>((ref) {
   final repository = ref.watch(recipeRepositoryProvider);
   return repository.getUnits();
+});
+
+final unitOptionsProvider = Provider<List<UnitOfMeasurement>>((ref) {
+  final all = ref.watch(unitsProvider).valueOrNull ?? const [];
+  final system = ref.watch(unitSystemProvider);
+
+  return all.where((u) {
+    if (u.system == null) return true;
+    return u.system == system.value; 
+  }).toList();
 });
 
 final deleteRecipeProvider = Provider((ref) {

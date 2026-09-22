@@ -222,7 +222,7 @@ void main() {
       ProviderScope(
         overrides: [
           offlineReadOnlyProvider.overrideWithValue(isOffline),
-          unitsProvider.overrideWith((ref) async => units),
+          unitOptionsProvider.overrideWithValue(units),
           pantryRepositoryProvider.overrideWithValue(pantryRepository),
           if (ingredientRepository != null)
             ingredientCatalogueRepositoryProvider
@@ -305,8 +305,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('1'), findsOneWidget);
 
-    //last Icons.add is the stepper plus because the header also has add icon
-    await tester.tap(find.byIcon(Icons.add).last);
+    await tester.tap(find.byIcon(Icons.add));
     await tester.pumpAndSettle();
     expect(find.text('2'), findsOneWidget);
   });

@@ -7,6 +7,8 @@ import 'package:mealchemy/core/shared_widgets/Molecules/app_confirm_dialog.dart'
 import 'package:mealchemy/core/shared_widgets/Molecules/app_input_dialog.dart';
 import 'package:mealchemy/features/auth/providers/auth_provider.dart';
 import 'package:mealchemy/core/connectivity/network_status_provider.dart';
+import 'package:mealchemy/core/providers/feedback_provider.dart';
+import 'package:mealchemy/core/shared_widgets/atoms/app_toast.dart';
 import '../providers/vault_repository_provider.dart';
 import '../models/vault.dart';
 import '../providers/vault_provider.dart';
@@ -92,21 +94,26 @@ class VaultMenuButton extends ConsumerWidget {
         );
         if (email == null) return;
         if (!context.mounted) return;
-        final messenger = ScaffoldMessenger.of(context);
         try {
           await ref
               .read(vaultRepositoryProvider)
               .addMember(vault.vaultId, email);
           ref.invalidate(vaultMembersProvider(vault.vaultId));
-          messenger.showSnackBar(
-            SnackBar(content: Text('$email added to the vault')),
-          );
+          ref.read(feedbackProvider.notifier).showShort(
+                '$email added to the vault',
+                kind: ToastKind.success,
+                icon: Icons.check_circle_outline,
+              );
         } catch (e) {
           final message = e is DioException && e.response?.data is Map
               ? (e.response?.data as Map)['message'] as String? ??
                   'Could not add member.'
               : 'Could not add member.';
-          messenger.showSnackBar(SnackBar(content: Text(message)));
+          ref.read(feedbackProvider.notifier).showShort(
+                message,
+                kind: ToastKind.error,
+                icon: Icons.error_outline,
+              );
         }
 
       case _VaultAction.deleteVault:

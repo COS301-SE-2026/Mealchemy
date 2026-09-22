@@ -19,6 +19,7 @@ import '../../features/recipe/screens/recipe_detail_screen.dart';
 import '../../features/cook_mode/screens/cook_mode_screen.dart';
 import '../../features/recipe/screens/add_recipe_screen.dart';
 import '../../features/discovery/screens/discovery_screen.dart';
+import '../../features/preference/screens/weights_screen.dart';
 
 import '../../features/shopping_lists/screens/shopping_lists_screen.dart';
 import '../../features/shopping_lists/screens/shopping_list_detail_screen.dart';
@@ -43,27 +44,9 @@ final appRouter = GoRouter(
       builder: (context, state) => const SignupScreen(),
     ),
     GoRoute(
-      //translucent overlay: opaque false keeps the previous screen
-      //visible so the header can blur it. open with push, not go
-
       path: AppRoutes.addIngredient,
-      pageBuilder: (context, state) => CustomTransitionPage(
-        key: state.pageKey,
-        opaque: false,
-        barrierColor: Colors.transparent,
-        child: const AddIngredientScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 1),
-              end: Offset.zero,
-            ).animate(
-              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-            ),
-            child: child,
-          );
-        },
-      ),
+      pageBuilder: (context, state) =>
+          _sheetPage(state.pageKey, const AddIngredientScreen()),
     ),
     GoRoute(
       path: AppRoutes.addRecipe,
@@ -117,7 +100,11 @@ final appRouter = GoRouter(
         return AddShoppingListItemScreen(listId: id);
       },
     ),
-
+    GoRoute(
+      path: AppRoutes.recommendationSettings,
+      pageBuilder: (context, state) =>
+          _sheetPage(state.pageKey, const WeightsScreen()),
+    ),
     GoRoute(
       path: AppRoutes.help,
       builder: (context, state) => const HelpScreen(),
@@ -152,33 +139,55 @@ final appRouter = GoRouter(
       routes: [
         GoRoute(
           path: AppRoutes.dashboard,
-          builder: (context, state) => const DashboardScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const DashboardScreen()),
         ),
         GoRoute(
           path: AppRoutes.vault,
-          builder: (context, state) => const VaultScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const VaultScreen()),
         ),
         GoRoute(
           path: AppRoutes.discovery,
-          builder: (context, state) => const DiscoveryScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const DiscoveryScreen()),
         ),
         GoRoute(
           path: AppRoutes.pantry,
-          builder: (context, state) => const PantryScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const PantryScreen()),
         ),
         GoRoute(
           path: AppRoutes.profile,
-          builder: (context, state) => const ProfileScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const ProfileScreen()),
         ),
         GoRoute(
           path: AppRoutes.shoppingLists,
-          builder: (context, state) => const ShoppingListsScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const ShoppingListsScreen()),
         ),
         GoRoute(
           path: AppRoutes.guidedDiscovery,
-          builder: (context, state) => const GuidedDiscoveryScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const GuidedDiscoveryScreen()),
         ),
       ],
     ),
   ],
 );
+
+// translucent slide up page keeps the previous screen painted underneath
+// so a header BackdropFilter can blur it open with push, not go.
+CustomTransitionPage<void> _sheetPage(LocalKey key, Widget child) {
+  return CustomTransitionPage(
+    key: key,
+    opaque: false,
+    barrierColor: Colors.transparent,
+    child: child,
+    transitionsBuilder: (context, animation, _, child) {
+      return SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 1),
+          end: Offset.zero,
+        ).animate(
+          CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+        ),
+        child: child,
+      );
+    },
+  );
+}

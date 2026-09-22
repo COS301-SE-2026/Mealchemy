@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mealchemy/core/providers/feedback_provider.dart';
+import 'package:mealchemy/core/shared_widgets/atoms/app_toast.dart';
 
 import '../../../core/shared_widgets/Molecules/app_confirm_dialog.dart';
 import '../../../core/shared_widgets/atoms/app_button.dart';
@@ -20,7 +22,6 @@ import '../services/recipe_photo_picker.dart';
 import '../widgets/ingredient_editor_row.dart';
 import '../widgets/recipe_photo_selector.dart';
 import '../widgets/step_editor_row.dart';
-import '../models/unit_of_measurement.dart';
 
 class AddRecipeScreen extends ConsumerStatefulWidget {
   const AddRecipeScreen({
@@ -178,9 +179,11 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     final message = error is RecipePhotoValidationException
         ? error.message
         : 'Could not select the photo. Try again.';
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    _showToast(message, kind: ToastKind.error, icon: Icons.error_outline);
+  }
+
+  void _showToast(String message, {ToastKind kind = ToastKind.info,  IconData? icon,}) {
+    ref.read(feedbackProvider.notifier).showShort(message, kind: kind, icon: icon);
   }
 
   void _removeSelectedPhoto() {
@@ -263,11 +266,10 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       } catch (_) {
         if (!mounted) return;
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content:
-                Text('Could not upload the photo. Changes were not saved.'),
-          ),
+        _showToast(
+          'Could not upload the photo. Changes were not saved.',
+          kind: ToastKind.error,
+          icon: Icons.error_outline,
         );
         return;
       }
@@ -334,28 +336,25 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     if (!mounted) return;
     setState(() => _isSaving = false);
 
+    // saveFailed && photoFailed
     if (saveFailed && photoFailed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Recipe saved, but some items and the photo did not.'),
-        ),
+      _showToast(
+        'Recipe saved, but some items and the photo did not.',
+        kind: ToastKind.error,
+        icon: Icons.error_outline,
       );
     } else if (saveFailed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Recipe saved, but some items did not.')),
-      );
+      _showToast('Recipe saved, but some items did not.',
+          kind: ToastKind.error,
+          icon: Icons.error_outline);
     } else if (photoFailed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Recipe saved, but the photo did not upload.'),
-        ),
-      );
+      _showToast('Recipe saved, but the photo did not upload.',
+          kind: ToastKind.error,
+          icon: Icons.error_outline);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(widget.isEditing ? 'Changes saved' : 'Recipe saved'),
-        ),
-      );
+      _showToast(widget.isEditing ? 'Changes saved' : 'Recipe saved',
+          kind: ToastKind.success,
+          icon: Icons.check_circle_outline);
     }
 
     ref.read(addRecipeProvider.notifier).reset();
@@ -424,9 +423,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
           ref.invalidate(recipeDetailProvider(widget.editRecipeId!));
         }
       } else if (next.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.errorMessage!)),
-        );
+        _showToast(next.errorMessage!, kind: ToastKind.error, icon: Icons.error_outline);
       }
     });
 
@@ -478,20 +475,14 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     }
 
     final cuisinesState = ref.watch(cuisineTypesProvider);
-    final unitsState = ref.watch(unitsProvider);
     final submissionState = ref.watch(addRecipeProvider);
 
     Widget body = cuisinesState.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => const _AddRecipeError(),
-      data: (cuisines) => unitsState.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => const _AddRecipeError(),
-        data: (units) => _buildForm(
-          cuisines,
-          units,
-          submissionState.isSubmitting || _isSaving,
-        ),
+      data: (cuisines) => _buildForm(
+        cuisines,
+        submissionState.isSubmitting || _isSaving,
       ),
     );
 
@@ -505,14 +496,9 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
           return cuisinesState.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, _) => const _AddRecipeError(),
-            data: (cuisines) => unitsState.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => const _AddRecipeError(),
-              data: (units) => _buildForm(
-                cuisines,
-                units,
-                submissionState.isSubmitting || _isSaving,
-              ),
+            data: (cuisines) => _buildForm(
+              cuisines,
+              submissionState.isSubmitting || _isSaving,
             ),
           );
         },
@@ -534,8 +520,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     );
   }
 
-  Widget _buildForm(
-      List<String> cuisines, List<UnitOfMeasurement> units, bool isSubmitting) {
+  Widget _buildForm(List<String> cuisines, bool isSubmitting) {
     return ListView(
       controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
@@ -670,7 +655,6 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
             key: ValueKey(_ingredientRows[i]),
             selectedItem: _ingredientRows[i].item,
             quantityController: _ingredientRows[i].quantity,
-            units: units,
             selectedUnit: _ingredientRows[i].unit,
             onUnitChanged: (u) => setState(() => _ingredientRows[i].unit = u),
             onItemSelected: (item) =>
