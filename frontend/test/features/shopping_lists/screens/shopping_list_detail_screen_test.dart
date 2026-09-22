@@ -511,8 +511,10 @@ void main() {
             _DeleteMenuShoppingListRepository(),
           ),
         ],
-        child: const MaterialApp(
-          home: ShoppingListDetailScreen(listId: '1'),
+        child: MaterialApp(
+          home: const ShoppingListDetailScreen(listId: '1'),
+          builder: (context, child) =>
+              toastHost(child ?? const SizedBox.shrink()),
         ),
       ),
     );
