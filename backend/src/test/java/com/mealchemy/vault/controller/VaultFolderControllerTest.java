@@ -150,17 +150,17 @@ public class VaultFolderControllerTest {
     }
 
     @Test
-    void createVaultFolder_returns404_whenNotOwner() throws Exception
+    void createVaultFolder_returns403_whenNotOwnerOrEditor() throws Exception
     {
         when(vaultFolderService.createVaultFolder(any(VaultFolderRequest.class), eq(1)))
-            .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
+            .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault owner or editor can modify folders."));
 
         mockMvc.perform(post("/folders")
             .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.message").value("Vault not found."));
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message").value("Only a vault owner or editor can modify folders."));
     }
 
     @Test
@@ -200,13 +200,13 @@ public class VaultFolderControllerTest {
     }
 
     @Test
-    void deleteVaultFolder_returns404_whenNotOwner() throws Exception
+    void deleteVaultFolder_returns403_whenNotOwnerOrEditor() throws Exception
     {
-        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."))
+        doThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault owner or editor can modify folders."))
             .when(vaultFolderService).deleteVaultFolder(1, 1, 1);
 
         mockMvc.perform(delete("/folders/vault/1/folder/1").with(csrf()))
-            .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.message").value("Vault not found."));
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message").value("Only a vault owner or editor can modify folders."));
     }
 }

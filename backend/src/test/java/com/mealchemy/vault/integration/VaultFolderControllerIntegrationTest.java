@@ -246,7 +246,7 @@ public class VaultFolderControllerIntegrationTest {
     }
 
     @Test
-    void createVaultFolder_returns404_whenNotOwner() throws Exception {
+    void createVaultFolder_returns403_whenNotOwnerOrEditor() throws Exception {
         VaultFolderRequest request = new VaultFolderRequest(sharedVault.getVaultId(), "NewFolder");
 
         mockMvc.perform(post("/folders")
@@ -254,8 +254,8 @@ public class VaultFolderControllerIntegrationTest {
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Vault not found."));
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Only a vault owner/editor can modify folders."));
     }
 
     @Test
@@ -292,7 +292,7 @@ public class VaultFolderControllerIntegrationTest {
     }
 
     @Test
-    void updateVaultFolder_returns404_whenNotOwner() throws Exception {
+    void updateVaultFolder_returns403_whenNotOwnerOrEditor() throws Exception {
         VaultFolder folder = newFolder(sharedVault, "General");
         VaultFolderRequest request = new VaultFolderRequest(sharedVault.getVaultId(), "Renamed");
 
@@ -301,8 +301,8 @@ public class VaultFolderControllerIntegrationTest {
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Vault not found."));
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Only a vault owner/editor can modify folders."));
     }
 
     @Test
@@ -347,14 +347,14 @@ public class VaultFolderControllerIntegrationTest {
     }
 
     @Test
-    void deleteVaultFolder_returns404_whenNotOwner() throws Exception {
+    void deleteVaultFolder_returns403_whenNotOwnerOrEditor() throws Exception {
         VaultFolder folder = newFolder(sharedVault, "General");
 
         mockMvc.perform(delete("/folders/vault/{vaultId}/folder/{id}", sharedVault.getVaultId(), folder.getFolderId())
                 .with(authentication(authAs(outsider.getUserId())))
                 .with(csrf()))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Vault not found."));
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Only a vault owner/editor can modify folders."));
 
         org.junit.jupiter.api.Assertions.assertTrue(vaultFolderRepository.findById(folder.getFolderId()).isPresent());
     }

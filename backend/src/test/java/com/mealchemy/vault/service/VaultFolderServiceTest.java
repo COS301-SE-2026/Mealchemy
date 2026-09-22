@@ -8,6 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import static org.mockito.ArgumentMatchers.anyInt;
 
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -22,6 +23,7 @@ import org.springframework.http.HttpStatus;
 /* Import classes */
 
 import com.mealchemy.vault.model.VaultFolder;
+import com.mealchemy.vault.model.VaultMember;
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.auth.model.User;
 import com.mealchemy.vault.dto.VaultFolderRequest;
@@ -30,6 +32,7 @@ import com.mealchemy.vault.repository.VaultFolderRepository;
 import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.vault.repository.VaultMemberRepository;
 import com.mealchemy.shared.enums.VaultType;
+import com.mealchemy.shared.enums.VaultMemberRole;
 
 @ExtendWith(MockitoExtension.class)
 public class VaultFolderServiceTest
@@ -50,6 +53,8 @@ public class VaultFolderServiceTest
     private Vault vault;
     private Vault privateVault;
     private VaultFolderRequest request;
+    private VaultMember editorMember;
+    private VaultMember viewerMember;
 
     @BeforeEach
     void setUp()
@@ -72,6 +77,14 @@ public class VaultFolderServiceTest
         ReflectionTestUtils.setField(folder, "folderId", 1);
 
         request = new VaultFolderRequest(1, "General");
+
+        editorMember = new VaultMember();
+        editorMember.setVault(vault);
+        editorMember.setRole(VaultMemberRole.EDITOR);
+ 
+        viewerMember = new VaultMember();
+        viewerMember.setVault(vault);
+        viewerMember.setRole(VaultMemberRole.VIEWER);
     }
 
     @Test
@@ -290,6 +303,20 @@ public class VaultFolderServiceTest
     }
 
     @Test
+    void createVaultFolder_returnsCreatedVaultFolder_whenEditor()
+    {
+        when(vaultRepository.findById(request.vaultId())).thenReturn(Optional.of(vault));
+        when(vaultMemberRepository.findByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(Optional.of(editorMember));
+        when(vaultFolderRepository.save(any(VaultFolder.class))).thenReturn(folder);
+
+        VaultFolderResponse result = vaultFolderService.createVaultFolder(request, 3);
+
+        assertNotNull(result);
+        assertEquals("General", result.folderName());
+        verify(vaultFolderRepository, times(1)).save(any(VaultFolder.class));
+    }
+
+    @Test
     void createVaultFolder_throwsException_whenVaultNotFound()
     {
         when(vaultRepository.findById(request.vaultId())).thenReturn(Optional.empty());
@@ -301,14 +328,15 @@ public class VaultFolderServiceTest
     }
 
     @Test
-    void createVaultFolder_throwsException_whenNotOwner()
+    void createVaultFolder_throwsException_whenNotOwnerOrEditor()
     {
         when(vaultRepository.findById(request.vaultId())).thenReturn(Optional.of(vault));
-        
+        when(vaultMemberRepository.findByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(Optional.empty());
+
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.createVaultFolder(request, 3));
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-        assertEquals("Vault not found.", ex.getReason());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only a vault owner/editor can modify folders.", ex.getReason());
     }
 
     @Test
@@ -341,14 +369,15 @@ public class VaultFolderServiceTest
     }
 
     @Test
-    void updateVaultFolder_throwsException_whenNotOwner()
+    void updateVaultFolder_throwsException_whenNotOwnerOrEditor()
     {
         when(vaultRepository.findById(request.vaultId())).thenReturn(Optional.of(vault));
+        when(vaultMemberRepository.findByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.updateVaultFolder(1, request, 3));
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-        assertEquals("Vault not found.", ex.getReason());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only a vault owner/editor can modify folders.", ex.getReason());
     }
 
     @Test
@@ -400,13 +429,14 @@ public class VaultFolderServiceTest
     }
 
     @Test
-    void deleteVaultFolder_throwsException_whenNotOwner()
+    void deleteVaultFolder_throwsException_whenNotOwnerOrEditor()
     {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultMemberRepository.findByVault_VaultIdAndUser_UserId(1, 3)).thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultFolderService.deleteVaultFolder(1, 1, 3));
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-        assertEquals("Vault not found.", ex.getReason());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only a vault owner/editor can modify folders.", ex.getReason());
     }
 }

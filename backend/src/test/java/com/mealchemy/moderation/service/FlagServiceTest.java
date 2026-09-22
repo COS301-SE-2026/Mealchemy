@@ -168,7 +168,7 @@ public class FlagServiceTest {
     }
 
     @Test
-    void getFlagDetai_whenNotFound_throwsNotFound() {
+    void getFlagDetail_whenNotFound_throwsNotFound() {
         // Arrange
         when(flaggedRecipeRepository.findById(99)).thenReturn(Optional.empty());
 

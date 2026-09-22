@@ -30,8 +30,11 @@ import org.springframework.http.HttpStatus;
 /* Import classes */
 import com.mealchemy.vault.dto.VaultMemberRequest;
 import com.mealchemy.vault.dto.VaultMemberResponse;
+import com.mealchemy.vault.dto.VaultMemberRoleRequest;
 import com.mealchemy.vault.service.VaultMemberService;
 import com.mealchemy.config.WithMockJwtUser;
+
+import com.mealchemy.shared.enums.VaultMemberRole;
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(VaultMemberController.class)
@@ -51,13 +54,16 @@ public class VaultMemberControllerTest {
 
     private VaultMemberResponse response;
     private VaultMemberRequest request;
+    private VaultMemberRoleRequest roleRequest;
 
     @BeforeEach
     void setUp()
     {
-        response = new VaultMemberResponse(1, 1, 2, OffsetDateTime.now());
+        response = new VaultMemberResponse(1, 1, 2, "testUser@gmail.com", OffsetDateTime.now(), VaultMemberRole.EDITOR);
 
         request = new VaultMemberRequest("testUser@gmail.com");
+
+        roleRequest = new VaultMemberRoleRequest(VaultMemberRole.EDITOR);
     }
 
     @Test
@@ -119,26 +125,64 @@ public class VaultMemberControllerTest {
     @Test
     void removeVaultMember_returns204() throws Exception
     {
-        doNothing().when(vaultMemberService).removeVaultMember(eq(1), any(VaultMemberRequest.class), eq(1));
+        doNothing().when(vaultMemberService).removeVaultMember(1, 2, 1);
 
-        mockMvc.perform(delete("/vault/1/members/delete")
-            .with(csrf())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(delete("/vault/1/members/2").with(csrf()))
             .andExpect(status().isNoContent());
     }
 
     @Test
     void removeVaultMember_returns400_whenMemberRowNotFound() throws Exception
     {
-        doThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to remove member."))
-            .when(vaultMemberService).removeVaultMember(eq(1), any(VaultMemberRequest.class), eq(1));
+        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "VaultMember row not found."))
+            .when(vaultMemberService).removeVaultMember(1, 2, 1);
 
-        mockMvc.perform(delete("/vault/1/members/delete")
-            .with(csrf())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.message").value("Unable to remove member."));
+        mockMvc.perform(delete("/vault/1/members/2").with(csrf()))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message").value("VaultMember row not found."));
     }
+
+    @Test
+void changeRole_returns200_withUpdatedMember() throws Exception
+{
+    when(vaultMemberService.changeRole(eq(1), eq(2), any(VaultMemberRoleRequest.class), eq(1))).thenReturn(response);
+
+    mockMvc.perform(patch("/vault/1/members/2/role")
+        .with(csrf())
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(roleRequest)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.userId").value(2));
+}
+
+@Test
+void changeRole_returns400_whenSettingOwner() throws Exception
+{
+    VaultMemberRoleRequest ownerRequest = new VaultMemberRoleRequest(VaultMemberRole.OWNER);
+
+    when(vaultMemberService.changeRole(eq(1), eq(2), any(VaultMemberRoleRequest.class), eq(1)))
+        .thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only one owner per vault."));
+
+    mockMvc.perform(patch("/vault/1/members/2/role")
+        .with(csrf())
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(ownerRequest)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("Only one owner per vault."));
+}
+
+@Test
+void changeRole_returns403_whenNotOwner() throws Exception
+{
+    when(vaultMemberService.changeRole(eq(1), eq(2), any(VaultMemberRoleRequest.class), eq(1)))
+        .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of the vault can change a member's role."));
+
+    mockMvc.perform(patch("/vault/1/members/2/role")
+        .with(csrf())
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(roleRequest)))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.message").value("Only the owner of the vault can change a member's role."));
+}
+
 }
