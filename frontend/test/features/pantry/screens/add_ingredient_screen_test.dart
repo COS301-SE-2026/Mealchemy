@@ -15,6 +15,8 @@ import 'package:mealchemy/features/pantry/screens/add_ingredient_screen.dart';
 import 'package:mealchemy/features/pantry/widgets/pantry_item_card.dart';
 import 'package:mealchemy/features/pantry/models/ingredient_category.dart';
 import 'package:mealchemy/features/pantry/models/pending_external_ingredient.dart';
+import 'package:mealchemy/features/recipe/models/unit_of_measurement.dart';
+import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
 
 class _FakeIngredientCatalogueRepository extends IngredientCatalogueRepository {
   _FakeIngredientCatalogueRepository({
@@ -177,6 +179,13 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
+  const units = [
+    UnitOfMeasurement(unitId: 1, name: 'g', system: 'METRIC'),
+    UnitOfMeasurement(unitId: 2, name: 'kg', system: 'METRIC'),
+    UnitOfMeasurement(unitId: 3, name: 'oz', system: 'IMPERIAL'),
+    UnitOfMeasurement(unitId: 4, name: 'pcs', system: null),
+  ];
+
   Future<_RecordingPantryRepository> pumpAddIngredientScreen(
     WidgetTester tester, {
     _FakeIngredientCatalogueRepository? ingredientRepository,
@@ -211,6 +220,7 @@ void main() {
       ProviderScope(
         overrides: [
           offlineReadOnlyProvider.overrideWithValue(isOffline),
+          unitOptionsProvider.overrideWithValue(units),
           pantryRepositoryProvider.overrideWithValue(pantryRepository),
           if (ingredientRepository != null)
             ingredientCatalogueRepositoryProvider
@@ -293,8 +303,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('1'), findsOneWidget);
 
-    //last Icons.add is the stepper plus because the header also has add icon
-    await tester.tap(find.byIcon(Icons.add).last);
+    await tester.tap(find.byIcon(Icons.add));
     await tester.pumpAndSettle();
     expect(find.text('2'), findsOneWidget);
   });
