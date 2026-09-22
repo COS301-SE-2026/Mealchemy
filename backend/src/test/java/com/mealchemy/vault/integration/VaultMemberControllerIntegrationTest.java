@@ -99,10 +99,12 @@ public class VaultMemberControllerIntegrationTest {
         mockMvc.perform(get("/vault/{vaultId}/members/all", sharedVault.getVaultId())
                         .with(authentication(authAs(owner.getUserId()))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].userId", is(member.getUserId())))
-                .andExpect(jsonPath("$[0].vaultId", is(sharedVault.getVaultId())))
-                .andExpect(jsonPath("$[0].joinedAt", notNullValue()));
+                .andExpect(jsonPath("$", hasSize(2)))
+            .andExpect(jsonPath("$[0].userId", is(owner.getUserId())))
+            .andExpect(jsonPath("$[0].id").doesNotExist())
+            .andExpect(jsonPath("$[1].userId", is(member.getUserId())))
+            .andExpect(jsonPath("$[1].vaultId", is(sharedVault.getVaultId())))
+            .andExpect(jsonPath("$[1].joinedAt", notNullValue()));
     }
 
     @Test
@@ -112,8 +114,9 @@ public class VaultMemberControllerIntegrationTest {
         mockMvc.perform(get("/vault/{vaultId}/members/all", sharedVault.getVaultId())
                         .with(authentication(authAs(member.getUserId()))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].userId", is(member.getUserId())));
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].userId", is(owner.getUserId())))
+                .andExpect(jsonPath("$[1].userId", is(member.getUserId())));
     }
 
     @Test
@@ -214,13 +217,9 @@ public class VaultMemberControllerIntegrationTest {
     void removeVaultMember_returns204_andDeletesRow() throws Exception {
         addMemberRow(sharedVault, member);
 
-        VaultMemberRequest request = new VaultMemberRequest(member.getEmail());
-
-        mockMvc.perform(delete("/vault/{vaultId}/members/delete", sharedVault.getVaultId())
+        mockMvc.perform(delete("/vault/{vaultId}/members/{userId}", sharedVault.getVaultId(), member.getUserId())
                         .with(authentication(authAs(owner.getUserId())))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .with(csrf()))
                 .andExpect(status().isNoContent());
 
         org.junit.jupiter.api.Assertions.assertTrue(
@@ -232,39 +231,18 @@ public class VaultMemberControllerIntegrationTest {
     void removeVaultMember_returns403_whenNotOwner() throws Exception {
         addMemberRow(sharedVault, member);
 
-        VaultMemberRequest request = new VaultMemberRequest(member.getEmail());
-
-        mockMvc.perform(delete("/vault/{vaultId}/members/delete", sharedVault.getVaultId())
+        mockMvc.perform(delete("/vault/{vaultId}/members/{userId}", sharedVault.getVaultId(), member.getUserId())
                         .with(authentication(authAs(outsider.getUserId())))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .with(csrf()))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("Only the owner of the vault can remove a member."));
     }
 
     @Test
-    void removeVaultMember_returns404_whenUserNotFound() throws Exception {
-        VaultMemberRequest request = new VaultMemberRequest("doesnotexist@gmail.com");
-
-        mockMvc.perform(delete("/vault/{vaultId}/members/delete", sharedVault.getVaultId())
-                        .with(authentication(authAs(owner.getUserId())))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("User not found."));
-    }
-
-    @Test
     void removeVaultMember_returns404_whenMemberRowNotFound() throws Exception {
-        VaultMemberRequest request = new VaultMemberRequest(member.getEmail());
-
-        mockMvc.perform(delete("/vault/{vaultId}/members/delete", sharedVault.getVaultId())
+        mockMvc.perform(delete("/vault/{vaultId}/members/{userId}", sharedVault.getVaultId(), member.getUserId())
                         .with(authentication(authAs(owner.getUserId())))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .with(csrf()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("VaultMember row not found."));
     }
