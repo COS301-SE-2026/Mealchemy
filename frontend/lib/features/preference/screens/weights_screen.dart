@@ -16,6 +16,8 @@ import '../widgets/weights_help_sheet.dart';
 
 const double _blurArea = 220;
 const double _sheetTop = 190;
+const double _dismissDistance = 120;
+const double _dismissVelocity = 700;
 
 class WeightsScreen extends ConsumerStatefulWidget {
   const WeightsScreen({super.key});
@@ -28,6 +30,8 @@ class _WeightsScreenState extends ConsumerState<WeightsScreen> {
   final _scroll = ScrollController();
   PreferenceWeights? _draft;
   bool _saving = false;
+  double _drag = 0;
+  bool _dragging = false;
 
   @override
   void dispose() {
@@ -60,15 +64,52 @@ class _WeightsScreenState extends ConsumerState<WeightsScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    ref.listen(weightsProvider, (_, next) {
-      next.whenData((w) {
-        if (_draft == null && mounted) setState(() => _draft = w);
-      });
+  void _dragBy(double dy) {
+    setState(() {
+      _dragging = true;
+      _drag = (_drag + dy).clamp(0, double.infinity);
     });
+  }
 
+  void _release(double velocity) {
+    if (!_dragging) return;
+    if (_drag > _dismissDistance || velocity > _dismissVelocity) {
+      context.pop();
+      return;
+    }
+    setState(() {
+      _dragging = false;
+      _drag = 0;
+    });
+  }
+
+  bool _onScroll(ScrollNotification n) {
+    if (n is OverscrollNotification &&
+        n.overscroll < 0 &&
+        n.dragDetails != null) {
+      _dragBy(-n.overscroll);
+    } else if (n is ScrollUpdateNotification &&
+        _drag > 0 &&
+        n.dragDetails != null) {
+      _dragBy(-(n.scrollDelta ?? 0));
+    } else if (n is ScrollEndNotification) {
+      _release(n.dragDetails?.primaryVelocity ?? 0);
+    }
+    return false;
+  }
+
+  void _set(int idx, double v) {
+    setState(() => _draft = _draft!.rebalance(idx, v));
+  }
+
+    @override
+  Widget build(BuildContext context) {
     final asyncWeights = ref.watch(weightsProvider);
+
+    final loaded = asyncWeights.valueOrNull;
+    if (_draft == null && loaded != null) _draft = loaded;
+
+    final fade = 1 - (_drag / _dismissDistance).clamp(0.0, 1.0);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -79,32 +120,70 @@ class _WeightsScreenState extends ConsumerState<WeightsScreen> {
             left: 0,
             right: 0,
             height: _blurArea,
-            child: _Header(
-              onBack: () => context.pop(),
-              onReset: _draft == null
-                  ? null
-                  : () => setState(() => _draft = PreferenceWeights.defaults),
-              onHelp: () => showWeightsHelp(context),
+            child: IgnorePointer(
+              ignoring: fade == 0,
+              child: AnimatedOpacity(
+                duration: _dragging
+                    ? Duration.zero
+                    : const Duration(milliseconds: 220),
+                opacity: fade,
+                child: GestureDetector(
+                  onVerticalDragUpdate: (d) => _dragBy(d.delta.dy),
+                  onVerticalDragEnd: (d) => _release(d.primaryVelocity ?? 0),
+                  child: _Header(
+                    onBack: () => context.pop(),
+                    onReset: _draft == null
+                        ? null
+                        : () =>
+                            setState(() => _draft = PreferenceWeights.defaults),
+                    onHelp: () => showWeightsHelp(context),
+                  ),
+                ),
+              ),
             ),
           ),
-          Positioned.fill(
-            top: _sheetTop,
+          AnimatedPositioned(
+            duration:
+                _dragging ? Duration.zero : const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            top: _sheetTop + _drag,
+            bottom: -_drag,
+            left: 0,
+            right: 0,
             child: Container(
               decoration: const BoxDecoration(
                 color: AppColors.bgCream,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
-              child: _draft == null
-                  ? Center(
-                      child: asyncWeights.hasError
-                          ? Text(
-                              'Could not load your settings.',
-                              style: AppTextStyles.body
-                                  .copyWith(color: AppColors.error),
-                            )
-                          : const CircularProgressIndicator(),
-                    )
-                  : _body(_draft!),
+              child: Column(
+                children: [
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onVerticalDragUpdate: (d) => _dragBy(d.delta.dy),
+                    onVerticalDragEnd: (d) => _release(d.primaryVelocity ?? 0),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      child: Center(child: _SheetHandle()),
+                    ),
+                  ),
+                  Expanded(
+                    child: _draft == null
+                        ? Center(
+                            child: asyncWeights.hasError
+                                ? Text(
+                                    'Could not load your settings.',
+                                    style: AppTextStyles.body
+                                        .copyWith(color: AppColors.error),
+                                  )
+                                : const CircularProgressIndicator(),
+                          )
+                        : NotificationListener<ScrollNotification>(
+                            onNotification: _onScroll,
+                            child: _body(_draft!),
+                          ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -118,13 +197,9 @@ class _WeightsScreenState extends ConsumerState<WeightsScreen> {
       thumbVisibility: true,
       child: ListView(
         controller: _scroll,
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+        physics: const ClampingScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
         children: [
-          const Align(
-            alignment: Alignment.topCenter,
-            child: _SheetHandle(),
-          ),
-          const SizedBox(height: 16),
           Text(
             'Recommendations',
             textAlign: TextAlign.center,
@@ -142,45 +217,35 @@ class _WeightsScreenState extends ConsumerState<WeightsScreen> {
             icon: Icons.kitchen_outlined,
             subtitle: 'Favour recipes you can make with what you already have',
             value: weights.pantryMatch,
-            share: weights.shareOf(weights.pantryMatch),
-            onChanged: (v) =>
-                setState(() => _draft = weights.copyWith(pantryMatch: v)),
+            onChanged: (v) => _set(0, v),
           ),
           WeightSlider(
             title: 'Cuisine',
             icon: Icons.public,
             subtitle: 'Lean towards the cuisines you cook and swipe on most',
             value: weights.cuisine,
-            share: weights.shareOf(weights.cuisine),
-            onChanged: (v) =>
-                setState(() => _draft = weights.copyWith(cuisine: v)),
+            onChanged: (v) => _set(1, v),
           ),
           WeightSlider(
             title: 'Nutrition',
             icon: Icons.monitor_heart_outlined,
             subtitle: 'Push recipes that match your nutritional goals',
             value: weights.nutrition,
-            share: weights.shareOf(weights.nutrition),
-            onChanged: (v) =>
-                setState(() => _draft = weights.copyWith(nutrition: v)),
+            onChanged: (v) => _set(2, v),
           ),
           WeightSlider(
             title: 'Freshness',
             icon: Icons.eco_outlined,
             subtitle: 'Prioritise ingredients close to their expiry date',
             value: weights.freshness,
-            share: weights.shareOf(weights.freshness),
-            onChanged: (v) =>
-                setState(() => _draft = weights.copyWith(freshness: v)),
+            onChanged: (v) => _set(3, v),
           ),
           WeightSlider(
             title: 'Novelty',
             icon: Icons.auto_awesome_outlined,
             subtitle: 'Bring more variety instead of familiar recipes',
             value: weights.novelty,
-            share: weights.shareOf(weights.novelty),
-            onChanged: (v) =>
-                setState(() => _draft = weights.copyWith(novelty: v)),
+            onChanged: (v) => _set(4, v),
           ),
           const SizedBox(height: 8),
           AppButton.primary(
