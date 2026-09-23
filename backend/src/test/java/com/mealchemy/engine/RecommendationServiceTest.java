@@ -16,6 +16,7 @@ import com.mealchemy.engine.dto.SignalScoresResponse;
 import com.mealchemy.engine.client.EmptyPoolException;
 import com.mealchemy.engine.client.EngineClient;
 import com.mealchemy.engine.dto.RecommendationFilters;
+import com.mealchemy.engine.dto.SignalHighlightResponse;
 
 // models
 import com.mealchemy.pantry.model.PantryIngredient;
@@ -169,7 +170,8 @@ public class RecommendationServiceTest {
         // Arrange
         SignalScoresResponse scoreBreakdown = new SignalScoresResponse(0.9, 0.8, 0.5, 0.3, 1.0);
         RecommendationDto dto = RecommendationDto.from(
-            100, "MEDITERRANEAN", new BigDecimal("0.87"), scoreBreakdown, 2, List.of("parmesan", "basil")
+            100, "MEDITERRANEAN", new BigDecimal("0.87"), scoreBreakdown, 2, List.of("parmesan", "basil"),
+            List.of(new SignalHighlightResponse("pantry_match", 90, "Matched 8 of 9 ingredients you already have on hand."))
         );
         RecommendationResponse engineResponse = RecommendationResponse.from(List.of(dto), Map.of("MEDITERRANEAN", 1), 1, 1);
 
@@ -202,6 +204,27 @@ public class RecommendationServiceTest {
         assertEquals(15, sent.batchSize());
         assertEquals(List.of(200, 201), sent.excludeRecipeIds());
         assertEquals(42, sent.seed());
+    }
+
+    @Test
+    void getRecommendations_transparencyPassesThroughUnchanged() {
+        // Arrange
+        SignalScoresResponse scoreBreakdown = new SignalScoresResponse(0.9, 0.8, 0.5, 0.3, 1.0);
+        List<SignalHighlightResponse> transparency = List.of(
+            new SignalHighlightResponse("pantry_match", 90, "Matched 8 of 9 ingredients you already have on hand."),
+            new SignalHighlightResponse("cuisine", 80, "You've consistently enjoyed MEDITERRANEAN recipes.")
+        );
+        RecommendationDto dto = RecommendationDto.from(
+            100, "MEDITERRANEAN", new BigDecimal("0.87"), scoreBreakdown, 2, List.of("parmesan", "basil"), transparency
+        );
+        RecommendationResponse engineResponse = RecommendationResponse.from(List.of(dto), Map.of("MEDITERRANEAN", 1), 1, 1);
+        when(engineClient.getRecommendations(any(RecommendationRequest.class))).thenReturn(engineResponse);
+
+        // Act
+        EnrichedRecommendationResponse response = recommendationService.getRecommendations(USER_ID, 10, List.of(), null, RecommendationFilters.none());
+
+        // Assert
+        assertEquals(transparency, response.recommendations().get(0).transparency());
     }
 
     @Test
@@ -305,7 +328,7 @@ public class RecommendationServiceTest {
         // Arrange
         SignalScoresResponse scoreBreakdown = new SignalScoresResponse(0.5, 0.5, 0.5, 0.5, 0.5);
         RecommendationDto unknownDto = RecommendationDto.from(
-            999, "ITALIAN", new BigDecimal("0.5"), scoreBreakdown, 0, List.of()
+            999, "ITALIAN", new BigDecimal("0.5"), scoreBreakdown, 0, List.of(), List.of()
         );
         RecommendationResponse engineResponse = RecommendationResponse.from(List.of(unknownDto), Map.of(), 1, 1);
 

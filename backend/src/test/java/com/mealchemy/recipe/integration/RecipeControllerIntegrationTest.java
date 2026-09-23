@@ -243,7 +243,7 @@ public class RecipeControllerIntegrationTest {
         return new RecipeUpdateRequest(
                 title, "A description.", validCuisine,
                 10, 20, 2,
-                photoUrl, removePhoto, null, null, false,
+                photoUrl, removePhoto, null, false, null, false,
                 ingredients, steps
         );
     }
