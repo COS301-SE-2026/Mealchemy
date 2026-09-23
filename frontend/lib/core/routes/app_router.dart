@@ -13,6 +13,7 @@ import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/pantry/screens/pantry_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/vault/screens/vault_screen.dart';
+import '../../features/vault/screens/vault_members_screen.dart';
 import '../../features/pantry/screens/add_ingredient_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
 import '../../features/recipe/screens/recipe_detail_screen.dart';
@@ -133,37 +134,62 @@ final appRouter = GoRouter(
       },
     ),
 
+    GoRoute(
+      path: AppRoutes.vaultMembers,
+      builder: (context, state) {
+        final vaultId = int.tryParse(
+          state.pathParameters['vaultId'] ?? '',
+        );
+
+        if (vaultId == null || vaultId <= 0) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Vault members')),
+            body: const Center(child: Text('Invalid vault ID.')),
+          );
+        }
+
+        return VaultMembersScreen(vaultId: vaultId);
+      },
+    ),
+
     // main destinations header + bottom nav supplied once by AppShell.
     ShellRoute(
       builder: (context, state, child) => AppShell(child: child),
       routes: [
         GoRoute(
           path: AppRoutes.dashboard,
-          pageBuilder: (context, state) => NoTransitionPage(child: const DashboardScreen()),
+          pageBuilder: (context, state) =>
+              NoTransitionPage(child: const DashboardScreen()),
         ),
         GoRoute(
           path: AppRoutes.vault,
-          pageBuilder: (context, state) => NoTransitionPage(child: const VaultScreen()),
+          pageBuilder: (context, state) =>
+              NoTransitionPage(child: const VaultScreen()),
         ),
         GoRoute(
           path: AppRoutes.discovery,
-          pageBuilder: (context, state) => NoTransitionPage(child: const DiscoveryScreen()),
+          pageBuilder: (context, state) =>
+              NoTransitionPage(child: const DiscoveryScreen()),
         ),
         GoRoute(
           path: AppRoutes.pantry,
-          pageBuilder: (context, state) => NoTransitionPage(child: const PantryScreen()),
+          pageBuilder: (context, state) =>
+              NoTransitionPage(child: const PantryScreen()),
         ),
         GoRoute(
           path: AppRoutes.profile,
-          pageBuilder: (context, state) => NoTransitionPage(child: const ProfileScreen()),
+          pageBuilder: (context, state) =>
+              NoTransitionPage(child: const ProfileScreen()),
         ),
         GoRoute(
           path: AppRoutes.shoppingLists,
-          pageBuilder: (context, state) => NoTransitionPage(child: const ShoppingListsScreen()),
+          pageBuilder: (context, state) =>
+              NoTransitionPage(child: const ShoppingListsScreen()),
         ),
         GoRoute(
           path: AppRoutes.guidedDiscovery,
-          pageBuilder: (context, state) => NoTransitionPage(child: const GuidedDiscoveryScreen()),
+          pageBuilder: (context, state) =>
+              NoTransitionPage(child: const GuidedDiscoveryScreen()),
         ),
       ],
     ),
