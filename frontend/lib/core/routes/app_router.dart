@@ -84,7 +84,10 @@ final appRouter = GoRouter(
       path: AppRoutes.recipeDetail,
       builder: (context, state) {
         final id = int.parse(state.pathParameters['id']!);
-        return RecipeDetailScreen(recipeId: id);
+        return RecipeDetailScreen(
+          recipeId: id,
+          allowReporting: state.uri.queryParameters['report'] == 'true',
+        );
       },
     ),
     GoRoute(
