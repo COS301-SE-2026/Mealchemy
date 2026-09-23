@@ -26,7 +26,6 @@ class TrendingRecipesSection extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: AppSectionHeader(
             title: 'Trending Recipes',
-            trailing: 'View all',
           ),
         ),
         const SizedBox(height: 12),

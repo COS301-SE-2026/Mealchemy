@@ -79,26 +79,6 @@ class _LoginFormState extends ConsumerState<LoginForm> with ScrollHelper {
     }
   }
 
-  // OR CONTINUE WITH divider row
-  Widget _buildDivider() {
-    return Row(
-      children: [
-        Expanded(child: Divider(color: AppColors.divider)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'OR CONTINUE WITH',
-            style: AppTextStyles.label.copyWith(
-              color: AppColors.textMuted,
-              letterSpacing: 1,
-            ),
-          ),
-        ),
-        Expanded(child: Divider(color: AppColors.divider)),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -150,31 +130,11 @@ class _LoginFormState extends ConsumerState<LoginForm> with ScrollHelper {
             ),
             const SizedBox(height: 16),
 
-            // Password label and forgot password link row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Password',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: (_passwordError != null || _authError != null)
-                        ? AppColors.error
-                        : AppColors.textLight,
-                  ),
-                ),
-                AppButton.text(
-                  label: 'Forgot Password?',
-                  onPressed: () {},
-                  customColor: AppColors.primary,
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-
             // Password input field
             AppTextField.private(
               key: _passwordKey,
               hint: '........',
+              label: 'Password',
               controller: _passwordController,
               errorText: _passwordError,
               hasError: _authError != null,
@@ -197,21 +157,6 @@ class _LoginFormState extends ConsumerState<LoginForm> with ScrollHelper {
               isFullWidth: true,
               isRounded: true,
               rightIcon: Icons.arrow_forward,
-            ),
-            const SizedBox(height: 24),
-
-            // OR CONTINUE WITH divider
-            _buildDivider(),
-            const SizedBox(height: 24),
-
-            // Google sign in button
-            AppButton.outlined(
-              label: 'Sign in with Google',
-              onPressed: () {},
-              isFullWidth: true,
-              isRounded: true,
-              customColor: AppColors.accentMuted,
-              customBorderColor: AppColors.accent,
             ),
             const SizedBox(height: 24),
 

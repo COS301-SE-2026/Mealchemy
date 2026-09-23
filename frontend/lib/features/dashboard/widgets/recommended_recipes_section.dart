@@ -18,7 +18,6 @@ class RecommendedRecipesSection extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: AppSectionHeader(
             title: 'Recommended for You',
-            trailing: 'View all',
           ),
         ),
 
