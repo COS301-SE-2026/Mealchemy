@@ -24,7 +24,7 @@ class _FakeAuthNotifier extends AuthNotifier {
 }
 
 class _UnusedRepo implements AuthRepository {
-  @override 
+  @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} not stubbed');
 }
@@ -59,14 +59,14 @@ void main() {
 
   testWidgets('non-owner see only the leave vault option', (tester) async {
     await tester.pumpWidget(host(
-      currentUserId: 99, 
+      currentUserId: 99,
       vault: vaultOwnedBy(42, type: VaultTypes.shared),
     ));
     await openMenu(tester);
 
     expect(find.text('Leave vault (coming soon)'), findsOneWidget);
     expect(find.text('Create folder'), findsNothing);
-    expect(find.text('Add member'), findsNothing);
+    expect(find.text('Invite member'), findsNothing);
     expect(find.text('Delete vault'), findsNothing);
   });
 
@@ -80,11 +80,11 @@ void main() {
 
     expect(find.text('Create folder'), findsOneWidget);
     // Member/delete are shared-only.
-    expect(find.text('Add member'), findsNothing);
+    expect(find.text('Invite member'), findsNothing);
     expect(find.text('Delete vault'), findsNothing);
   });
 
-  testWidgets('owner of a shared vault sees create, add member and delete',
+  testWidgets('owner of a shared vault sees create, invite member and delete',
       (tester) async {
     await tester.pumpWidget(host(
       currentUserId: 42,
@@ -93,7 +93,7 @@ void main() {
     await openMenu(tester);
 
     expect(find.text('Create folder'), findsOneWidget);
-    expect(find.text('Add member'), findsOneWidget);
+    expect(find.text('Invite member'), findsOneWidget);
     expect(find.text('Delete vault'), findsOneWidget);
   });
 }
