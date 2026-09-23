@@ -55,3 +55,18 @@ _RENDERERS = {
     "novelty": lambda recipe, user_state, score, rng: _render_novelty(recipe, user_state, rng),
     "freshness": lambda recipe, user_state, score, rng: _render_freshness(recipe, user_state, rng),
 }
+
+def build_transparency_card(recipe: CandidatePoolEntry, user_state: UserState, breakdown: ScoreBreakdown, seed: int | None= None) -> list[SignalHighlight]:
+    rng = random.Random(derive_seed(seed, "transparency"))
+
+    scored_signals = [(name, getattr(breakdown, name)) for name in _SIGNALS]
+    top_two = sorted(scored_signals, key=lambda pair: pair[1], reverse=True)[:2]
+
+    return[
+        SignalHighlight(
+            signal = name, 
+            percentage = round(score * 100), 
+            message = _RENDERERS[name](recipe, user_state, score, rng),
+        )
+        for name, score in top_two
+    ]
