@@ -77,7 +77,8 @@ void main() {
     return ProviderScope(
       overrides: [
         isSharedModeProvider.overrideWith((ref) => sharedMode),
-        folderRecipeDisplayProvider.overrideWith((ref, int folderId) async => <Recipe>[]),
+        folderRecipeDisplayProvider
+            .overrideWith((ref, int folderId) async => <Recipe>[]),
         authProvider.overrideWith((ref) => _FakeAuthNotifier(42, ref)),
         linkRepositoryProvider.overrideWithValue(_EmptyLinkRepository()),
       ],

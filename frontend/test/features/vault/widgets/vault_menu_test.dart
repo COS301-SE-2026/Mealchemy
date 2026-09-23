@@ -8,6 +8,9 @@ import 'package:mealchemy/features/auth/providers/auth_provider.dart';
 import 'package:mealchemy/features/auth/repositories/auth_repository.dart';
 import 'package:mealchemy/features/vault/models/vault.dart';
 import 'package:mealchemy/features/vault/widgets/vault_menu.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
+import 'package:mealchemy/features/vault/models/vault_member.dart';
+import 'package:mealchemy/features/vault/providers/shared_vault_access_provider.dart';
 
 // Minimal JWT whose payload carries the given `sub` (user id); AuthState.userId
 // decodes exactly this claim.
@@ -43,6 +46,31 @@ void main() {
   Widget host({required int currentUserId, required Vault vault}) {
     return ProviderScope(
       overrides: [
+        vaultSessionProvider.overrideWithValue((
+          userId: currentUserId,
+          token: 'test-token',
+          restoring: false,
+          hasValidCredential: true,
+        )),
+        vaultConnectionProvider.overrideWithValue(NetworkStatus.online),
+        sharedVaultAccessProvider.overrideWith((ref, vaultId) async {
+          final member = VaultMember(
+            id: currentUserId == vault.ownerId ? null : 44,
+            vaultId: vaultId,
+            userId: currentUserId,
+            email: 'user@example.com',
+            joinedAt: DateTime(2026, 1, 1),
+            role: currentUserId == vault.ownerId
+                ? VaultMemberRole.owner
+                : VaultMemberRole.viewer,
+          );
+
+          return SharedVaultAccess(
+            vault: vault,
+            currentMember: member,
+            members: [member],
+          );
+        }),
         authProvider
             .overrideWith((ref) => _FakeAuthNotifier(currentUserId, ref)),
       ],
@@ -53,6 +81,7 @@ void main() {
   }
 
   Future<void> openMenu(WidgetTester tester) async {
+    await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pumpAndSettle();
   }
