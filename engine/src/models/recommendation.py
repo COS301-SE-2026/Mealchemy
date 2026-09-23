@@ -8,6 +8,10 @@ class ScoreBreakdown(BaseModel):
     novelty: float = Field(ge=0, le=1)
     freshness: float = Field(ge=0, le=1)
 
+class SignalHighlight(BaseModel):
+    signal: str = Field(min_length=1)
+    percentage: int = Field(ge = 0, le = 100)
+    message: str = Field(min_length=1)
 
 class RecommendationItem(BaseModel):
     recipe_id: int = Field(gt=0)
@@ -16,6 +20,7 @@ class RecommendationItem(BaseModel):
     score_breakdown: ScoreBreakdown
     pantry_gap_count: int = Field(ge=0)
     missing_ingredients: list[str] = Field(default_factory=list)
+    transparency: list[SignalHighlight] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def gap_count_matches_size_of_missing_ingredients_list(self) -> "RecommendationItem":
