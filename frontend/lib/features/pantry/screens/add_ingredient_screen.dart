@@ -8,6 +8,7 @@ import '../../../core/connectivity/network_status_provider.dart';
 import '../../../core/shared_widgets/Molecules/app_section_header.dart';
 import '../../../core/shared_widgets/atoms/app_button.dart';
 import '../../../core/shared_widgets/atoms/app_text_field.dart';
+import '../../../core/shared_widgets/atoms/app_unit_dropdown.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/ingredient_catalogue_item.dart';
@@ -17,20 +18,6 @@ import '../repositories/ingredient_catalogue_repository.dart';
 
 const double _blurArea = 240;
 const double _sheetTop = 212;
-
-//units for the unit dropdown
-//need to be made dynamic in the future to support custom units and unit conversion
-const List<String> _unitOptions = [
-  'g',
-  'kg',
-  'ml',
-  'L',
-  'cups',
-  'tbsp',
-  'tsp',
-  'oz',
-  'pcs',
-];
 
 class AddIngredientScreen extends ConsumerWidget {
   const AddIngredientScreen({super.key});
@@ -229,11 +216,9 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _LabelledDropdown(
-                        label: 'Unit',
-                        hint: 'e.g. oz',
+                      child: AppUnitDropdown(
                         value: _selectedUnit,
-                        options: _unitOptions,
+                        hint: 'e.g. oz',
                         onChanged: (value) =>
                             setState(() => _selectedUnit = value),
                       ),
@@ -502,35 +487,14 @@ class _PantryHeader extends StatelessWidget {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _HeaderCircleButton(
-                    icon: Icons.arrow_back,
-                    onTap: () => context.pop(),
-                    background: AppColors.textMuted.withValues(alpha: 0.45),
-                    iconColor: AppColors.textDark,
-                  ),
-                  const Spacer(),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _HeaderCircleButton(
-                        icon: Icons.add,
-                        onTap: () {},
-                        background: AppColors.textMuted.withValues(alpha: 0.25),
-                        iconColor: AppColors.primary,
-                      ),
-                      const SizedBox(height: 10),
-                      _HeaderCircleButton(
-                        icon: Icons.photo_camera_outlined,
-                        onTap: () {},
-                        background: AppColors.textMuted.withValues(alpha: 0.25),
-                        iconColor: AppColors.primary,
-                      ),
-                    ],
-                  ),
-                ],
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: _HeaderCircleButton(
+                  icon: Icons.arrow_back,
+                  onTap: () => context.pop(),
+                  background: AppColors.textMuted.withValues(alpha: 0.45),
+                  iconColor: AppColors.textDark,
+                ),
               ),
             ),
           ),
@@ -685,73 +649,6 @@ class _LabelledField extends StatelessWidget {
         const SizedBox(height: 6),
         child,
       ],
-    );
-  }
-}
-
-class _LabelledDropdown extends StatelessWidget {
-  const _LabelledDropdown({
-    required this.label,
-    required this.hint,
-    required this.value,
-    required this.options,
-    required this.onChanged,
-  });
-
-  final String label;
-  final String hint;
-  final String? value;
-  final List<String> options;
-  final ValueChanged<String?> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return _LabelledField(
-      label: label,
-      child: DropdownButtonFormField<String>(
-        initialValue: value,
-        onChanged: onChanged,
-        isExpanded: true,
-        icon: const Icon(
-          Icons.keyboard_arrow_down,
-          color: AppColors.primary,
-          size: 20,
-        ),
-        hint: Text(
-          hint,
-          style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
-        ),
-        style: AppTextStyles.body.copyWith(color: AppColors.textLight),
-        dropdownColor: AppColors.surfaceWhite,
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: AppColors.surfaceMuted,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide:
-                const BorderSide(color: AppColors.inputBorder, width: 1),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide:
-                const BorderSide(color: AppColors.inputBorder, width: 1),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-          ),
-        ),
-        items: options
-            .map(
-              (option) => DropdownMenuItem<String>(
-                value: option,
-                child: Text(option),
-              ),
-            )
-            .toList(),
-      ),
     );
   }
 }

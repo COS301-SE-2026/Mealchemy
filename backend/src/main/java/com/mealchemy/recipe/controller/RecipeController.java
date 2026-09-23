@@ -15,9 +15,12 @@ import com.mealchemy.recipe.dto.RecipeFullRequest;
 import com.mealchemy.recipe.dto.RecipeUpdateRequest;
 import com.mealchemy.recipe.dto.RecipePhotoUploadRequest;
 import com.mealchemy.recipe.dto.RecipePhotoUploadResponse;
+import com.mealchemy.recipe.dto.RecipeVideoUploadRequest;
+import com.mealchemy.recipe.dto.RecipeVideoUploadResponse;
 import com.mealchemy.recipe.dto.RecipeResponse;
 import com.mealchemy.recipe.service.RecipePhotoService;
 import com.mealchemy.recipe.service.RecipeService;
+import com.mealchemy.recipe.service.RecipeVideoService;
 
 // swagger 
 import com.mealchemy.shared.dto.ErrorResponse;
@@ -37,11 +40,17 @@ public class RecipeController
 {
     private final RecipeService recipeService;
     private final RecipePhotoService recipePhotoService;
+    private final RecipeVideoService recipeVideoService;
 
-    public RecipeController(RecipeService recipeService, RecipePhotoService recipePhotoService)
+    public RecipeController(
+        RecipeService recipeService,
+        RecipePhotoService recipePhotoService,
+        RecipeVideoService recipeVideoService
+    )
     {
         this.recipeService = recipeService;
         this.recipePhotoService = recipePhotoService;
+        this.recipeVideoService = recipeVideoService;
     }
 
     /* Mapping functions */
@@ -74,6 +83,18 @@ public class RecipeController
         return recipeService.getAllCommunityPublishedRecipes();
     }
 
+    @Operation(summary = "Get all community Sizzles", description = "Returns community-published recipes with curated videos in a stable global order.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Sizzles retrieved successfully", content = @Content(array = @ArraySchema(schema = @Schema(implementation = RecipeResponse.class)))),
+        @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/community/sizzles")
+    public List<RecipeResponse> getAllCommunitySizzles()
+    {
+        return recipeService.getAllCommunitySizzles();
+    }
+
 
     // Get
     // changed to receive the authenticated user ID
@@ -81,8 +102,7 @@ public class RecipeController
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Recipe retrieved successfully", content = @Content(schema = @Schema(implementation = RecipeResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Recipe exists but is not accessible to the authenticated user", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Recipe not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Recipe not found, or not accessible to the authenticated user", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/single/{id}")
@@ -98,8 +118,7 @@ public class RecipeController
         @ApiResponse(responseCode = "200", description = "Recipe created successfully", content = @Content(schema = @Schema(implementation = RecipeResponse.class))),
         @ApiResponse(responseCode = "400", description = "Folder ID missing, or cuisine type is invalid", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Folder is not in the caller's private vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Folder not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Folder not found, or not in caller's private vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/create")
@@ -114,8 +133,7 @@ public class RecipeController
         @ApiResponse(responseCode = "200", description = "Recipe created successfully", content = @Content(schema = @Schema(implementation = RecipeResponse.class))),
         @ApiResponse(responseCode = "400", description = "Cuisine type is invalid, or one of the supplied ingredients does not exist in the catalogue", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Folder is not in the caller's private vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Folder not found, or source recipe not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Folder not found or not in the caller's private vault, or source recipe not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/{sourceId}/copy")
@@ -131,8 +149,7 @@ public class RecipeController
         @ApiResponse(responseCode = "200", description = "Upload URL created successfully", content = @Content(schema = @Schema(implementation = RecipePhotoUploadResponse.class))),
         @ApiResponse(responseCode = "400", description = "Validation failed on the upload request", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller does not own this recipe", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Recipe not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Recipe not found, or not owned by the caller", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "503", description = "Recipe photo storage is not configured, or the storage provider failed to generate an upload URL", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -150,6 +167,29 @@ public class RecipeController
         );
     }
 
+    @Operation(summary = "Create a signed video upload URL for a recipe", description = "Returns signed upload details the client can use to upload a curated recipe video directly to storage.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Upload URL created successfully", content = @Content(schema = @Schema(implementation = RecipeVideoUploadResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Validation failed on the upload request", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "403", description = "Caller does not own this recipe", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Recipe not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "503", description = "Recipe video storage is unavailable", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PostMapping("/{id}/video-upload-url")
+    public RecipeVideoUploadResponse createVideoUploadUrl(
+        @PathVariable Integer id,
+        @Valid @RequestBody RecipeVideoUploadRequest request,
+        @AuthenticationPrincipal String ownerId
+    )
+    {
+        return recipeVideoService.createVideoUploadUrl(
+            id,
+            request,
+            Integer.parseInt(ownerId)
+        );
+    }
+
 
     // Put
     @Operation(summary = "Update a recipe", description = "Update a recipe's fields, optionally replacing its ingredients and/or steps entirely. Only the owner may edit.")
@@ -157,8 +197,7 @@ public class RecipeController
         @ApiResponse(responseCode = "200", description = "Recipe updated successfully", content = @Content(schema = @Schema(implementation = RecipeResponse.class))),
         @ApiResponse(responseCode = "400", description = "Cuisine type is invalid, photo removal conflicts with a supplied photo URL, photo URL is blank, or an ingredient does not exist in the catalogue", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller does not own this recipe", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Recipe not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Recipe not found, or not owned by the caller", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/edit/{id}")
@@ -172,8 +211,7 @@ public class RecipeController
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Recipe deleted successfully"),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller does not own this recipe", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Recipe not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Recipe not found, or not owned by the caller", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/delete/{id}")

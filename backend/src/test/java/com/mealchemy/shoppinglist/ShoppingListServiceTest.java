@@ -288,7 +288,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test
-    void updateShoppingList_whenNotOwned_throwsForbidden() {
+    void updateShoppingList_whenNotOwned_throwsNotFound() {
         // Arrange
         existingShoppingList.setUserId(2);
         when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
@@ -300,7 +300,8 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Shopping list not found", ex.getReason());
     }
 
     @Test
@@ -338,7 +339,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test
-    void deleteShoppingList_whenNotOwned_throwsForbidden() {
+    void deleteShoppingList_whenNotOwned_throwsNotFound() {
         // Arrange
         existingShoppingList.setUserId(2);
         when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
@@ -350,7 +351,8 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Shopping list not found", ex.getReason());
     }
 
     @Test
@@ -385,7 +387,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test
-    void getSpecificListItems_whenNotOwned_throwsForbidden() {
+    void getSpecificListItems_whenNotOwned_throwsNotFound() {
         // Arrange
         existingShoppingList.setUserId(2);
         when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
@@ -397,7 +399,8 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Shopping list not found", ex.getReason());
     }
 
     @Test
@@ -460,7 +463,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test 
-    void addNewShoppingListItem_whenNotOwned_throwsForbidden() {
+    void addNewShoppingListItem_whenNotOwned_throwsNotFound() {
         // Arrange
         existingShoppingList.setUserId(2);
         ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
@@ -473,7 +476,8 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Shopping list not found", ex.getReason());
     }
 
     @Test
@@ -596,7 +600,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test 
-    void updateShoppingListItem_whenNotOwned_throwsForbidden() {
+    void updateShoppingListItem_whenNotOwned_throwsNotFound() {
         // Arrange
         existingShoppingList.setUserId(2);
         ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
@@ -609,7 +613,8 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Shopping list not found", ex.getReason());
     }
 
     @Test
@@ -694,7 +699,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test
-    void updatePurchasedFlag_whenNotOwned_throwsForbidden() {
+    void updatePurchasedFlag_whenNotOwned_throwsNotFound() {
         // Arrange
         existingShoppingList.setUserId(2);
         ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
@@ -707,7 +712,8 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Shopping list not found", ex.getReason());
     }
 
     @Test
@@ -790,7 +796,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test
-    void deleteShoppingListItem_whenNotOwned_throwsForbidden() {
+    void deleteShoppingListItem_whenNotOwned_throwsNotFound() {
         // Arrange
         existingShoppingList.setUserId(2);
         ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
@@ -803,7 +809,8 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Shopping list not found", ex.getReason());
     }
 
     @Test
@@ -881,7 +888,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test
-    void deleteSelectedItems_whenNotOwned_throwsForbidden() {
+    void deleteSelectedItems_whenNotOwned_throwsNotFound() {
         // Arrange
         existingShoppingList.setUserId(2);
         ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
@@ -896,7 +903,8 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Shopping list not found", ex.getReason());
     }
 
     @Test
@@ -1000,7 +1008,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test
-    void selectAllItemsAsPurchase_whenNotOwned_throwsForbidden() {
+    void selectAllItemsAsPurchase_whenNotOwned_throwsNotFound() {
         // Arrange
         existingShoppingList.setUserId(2);
         ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
@@ -1013,7 +1021,8 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Shopping list not found", ex.getReason());
     }
 
     @Test
@@ -1059,7 +1068,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test
-    void deselectAllItemsAsPurchase_whenNotOwned_throwsForbidden() {
+    void deselectAllItemsAsPurchase_whenNotOwned_throwsNotFound() {
         // Arrange
         existingShoppingList.setUserId(2);
         ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
@@ -1072,7 +1081,8 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Shopping list not found", ex.getReason());
     }
 
     @Test
@@ -1117,7 +1127,7 @@ public class ShoppingListServiceTest {
     }
 
     @Test
-    void autoAddToPantryRemoveFromList_whenNotOwned_throwsForbidden() {
+    void autoAddToPantryRemoveFromList_whenNotOwned_throwsNotFound() {
         // Arrange
         existingShoppingList.setUserId(2);
         ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
@@ -1130,7 +1140,8 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Shopping list not found", ex.getReason());
     }
 
     @Test
@@ -1478,7 +1489,7 @@ public class ShoppingListServiceTest {
 
 
     @Test
-    public void addRecipeIngredientsToShoppingList_whenNotOwned_throwsForbidden() {    
+    public void addRecipeIngredientsToShoppingList_whenNotOwned_throwsNotFound() {    
         // Arrange
         existingShoppingList.setUserId(2);
         when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
@@ -1490,7 +1501,8 @@ public class ShoppingListServiceTest {
         );
 
         // Assert
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Shopping list not found", ex.getReason());
     }
 
     @Test

@@ -9,6 +9,7 @@ import 'package:mealchemy/features/ingredients/models/ingredient_category.dart';
 import 'package:mealchemy/features/ingredients/providers/ingredient_catalogue_provider.dart';
 import 'package:mealchemy/features/ingredients/repositories/ingredient_catalogue_repository.dart';
 import 'package:mealchemy/features/ingredients/models/pending_external_ingredient.dart';
+import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
 
 class _ExternalCatalogueRepository implements IngredientCatalogueRepository {
   _ExternalCatalogueRepository({
@@ -110,6 +111,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          unitOptionsProvider.overrideWithValue(units),
           if (catalogueRepository != null)
             ingredientCatalogueRepositoryProvider.overrideWithValue(
               catalogueRepository,
@@ -120,7 +122,6 @@ void main() {
             body: IngredientEditorRow(
               selectedItem: selectedItem,
               quantityController: quantityController ?? TextEditingController(),
-              units: units,
               selectedUnit: selectedUnit,
               onUnitChanged: onUnitChanged ?? (_) {},
               onItemSelected: onItemSelected ?? (_) {},

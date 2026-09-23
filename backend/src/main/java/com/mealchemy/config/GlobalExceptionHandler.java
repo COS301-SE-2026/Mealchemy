@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import com.mealchemy.engine.client.EmptyPoolException;
 import com.mealchemy.engine.client.StaleStateException;
 import com.mealchemy.engine.client.InvalidSwipeException;
@@ -86,6 +87,17 @@ public class GlobalExceptionHandler {
                 .body(Map.of("message", ex.getMessage()));
     }
     
+    //handles a required RequestParam that was ommitted
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingParam(MissingServletRequestParameterException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(
+                                                                        HttpStatus.BAD_REQUEST.value(),
+                                                                        "MISSING_PARAMETER",
+                                                                        "Missing required parameter",
+                                                                        Instant.now()
+        ));
+    }
+
     //catches anything unexpected - returns generic message
     //prevents stack traces and sensitive information leaking to Flutter
     @ExceptionHandler(Exception.class)

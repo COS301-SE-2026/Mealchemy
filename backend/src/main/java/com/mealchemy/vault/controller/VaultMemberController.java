@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 /* Import classes */
 import com.mealchemy.vault.dto.VaultMemberResponse;
 import com.mealchemy.vault.dto.VaultMemberRequest;
+import com.mealchemy.vault.dto.VaultMemberRoleRequest;
 import com.mealchemy.vault.service.VaultMemberService;
 
 // swagger 
@@ -42,7 +43,7 @@ public class VaultMemberController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Members retrieved successfully", content = @Content(array = @ArraySchema(schema = @Schema(implementation = VaultMemberResponse.class)))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Vault not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Vault not found, or the caller is not its owner or a member", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{vaultId}/members/all")
@@ -56,9 +57,10 @@ public class VaultMemberController {
     @Operation(summary = "Add a member to a vault", description = "Adds a registered user to a shared vault by email. Only the vault owner may add members. Memebers cannot be added to a private vault.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Member added successfully", content = @Content(schema = @Schema(implementation = VaultMemberResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Unable to add member", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller does not own this vault, or the vault is PRIVATE", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Vault not found, or no user is registed with the given email", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "403", description = "The vault is PRIVATE, so members cannot be added", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Vault not found, or not owned by the caller", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/{vaultId}/members/create")
@@ -73,15 +75,31 @@ public class VaultMemberController {
     @Operation(summary = "Removes a member from a vault", description = "Removes a member from a shared vault by email. Only the vault owner may remove members.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Member removed successfully"),
+        @ApiResponse(responseCode = "400", description = "Unable to remove member", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller does not own this vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Vault not found, or no user is registed with the given email, or the user is not a member of this vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Vault not found, or not owned by the caller", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @DeleteMapping("/{vaultId}/members/delete")
-    public ResponseEntity<Void> removeVaultMember(@PathVariable Integer vaultId, @Valid @RequestBody VaultMemberRequest request, @AuthenticationPrincipal String ownerId)
+    @DeleteMapping("/{vaultId}/members/{userId}")
+    public ResponseEntity<Void> removeVaultMember(@PathVariable Integer vaultId, @PathVariable Integer userId, @AuthenticationPrincipal String ownerId)
     {
-        vaultMemberService.removeVaultMember(vaultId, request, Integer.parseInt(ownerId));
+        vaultMemberService.removeVaultMember(vaultId, userId, Integer.parseInt(ownerId));
         return ResponseEntity.noContent().build();
+    }
+
+    // Patch
+    @Operation(summary = "Change a vault member's role", description = "Changes a shared vault member's role between VIEWER and EDITOR. Only the vault owner may change roles. OWNER cannot be set as a target role.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Role changed successfully", content = @Content(schema = @Schema(implementation = VaultMemberResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Request attempted to set role to OWNER", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "403", description = "Caller does not own this vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Vault not found, or target user is not a member of this vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PatchMapping("/{vaultId}/members/{userId}/role") 
+    public VaultMemberResponse changeRole(@PathVariable Integer vaultId, @PathVariable Integer userId, @Valid @RequestBody VaultMemberRoleRequest request, @AuthenticationPrincipal String ownerId)
+    {
+        return vaultMemberService.changeRole(vaultId, userId, request, Integer.parseInt(ownerId));
     }
 }

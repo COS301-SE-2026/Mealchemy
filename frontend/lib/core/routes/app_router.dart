@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/screens/login_screen.dart';
+import '../../features/admin/screens/admin_screen.dart';
+import '../../features/admin/screens/admin_users_screen.dart';
+import '../../features/admin/screens/admin_flag_detail_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/pantry/screens/pantry_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
@@ -13,8 +16,10 @@ import '../../features/vault/screens/vault_screen.dart';
 import '../../features/pantry/screens/add_ingredient_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
 import '../../features/recipe/screens/recipe_detail_screen.dart';
+import '../../features/cook_mode/screens/cook_mode_screen.dart';
 import '../../features/recipe/screens/add_recipe_screen.dart';
 import '../../features/discovery/screens/discovery_screen.dart';
+import '../../features/preference/screens/weights_screen.dart';
 
 import '../../features/shopping_lists/screens/shopping_lists_screen.dart';
 import '../../features/shopping_lists/screens/shopping_list_detail_screen.dart';
@@ -39,27 +44,9 @@ final appRouter = GoRouter(
       builder: (context, state) => const SignupScreen(),
     ),
     GoRoute(
-      //translucent overlay: opaque false keeps the previous screen
-      //visible so the header can blur it. open with push, not go
-
       path: AppRoutes.addIngredient,
-      pageBuilder: (context, state) => CustomTransitionPage(
-        key: state.pageKey,
-        opaque: false,
-        barrierColor: Colors.transparent,
-        child: const AddIngredientScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 1),
-              end: Offset.zero,
-            ).animate(
-              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-            ),
-            child: child,
-          );
-        },
-      ),
+      pageBuilder: (context, state) =>
+          _sheetPage(state.pageKey, const AddIngredientScreen()),
     ),
     GoRoute(
       path: AppRoutes.addRecipe,
@@ -78,6 +65,16 @@ final appRouter = GoRouter(
         final id = int.parse(state.pathParameters['id']!);
         final recipe = state.extra as Recipe?;
         return AddRecipeScreen(editRecipeId: id, initialRecipe: recipe);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.cookMode,
+      builder: (context, state) {
+        final id = int.parse(state.pathParameters['id']!);
+        final stepIndex = int.tryParse(
+          state.uri.queryParameters['step'] ?? '',
+        );
+        return CookModeScreen(recipeId: id, initialStepIndex: stepIndex);
       },
     ),
     GoRoute(
@@ -103,10 +100,37 @@ final appRouter = GoRouter(
         return AddShoppingListItemScreen(listId: id);
       },
     ),
-
+    GoRoute(
+      path: AppRoutes.recommendationSettings,
+      pageBuilder: (context, state) =>
+          _sheetPage(state.pageKey, const WeightsScreen()),
+    ),
     GoRoute(
       path: AppRoutes.help,
       builder: (context, state) => const HelpScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.admin,
+      builder: (context, state) => const AdminScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.adminUsers,
+      builder: (context, state) => const AdminUsersScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.adminFlagDetail,
+      builder: (context, state) {
+        final id = int.tryParse(state.pathParameters['id'] ?? '');
+
+        if (id == null || id <= 0) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Report')),
+            body: const Center(child: Text('Invalid report ID.')),
+          );
+        }
+
+        return AdminFlagDetailScreen(flaggedId: id);
+      },
     ),
 
     // main destinations header + bottom nav supplied once by AppShell.
@@ -115,33 +139,55 @@ final appRouter = GoRouter(
       routes: [
         GoRoute(
           path: AppRoutes.dashboard,
-          builder: (context, state) => const DashboardScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const DashboardScreen()),
         ),
         GoRoute(
           path: AppRoutes.vault,
-          builder: (context, state) => const VaultScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const VaultScreen()),
         ),
         GoRoute(
           path: AppRoutes.discovery,
-          builder: (context, state) => const DiscoveryScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const DiscoveryScreen()),
         ),
         GoRoute(
           path: AppRoutes.pantry,
-          builder: (context, state) => const PantryScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const PantryScreen()),
         ),
         GoRoute(
           path: AppRoutes.profile,
-          builder: (context, state) => const ProfileScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const ProfileScreen()),
         ),
         GoRoute(
           path: AppRoutes.shoppingLists,
-          builder: (context, state) => const ShoppingListsScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const ShoppingListsScreen()),
         ),
         GoRoute(
           path: AppRoutes.guidedDiscovery,
-          builder: (context, state) => const GuidedDiscoveryScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(child: const GuidedDiscoveryScreen()),
         ),
       ],
     ),
   ],
 );
+
+// translucent slide up page keeps the previous screen painted underneath
+// so a header BackdropFilter can blur it open with push, not go.
+CustomTransitionPage<void> _sheetPage(LocalKey key, Widget child) {
+  return CustomTransitionPage(
+    key: key,
+    opaque: false,
+    barrierColor: Colors.transparent,
+    child: child,
+    transitionsBuilder: (context, animation, _, child) {
+      return SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 1),
+          end: Offset.zero,
+        ).animate(
+          CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+        ),
+        child: child,
+      );
+    },
+  );
+}

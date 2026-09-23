@@ -19,18 +19,7 @@ import '../models/ingredient_catalogue_item.dart';
 import '../../offline/data/offline_cache_store.dart';
 import '../../offline/widgets/cache_freshness_label.dart';
 import '../repositories/ingredient_catalogue_repository.dart';
-
-const List<String> _unitOptions = [
-  'g',
-  'kg',
-  'ml',
-  'L',
-  'cups',
-  'tbsp',
-  'tsp',
-  'oz',
-  'pcs',
-];
+import '../../recipe/providers/recipe_provider.dart';
 
 class PantryScreen extends ConsumerWidget {
   const PantryScreen({super.key});
@@ -107,6 +96,14 @@ class _PantryContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pantryNotifier = ref.read(pantryStateProvider.notifier);
+    final unitOptions = isReadOnly
+        ? const <String>[]
+        : ref
+                .watch(unitsProvider)
+                .valueOrNull
+                ?.map((unit) => unit.name)
+                .toList() ??
+            const <String>[];
     final visibleIngredients = _visibleIngredients(pantryState);
     final groupedIngredients = _groupIngredientsByCategory(visibleIngredients);
 
@@ -186,6 +183,7 @@ class _PantryContent extends ConsumerWidget {
                               context: context,
                               ref: ref,
                               ingredient: ingredient,
+                              units: unitOptions,
                             ),
                     onDelete: isReadOnly || ingredient.pIngredientId == null
                         ? null
@@ -277,6 +275,7 @@ Future<void> _showEditPantryIngredientDialog({
   required BuildContext context,
   required WidgetRef ref,
   required PantryIngredient ingredient,
+  required List<String> units,
 }) async {
   final nameController = TextEditingController(text: ingredient.name);
   final quantityController = TextEditingController(
@@ -290,6 +289,10 @@ Future<void> _showEditPantryIngredientDialog({
   );
 
   var selectedUnit = ingredient.unit;
+  final availableUnits = <String>{
+    ...units,
+    if (selectedUnit != null && selectedUnit.isNotEmpty) selectedUnit,
+  }.toList();
   var ingredientOptions = <IngredientCatalogueItem>[];
   var isSearching = false;
   var showValidation = false;
@@ -594,7 +597,7 @@ Future<void> _showEditPantryIngredientDialog({
                     decoration: const InputDecoration(
                       labelText: 'Unit',
                     ),
-                    items: _unitOptions
+                    items: availableUnits
                         .map(
                           (unit) => DropdownMenuItem<String>(
                             value: unit,

@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 /* Import classes */
 import com.mealchemy.vault.dto.VaultMemberResponse;
 import com.mealchemy.vault.dto.VaultMemberRequest;
+import com.mealchemy.vault.dto.VaultMemberRoleRequest;
 import com.mealchemy.vault.model.VaultMember;
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.auth.model.User;
@@ -29,6 +30,7 @@ import com.mealchemy.vault.repository.VaultMemberRepository;
 import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.auth.repository.UserRepository;
 import com.mealchemy.shared.enums.VaultType;
+import com.mealchemy.shared.enums.VaultMemberRole;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -47,6 +49,7 @@ public class VaultMemberServiceTest {
 
     private Vault vault;
     private User user;
+    private User user2;
     private VaultMember vaultMember;
     private VaultMemberRequest request;
 
@@ -63,6 +66,10 @@ public class VaultMemberServiceTest {
         user.setEmail("testUser@gmail.com");
         ReflectionTestUtils.setField(user, "userId", 1);
 
+        user2 = new User();
+        user2.setEmail("user2@gmail.com");
+        ReflectionTestUtils.setField(user2, "userId", 2);
+
         vaultMember = new VaultMember();
         vaultMember.setVault(vault);
         vaultMember.setUser(user);
@@ -73,26 +80,45 @@ public class VaultMemberServiceTest {
     @Test
     void getVaultMembersByVaultId_returnsListOfVaultMembers_whenFoundAndOwner()
     {
+        vaultMember = new VaultMember();
+        vaultMember.setVault(vault);
+        vaultMember.setUser(user2);
+
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
         when(vaultMemberRepository.findByVault_VaultId(1)).thenReturn(List.of(vaultMember));
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
 
         List<VaultMemberResponse> result = vaultMemberService.getVaultMembersByVaultId(1, 1);
 
-        assertEquals(1, result.size());
-        assertEquals(1, result.get(0).userId());
+        // 2 members, get's the owner as well
+        assertEquals(2, result.size());
+        assertEquals(1, result.get(0).userId()); // owner
+        assertNull(result.get(0).id()); // synthetic
+        assertEquals(2, result.get(1).userId()); // real member
+        assertNotNull(result.get(1).id());
+
     }
 
     @Test
     void getVaultMembersByVaultId_returnsListOfVaultMembers_whenFoundAndMember()
     {
+        vaultMember = new VaultMember();
+        vaultMember.setVault(vault);
+        vaultMember.setUser(user2);
+
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
         when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(1, 2)).thenReturn(true);
         when(vaultMemberRepository.findByVault_VaultId(1)).thenReturn(List.of(vaultMember));
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
 
         List<VaultMemberResponse> result = vaultMemberService.getVaultMembersByVaultId(1, 2);
 
-        assertEquals(1, result.size());
-        assertEquals(1, result.get(0).userId());
+        // 2 members, get's the owner as well
+        assertEquals(2, result.size());
+        assertEquals(1, result.get(0).userId()); // owner
+        assertNull(result.get(0).id()); // synthetic
+        assertEquals(2, result.get(1).userId()); // real member
+        assertNotNull(result.get(1).id());
     }
 
     @Test
@@ -114,8 +140,8 @@ public class VaultMemberServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.getVaultMembersByVaultId(1, 3));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only a member/owner of the vault can view its members.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Vault not found.", ex.getReason());
     }
 
     @Test
@@ -150,8 +176,8 @@ public class VaultMemberServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.addVaultMember(1, request, 3));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of the vault can add a new member.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Vault not found.", ex.getReason());
     }
 
     @Test
@@ -174,19 +200,18 @@ public class VaultMemberServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.addVaultMember(1, request, 1));
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-        assertEquals("User not found.", ex.getReason());
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("Unable to add member.", ex.getReason());
     }
 
     @Test
     void removeVaultMember_callsDelete_whenOwner()
     {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
-        when(userRepository.findByEmail("testUser@gmail.com")).thenReturn(Optional.of(user));
-        when(vaultMemberRepository.findByVault_VaultIdAndUser_UserId(vault.getVaultId(), user.getUserId())).thenReturn(Optional.of(vaultMember));
+        when(vaultMemberRepository.findByVault_VaultIdAndUser_UserId(1, 2)).thenReturn(Optional.of(vaultMember));
         doNothing().when(vaultMemberRepository).delete(vaultMember);
 
-        vaultMemberService.removeVaultMember(1, request, 1);
+        vaultMemberService.removeVaultMember(1, 2, 1);
         
         verify(vaultMemberRepository, times(1)).delete(vaultMember);
     }
@@ -196,7 +221,7 @@ public class VaultMemberServiceTest {
     {
         when(vaultRepository.findById(99)).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.removeVaultMember(99, request, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.removeVaultMember(99, 2, 1));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Vault not found.", ex.getReason());
@@ -207,34 +232,61 @@ public class VaultMemberServiceTest {
     {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.removeVaultMember(1, request, 3));
-
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of the vault can remove a member.", ex.getReason());
-    }
-
-    @Test
-    void removeVaultMember_throwsException_whenUserNotFound()
-    {
-        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
-        when(userRepository.findByEmail("testUser@gmail.com")).thenReturn(Optional.empty());
-
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.removeVaultMember(1, request, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.removeVaultMember(1, 2, 3));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-        assertEquals("User not found.", ex.getReason());
+        assertEquals("Vault not found.", ex.getReason());
     }
 
     @Test
     void removeVaultMember_throwsException_whenNoMatchingVaultMemberRowFound()
     {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
-        when(userRepository.findByEmail("testUser@gmail.com")).thenReturn(Optional.of(user));
-        when(vaultMemberRepository.findByVault_VaultIdAndUser_UserId(vault.getVaultId(), user.getUserId())).thenReturn(Optional.empty());
+        when(vaultMemberRepository.findByVault_VaultIdAndUser_UserId(1, 2)).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.removeVaultMember(1, request, 1));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.removeVaultMember(1, 2, 1));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("VaultMember row not found.", ex.getReason());
+    }
+
+    // ========== Change member role ==========
+
+    @Test
+    void changeRole_returnsUpdatedMember_whenOwner() 
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultMemberRepository.findByVault_VaultIdAndUser_UserId(1, 2)).thenReturn(Optional.of(vaultMember));
+        when(vaultMemberRepository.save(any(VaultMember.class))).thenReturn(vaultMember);
+
+        VaultMemberRoleRequest request = new VaultMemberRoleRequest(VaultMemberRole.EDITOR);
+        VaultMemberResponse result = vaultMemberService.changeRole(1, 2, request, 1);
+
+        assertNotNull(result);
+        verify(vaultMemberRepository, times(1)).save(any(VaultMember.class));
+    }
+
+    @Test
+    void changeRole_throwsException_whenVaultNotFound()
+    {
+        when(vaultRepository.findById(99)).thenReturn(Optional.empty());
+
+        VaultMemberRoleRequest request = new VaultMemberRoleRequest(VaultMemberRole.EDITOR);
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.changeRole(99, 2, request, 1));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Vault not found.", ex.getReason());
+    }
+
+    @Test
+    void changeRole_throwsException_whenNotOwner()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+
+        VaultMemberRoleRequest request = new VaultMemberRoleRequest(VaultMemberRole.EDITOR);
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.changeRole(1, 2, request, 3));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Only the owner of the vault can change a member's role.", ex.getReason());
     }
 }

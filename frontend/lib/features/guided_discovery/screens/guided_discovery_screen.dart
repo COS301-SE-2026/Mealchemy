@@ -11,6 +11,7 @@ import '../widgets/discovery_header.dart';
 import '../widgets/discovery_recipe_card.dart';
 import '../widgets/swipe_action_button.dart';
 import '../widgets/recipe_preview_sheet.dart';
+import '../../sizzles/screens/sizzles_screen.dart';
 
 //main Guided Discovery swipe screen
 class GuidedDiscoveryScreen extends ConsumerStatefulWidget {
@@ -29,6 +30,7 @@ class _GuidedDiscoveryScreenState extends ConsumerState<GuidedDiscoveryScreen> {
     'Vegetarian',
   ];
   String _selectedFilter = 'All';
+  DiscoveryTab _selectedTab = DiscoveryTab.discover;
 
   @override
   Widget build(BuildContext context) {
@@ -45,40 +47,44 @@ class _GuidedDiscoveryScreenState extends ConsumerState<GuidedDiscoveryScreen> {
             child: SafeArea(
               top: true,
               bottom: false,
-              child: discoveryState.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stackTrace) => _ErrorState(
-                  message: error.toString(),
-                  onRetry: notifier.resetDiscovery,
-                ),
-                data: (state) {
-                  return Column(
-                    children: [
-                      DiscoveryHeader(
-                        selectedFilter: _selectedFilter,
-                        filters: _filters,
-                        onFilterSelected: (f) =>
-                            setState(() => _selectedFilter = f),
-                      ),
-                      Expanded(
-                        child: AppRefresh(
-                          onRefresh: notifier.resetDiscovery,
-                          child: state.isComplete
-                              ? DiscoveryCompleteState(
-                                  likedCount: state.likedCount,
-                                  dislikedCount: state.dislikedCount,
-                                  skippedCount: state.skippedCount,
-                                  onReset: notifier.resetDiscovery,
-                                )
-                              : _Deck(
-                                  state: state,
-                                  notifier: notifier,
-                                ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
+              child: Column(
+                children: [
+                  DiscoveryHeader(
+                    selectedFilter: _selectedFilter,
+                    filters: _filters,
+                    selectedTab: _selectedTab,
+                    onTabSelected: (tab) => setState(() => _selectedTab = tab),
+                    onFilterSelected: (f) =>
+                        setState(() => _selectedFilter = f),
+                  ),
+                  Expanded(
+                    child: _selectedTab == DiscoveryTab.sizzles
+                        ? const SizzlesScreen()
+                        : discoveryState.when(
+                            loading: () => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                            error: (error, stackTrace) => _ErrorState(
+                              message: error.toString(),
+                              onRetry: notifier.resetDiscovery,
+                            ),
+                            data: (state) => AppRefresh(
+                              onRefresh: notifier.resetDiscovery,
+                              child: state.isComplete
+                                  ? DiscoveryCompleteState(
+                                      likedCount: state.likedCount,
+                                      dislikedCount: state.dislikedCount,
+                                      skippedCount: state.skippedCount,
+                                      onReset: notifier.resetDiscovery,
+                                    )
+                                  : _Deck(
+                                      state: state,
+                                      notifier: notifier,
+                                    ),
+                            ),
+                          ),
+                  ),
+                ],
               ),
             ),
           ),

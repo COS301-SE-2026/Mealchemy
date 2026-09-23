@@ -11,6 +11,7 @@ import '../models/recipe.dart';
 import 'recipe_network_image.dart';
 import 'save_to_vault_sheet.dart';
 import 'add_to_sl.dart';
+import 'report_recipe_button.dart';
 
 //image with overlay, back/share buttons, recipe title
 class RecipeHero extends ConsumerWidget {
@@ -50,6 +51,13 @@ class RecipeHero extends ConsumerWidget {
                       frosted: false,
                     ),
                     const Spacer(),
+                    if (recipe.isCommunityPublished) ...[
+                      ReportRecipeButton(
+                        recipe: recipe,
+                        onImage: true,
+                      ),
+                      const SizedBox(width: 6),
+                    ],
                     _HeroCircleButton(
                       icon: Icons.add_shopping_cart,
                       onTap: isReadOnly

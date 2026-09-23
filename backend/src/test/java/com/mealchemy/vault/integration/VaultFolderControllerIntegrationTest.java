@@ -155,13 +155,13 @@ public class VaultFolderControllerIntegrationTest {
     }
 
     @Test
-    void getVaultFolderByVaultId_returns403_whenNotOwnerOrMember() throws Exception {
+    void getVaultFolderByVaultId_returns404_whenNotOwnerOrMember() throws Exception {
         newFolder(sharedVault, "General");
 
         mockMvc.perform(get("/folders/vault/{vaultId}", sharedVault.getVaultId())
-                        .with(authentication(authAs(outsider.getUserId()))))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Only a vault member/owner can view the folders."));
+                .with(authentication(authAs(outsider.getUserId()))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Vault not found."));
     }
 
     @Test
@@ -246,16 +246,16 @@ public class VaultFolderControllerIntegrationTest {
     }
 
     @Test
-    void createVaultFolder_returns403_whenNotOwner() throws Exception {
+    void createVaultFolder_returns403_whenNotOwnerOrEditor() throws Exception {
         VaultFolderRequest request = new VaultFolderRequest(sharedVault.getVaultId(), "NewFolder");
 
         mockMvc.perform(post("/folders")
-                        .with(authentication(authAs(outsider.getUserId())))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                .with(authentication(authAs(outsider.getUserId())))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Only a vault owner can modify folders."));
+                .andExpect(jsonPath("$.message").value("Only a vault owner/editor can modify folders."));
     }
 
     @Test
@@ -292,17 +292,17 @@ public class VaultFolderControllerIntegrationTest {
     }
 
     @Test
-    void updateVaultFolder_returns403_whenNotOwner() throws Exception {
+    void updateVaultFolder_returns403_whenNotOwnerOrEditor() throws Exception {
         VaultFolder folder = newFolder(sharedVault, "General");
         VaultFolderRequest request = new VaultFolderRequest(sharedVault.getVaultId(), "Renamed");
 
         mockMvc.perform(put("/folders/{id}", folder.getFolderId())
-                        .with(authentication(authAs(outsider.getUserId())))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                .with(authentication(authAs(outsider.getUserId())))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Only a vault owner can modify folders."));
+                .andExpect(jsonPath("$.message").value("Only a vault owner/editor can modify folders."));
     }
 
     @Test
@@ -347,14 +347,14 @@ public class VaultFolderControllerIntegrationTest {
     }
 
     @Test
-    void deleteVaultFolder_returns403_whenNotOwner() throws Exception {
+    void deleteVaultFolder_returns403_whenNotOwnerOrEditor() throws Exception {
         VaultFolder folder = newFolder(sharedVault, "General");
 
         mockMvc.perform(delete("/folders/vault/{vaultId}/folder/{id}", sharedVault.getVaultId(), folder.getFolderId())
-                        .with(authentication(authAs(outsider.getUserId())))
-                        .with(csrf()))
+                .with(authentication(authAs(outsider.getUserId())))
+                .with(csrf()))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Only a vault owner can modify folders."));
+                .andExpect(jsonPath("$.message").value("Only a vault owner/editor can modify folders."));
 
         org.junit.jupiter.api.Assertions.assertTrue(vaultFolderRepository.findById(folder.getFolderId()).isPresent());
     }
@@ -366,5 +366,39 @@ public class VaultFolderControllerIntegrationTest {
                         .with(csrf()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Vault not found."));
+    }
+
+    @Test
+    void deleteVaultFolder_returns404_whenFolderInDifferentVault() throws Exception {
+        Vault outsiderVault = newVault(outsider.getUserId(), VaultType.SHARED, "Outsider Vault");
+        VaultFolder folder = newFolder(sharedVault, "General");
+
+        mockMvc.perform(delete("/folders/vault/{vaultId}/folder/{id}", outsiderVault.getVaultId(), folder.getFolderId())
+                .with(authentication(authAs(outsider.getUserId())))
+                .with(csrf()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Folder not found."));
+
+        org.junit.jupiter.api.Assertions.assertTrue(vaultFolderRepository.findById(folder.getFolderId()).isPresent());
+    }
+
+    @Test
+    void updateVaultFolder_returns404_whenFolderInDifferentVault() throws Exception {
+        Vault outsiderVault = newVault(outsider.getUserId(), VaultType.SHARED, "Outsider Vault");
+        VaultFolder folder = newFolder(sharedVault, "General");
+        VaultFolderRequest request = new VaultFolderRequest(outsiderVault.getVaultId(), "Hijacked");
+
+        mockMvc.perform(put("/folders/{id}", folder.getFolderId())
+                .with(authentication(authAs(outsider.getUserId())))                    
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Folder not found."));
+
+        List<VaultFolder> inShared = vaultFolderRepository.findByVault_VaultId(sharedVault.getVaultId());
+        org.junit.jupiter.api.Assertions.assertEquals(1, inShared.size());
+        org.junit.jupiter.api.Assertions.assertEquals("General", inShared.get(0).getFolderName());
+        org.junit.jupiter.api.Assertions.assertTrue(vaultFolderRepository.findByVault_VaultId(outsiderVault.getVaultId()).isEmpty());
     }
 }

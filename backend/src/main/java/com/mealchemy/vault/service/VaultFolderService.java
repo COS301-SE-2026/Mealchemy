@@ -10,13 +10,14 @@ import org.springframework.http.*;
 /* Import classes */
 import com.mealchemy.vault.model.VaultFolder;
 import com.mealchemy.vault.model.Vault;
-import com.mealchemy.auth.model.User;
+import com.mealchemy.vault.model.VaultMember;
 import com.mealchemy.vault.dto.VaultFolderRequest;
 import com.mealchemy.vault.dto.VaultFolderResponse;
 import com.mealchemy.vault.repository.VaultFolderRepository;
 import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.vault.repository.VaultMemberRepository;
 
+import com.mealchemy.shared.enums.VaultMemberRole;
 import com.mealchemy.shared.enums.VaultType;
 
 @Service
@@ -53,7 +54,8 @@ public class VaultFolderService {
 
         isOwnerOrMember(vaultForCheck, userId);
 
-        VaultFolder vaultFolderForReturn = vaultFolderRepository.findByFolderName(name).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
+        VaultFolder vaultFolderForReturn = vaultFolderRepository.findByVault_VaultIdAndFolderName(vaultId, name)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
 
         return VaultFolderResponse.from(vaultFolderForReturn);
     }
@@ -73,16 +75,17 @@ public class VaultFolderService {
 
         isOwnerOrMember(vaultForCheck, userId);
         
-        VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
+        VaultFolder vaultFolderForReturn = vaultFolderRepository.findByVault_VaultIdAndFolderId(vaultId, id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
         return VaultFolderResponse.from(vaultFolderForReturn);
     }
 
     // Post to create a new vault folder
-    public VaultFolderResponse createVaultFolder(VaultFolderRequest request, Integer ownerId)
+    public VaultFolderResponse createVaultFolder(VaultFolderRequest request, Integer userId)
     {
         Vault vaultForCheck = vaultRepository.findById(request.vaultId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
         
-        isOwner(vaultForCheck, ownerId);
+        isOwnerOrEditor(vaultForCheck, userId);
 
         VaultFolder vaultFolderForReturn = mapRequestToEntity(request, vaultForCheck);
         return VaultFolderResponse.from(vaultFolderRepository.save(vaultFolderForReturn));
@@ -93,11 +96,11 @@ public class VaultFolderService {
     {
         Vault vaultForCheck = vaultRepository.findById(request.vaultId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
         
-        isOwner(vaultForCheck, ownerId);
+        isOwnerOrEditor(vaultForCheck, ownerId);
 
-        VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
-        
-        vaultFolderForReturn.setVault(vaultForCheck);
+        VaultFolder vaultFolderForReturn = vaultFolderRepository.findByVault_VaultIdAndFolderId(request.vaultId(), id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
+
         vaultFolderForReturn.setFolderName(request.folderName());
 
         return VaultFolderResponse.from(vaultFolderRepository.save(vaultFolderForReturn));
@@ -108,7 +111,10 @@ public class VaultFolderService {
     {
         Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
         
-        isOwner(vaultForCheck, ownerId);
+        isOwnerOrEditor(vaultForCheck, ownerId);
+
+        vaultFolderRepository.findByVault_VaultIdAndFolderId(vaultId, id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
 
         vaultFolderRepository.deleteById(id);
     }
@@ -134,15 +140,28 @@ public class VaultFolderService {
 
         if (!isOwner && !isMember)
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault member/owner can view the folders.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found.");
         }
     }
 
-    private void isOwner(Vault vault, Integer ownerId)
+    private void isOwnerOrEditor(Vault vault, Integer userId) 
     {
-        if (!vault.getOwnerId().equals(ownerId))
+        boolean isOwner = vault.getOwnerId().equals(userId);
+
+        if (isOwner)
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault owner can modify folders.");
+            return;
+        }
+
+        // owner returns above because owner doesn't have a role in vaultMember
+        VaultMember member = vaultMemberRepository.findByVault_VaultIdAndUser_UserId(vault.getVaultId(), userId)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault owner/editor can modify folders."));
+        
+        boolean isEditor = member.getRole().equals(VaultMemberRole.EDITOR);
+
+        if (!isEditor)
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a vault owner/editor can modify the folders.");
         }
     }
 }

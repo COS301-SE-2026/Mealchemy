@@ -5,9 +5,13 @@ package com.mealchemy.vault.model;
 import jakarta.persistence.*;
 import java.util.*;
 import java.time.OffsetDateTime;
+import org.hibernate.type.SqlTypes;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
+
+import com.mealchemy.shared.enums.VaultMemberRole;
 
 /* Import classes */
 
@@ -35,6 +39,11 @@ public class VaultMember {
     @Column(name = "joined_at", nullable = false)
     private OffsetDateTime joinedAt;
 
+    @Enumerated(EnumType.STRING) // serilize by name
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "role", nullable = false, columnDefinition = "vault_member_role_enum")
+    private VaultMemberRole role = VaultMemberRole.VIEWER;
+
     /* Getters */
 
     public int getId()
@@ -57,6 +66,11 @@ public class VaultMember {
         return joinedAt;
     }
 
+    public VaultMemberRole getRole()
+    {
+        return role;
+    }
+
     /* Setters */
 
     public void setVault(Vault vaultIn)
@@ -68,4 +82,10 @@ public class VaultMember {
     {
         user = userIn;
     }
+
+    public void setRole(VaultMemberRole roleIn)
+    {
+        role = roleIn;
+    }
+
 }

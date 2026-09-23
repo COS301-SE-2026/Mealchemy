@@ -37,10 +37,13 @@ import com.mealchemy.recipe.dto.RecipeUpdateRequest;
 import com.mealchemy.recipe.dto.RecipeIngredientRequest;
 import com.mealchemy.recipe.dto.RecipePhotoUploadRequest;
 import com.mealchemy.recipe.dto.RecipePhotoUploadResponse;
+import com.mealchemy.recipe.dto.RecipeVideoUploadRequest;
+import com.mealchemy.recipe.dto.RecipeVideoUploadResponse;
 import com.mealchemy.recipe.dto.RecipeStepRequest;
 import com.mealchemy.recipe.dto.RecipeResponse;
 import com.mealchemy.recipe.service.RecipePhotoService;
 import com.mealchemy.recipe.service.RecipeService;
+import com.mealchemy.recipe.service.RecipeVideoService;
 import com.mealchemy.config.WithMockJwtUser;
 
 @ExtendWith(SpringExtension.class)
@@ -58,6 +61,9 @@ public class RecipeControllerTest {
 
     @MockitoBean
     private RecipePhotoService recipePhotoService;
+
+    @MockitoBean
+    private RecipeVideoService recipeVideoService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -107,6 +113,16 @@ public class RecipeControllerTest {
     }
 
     @Test
+    void getAllCommunitySizzles_returns200_withList() throws Exception
+    {
+        when(recipeService.getAllCommunitySizzles()).thenReturn(List.of(response));
+
+        mockMvc.perform(get("/recipes/community/sizzles"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].title").value("Recipe 1"));
+    }
+
+    @Test
     void getRecipeById_returns200_whenFound() throws Exception
     {
         when(recipeService.getRecipeById(1, 1)).thenReturn(response);
@@ -123,13 +139,13 @@ public class RecipeControllerTest {
     }
 
     @Test
-    void getRecipeById_returns403_whenNotAccessible() throws Exception
+    void getRecipeById_returns404_whenNotAccessible() throws Exception
     {
-        when(recipeService.getRecipeById(1, 1)).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to view this recipe."));
+        when(recipeService.getRecipeById(1, 1)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         mockMvc.perform(get("/recipes/single/1"))
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.message").value("You do not have permission to view this recipe."));
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message").value("Recipe not found."));
     }
 
     @Test
@@ -246,7 +262,7 @@ public class RecipeControllerTest {
     }
 
     @Test
-    void createPhotoUploadUrl_returns403_whenUserDoesNotOwnRecipe() throws Exception
+    void createPhotoUploadUrl_returns404_whenUserDoesNotOwnRecipe() throws Exception
     {
         RecipePhotoUploadRequest photoRequest = new RecipePhotoUploadRequest(
             "image/jpeg",
@@ -257,18 +273,60 @@ public class RecipeControllerTest {
             any(RecipePhotoUploadRequest.class),
             eq(1)
         )).thenThrow(new ResponseStatusException(
-            HttpStatus.FORBIDDEN,
-            "Only the owner of this recipe can upload a photo."
+            HttpStatus.NOT_FOUND,
+            "Recipe not found."
         ));
 
         mockMvc.perform(post("/recipes/1/photo-upload-url")
             .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(photoRequest)))
-            .andExpect(status().isForbidden())
+            .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.message").value(
-                "Only the owner of this recipe can upload a photo."
+                "Recipe not found."
             ));
+    }
+
+    @Test
+    void createVideoUploadUrl_returns200_withUploadDetails() throws Exception
+    {
+        RecipeVideoUploadRequest videoRequest = new RecipeVideoUploadRequest(
+            "video/mp4",
+            4096L
+        );
+        RecipeVideoUploadResponse videoResponse = new RecipeVideoUploadResponse(
+            "https://storage.googleapis.com/signed-video-upload",
+            "https://storage.googleapis.com/bucket/recipes/1/videos/video.mp4",
+            Map.of("Content-Type", "video/mp4", "Content-Length", "4096"),
+            OffsetDateTime.now().plusMinutes(10)
+        );
+        when(recipeVideoService.createVideoUploadUrl(
+            eq(1),
+            any(RecipeVideoUploadRequest.class),
+            eq(1)
+        )).thenReturn(videoResponse);
+
+        mockMvc.perform(post("/recipes/1/video-upload-url")
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(videoRequest)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.uploadUrl").value(videoResponse.uploadUrl()))
+            .andExpect(jsonPath("$.videoUrl").value(videoResponse.videoUrl()))
+            .andExpect(jsonPath("$.requiredHeaders.Content-Type").value("video/mp4"))
+            .andExpect(jsonPath("$.requiredHeaders.Content-Length").value("4096"));
+    }
+
+    @Test
+    void createVideoUploadUrl_returns400_whenRequestIsInvalid() throws Exception
+    {
+        RecipeVideoUploadRequest videoRequest = new RecipeVideoUploadRequest("", 0L);
+
+        mockMvc.perform(post("/recipes/1/video-upload-url")
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(videoRequest)))
+            .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -289,7 +347,7 @@ public class RecipeControllerTest {
     {
         RecipeUpdateRequest invalidRequest = new RecipeUpdateRequest(
             "Req Title", "Description", "Chinese", 10, 15, 2,
-            null, false, null, null, false, null,
+            null, false, null, false, null, false, null,
             List.of(new RecipeStepRequest(0, ""))
         );
 

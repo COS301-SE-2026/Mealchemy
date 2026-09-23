@@ -2,6 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mealchemy/features/auth/providers/auth_provider.dart';
+import 'package:mealchemy/features/cook_mode/models/cook_session.dart';
+import 'package:mealchemy/features/cook_mode/providers/cook_session_provider.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
@@ -9,6 +12,7 @@ import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
 import 'package:mealchemy/features/recipe/screens/recipe_detail_screen.dart';
 import 'package:mealchemy/features/recipe/providers/recipe_nutrition_provider.dart';
 import 'package:mealchemy/features/recipe/repositories/mock_recipe_nutrition_repository.dart';
+import 'package:mealchemy/core/shared_widgets/atoms/app_button.dart';
 
 const _fixture = Recipe(
   recipeId: 1,
@@ -41,7 +45,7 @@ const _fixture = Recipe(
 
 Widget _host(Widget child, List<Override> overrides) {
   return ProviderScope(
-    overrides: overrides,
+    overrides: [activeIdentityProvider.overrideWithValue(null), ...overrides],
     child: MaterialApp(home: child),
   );
 }
@@ -86,6 +90,50 @@ void main() {
     expect(find.text('Saffron-Infused Risotto'), findsWidgets);
     expect(find.text('30m'), findsOneWidget); // cook time
     expect(find.text('15m'), findsOneWidget); // prep time
+
+    final startCooking = tester.widget<AppButton>(
+      find.widgetWithText(AppButton, 'Start Cooking'),
+    );
+    expect(startCooking.onPressed, isNotNull);
+  });
+
+  testWidgets('offers the matching saved step as the resume action',
+      (tester) async {
+    final saved = CookSession(
+      recipeId: 1,
+      recipeTitle: _fixture.title,
+      stepIndex: 1,
+      stepNumber: 2,
+      stepText: 'Toast the rice.',
+      stepCount: 2,
+      savedAt: DateTime.utc(2026, 9, 13),
+    );
+    await tester.pumpWidget(_host(const RecipeDetailScreen(recipeId: 1), [
+      recipeDetailProvider(1).overrideWith((ref) async => _fixture),
+      cookSessionForRecipeProvider(1).overrideWith((ref) async => saved),
+    ]));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(AppButton, 'Resume Step 2'), findsOneWidget);
+  });
+
+  testWidgets('does not offer resume for a changed saved step', (tester) async {
+    final saved = CookSession(
+      recipeId: 1,
+      recipeTitle: _fixture.title,
+      stepIndex: 1,
+      stepNumber: 2,
+      stepText: 'Old instruction.',
+      stepCount: 2,
+      savedAt: DateTime.utc(2026, 9, 13),
+    );
+    await tester.pumpWidget(_host(const RecipeDetailScreen(recipeId: 1), [
+      recipeDetailProvider(1).overrideWith((ref) async => _fixture),
+      cookSessionForRecipeProvider(1).overrideWith((ref) async => saved),
+    ]));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(AppButton, 'Start Cooking'), findsOneWidget);
   });
 
   testWidgets('renders ingredient names from the recipe', (tester) async {
@@ -125,6 +173,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300)); // let tabs settle
     expect(tester.takeException(), isNull);
     expect(find.text('Ingredient #42'), findsOneWidget);
+
+    final startCooking = tester.widget<AppButton>(
+      find.widgetWithText(AppButton, 'Start Cooking'),
+    );
+    expect(startCooking.onPressed, isNull);
   });
 
   testWidgets('shows an error state when the recipe fails to load',

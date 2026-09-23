@@ -9,12 +9,15 @@ import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/features/pantry/models/ingredient_catalogue_item.dart';
 import 'package:mealchemy/features/pantry/providers/pantry_provider.dart';
 import 'package:mealchemy/features/pantry/repositories/ingredient_catalogue_repository.dart';
+import 'package:mealchemy/features/recipe/models/unit_of_measurement.dart';
+import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
 import 'package:mealchemy/features/shopping_lists/models/shopping_list_item.dart';
 import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
 import 'package:mealchemy/features/shopping_lists/repositories/mock_shopping_list_repository.dart';
 import 'package:mealchemy/features/shopping_lists/screens/add_shopping_list_item_screen.dart';
 import 'package:mealchemy/features/pantry/models/ingredient_category.dart';
 import 'package:mealchemy/features/pantry/models/pending_external_ingredient.dart';
+import 'package:mealchemy/core/shared_widgets/atoms/app_toast_host.dart';
 
 class _FakeIngredientCatalogueRepository extends IngredientCatalogueRepository {
   _FakeIngredientCatalogueRepository({
@@ -171,6 +174,13 @@ void main() {
     bool catalogueRequiresCategory = false,
     bool shoppingShouldFail = false,
     bool isOffline = false,
+    List<UnitOfMeasurement> units = const [
+      UnitOfMeasurement(unitId: 1, name: 'g', system: 'METRIC'),
+      UnitOfMeasurement(unitId: 2, name: 'kg', system: 'METRIC'),
+      UnitOfMeasurement(unitId: 3, name: 'ml', system: 'METRIC'),
+      UnitOfMeasurement(unitId: 4, name: 'L', system: 'METRIC'),
+      UnitOfMeasurement(unitId: 5, name: 'pcs', system: 'GENERAL'),
+    ],
   }) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 1;
@@ -213,6 +223,7 @@ void main() {
       ProviderScope(
         overrides: [
           offlineReadOnlyProvider.overrideWithValue(isOffline),
+          unitOptionsProvider.overrideWithValue(units),
           shoppingListRepositoryProvider.overrideWithValue(
             shoppingRepository,
           ),
@@ -225,6 +236,9 @@ void main() {
             splashFactory: NoSplash.splashFactory,
           ),
           routerConfig: router,
+          builder: (context, child) => AppToastHost(
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
       ),
     );
@@ -286,6 +300,7 @@ void main() {
 
     await tester.tap(find.text('Add Item'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(
       find.text('Could not add the item. Try again.'),
@@ -307,6 +322,29 @@ void main() {
     expect(find.text('Add Item'), findsOneWidget);
   });
 
+  testWidgets('uses units returned by the dynamic units provider', (
+    tester,
+  ) async {
+    await pumpEntryScreen(
+      tester,
+      units: const [
+        UnitOfMeasurement(
+          unitId: 90,
+          name: 'dynamic-unit',
+          system: 'GENERAL',
+        ),
+      ],
+    );
+
+    await tester.tap(
+      find.byType(DropdownButtonFormField<String>),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('dynamic-unit'), findsOneWidget);
+    expect(find.text('cups'), findsNothing);
+  });
+
   testWidgets('blocks direct offline entry', (tester) async {
     await pumpEntryScreen(tester, isOffline: true);
 
@@ -325,6 +363,7 @@ void main() {
 
     await tester.tap(find.text('Add Item'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(
       find.text('Please select an ingredient from the catalogue.'),
@@ -369,6 +408,7 @@ void main() {
 
     await tester.tap(find.text('Add Item'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(harness.shoppingRepository.addedListId, 'general-list');
     expect(harness.shoppingRepository.addedIngId, 12);
@@ -418,6 +458,7 @@ void main() {
 
     await tester.tap(find.text('Add Item'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     //saved local catalogue id is submitted after USDA import
     expect(harness.shoppingRepository.addedListId, 'general-list');
@@ -495,6 +536,7 @@ void main() {
 
     await tester.tap(find.text('Add Item'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(harness.shoppingRepository.addedListId, 'general-list');
     expect(harness.shoppingRepository.addedIngId, isNull);

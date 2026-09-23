@@ -6,6 +6,7 @@ import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/features/guided_discovery/models/recommendation.dart';
 import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
+import 'package:mealchemy/features/recipe/widgets/report_recipe_button.dart';
 
 class RecipeRecommendationCard extends StatelessWidget {
   const RecipeRecommendationCard({
@@ -58,13 +59,19 @@ class RecipeRecommendationCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Match badge
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: AppMatchBadge(
-                        percent: data.matchPercent,
-                        size: BadgeSize.small,
-                      ),
+                    Row(
+                      children: [
+                        if (data.recipe.isCommunityPublished)
+                          ReportRecipeButton(
+                            recipe: data.recipe,
+                            onImage: true,
+                          ),
+                        const Spacer(),
+                        AppMatchBadge(
+                          percent: data.matchPercent,
+                          size: BadgeSize.small,
+                        ),
+                      ],
                     ),
                     const Spacer(),
                     // Cuisine tag

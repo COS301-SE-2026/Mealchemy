@@ -24,6 +24,7 @@ import com.mealchemy.recipe.dto.RecipeIngredientRequest;
 import com.mealchemy.recipe.dto.RecipeStepRequest;
 import com.mealchemy.recipe.dto.RecipeResponse;
 import com.mealchemy.recipe.event.RecipePhotoCleanupEvent;
+import com.mealchemy.recipe.event.RecipeVideoCleanupEvent;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.cuisinetype.repository.FlavourProfileOptionsRepository;
@@ -71,23 +72,19 @@ public class RecipeService
         return recipeRepository.findByIsCommunityPublishedTrue().stream().map(RecipeResponse::from).collect(Collectors.toList());
     }
 
+    // Get all community published recipes with curated videos.
+    public List<RecipeResponse> getAllCommunitySizzles()
+    {
+        return recipeRepository.findCommunitySizzles().stream().map(RecipeResponse::from).collect(Collectors.toList());
+    }
+
     // Get a single recipe by Id
     // Modified to find accessible recipe, returns it when acess allowed, checkif reciepe exists if acess fails, returns 403 if exists but not allowed access, returns 404 when it doesnt exist.
     public RecipeResponse getRecipeById(Integer id, Integer userId)
     {
-        Optional<Recipe> accessibleRecipe = recipeRepository.findAccessibleByIdAndUserId(id, userId);
+        Recipe recipeForReturn = recipeRepository.findAccessibleByIdAndUserId(id, userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
-        if (accessibleRecipe.isEmpty())
-        {
-            if (recipeRepository.existsById(id))
-            {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to view this recipe.");
-            }
-
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
-        }
-
-        Recipe recipeForReturn = accessibleRecipe.get();
         return RecipeResponse.from(recipeForReturn);
     }
 
@@ -165,7 +162,7 @@ public class RecipeService
         
         if (!recipeForReturn.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can edit it.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
         }
 
         if (!flavourProfileOptionsRepository.existsByValue(request.cuisineType()))
@@ -174,6 +171,7 @@ public class RecipeService
         }
 
         String oldPhotoUrl = recipeForReturn.getPhotoUrl();
+        String oldVideoUrl = recipeForReturn.getVideoUrl();
 
         if (request.removePhoto() && request.photoUrl() != null && !request.photoUrl().isBlank())
         {
@@ -194,6 +192,25 @@ public class RecipeService
             newPhotoUrl = request.photoUrl();
         }
 
+        if (request.removeVideo() && request.videoUrl() != null && !request.videoUrl().isBlank())
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A replacement video URL cannot be supplied when removing the video.");
+        }
+
+        String newVideoUrl = oldVideoUrl;
+        if (request.removeVideo())
+        {
+            newVideoUrl = null;
+        }
+        else if (request.videoUrl() != null)
+        {
+            if (request.videoUrl().isBlank())
+            {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Video URL cannot be blank.");
+            }
+            newVideoUrl = request.videoUrl();
+        }
+
         List<RecipeIngredient> ingredients = request.ingredients() == null
             ? null
             : mapIngredientRequests(request.ingredients(), recipeForReturn);
@@ -208,7 +225,7 @@ public class RecipeService
         recipeForReturn.setCookingTimeMins(request.cookingTimeMins());
         recipeForReturn.setServingSize(request.servingSize());
         recipeForReturn.setPhotoUrl(newPhotoUrl);
-        recipeForReturn.setVideoUrl(request.videoUrl());
+        recipeForReturn.setVideoUrl(newVideoUrl);
         recipeForReturn.setExternalUrl(request.externalUrl());
         recipeForReturn.setIsCommunityPublished(request.isCommunityPublished());
 
@@ -235,6 +252,7 @@ public class RecipeService
 
         Recipe saved = recipeRepository.save(recipeForReturn);
         publishPhotoCleanupWhenChanged(id, oldPhotoUrl, newPhotoUrl);
+        publishVideoCleanupWhenChanged(id, oldVideoUrl, newVideoUrl);
 
         return RecipeResponse.from(saved);
     }
@@ -247,11 +265,12 @@ public class RecipeService
 
         if (!recipeForDeletion.getOwnerId().equals(ownerId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can delete it.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
         }
 
         recipeRepository.deleteById(id);
         publishPhotoCleanup(id, recipeForDeletion.getPhotoUrl());
+        publishVideoCleanup(id, recipeForDeletion.getVideoUrl());
     }
 
     /* Mapping functions */
@@ -352,15 +371,35 @@ public class RecipeService
         }
     }
 
-    private void validateFolderIsInPrivateVault(Integer folderId, Integer ownerId)
-{
-    VaultFolder folder = vaultFolderRepository.findById(folderId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
-
-    Vault vault = folder.getVault();
-
-    if (!vault.getOwnerId().equals(ownerId) || !vault.getVaultType().equals(VaultType.PRIVATE))
+    private void publishVideoCleanupWhenChanged(
+        Integer recipeId,
+        String oldVideoUrl,
+        String newVideoUrl
+    )
     {
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Recipes can only be added to a folder in your private vault.");
+        if (!Objects.equals(oldVideoUrl, newVideoUrl))
+        {
+            publishVideoCleanup(recipeId, oldVideoUrl);
+        }
     }
-}
+
+    private void publishVideoCleanup(Integer recipeId, String videoUrl)
+    {
+        if (videoUrl != null && !videoUrl.isBlank())
+        {
+            eventPublisher.publishEvent(new RecipeVideoCleanupEvent(recipeId, videoUrl));
+        }
+    }
+
+    private void validateFolderIsInPrivateVault(Integer folderId, Integer ownerId)
+    {
+        VaultFolder folder = vaultFolderRepository.findById(folderId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
+
+        Vault vault = folder.getVault();
+
+        if (!vault.getOwnerId().equals(ownerId) || !vault.getVaultType().equals(VaultType.PRIVATE))
+        {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found.");
+        }
+    }
 }
