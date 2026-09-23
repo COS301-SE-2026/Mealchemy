@@ -59,13 +59,13 @@ def cuisine_affinity_score(cuisine: str, cuisine_affinities: dict[str, float]) -
 def _score_high_protein(nutrition: Nutrition) -> float:
     if nutrition.protein_g is None:
         return NEUTRAL_SIGNAL_VALUE
-    return 1.0 if nutrition.protein_g >= NUTRITION_HIGH_PROTEIN_MIN_G else 0.0
+    return min(nutrition.protein_g / NUTRITION_HIGH_PROTEIN_MIN_G, 1.0)
 
 
 def _score_low_carb(nutrition: Nutrition) -> float:
     if nutrition.carbs_g is None:
         return NEUTRAL_SIGNAL_VALUE
-    return 1.0 if nutrition.carbs_g <= NUTRITION_LOW_CARB_MAX_G else 0.0
+    return max(1.0 - (nutrition.carbs_g / NUTRITION_LOW_CARB_MAX_G), 0.0)
 
 
 _GOAL_SCORERS = {
