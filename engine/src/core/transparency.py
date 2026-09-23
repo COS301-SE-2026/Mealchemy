@@ -47,3 +47,11 @@ def _render_freshness(recipe: CandidatePoolEntry, user_state: UserState, rng: ra
     template = rng.choice(MESSAGE_TEMPLATES["freshness"][_tier(urgency)])
 
     return template.format(ingredient=ingredient_name)
+
+_RENDERERS = {
+    "pantry_match": lambda recipe, user_state, score, rng: _render_pantry_match(recipe, user_state, score, rng),
+    "cuisine": lambda recipe, user_state, score, rng: _render_cuisine(recipe, score, rng),
+    "nutrition": lambda recipe, user_state, score, rng: _render_nutrition(recipe, user_state, rng),
+    "novelty": lambda recipe, user_state, score, rng: _render_novelty(recipe, user_state, rng),
+    "freshness": lambda recipe, user_state, score, rng: _render_freshness(recipe, user_state, rng),
+}
