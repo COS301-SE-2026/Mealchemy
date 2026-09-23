@@ -12,6 +12,8 @@ import '../../../core/connectivity/network_status_provider.dart';
 import '../../../core/shared_widgets/Molecules/app_search_bar.dart';
 import '../../external_links/widgets/link_row.dart';
 import '../widgets/folder_recipe_row.dart';
+import '../providers/shared_vault_access_provider.dart';
+import '../widgets/shared_vault_members_entry.dart';
 
 import '../widgets/vault_hero.dart';
 import '../../offline/data/offline_cache_store.dart';
@@ -35,7 +37,21 @@ class VaultScreen extends ConsumerWidget {
         child: const Icon(Icons.add),
       ),
       body: AppRefresh(
-        onRefresh: () => ref.refresh(vaultsProvider.future),
+        onRefresh: () async {
+          ref.invalidate(sharedVaultAccessProvider);
+          ref.invalidate(vaultMembersProvider);
+          ref.invalidate(vaultFoldersProvider);
+          ref.invalidate(folderRecipesProvider);
+          ref.invalidate(vaultSearchResultsProvider);
+
+          ref.invalidate(vaultsProvider);
+
+          try {
+            await ref.read(vaultsProvider.future);
+          } catch (_) {
+            // The screen displays the current loading/error state.
+          }
+        },
         child: vaultsAsync.when(
           loading: () => const _ScrollableCentre(
             child: CircularProgressIndicator(),
@@ -89,6 +105,14 @@ class _VaultBody extends ConsumerWidget {
                 },
               ),
             ),
+            if (selected != null && selected.vaultType == VaultTypes.shared)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: SharedVaultMembersEntry(
+                  key: ValueKey(selected.vaultId),
+                  vaultId: selected.vaultId,
+                ),
+              ),
             if (selected == null && isShared)
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
