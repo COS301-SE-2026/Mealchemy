@@ -24,6 +24,7 @@ import com.mealchemy.recipe.dto.RecipeIngredientRequest;
 import com.mealchemy.recipe.dto.RecipeStepRequest;
 import com.mealchemy.recipe.dto.RecipeResponse;
 import com.mealchemy.recipe.event.RecipePhotoCleanupEvent;
+import com.mealchemy.recipe.event.RecipeVideoCleanupEvent;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.cuisinetype.repository.FlavourProfileOptionsRepository;
@@ -69,6 +70,12 @@ public class RecipeService
     public List<RecipeResponse> getAllCommunityPublishedRecipes()
     {
         return recipeRepository.findByIsCommunityPublishedTrue().stream().map(RecipeResponse::from).collect(Collectors.toList());
+    }
+
+    // Get all community published recipes with curated videos.
+    public List<RecipeResponse> getAllCommunitySizzles()
+    {
+        return recipeRepository.findCommunitySizzles().stream().map(RecipeResponse::from).collect(Collectors.toList());
     }
 
     // Get a single recipe by Id
@@ -164,6 +171,7 @@ public class RecipeService
         }
 
         String oldPhotoUrl = recipeForReturn.getPhotoUrl();
+        String oldVideoUrl = recipeForReturn.getVideoUrl();
 
         if (request.removePhoto() && request.photoUrl() != null && !request.photoUrl().isBlank())
         {
@@ -184,6 +192,25 @@ public class RecipeService
             newPhotoUrl = request.photoUrl();
         }
 
+        if (request.removeVideo() && request.videoUrl() != null && !request.videoUrl().isBlank())
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A replacement video URL cannot be supplied when removing the video.");
+        }
+
+        String newVideoUrl = oldVideoUrl;
+        if (request.removeVideo())
+        {
+            newVideoUrl = null;
+        }
+        else if (request.videoUrl() != null)
+        {
+            if (request.videoUrl().isBlank())
+            {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Video URL cannot be blank.");
+            }
+            newVideoUrl = request.videoUrl();
+        }
+
         List<RecipeIngredient> ingredients = request.ingredients() == null
             ? null
             : mapIngredientRequests(request.ingredients(), recipeForReturn);
@@ -198,7 +225,7 @@ public class RecipeService
         recipeForReturn.setCookingTimeMins(request.cookingTimeMins());
         recipeForReturn.setServingSize(request.servingSize());
         recipeForReturn.setPhotoUrl(newPhotoUrl);
-        recipeForReturn.setVideoUrl(request.videoUrl());
+        recipeForReturn.setVideoUrl(newVideoUrl);
         recipeForReturn.setExternalUrl(request.externalUrl());
         recipeForReturn.setIsCommunityPublished(request.isCommunityPublished());
 
@@ -225,6 +252,7 @@ public class RecipeService
 
         Recipe saved = recipeRepository.save(recipeForReturn);
         publishPhotoCleanupWhenChanged(id, oldPhotoUrl, newPhotoUrl);
+        publishVideoCleanupWhenChanged(id, oldVideoUrl, newVideoUrl);
 
         return RecipeResponse.from(saved);
     }
@@ -242,6 +270,7 @@ public class RecipeService
 
         recipeRepository.deleteById(id);
         publishPhotoCleanup(id, recipeForDeletion.getPhotoUrl());
+        publishVideoCleanup(id, recipeForDeletion.getVideoUrl());
     }
 
     /* Mapping functions */
@@ -339,6 +368,26 @@ public class RecipeService
         if (photoUrl != null && !photoUrl.isBlank())
         {
             eventPublisher.publishEvent(new RecipePhotoCleanupEvent(recipeId, photoUrl));
+        }
+    }
+
+    private void publishVideoCleanupWhenChanged(
+        Integer recipeId,
+        String oldVideoUrl,
+        String newVideoUrl
+    )
+    {
+        if (!Objects.equals(oldVideoUrl, newVideoUrl))
+        {
+            publishVideoCleanup(recipeId, oldVideoUrl);
+        }
+    }
+
+    private void publishVideoCleanup(Integer recipeId, String videoUrl)
+    {
+        if (videoUrl != null && !videoUrl.isBlank())
+        {
+            eventPublisher.publishEvent(new RecipeVideoCleanupEvent(recipeId, videoUrl));
         }
     }
 
