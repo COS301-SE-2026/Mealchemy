@@ -15,5 +15,6 @@ public record EnrichedRecommendationItem(
     SignalScoresResponse scoreBreakdown,
     Integer pantryGapCount,
     List<String> missingIngredients,
+    List<SignalHighlightResponse> transparency,
     RecipeResponse recipe
 ){}
