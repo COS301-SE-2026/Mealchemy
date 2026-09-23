@@ -21,3 +21,14 @@ def _render_pantry_match(recipe: CandidatePoolEntry, user_state: UserState, scor
 def _render_cuisine(recipe: CandidatePoolEntry, score: float, rng: random.Random) -> str:
     template = rng.choice(MESSAGE_TEMPLATES["cuisine"][_tier(score)])
     return template.format(cuisine=recipe.cuisine)
+
+def _render_nutrition(recipe: CandidatePoolEntry, user_state: UserState, rng: random.Random) -> str:
+    detail = nutrition_detail(recipe, user_state)
+
+    if detail is None:
+        return rng.choice(MESSAGE_TEMPLATES["nutrition"]["none"])
+
+    goal, actual, _, goal_score = detail
+
+    template = rng.choice(MESSAGE_TEMPLATES["nutrition"][goal][_tier(goal_score)])
+    return template.format(actual=round(actual))
