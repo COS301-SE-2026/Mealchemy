@@ -103,24 +103,44 @@ def nutrition_score(recipe: CandidatePoolEntry, user_state: UserState) -> float:
     return sum(goal_scores) / len(goal_scores)
 
 
-def freshness_score(recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]) -> float:
+def _owned_ingredient_urgencies(recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]) -> list[tuple[int, float]]:
     owned_ids, _ = pantry_ingredient_match(recipe_ingredients, pantry)
+
     if not owned_ids:
-        return NEUTRAL_SIGNAL_VALUE
+        return []
 
     pantry_by_ing_id = {p.ing_id: p for p in pantry}
     now = datetime.now(UTC)
 
     urgencies = []
-    for ing_id in owned_ids:
+    for ing_id in _owned_ingredient_urgencies:
         entry = pantry_by_ing_id.get(ing_id)
+
         if entry is None or entry.shelf_life_days is None:
             continue
         days_stored = (now - entry.added_at).days
         urgency = min(max(days_stored / entry.shelf_life_days, 0.0), 1.0)
-        urgencies.append(urgency)
+        urgencies.append((ing_id, urgency))
 
+    return urgencies
+
+def freshness_score(recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]) -> float:
+    urgencies = _owned_ingredient_urgencies(recipe_ingredients, pantry)
     if not urgencies:
         return NEUTRAL_SIGNAL_VALUE
+    return sum(u for _, u in urgencies) / len(urgencies)
 
-    return sum(urgencies) / len(urgencies)
+"""Returns (ingredient_name, urgency) for the most urgent owned ingredient, or None."""
+def freshness_detail(recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]) -> tuple[str, float | None]:
+    urgencies = _owned_ingredient_urgencies(recipe_ingredients, pantry)
+
+    if not urgencies:
+        return None
+
+    ing_id, urgency = max(urgencies, key=lambda pair: pair[1])
+    name = next((ing.name for ing in recipe_ingredients if ing.ing_id == ing_id), None)
+
+    if name is None:
+        return None
+
+    return name, urgency
