@@ -19,29 +19,46 @@ from src.models.recipe import CandidatePoolEntry, Ingredient, Nutrition
 from src.models.user_state import PantryEntry, SwipeHistoryEntry, UserState
 
 
-def novelty_score(recipe_id: int, swipe_history: list[SwipeHistoryEntry]) -> float:
+"""Returns (state_key, days_ago). days_ago is None when never seen"""
+def _novelty_state(recipe_id: int, swipe_history: list[SwipeHistoryEntry]) -> tuple[str, int | None]:
     relevant_swipes = [s for s in swipe_history if s.recipe_id == recipe_id]
 
     if not relevant_swipes:
-        return NOVELTY_SCORE_NEVER_SEEN
+        return "never_seen", None
 
     last_swipe = max(relevant_swipes, key=lambda s: s.swiped_at)
     days_ago = (datetime.now(UTC) - last_swipe.swiped_at).days
 
     if last_swipe.action == "LIKED":
         if days_ago < NOVELTY_LIKED_RECENT_DAYS:
-            return NOVELTY_SCORE_LIKED_RECENT
+            return "recent_like", days_ago
         if days_ago < NOVELTY_LIKED_ACCEPTABLE_DAYS:
-            return NOVELTY_SCORE_LIKED_ACCEPTABLE
-        return NOVELTY_SCORE_LIKED_OLD
+            return "acceptable_like", days_ago
+        return "old_like", days_ago
 
     if last_swipe.action == "SKIPPED":
         if days_ago < NOVELTY_SKIPPED_RECENT_DAYS:
-            return NOVELTY_SCORE_SKIPPED_RECENT
-        return NOVELTY_SCORE_SKIPPED_OLD
+            return "recent_skip", days_ago
+        return "old_skip", days_ago
 
-    return NEUTRAL_SIGNAL_VALUE
+    return "neutral", days_ago
 
+_NOVELTY_STATE_SCORES = {
+    "never_seen": NOVELTY_SCORE_NEVER_SEEN,
+    "recent_like": NOVELTY_SCORE_LIKED_RECENT,
+    "acceptable_like": NOVELTY_SCORE_LIKED_ACCEPTABLE,
+    "old_like": NOVELTY_SCORE_LIKED_OLD,
+    "recent_skip": NOVELTY_SCORE_SKIPPED_RECENT,
+    "old_skip": NOVELTY_SCORE_SKIPPED_OLD,
+    "neutral": NEUTRAL_SIGNAL_VALUE,
+}
+
+def novelty_score(recipe_id: int, swipe_history: list[SwipeHistoryEntry]) -> float:
+    state, _ = _novelty_state(recipe_id, swipe_history)
+    return _NOVELTY_STATE_SCORES[state]
+
+def novelty_detail(recipe_id: int, swipe_history: list[SwipeHistoryEntry]) -> tuple[str, int | None]:
+    return _novelty_state(recipe_id, swipe_history)
 
 # Although not used in the main pipeline this isn't dead code and is left in for unit testing
 def pantry_coverage_score(recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]) -> float:
