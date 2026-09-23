@@ -9,14 +9,15 @@ import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/features/pantry/models/ingredient_catalogue_item.dart';
 import 'package:mealchemy/features/pantry/providers/pantry_provider.dart';
 import 'package:mealchemy/features/pantry/repositories/ingredient_catalogue_repository.dart';
+import 'package:mealchemy/features/recipe/models/unit_of_measurement.dart';
+import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
 import 'package:mealchemy/features/shopping_lists/models/shopping_list_item.dart';
 import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
 import 'package:mealchemy/features/shopping_lists/repositories/mock_shopping_list_repository.dart';
 import 'package:mealchemy/features/shopping_lists/screens/add_shopping_list_item_screen.dart';
 import 'package:mealchemy/features/pantry/models/ingredient_category.dart';
 import 'package:mealchemy/features/pantry/models/pending_external_ingredient.dart';
-import 'package:mealchemy/features/recipe/models/unit_of_measurement.dart';
-import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
+import 'package:mealchemy/core/shared_widgets/atoms/app_toast_host.dart';
 
 class _FakeIngredientCatalogueRepository extends IngredientCatalogueRepository {
   _FakeIngredientCatalogueRepository({
@@ -222,7 +223,7 @@ void main() {
       ProviderScope(
         overrides: [
           offlineReadOnlyProvider.overrideWithValue(isOffline),
-          unitsProvider.overrideWith((ref) async => units),
+          unitOptionsProvider.overrideWithValue(units),
           shoppingListRepositoryProvider.overrideWithValue(
             shoppingRepository,
           ),
@@ -235,6 +236,9 @@ void main() {
             splashFactory: NoSplash.splashFactory,
           ),
           routerConfig: router,
+          builder: (context, child) => AppToastHost(
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
       ),
     );
@@ -296,6 +300,7 @@ void main() {
 
     await tester.tap(find.text('Add Item'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(
       find.text('Could not add the item. Try again.'),
@@ -358,6 +363,7 @@ void main() {
 
     await tester.tap(find.text('Add Item'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(
       find.text('Please select an ingredient from the catalogue.'),
@@ -402,6 +408,7 @@ void main() {
 
     await tester.tap(find.text('Add Item'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(harness.shoppingRepository.addedListId, 'general-list');
     expect(harness.shoppingRepository.addedIngId, 12);
@@ -451,6 +458,7 @@ void main() {
 
     await tester.tap(find.text('Add Item'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     //saved local catalogue id is submitted after USDA import
     expect(harness.shoppingRepository.addedListId, 'general-list');
@@ -528,6 +536,7 @@ void main() {
 
     await tester.tap(find.text('Add Item'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(harness.shoppingRepository.addedListId, 'general-list');
     expect(harness.shoppingRepository.addedIngId, isNull);

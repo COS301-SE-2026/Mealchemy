@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mealchemy/core/connectivity/network_status_provider.dart';
+import 'package:mealchemy/core/shared_widgets/atoms/app_toast_host.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
@@ -260,6 +261,11 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
+  const unitOptions = [
+    UnitOfMeasurement(unitId: 1, name: 'g', system: 'METRIC'),
+    UnitOfMeasurement(unitId: 2, name: 'tbsp', system: null),
+  ];
+
   Widget host({
     required RecipeRepository recipeRepo,
     VaultRepository? vaultRepo,
@@ -284,6 +290,7 @@ void main() {
     return ProviderScope(
       overrides: [
         recipeRepositoryProvider.overrideWithValue(recipeRepo),
+        unitOptionsProvider.overrideWithValue(unitOptions),
         recipePhotoPickerProvider.overrideWithValue(
           photoPicker ?? _FakePhotoPicker(),
         ),
@@ -294,7 +301,12 @@ void main() {
             .overrideWithValue(vaultRepo ?? _FakeVaultRepo()),
         ...extraOverrides,
       ],
-      child: MaterialApp.router(routerConfig: router),
+      child: MaterialApp.router(
+        routerConfig: router,
+        builder: (context, child) => AppToastHost(
+          child: child ?? const SizedBox.shrink(),
+        ),
+      ),
     );
   }
 

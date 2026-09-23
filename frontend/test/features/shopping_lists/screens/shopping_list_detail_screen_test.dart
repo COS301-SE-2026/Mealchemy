@@ -17,6 +17,7 @@ import 'package:mealchemy/features/shopping_lists/repositories/shopping_list_rep
 import 'package:mealchemy/features/shopping_lists/repositories/mock_shopping_list_repository.dart';
 import 'package:mealchemy/features/pantry/providers/pantry_provider.dart';
 import 'package:mealchemy/features/pantry/repositories/mock_pantry_repository.dart';
+import 'package:mealchemy/core/shared_widgets/atoms/app_toast_host.dart';
 import 'package:mealchemy/features/recipe/models/unit_of_measurement.dart';
 import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
 
@@ -223,6 +224,8 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
+  Widget toastHost(Widget child) => AppToastHost(child: child);
+
   Future<void> pumpShoppingListDetailScreen(
     WidgetTester tester, {
     String listId = 'general-list',
@@ -242,6 +245,8 @@ void main() {
           home: ShoppingListDetailScreen(
             listId: listId,
           ),
+          builder: (context, child) =>
+              toastHost(child ?? const SizedBox.shrink()),
         ),
       ),
     );
@@ -352,10 +357,12 @@ void main() {
             _FailingUpdateShoppingListRepository(),
           ),
         ],
-        child: const MaterialApp(
-          home: ShoppingListDetailScreen(
+        child: MaterialApp(
+          home: const ShoppingListDetailScreen(
             listId: 'general-list',
           ),
+          builder: (context, child) =>
+              toastHost(child ?? const SizedBox.shrink()),
         ),
       ),
     );
@@ -441,8 +448,10 @@ void main() {
             _DeleteMenuShoppingListRepository(),
           ),
         ],
-        child: const MaterialApp(
-          home: ShoppingListDetailScreen(listId: '1'),
+        child: MaterialApp(
+          home: const ShoppingListDetailScreen(listId: '1'),
+          builder: (context, child) =>
+              toastHost(child ?? const SizedBox.shrink()),
         ),
       ),
     );
@@ -468,8 +477,10 @@ void main() {
             _DeleteMenuShoppingListRepository(),
           ),
         ],
-        child: const MaterialApp(
-          home: ShoppingListDetailScreen(listId: '1'),
+        child: MaterialApp(
+          home: const ShoppingListDetailScreen(listId: '1'),
+          builder: (context, child) =>
+              toastHost(child ?? const SizedBox.shrink()),
         ),
       ),
     );
@@ -500,8 +511,10 @@ void main() {
             _DeleteMenuShoppingListRepository(),
           ),
         ],
-        child: const MaterialApp(
-          home: ShoppingListDetailScreen(listId: '1'),
+        child: MaterialApp(
+          home: const ShoppingListDetailScreen(listId: '1'),
+          builder: (context, child) =>
+              toastHost(child ?? const SizedBox.shrink()),
         ),
       ),
     );

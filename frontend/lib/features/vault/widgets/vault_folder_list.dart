@@ -12,6 +12,7 @@ import '../providers/vault_repository_provider.dart';
 import '../providers/vault_provider.dart';
 import '../../../core/connectivity/network_status_provider.dart';
 import '../../external_links/widgets/my_links_folder_row.dart';
+import '../../favourites/widgets/my_favs_folder_row.dart';
 
 //folder section vault name label plus one row per folder
 class VaultFolderList extends ConsumerWidget {
@@ -75,6 +76,7 @@ class VaultFolderList extends ConsumerWidget {
               vault: vault,
               folder: folder,
             ),
+        if (isPrivate) const MyFavsFolderRow(),
         if (isPrivate) const MyLinksFolderRow(),
         if (folders.length < 3) ...[
           const SizedBox(height: 16),
