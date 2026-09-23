@@ -32,3 +32,8 @@ def _render_nutrition(recipe: CandidatePoolEntry, user_state: UserState, rng: ra
 
     template = rng.choice(MESSAGE_TEMPLATES["nutrition"][goal][_tier(goal_score)])
     return template.format(actual=round(actual))
+
+def _render_novelty(recipe: CandidatePoolEntry, user_state: UserState, rng: random.Random) -> str:
+    state, _ = novelty_detail(recipe.recipe_id, user_state.swipe_history)
+    return rng.choice(MESSAGE_TEMPLATES["novelty"][state])
+
