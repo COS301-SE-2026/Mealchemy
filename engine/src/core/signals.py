@@ -102,6 +102,31 @@ def nutrition_score(recipe: CandidatePoolEntry, user_state: UserState) -> float:
     goal_scores = [_GOAL_SCORERS[goal](recipe.nutrition) for goal in relevant_goals]
     return sum(goal_scores) / len(goal_scores)
 
+"""Returns (goal, actual_value, threshold, goal_score) for whichever relevant goal scored highest individually. 
+None when there's no nutrition data or no relevant goals."""
+def nutrition_detail(recipe: CandidatePoolEntry, user_state: UserState) -> tuple[str, float, float, float] | None:
+    if recipe.nutrition is None:
+        return None
+
+    relevant_goals = [g for g in user_state.nutritional_goals if g in _GOAL_SCORERS]
+    if not relevant_goals:
+        return None
+
+    scored = [(goal, _GOAL_SCORERS[goal](recipe.nutrition)) for goal in relevant_goals]
+    best_goal, best_score = max(scored, key=lambda pair: pair[1])
+
+    if best_goal == "HIGH_PROTEIN":
+        if recipe.nutrition.protein_g is None:
+            return None
+
+        return best_goal, recipe.nutrition.protein_g, NUTRITION_HIGH_PROTEIN_MIN_G, best_score
+    if best_goal == "LOW_CARB":
+        if recipe.nutrition.carbs_g is None:
+            return None
+
+        return best_goal, recipe.nutrition.carbs_g, NUTRITION_LOW_CARB_MAX_G, best_score
+
+    return None
 
 def _owned_ingredient_urgencies(recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]) -> list[tuple[int, float]]:
     owned_ids, _ = pantry_ingredient_match(recipe_ingredients, pantry)
