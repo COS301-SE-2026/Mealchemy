@@ -12,6 +12,8 @@ import '../../../core/connectivity/network_status_provider.dart';
 import '../../../core/shared_widgets/Molecules/app_search_bar.dart';
 import '../../external_links/widgets/link_row.dart';
 import '../widgets/folder_recipe_row.dart';
+import '../../external_links/providers/link_provider.dart';
+import '../../favourites/providers/fav_provider.dart';
 
 import '../widgets/vault_hero.dart';
 import '../../offline/data/offline_cache_store.dart';
@@ -35,7 +37,17 @@ class VaultScreen extends ConsumerWidget {
         child: const Icon(Icons.add),
       ),
       body: AppRefresh(
-        onRefresh: () => ref.refresh(vaultsProvider.future),
+                onRefresh: () async {
+          final vault = ref.read(selectedVaultProvider);
+          if (vault != null) {
+            ref.invalidate(vaultFoldersProvider(vault.vaultId));
+          }
+          ref.invalidate(folderRecipesProvider);
+          ref.invalidate(favsProvider);
+          ref.invalidate(linksProvider);
+          ref.invalidate(vaultsProvider);
+          await ref.read(vaultsProvider.future);
+        },
         child: vaultsAsync.when(
           loading: () => const _ScrollableCentre(
             child: CircularProgressIndicator(),
