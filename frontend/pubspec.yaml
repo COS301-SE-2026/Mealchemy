@@ -17,6 +17,8 @@ dependencies:
   flutter_secure_storage: ^10.2.0
   #images
   image_picker: ^1.2.3
+  #video playback
+  video_player: 2.11.1
   # Navigation
   go_router: ^17.2.3
   #Fonts
