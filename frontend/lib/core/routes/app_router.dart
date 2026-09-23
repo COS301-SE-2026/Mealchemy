@@ -22,6 +22,7 @@ import '../../features/recipe/screens/add_recipe_screen.dart';
 import '../../features/discovery/screens/discovery_screen.dart';
 import '../../features/preference/screens/weights_screen.dart';
 import '../../features/vault/screens/vault_invitations_screen.dart';
+import '../../features/vault/screens/incoming_vault_invitations_screen.dart';
 
 import '../../features/shopping_lists/screens/shopping_lists_screen.dart';
 import '../../features/shopping_lists/screens/shopping_list_detail_screen.dart';
@@ -136,6 +137,11 @@ final appRouter = GoRouter(
 
         return AdminFlagDetailScreen(flaggedId: id);
       },
+    ),
+
+    GoRoute(
+      path: AppRoutes.incomingVaultInvitations,
+      builder: (context, state) => const IncomingVaultInvitationsScreen(),
     ),
 
     GoRoute(
