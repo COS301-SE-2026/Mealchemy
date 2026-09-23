@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
@@ -7,13 +7,14 @@ import 'package:mealchemy/core/shared_widgets/Molecules/app_confirm_dialog.dart'
 import 'package:mealchemy/core/shared_widgets/Molecules/app_input_dialog.dart';
 import 'package:mealchemy/features/auth/providers/auth_provider.dart';
 import 'package:mealchemy/core/connectivity/network_status_provider.dart';
-import 'package:mealchemy/core/providers/feedback_provider.dart';
-import 'package:mealchemy/core/shared_widgets/atoms/app_toast.dart';
+import '../../../core/routes/app_routes.dart';
+import '../providers/shared_vault_access_provider.dart';
+import '../providers/owner_vault_invitations_provider.dart';
 import '../providers/vault_repository_provider.dart';
 import '../models/vault.dart';
 import '../providers/vault_provider.dart';
 
-enum _VaultAction { createFolder, addMember, deleteVault, leaveVault }
+enum _VaultAction { createFolder, inviteMember, deleteVault, leaveVault }
 
 class VaultMenuButton extends ConsumerWidget {
   const VaultMenuButton({super.key, required this.vault});
@@ -52,8 +53,8 @@ class VaultMenuButton extends ConsumerWidget {
           ),
           if (isShared) ...[
             PopupMenuItem<_VaultAction>(
-              value: _VaultAction.addMember,
-              child: _row(Icons.person_add_alt, 'Add member'),
+              value: _VaultAction.inviteMember,
+              child: _row(Icons.person_add_alt, 'Invite member'),
             ),
             PopupMenuItem<_VaultAction>(
               value: _VaultAction.deleteVault,
@@ -83,39 +84,17 @@ class VaultMenuButton extends ConsumerWidget {
   Future<void> _handle(
       BuildContext context, WidgetRef ref, _VaultAction action) async {
     switch (action) {
-      case _VaultAction.addMember:
-        final email = await showAppInputDialog(
-          context: context,
-          title: 'Add Member',
-          label: 'Email',
-          hint: 'chef@mealchemy.com',
-          confirmLabel: 'Add',
-          prefixIcon: Icons.email_outlined,
-        );
-        if (email == null) return;
-        if (!context.mounted) return;
-        try {
-          await ref
-              .read(vaultRepositoryProvider)
-              .addMember(vault.vaultId, email);
-          ref.invalidate(vaultMembersProvider(vault.vaultId));
-          ref.read(feedbackProvider.notifier).showShort(
-                '$email added to the vault',
-                kind: ToastKind.success,
-                icon: Icons.check_circle_outline,
-              );
-        } catch (e) {
-          final message = e is DioException && e.response?.data is Map
-              ? (e.response?.data as Map)['message'] as String? ??
-                  'Could not add member.'
-              : 'Could not add member.';
-          ref.read(feedbackProvider.notifier).showShort(
-                message,
-                kind: ToastKind.error,
-                icon: Icons.error_outline,
-              );
-        }
+      case _VaultAction.inviteMember:
+        ref.invalidate(sharedVaultAccessProvider(vault.vaultId));
+        ref.invalidate(ownerVaultInvitationsProvider(vault.vaultId));
 
+        await context.push(
+          AppRoutes.vaultInvitations.replaceFirst(
+            ':vaultId',
+            '${vault.vaultId}',
+          ),
+        );
+        return;
       case _VaultAction.deleteVault:
         final ok = await showAppConfirmDialog(
           context: context,

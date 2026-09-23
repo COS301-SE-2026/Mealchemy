@@ -8,6 +8,8 @@ import '../../../core/theme/app_typography.dart';
 import '../models/vault_member.dart';
 import '../providers/shared_vault_access_provider.dart';
 import '../widgets/shared_vault_access_view.dart';
+import '../../../core/shared_widgets/atoms/app_button.dart';
+import '../providers/owner_vault_invitations_provider.dart';
 
 class VaultMembersScreen extends ConsumerStatefulWidget {
   const VaultMembersScreen({
@@ -106,6 +108,29 @@ class _VaultMembersScreenState extends ConsumerState<VaultMembersScreen> {
                     _roleDescription(access.role),
                     style: AppTextStyles.body,
                   ),
+                  if (access.canManageMembers) ...[
+                    const SizedBox(height: 20),
+                    AppButton.outlined(
+                      label: 'Invitations',
+                      leftIcon: Icons.mail_outline,
+                      isFullWidth: true,
+                      onPressed: () {
+                        ref.invalidate(
+                          sharedVaultAccessProvider(widget.vaultId),
+                        );
+                        ref.invalidate(
+                          ownerVaultInvitationsProvider(widget.vaultId),
+                        );
+
+                        context.push(
+                          AppRoutes.vaultInvitations.replaceFirst(
+                            ':vaultId',
+                            '${widget.vaultId}',
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   for (final member in access.members)
                     Card(
