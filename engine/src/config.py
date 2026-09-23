@@ -1,5 +1,8 @@
 # Central configuration for the the recommendation engine.
 
+# Import
+from typing import Any
+
 # Default preference weights
 DEFAULT_PREFERENCE_WEIGHTS = {
     "pantry_match": 0.40,
@@ -59,7 +62,7 @@ NUTRITION_LOW_CARB_MAX_G = 20
 # Transparency cards
 TRANSPARENCY_STRONG_THRESHOLD = 0.8
 
-MESSAGE_TEMPLATES = {
+MESSAGE_TEMPLATES: dict[str, Any] = {
     "pantry_match": {
         "strong": [
             "Matched {matched} of {total} ingredients you already have on hand.",

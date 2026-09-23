@@ -179,7 +179,7 @@ def freshness_score(recipe_ingredients: list[Ingredient], pantry: list[PantryEnt
 
 def freshness_detail(
     recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]
-) -> tuple[str, float | None]:
+) -> tuple[str, float] | None:
     urgencies = _owned_ingredient_urgencies(recipe_ingredients, pantry)
 
     if not urgencies:
