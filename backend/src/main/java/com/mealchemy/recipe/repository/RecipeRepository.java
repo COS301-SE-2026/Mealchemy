@@ -27,6 +27,16 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer>
     List<Recipe> findByIsCommunityPublishedTrue();
 
     @Query("""
+    SELECT recipe
+    FROM Recipe recipe
+    WHERE recipe.isCommunityPublished = true
+        AND recipe.videoUrl IS NOT NULL
+        AND TRIM(recipe.videoUrl) <> ''
+    ORDER BY recipe.createdAt DESC, recipe.recipeId DESC
+    """)
+    List<Recipe> findCommunitySizzles();
+
+    @Query("""
         SELECT DISTINCT recipe
         FROM Recipe recipe
         WHERE recipe.ownerId = :userId
