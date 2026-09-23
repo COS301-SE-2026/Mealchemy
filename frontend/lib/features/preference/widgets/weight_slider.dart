@@ -9,6 +9,7 @@ class WeightSlider extends StatelessWidget {
     super.key,
     required this.title,
     required this.icon,
+    required this.subtitle,
     required this.value,
     required this.share,
     required this.onChanged,
@@ -16,6 +17,7 @@ class WeightSlider extends StatelessWidget {
 
   final String title;
   final IconData icon;
+  final String subtitle;
   final double value;
   final double share;
   final ValueChanged<double> onChanged;
@@ -35,6 +37,14 @@ class WeightSlider extends StatelessWidget {
               const SizedBox(width: 12),
               _SharePill(share: share),
             ],
+          ),
+           const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.only(left: 2),
+            child: Text(
+              subtitle,
+              style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+            ),
           ),
           const SizedBox(height: 8),
           SliderTheme(

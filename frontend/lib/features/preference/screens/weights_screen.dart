@@ -14,8 +14,8 @@ import '../providers/weights_provider.dart';
 import '../widgets/weight_slider.dart';
 import '../widgets/weights_help_sheet.dart';
 
-const double _blurArea = 240;
-const double _sheetTop = 212;
+const double _blurArea = 220;
+const double _sheetTop = 190;
 
 class WeightsScreen extends ConsumerStatefulWidget {
   const WeightsScreen({super.key});
@@ -140,6 +140,7 @@ class _WeightsScreenState extends ConsumerState<WeightsScreen> {
           WeightSlider(
             title: 'Pantry Match',
             icon: Icons.kitchen_outlined,
+            subtitle: 'Favour recipes you can make with what you already have',
             value: weights.pantryMatch,
             share: weights.shareOf(weights.pantryMatch),
             onChanged: (v) =>
@@ -148,6 +149,7 @@ class _WeightsScreenState extends ConsumerState<WeightsScreen> {
           WeightSlider(
             title: 'Cuisine',
             icon: Icons.public,
+            subtitle: 'Lean towards the cuisines you cook and swipe on most',
             value: weights.cuisine,
             share: weights.shareOf(weights.cuisine),
             onChanged: (v) =>
@@ -156,6 +158,7 @@ class _WeightsScreenState extends ConsumerState<WeightsScreen> {
           WeightSlider(
             title: 'Nutrition',
             icon: Icons.monitor_heart_outlined,
+            subtitle: 'Push recipes that match your nutritional goals',
             value: weights.nutrition,
             share: weights.shareOf(weights.nutrition),
             onChanged: (v) =>
@@ -164,6 +167,7 @@ class _WeightsScreenState extends ConsumerState<WeightsScreen> {
           WeightSlider(
             title: 'Freshness',
             icon: Icons.eco_outlined,
+            subtitle: 'Prioritise ingredients close to their expiry date',
             value: weights.freshness,
             share: weights.shareOf(weights.freshness),
             onChanged: (v) =>
@@ -172,6 +176,7 @@ class _WeightsScreenState extends ConsumerState<WeightsScreen> {
           WeightSlider(
             title: 'Novelty',
             icon: Icons.auto_awesome_outlined,
+            subtitle: 'Bring more variety instead of familiar recipes',
             value: weights.novelty,
             share: weights.shareOf(weights.novelty),
             onChanged: (v) =>
@@ -226,7 +231,7 @@ class _Header extends StatelessWidget {
                   _CircleButton(
                     icon: Icons.arrow_back,
                     onTap: onBack,
-                    background: AppColors.textMuted.withValues(alpha: 0.45),
+                    background: AppColors.textLight.withValues(alpha: 0.45),
                     iconColor: AppColors.textDark,
                   ),
                   const Spacer(),
@@ -236,15 +241,15 @@ class _Header extends StatelessWidget {
                       _CircleButton(
                         icon: Icons.restart_alt,
                         onTap: onReset,
-                        background: AppColors.textMuted.withValues(alpha: 0.25),
-                        iconColor: AppColors.primary,
+                        background: AppColors.textLight.withValues(alpha: 0.45),
+                        iconColor: AppColors.textDark,
                       ),
                       const SizedBox(height: 8),
                       _CircleButton(
                         icon: Icons.help_outline,
                         onTap: onHelp,
-                        background: AppColors.textMuted.withValues(alpha: 0.25),
-                        iconColor: AppColors.primary,
+                        background: AppColors.textLight.withValues(alpha: 0.45),
+                        iconColor: AppColors.textDark,
                       ),
                     ],
                   ),
