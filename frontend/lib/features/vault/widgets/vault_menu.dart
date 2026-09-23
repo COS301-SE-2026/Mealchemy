@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_confirm_dialog.dart';
-import 'package:mealchemy/core/shared_widgets/Molecules/app_input_dialog.dart';
-import 'package:mealchemy/features/auth/providers/auth_provider.dart';
+import '../providers/vault_folder_management_provider.dart';
+import 'vault_folder_actions.dart';
 import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import '../../../core/routes/app_routes.dart';
 import '../providers/shared_vault_access_provider.dart';
@@ -23,47 +23,76 @@ class VaultMenuButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentUserId = ref.watch(authProvider).userId;
-    final isOwner = vault.ownerId == currentUserId;
-    final isReadOnly = ref.watch(offlineReadOnlyProvider);
+    final session = ref.watch(vaultSessionProvider);
+    final isShared = vault.vaultType == VaultTypes.shared;
+    final canManageFolders = ref.watch(
+      canManageVaultFoldersProvider(vault),
+    );
+    final foldersEnabled = ref.watch(
+      vaultFolderManagementEnabledProvider(vault),
+    );
+    final online = ref.watch(vaultConnectionProvider) == NetworkStatus.online;
+    final busy = ref.watch(
+      vaultFolderManagementProvider(vault.vaultId),
+    );
+
+    final access =
+        isShared ? ref.watch(sharedVaultAccessProvider(vault.vaultId)) : null;
+
+    final verifiedSharedAccess = access != null &&
+        !access.isLoading &&
+        !access.hasError &&
+        access.valueOrNull != null;
+
+    final isOwner = isShared
+        ? verifiedSharedAccess && access.valueOrNull?.canManageMembers == true
+        : canManageFolders && vault.ownerId == session.userId;
+
+    final enabled =
+        online && !busy && (isShared ? verifiedSharedAccess : canManageFolders);
 
     return PopupMenuButton<_VaultAction>(
       icon: const Icon(Icons.more_vert, color: AppColors.primary),
       color: AppColors.bgLight,
       elevation: 4,
       offset: const Offset(0, 40),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      enabled: !isReadOnly,
-      tooltip: isReadOnly ? 'Unavailable offline' : 'Vault actions',
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      enabled: enabled,
+      tooltip: enabled ? 'Vault actions' : 'Vault changes unavailable',
       onSelected: (action) => _handle(context, ref, action),
-      itemBuilder: (context) {
-        if (!isOwner) {
-          return [
-            PopupMenuItem<_VaultAction>(
-              value: _VaultAction.leaveVault,
-              child: _row(Icons.logout, 'Leave vault (coming soon)'),
-            ),
-          ];
-        }
-        final isShared = vault.vaultType == VaultTypes.shared;
-        return [
+      itemBuilder: (_) => [
+        if (canManageFolders)
           PopupMenuItem<_VaultAction>(
             value: _VaultAction.createFolder,
-            child: _row(Icons.create_new_folder_outlined, 'Create folder'),
+            enabled: foldersEnabled,
+            child: _row(
+              Icons.create_new_folder_outlined,
+              'Create folder',
+            ),
           ),
-          if (isShared) ...[
-            PopupMenuItem<_VaultAction>(
-              value: _VaultAction.inviteMember,
-              child: _row(Icons.person_add_alt, 'Invite member'),
+        if (isShared && isOwner) ...[
+          PopupMenuItem<_VaultAction>(
+            value: _VaultAction.inviteMember,
+            child: _row(Icons.person_add_alt, 'Invite member'),
+          ),
+          PopupMenuItem<_VaultAction>(
+            value: _VaultAction.deleteVault,
+            child: _row(
+              Icons.delete_forever_outlined,
+              'Delete vault',
+              destructive: true,
             ),
-            PopupMenuItem<_VaultAction>(
-              value: _VaultAction.deleteVault,
-              child: _row(Icons.delete_forever_outlined, 'Delete vault',
-                  destructive: true),
-            ),
-          ],
-        ];
-      },
+          ),
+        ],
+        if (isShared && !isOwner)
+          PopupMenuItem<_VaultAction>(
+            value: _VaultAction.leaveVault,
+            enabled: false,
+            child: _row(Icons.logout, 'Leave vault (coming soon)'),
+          ),
+      ],
     );
   }
 
@@ -114,19 +143,13 @@ class VaultMenuButton extends ConsumerWidget {
         return;
 
       case _VaultAction.createFolder:
-        final name = await showAppInputDialog(
+        await showVaultFolderAction(
           context: context,
-          title: 'Create Folder',
-          label: 'Folder Name',
-          hint: 'e.g. Weeknight Dinners',
-          confirmLabel: 'Create',
-          prefixIcon: Icons.folder_outlined,
+          ref: ref,
+          vault: vault,
+          action: VaultFolderAction.create,
         );
-        if (name == null) return;
-        await ref
-            .read(vaultRepositoryProvider)
-            .createFolder(vault.vaultId, name);
-        ref.invalidate(vaultFoldersProvider(vault.vaultId));
+        return;
     }
   }
 }
