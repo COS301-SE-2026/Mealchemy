@@ -17,3 +17,7 @@ def _render_pantry_match(recipe: CandidatePoolEntry, user_state: UserState, scor
     owned_ids, _ = pantry_ingredient_match(recipe.ingredients, user_state.pantry)
     template = rng.choice(MESSAGE_TEMPLATES["pantry_match"][_tier(score)])
     return template.format(matched=len(owned_ids), total=len(recipe.ingredients))
+
+def _render_cuisine(recipe: CandidatePoolEntry, score: float, rng: random.Random) -> str:
+    template = rng.choice(MESSAGE_TEMPLATES["cuisine"][_tier(score)])
+    return template.format(cuisine=recipe.cuisine)
