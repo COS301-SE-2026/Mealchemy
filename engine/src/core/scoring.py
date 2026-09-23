@@ -53,5 +53,5 @@ def build_recommendation_item(
         score_breakdown=breakdown,
         pantry_gap_count=len(missing),
         missing_ingredients=missing,
-        transparency = transparency,
+        transparency=transparency,
     )

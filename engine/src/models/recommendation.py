@@ -8,10 +8,12 @@ class ScoreBreakdown(BaseModel):
     novelty: float = Field(ge=0, le=1)
     freshness: float = Field(ge=0, le=1)
 
+
 class SignalHighlight(BaseModel):
     signal: str = Field(min_length=1)
-    percentage: int = Field(ge = 0, le = 100)
+    percentage: int = Field(ge=0, le=100)
     message: str = Field(min_length=1)
+
 
 class RecommendationItem(BaseModel):
     recipe_id: int = Field(gt=0)

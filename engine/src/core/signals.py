@@ -18,9 +18,12 @@ from src.core.ingredient_matching import pantry_ingredient_match
 from src.models.recipe import CandidatePoolEntry, Ingredient, Nutrition
 from src.models.user_state import PantryEntry, SwipeHistoryEntry, UserState
 
-
 """Returns (state_key, days_ago). days_ago is None when never seen"""
-def _novelty_state(recipe_id: int, swipe_history: list[SwipeHistoryEntry]) -> tuple[str, int | None]:
+
+
+def _novelty_state(
+    recipe_id: int, swipe_history: list[SwipeHistoryEntry]
+) -> tuple[str, int | None]:
     relevant_swipes = [s for s in swipe_history if s.recipe_id == recipe_id]
 
     if not relevant_swipes:
@@ -43,6 +46,7 @@ def _novelty_state(recipe_id: int, swipe_history: list[SwipeHistoryEntry]) -> tu
 
     return "neutral", days_ago
 
+
 _NOVELTY_STATE_SCORES = {
     "never_seen": NOVELTY_SCORE_NEVER_SEEN,
     "recent_like": NOVELTY_SCORE_LIKED_RECENT,
@@ -53,12 +57,17 @@ _NOVELTY_STATE_SCORES = {
     "neutral": NEUTRAL_SIGNAL_VALUE,
 }
 
+
 def novelty_score(recipe_id: int, swipe_history: list[SwipeHistoryEntry]) -> float:
     state, _ = _novelty_state(recipe_id, swipe_history)
     return _NOVELTY_STATE_SCORES[state]
 
-def novelty_detail(recipe_id: int, swipe_history: list[SwipeHistoryEntry]) -> tuple[str, int | None]:
+
+def novelty_detail(
+    recipe_id: int, swipe_history: list[SwipeHistoryEntry]
+) -> tuple[str, int | None]:
     return _novelty_state(recipe_id, swipe_history)
+
 
 # Although not used in the main pipeline this isn't dead code and is left in for unit testing
 def pantry_coverage_score(recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]) -> float:
@@ -102,9 +111,14 @@ def nutrition_score(recipe: CandidatePoolEntry, user_state: UserState) -> float:
     goal_scores = [_GOAL_SCORERS[goal](recipe.nutrition) for goal in relevant_goals]
     return sum(goal_scores) / len(goal_scores)
 
-"""Returns (goal, actual_value, threshold, goal_score) for whichever relevant goal scored highest individually. 
-None when there's no nutrition data or no relevant goals."""
-def nutrition_detail(recipe: CandidatePoolEntry, user_state: UserState) -> tuple[str, float, float, float] | None:
+
+"""Returns (goal, actual_value, threshold, goal_score) for whichever relevant goal scored 
+highest individually. None when there's no nutrition data or no relevant goals."""
+
+
+def nutrition_detail(
+    recipe: CandidatePoolEntry, user_state: UserState
+) -> tuple[str, float, float, float] | None:
     if recipe.nutrition is None:
         return None
 
@@ -128,7 +142,10 @@ def nutrition_detail(recipe: CandidatePoolEntry, user_state: UserState) -> tuple
 
     return None
 
-def _owned_ingredient_urgencies(recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]) -> list[tuple[int, float]]:
+
+def _owned_ingredient_urgencies(
+    recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]
+) -> list[tuple[int, float]]:
     owned_ids, _ = pantry_ingredient_match(recipe_ingredients, pantry)
 
     if not owned_ids:
@@ -138,7 +155,7 @@ def _owned_ingredient_urgencies(recipe_ingredients: list[Ingredient], pantry: li
     now = datetime.now(UTC)
 
     urgencies = []
-    for ing_id in _owned_ingredient_urgencies:
+    for ing_id in owned_ids:
         entry = pantry_by_ing_id.get(ing_id)
 
         if entry is None or entry.shelf_life_days is None:
@@ -149,14 +166,20 @@ def _owned_ingredient_urgencies(recipe_ingredients: list[Ingredient], pantry: li
 
     return urgencies
 
+
 def freshness_score(recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]) -> float:
     urgencies = _owned_ingredient_urgencies(recipe_ingredients, pantry)
     if not urgencies:
         return NEUTRAL_SIGNAL_VALUE
     return sum(u for _, u in urgencies) / len(urgencies)
 
+
 """Returns (ingredient_name, urgency) for the most urgent owned ingredient, or None."""
-def freshness_detail(recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]) -> tuple[str, float | None]:
+
+
+def freshness_detail(
+    recipe_ingredients: list[Ingredient], pantry: list[PantryEntry]
+) -> tuple[str, float | None]:
     urgencies = _owned_ingredient_urgencies(recipe_ingredients, pantry)
 
     if not urgencies:
