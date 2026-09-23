@@ -11,6 +11,9 @@ from src.core.signals import (
     novelty_score,
     nutrition_score,
     pantry_coverage_score,
+    nutrition_detail,
+    novelty_detail,
+    freshness_detail,
 )
 from src.models.recipe import Nutrition
 
@@ -57,6 +60,27 @@ class TestNoveltyScore:
 
         assert novelty_score(1, [other_recipe_swipe]) == 1.0
 
+class TestNoveltyDetail:
+    def test_never_seen_returns_that_state(self):
+        state, days_ago = novelty_detail(1, [])
+        assert state == "never_seen"
+        assert days_ago is None
+
+    def test_recent_like_returns_that_state_and_days(self, swipe_factory):
+        swipe = swipe_factory(1, "LIKED", datetime.now(UTC) - timedelta(days=1))
+        state, days_ago = novelty_detail(1, [swipe])
+        assert state == "recent_like"
+        assert days_ago == 1
+
+    def test_old_skip_returns_that_state(self, swipe_factory):
+        swipe = swipe_factory(1, "SKIPPED", datetime.now(UTC) - timedelta(days=10))
+        state, _ = novelty_detail(1, [swipe])
+        assert state == "old_skip"
+
+    def test_dislike_returns_neutral_state(self, swipe_factory):
+        swipe = swipe_factory(1, "DISLIKED", datetime.now(UTC) - timedelta(days=1))
+        state, _ = novelty_detail(1, [swipe])
+        assert state == "neutral"
 
 class TestPantryCoverageScore:
     def test_full_coverage_scores_one(self, ingredient_factory, pantry_entry_factory):
@@ -127,6 +151,34 @@ class TestNutritionScore:
 
         assert nutrition_score(recipe, user_state) == NEUTRAL_SIGNAL_VALUE
 
+    def test_high_protein_partial_credit_below_threshold(self, recipe_factory, user_state_factory):
+        recipe = recipe_factory(nutrition=Nutrition(calories_kcal=300, protein_g=15, carbs_g=20, fat_g=10))
+        user_state = user_state_factory(nutritional_goals=["HIGH_PROTEIN"])
+        assert nutrition_score(recipe, user_state) == pytest.approx(0.6)
+
+    def test_low_carb_partial_credit_above_zero(self, recipe_factory, user_state_factory):
+        recipe = recipe_factory(nutrition=Nutrition(calories_kcal=300, protein_g=10, carbs_g=10, fat_g=10))
+        user_state = user_state_factory(nutritional_goals=["LOW_CARB"])
+        assert nutrition_score(recipe, user_state) == pytest.approx(0.5) 
+
+class TestNutritionDetail:
+    def test_returns_the_highest_scoring_goal(self, recipe_factory, user_state_factory):
+        recipe = recipe_factory(nutrition=Nutrition(calories_kcal=300, protein_g=30, carbs_g=25, fat_g=10))
+        user_state = user_state_factory(nutritional_goals=["HIGH_PROTEIN", "LOW_CARB"])
+
+        goal, actual, _threshold, score = nutrition_detail(recipe, user_state)
+
+        assert goal == "HIGH_PROTEIN"
+        assert actual == 30
+        assert score == 1.0
+
+    def test_returns_none_when_no_goals_set(self, recipe_factory, user_state_factory):
+        recipe = recipe_factory(nutrition=Nutrition(calories_kcal=300, protein_g=30, carbs_g=10, fat_g=10))
+        assert nutrition_detail(recipe, user_state_factory(nutritional_goals=[])) is None
+
+    def test_returns_none_when_no_nutrition_data(self, recipe_factory, user_state_factory):
+        recipe = recipe_factory(nutrition=None)
+        assert nutrition_detail(recipe, user_state_factory(nutritional_goals=["HIGH_PROTEIN"])) is None
 
 class TestFreshnessScore:
     def test_freshly_added_ingredient_scores_low_urgency(
@@ -161,3 +213,19 @@ class TestFreshnessScore:
         pantry = [pantry_entry_factory(1, shelf_life_days=None)]
 
         assert freshness_score(ingredients, pantry) == NEUTRAL_SIGNAL_VALUE
+
+class TestFreshnessDetail:
+    def test_returns_none_when_no_owned_ingredients(self, ingredient_factory):
+        assert freshness_detail([ingredient_factory(1)], []) is None
+
+    def test_returns_the_most_urgent_owned_ingredient(self, ingredient_factory, pantry_entry_factory):
+        ingredients = [ingredient_factory(1, name="Milk"), ingredient_factory(2, name="Rice")]
+        pantry = [
+            pantry_entry_factory(1, shelf_life_days=5, added_at=datetime.now(UTC) - timedelta(days=4)),
+            pantry_entry_factory(2, shelf_life_days=100, added_at=datetime.now(UTC)),
+        ]
+
+        name, urgency = freshness_detail(ingredients, pantry)
+
+        assert name == "Milk"
+        assert urgency == pytest.approx(0.8)
