@@ -37,3 +37,13 @@ def _render_novelty(recipe: CandidatePoolEntry, user_state: UserState, rng: rand
     state, _ = novelty_detail(recipe.recipe_id, user_state.swipe_history)
     return rng.choice(MESSAGE_TEMPLATES["novelty"][state])
 
+def _render_freshness(recipe: CandidatePoolEntry, user_state: UserState, rng: random.Random) -> str:
+    detail = freshness_detail(recipe.ingredients, user_state.pantry)
+
+    if detail is None:
+        return rng.choice(MESSAGE_TEMPLATES["freshness"]["none"])
+
+    ingredient_name, urgency = detail
+    template = rng.choice(MESSAGE_TEMPLATES["freshness"][_tier(urgency)])
+
+    return template.format(ingredient=ingredient_name)
