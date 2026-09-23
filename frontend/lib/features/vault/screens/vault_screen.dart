@@ -254,6 +254,8 @@ class _VaultSearchResultsView extends ConsumerWidget {
             FolderRecipeRow(
               recipe: result.recipe,
               mutationsEnabled: false,
+              allowReporting: ref.watch(selectedVaultProvider)?.vaultType ==
+                  VaultTypes.global,
             ),
             const SizedBox(height: 8),
           ],
