@@ -41,6 +41,8 @@ import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.cuisinetype.repository.FlavourProfileOptionsRepository;
 import com.mealchemy.vault.repository.VaultFolderRepository;
 import com.mealchemy.vault.service.VaultFolderRecipeService;
+import com.mealchemy.vault.service.RecipeEditLockService;
+
 import com.mealchemy.shared.enums.VaultType;
 
 @ExtendWith(MockitoExtension.class)
@@ -63,8 +65,12 @@ public class RecipeServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private RecipeEditLockService recipeEditLockService;
+
     @InjectMocks
     private RecipeService recipeService;
+
 
     private Recipe recipe;
     private Recipe sourceRecipe;
@@ -541,6 +547,7 @@ public class RecipeServiceTest {
     void updateRecipe_throwsException_whenNotOwner()
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeEditLockService.canEditRecipe(1, 99)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.updateRecipe(1, updateRequest, 99));
 
@@ -599,6 +606,7 @@ public class RecipeServiceTest {
     void deleteRecipe_throwsException_whenNotOwner()
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeEditLockService.canEditRecipe(1, 3)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
         
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.deleteRecipe(1, 3));
 

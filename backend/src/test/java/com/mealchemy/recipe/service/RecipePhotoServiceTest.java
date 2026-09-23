@@ -18,6 +18,7 @@ import com.mealchemy.recipe.dto.RecipePhotoUploadResponse;
 import com.mealchemy.recipe.event.RecipePhotoCleanupEvent;
 import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.recipe.repository.RecipeRepository;
+import com.mealchemy.vault.service.RecipeEditLockService;
 import java.net.URL;
 import java.time.Duration;
 import java.util.Optional;
@@ -41,6 +42,9 @@ public class RecipePhotoServiceTest
     @Mock
     private RecipeRepository recipeRepository;
 
+    @Mock
+    private RecipeEditLockService recipeEditLockService;
+
     private RecipePhotoService recipePhotoService;
     private Recipe recipe;
 
@@ -52,7 +56,8 @@ public class RecipePhotoServiceTest
             recipeRepository,
             "recipe-photo-bucket",
             Duration.ofMinutes(10),
-            DataSize.ofMegabytes(5)
+            DataSize.ofMegabytes(5),
+            recipeEditLockService
         );
 
         recipe = new Recipe();
@@ -110,10 +115,11 @@ public class RecipePhotoServiceTest
     }
 
     @Test
-    void createPhotoUploadUrl_throws404_whenUserDoesNotOwnRecipe()
+    void createPhotoUploadUrl_throws404_whenCallerCannotEdit()
     {
         RecipePhotoUploadRequest request = new RecipePhotoUploadRequest("image/png", 2048L);
         when(recipeRepository.findById(10)).thenReturn(Optional.of(recipe));
+        when(recipeEditLockService.canEditRecipe(10, 2)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         ResponseStatusException exception = assertThrows(
             ResponseStatusException.class,
@@ -185,7 +191,8 @@ public class RecipePhotoServiceTest
             recipeRepository,
             "",
             Duration.ofMinutes(10),
-            DataSize.ofMegabytes(5)
+            DataSize.ofMegabytes(5),
+            recipeEditLockService
         );
         RecipePhotoUploadRequest request = new RecipePhotoUploadRequest("image/webp", 2048L);
         when(recipeRepository.findById(10)).thenReturn(Optional.of(recipe));

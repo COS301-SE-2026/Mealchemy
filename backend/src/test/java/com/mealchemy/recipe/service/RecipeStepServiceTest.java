@@ -28,6 +28,7 @@ import com.mealchemy.recipe.dto.RecipeStepResponse;
 import com.mealchemy.recipe.dto.RecipeStepReorderRequest;
 import com.mealchemy.recipe.repository.RecipeStepRepository;
 import com.mealchemy.recipe.repository.RecipeRepository;
+import com.mealchemy.vault.service.RecipeEditLockService;
 
 @ExtendWith(MockitoExtension.class)
 public class RecipeStepServiceTest {
@@ -36,6 +37,9 @@ public class RecipeStepServiceTest {
 
     @Mock
     private RecipeRepository recipeRepository;
+
+    @Mock
+    private RecipeEditLockService recipeEditLockService;
 
     @InjectMocks
     private RecipeStepService recipeStepService;
@@ -140,6 +144,7 @@ public class RecipeStepServiceTest {
     void createRecipeStep_throwsException_whenNotOwner()
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeEditLockService.canEditRecipe(1, 99)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.createRecipeStep(request, 1, 99));
 
@@ -176,6 +181,7 @@ public class RecipeStepServiceTest {
     void updateRecipeStep_throwsException_whenNotOwner()
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeEditLockService.canEditRecipe(1, 99)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.updateRecipeStep(1, request, 1, 99));
         
@@ -235,6 +241,7 @@ public class RecipeStepServiceTest {
     void deleteRecipeStep_throwsException_whenNotOwner()
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeEditLockService.canEditRecipe(1, 99)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.deleteRecipeStep(1, 1, 99));
         
@@ -288,6 +295,7 @@ public class RecipeStepServiceTest {
         RecipeStepReorderRequest reorderRequest = new RecipeStepReorderRequest(List.of(1, 2, 3));
 
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeEditLockService.canEditRecipe(1, 99)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeStepService.reorderSteps(1, reorderRequest, 99));
 

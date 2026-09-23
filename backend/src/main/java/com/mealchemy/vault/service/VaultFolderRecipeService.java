@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import java.util.List;
 import org.springframework.web.server.*;
 import org.springframework.http.*;
+import org.springframework.transaction.annotation.Transactional;
 
 /* Import classes */
 import com.mealchemy.vault.model.VaultFolderRecipe;
@@ -13,6 +14,8 @@ import com.mealchemy.vault.model.VaultMember;
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.model.VaultFolder;
 import com.mealchemy.recipe.model.Recipe;
+import com.mealchemy.recipe.model.RecipeIngredient;
+import com.mealchemy.recipe.model.RecipeStep;
 import com.mealchemy.auth.model.User;
 import com.mealchemy.vault.dto.VaultFolderRecipeResponse;
 import com.mealchemy.vault.dto.VaultFolderRecipeRequest;
@@ -22,6 +25,10 @@ import com.mealchemy.vault.repository.VaultMemberRepository;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.vault.repository.VaultFolderRepository;
 import com.mealchemy.auth.repository.UserRepository;
+import com.mealchemy.recipe.repository.RecipeIngredientRepository;
+import com.mealchemy.recipe.repository.RecipeStepRepository;
+
+import com.mealchemy.shared.enums.VaultType;
 
 @Service
 public class VaultFolderRecipeService {
@@ -29,17 +36,23 @@ public class VaultFolderRecipeService {
 
     private final RecipeRepository recipeRepository;
 
+    private final RecipeIngredientRepository recipeIngredientRepository;
+
+    private final RecipeStepRepository recipeStepRepository;
+
     private final VaultMemberRepository vaultMemberRepository;
 
     private final VaultFolderRepository vaultFolderRepository;
 
     private final UserRepository userRepository;
 
-    public VaultFolderRecipeService(VaultFolderRecipeRepository vaultFolderRecipeRepository, RecipeRepository recipeRepository, 
-        VaultMemberRepository vaultMemberRepository, VaultFolderRepository vaultFolderRepository, UserRepository userRepository)
+    public VaultFolderRecipeService(VaultFolderRecipeRepository vaultFolderRecipeRepository, RecipeRepository recipeRepository, RecipeIngredientRepository recipeIngredientRepository,
+        RecipeStepRepository recipeStepRepository, VaultMemberRepository vaultMemberRepository, VaultFolderRepository vaultFolderRepository, UserRepository userRepository)
     {
         this.vaultFolderRecipeRepository = vaultFolderRecipeRepository;
         this.recipeRepository = recipeRepository;
+        this.recipeIngredientRepository = recipeIngredientRepository;
+        this.recipeStepRepository = recipeStepRepository;
         this.vaultMemberRepository = vaultMemberRepository;
         this.vaultFolderRepository = vaultFolderRepository;
         this.userRepository = userRepository;
@@ -81,6 +94,7 @@ public class VaultFolderRecipeService {
     }
 
     // Post create a new record
+    @Transactional
     public VaultFolderRecipeResponse createVaultFolderRecipe(VaultFolderRecipeRequest request, Integer userId, Integer folderId)
     {
         VaultFolder vaultFolderForReturn = vaultFolderRepository.findById(folderId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
@@ -92,7 +106,10 @@ public class VaultFolderRecipeService {
             
         User userForReturn = userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found."));
 
-        VaultFolderRecipe vaultFolderRecipeForReturn = mapRequestToEntity(vaultFolderForReturn, recipeForReturn, userForReturn);
+        // if vault is shared create and return clone else return recipe
+        Recipe resulantRecipe = vaultForCheck.getVaultType().equals(VaultType.SHARED) ? findOrCreateSharedVaultClone(recipeForReturn, userId, vaultForCheck) : recipeForReturn;
+
+        VaultFolderRecipe vaultFolderRecipeForReturn = mapRequestToEntity(vaultFolderForReturn, resulantRecipe, userForReturn);
         return VaultFolderRecipeResponse.from(vaultFolderRecipeRepository.save(vaultFolderRecipeForReturn));
     }
 
@@ -168,5 +185,57 @@ public class VaultFolderRecipeService {
         {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, notFoundMessage);
         }
+    }
+
+    // to clone a recipe when recipe is added to SHARED vault
+    private Recipe cloneRecipe(Recipe source, Integer newOwnerId) 
+    {
+        // create new recipe to deep clone
+        Recipe clone = new Recipe();
+
+        clone.setOwnerId(newOwnerId);
+        clone.setTitle(source.getTitle());
+        clone.setDescription(source.getDescription());
+        clone.setCuisineType(source.getCuisineType());
+        clone.setPrepTimeMins(source.getPrepTimeMins());
+        clone.setCookingTimeMins(source.getCookingTimeMins());
+        clone.setServingSize(source.getServingSize());
+        clone.setPhotoUrl(source.getPhotoUrl());
+        clone.setVideoUrl(source.getVideoUrl());
+        clone.setExternalUrl(source.getExternalUrl());
+        clone.setIsCommunityPublished(false);
+        clone.setParentRecipe(source);
+
+        Recipe savedClone = recipeRepository.save(clone);
+
+        // deep clone ingredients and steps
+        List<RecipeIngredient> clonedIngedients = source.getIngredients().stream().map(sourceIngredient -> {
+            RecipeIngredient ingredientClone = new RecipeIngredient();
+            ingredientClone.setRecipe(savedClone);
+            ingredientClone.setIngId(sourceIngredient.getIngId());
+            ingredientClone.setQuantity(sourceIngredient.getQuantity());
+            ingredientClone.setUnit(sourceIngredient.getUnit());
+            ingredientClone.setSortOrder(sourceIngredient.getSortOrder());
+            return ingredientClone;
+        }).collect(Collectors.toList());
+
+        List<RecipeStep> clonedSteps = source.getSteps().stream().map(sourceStep -> {
+            RecipeStep stepClone = new RecipeStep();
+            stepClone.setRecipe(savedClone);
+            stepClone.setStepNr(sourceStep.getStepNr());
+            stepClone.setContent(sourceStep.getContent());
+            return stepClone;
+        }).collect(Collectors.toList());
+
+        recipeIngredientRepository.saveAll(clonedIngedients);
+        recipeStepRepository.saveAll(clonedSteps);
+
+        return savedClone;
+    }
+
+    // finds the already existing cloned recipe in shared vault or creates new clone
+    private Recipe findOrCreateSharedVaultClone(Recipe source, Integer newOwnerId, Vault targetVault)
+    {
+        return recipeRepository.findExistingClone(source, newOwnerId, targetVault).orElseGet(() -> cloneRecipe(source, newOwnerId));
     }
 }

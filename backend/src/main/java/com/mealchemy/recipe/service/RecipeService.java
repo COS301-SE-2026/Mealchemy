@@ -29,6 +29,7 @@ import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.cuisinetype.repository.FlavourProfileOptionsRepository;
 import com.mealchemy.vault.repository.VaultFolderRepository;
 import com.mealchemy.vault.service.VaultFolderRecipeService;
+import com.mealchemy.vault.service.RecipeEditLockService;
 
 @Service
 public class RecipeService
@@ -43,18 +44,21 @@ public class RecipeService
 
     private final VaultFolderRecipeService vaultFolderRecipeService;
 
+    private final RecipeEditLockService recipeEditLockService;
+
     // lets it annouce that an old photo needs cleanup without making RecipeService directly responsible for GC Storage
     private final ApplicationEventPublisher eventPublisher;
 
     public RecipeService(RecipeRepository recipeRepository, IngredientCatalogueRepository ingredientCatalogueRepository, 
         FlavourProfileOptionsRepository flavourProfileOptionsRepository, VaultFolderRepository vaultFolderRepository, 
-        VaultFolderRecipeService vaultFolderRecipeService, ApplicationEventPublisher eventPublisher)
+        VaultFolderRecipeService vaultFolderRecipeService, RecipeEditLockService recipeEditLockService, ApplicationEventPublisher eventPublisher)
     {
         this.recipeRepository = recipeRepository;
         this.ingredientCatalogueRepository = ingredientCatalogueRepository;
         this.flavourProfileOptionsRepository = flavourProfileOptionsRepository;
         this.vaultFolderRepository = vaultFolderRepository;
         this.vaultFolderRecipeService = vaultFolderRecipeService;
+        this.recipeEditLockService = recipeEditLockService;
         this.eventPublisher = eventPublisher;
     }
 
@@ -149,14 +153,11 @@ public class RecipeService
 
     // Put to update an existing recipe
     @Transactional
-    public RecipeResponse updateRecipe(int id, RecipeUpdateRequest request, Integer ownerId)
+    public RecipeResponse updateRecipe(int id, RecipeUpdateRequest request, Integer userId)
     {
         Recipe recipeForReturn = recipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
         
-        if (!recipeForReturn.getOwnerId().equals(ownerId))
-        {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
-        }
+        recipeEditLockService.canEditRecipe(id, userId);
 
         if (!flavourProfileOptionsRepository.existsByValue(request.cuisineType()))
         {
@@ -231,14 +232,11 @@ public class RecipeService
 
     // Delete a specific vault using id
     @Transactional
-    public void deleteRecipe(int id, Integer ownerId)
+    public void deleteRecipe(int id, Integer userId)
     {
         Recipe recipeForDeletion = recipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
-        if (!recipeForDeletion.getOwnerId().equals(ownerId))
-        {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
-        }
+        recipeEditLockService.canEditRecipe(id, userId);
 
         recipeRepository.deleteById(id);
         publishPhotoCleanup(id, recipeForDeletion.getPhotoUrl());

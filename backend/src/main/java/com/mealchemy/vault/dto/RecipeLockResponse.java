@@ -4,12 +4,13 @@ package com.mealchemy.vault.dto;
 
 import java.time.OffsetDateTime;
 import jakarta.validation.constraints.*;
+import com.mealchemy.vault.model.RecipeEditLock;
 
 /* Import classes */
 
 public record RecipeLockResponse(
     Integer recipeId,
-    Integer lockedByUserId // current holder of the lock
+    Integer lockedByUserId, // current holder of the lock
     String lockedByEmail,
     OffsetDateTime acquiredAt,
     OffsetDateTime expiresAt 

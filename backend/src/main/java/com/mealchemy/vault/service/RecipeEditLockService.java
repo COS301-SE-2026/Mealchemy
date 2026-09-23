@@ -1,3 +1,5 @@
+package com.mealchemy.vault.service;
+
 // models
 import com.mealchemy.vault.model.RecipeEditLock;
 import com.mealchemy.vault.model.VaultMember;
@@ -15,6 +17,16 @@ import com.mealchemy.auth.repository.UserRepository;
 
 // enums
 import com.mealchemy.shared.enums.VaultMemberRole;
+
+/* Import libraries */
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+import org.springframework.dao.DataIntegrityViolationException;
+import jakarta.persistence.EntityManager;
+import java.time.OffsetDateTime;
+
 
 @Service
 public class RecipeEditLockService
@@ -80,19 +92,29 @@ public class RecipeEditLockService
         User lockHolder = userRepository.findById(userId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found."));
 
+        // refreshing current user that holds the lock
+        boolean isGenuineRefresh = existingLock != null && isActive(existingLock) && existingLock.getLockedByUser().getUserId().equals(userId);
+
         // declaring lock to save
         RecipeEditLock saved;
 
-        // if the existing lock is not null but is locked by the current user - refresh the lock
-        if (existingLock != null)
+        if (isGenuineRefresh)
         {
-            // reclaiming lock that is expired - no new row in db
-            existingLock.setLockedByUser(lockHolder);
+            // same holder refreshing the lock - extends TTL and acquiredAt stays exactly the same
             existingLock.setExpiresAt(OffsetDateTime.now().plusSeconds(LOCK_TTL_SECONDS));
             saved = recipeEditLockRepository.save(existingLock);
         }
-        else // there is no existing lock - new entry in db. Protect against concurrent attempt to acquire lock. Force INSERT to trigger db condition because of PK conflict
+        else // no row exists (no current lock holder) or row is expired
         {
+            // if the existing lock is not null but is locked by the current user - refresh the lock
+            if (existingLock != null)
+            {
+                recipeEditLockRepository.delete(existingLock);
+                recipeEditLockRepository.flush();
+            }
+            
+            // there is no existing lock - new entry in db. Protect against concurrent attempt to acquire lock. Force INSERT to trigger db condition because of PK conflict
+        
             RecipeEditLock newLock = new RecipeEditLock();
             newLock.setRecipeId(recipeId);
             newLock.setLockedByUser(lockHolder);
@@ -107,7 +129,7 @@ public class RecipeEditLockService
             }
             catch(DataIntegrityViolationException e) 
             {
-               throw new ResponseStatusException(HttpStatus.CONFLICT, "This recipe is currently being edited by another user.");
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "This recipe is currently being edited by another user.");
             }
         }
 
