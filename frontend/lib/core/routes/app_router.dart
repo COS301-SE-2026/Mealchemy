@@ -21,6 +21,7 @@ import '../../features/cook_mode/screens/cook_mode_screen.dart';
 import '../../features/recipe/screens/add_recipe_screen.dart';
 import '../../features/discovery/screens/discovery_screen.dart';
 import '../../features/preference/screens/weights_screen.dart';
+import '../../features/vault/screens/vault_invitations_screen.dart';
 
 import '../../features/shopping_lists/screens/shopping_lists_screen.dart';
 import '../../features/shopping_lists/screens/shopping_list_detail_screen.dart';
@@ -134,6 +135,24 @@ final appRouter = GoRouter(
         }
 
         return AdminFlagDetailScreen(flaggedId: id);
+      },
+    ),
+
+    GoRoute(
+      path: AppRoutes.vaultInvitations,
+      builder: (context, state) {
+        final vaultId = int.tryParse(
+          state.pathParameters['vaultId'] ?? '',
+        );
+
+        if (vaultId == null || vaultId <= 0) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Vault invitations')),
+            body: const Center(child: Text('Invalid vault ID.')),
+          );
+        }
+
+        return VaultInvitationsScreen(vaultId: vaultId);
       },
     ),
 

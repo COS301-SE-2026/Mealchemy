@@ -7,6 +7,7 @@ class AppRoutes {
   static const String pantry = '/pantry';
   static const String vault = '/vault';
   static const String vaultMembers = '/vault/:vaultId/members';
+  static const String vaultInvitations = '/vault/:vaultId/invitations';
   static const String recipeEdit = '/recipe/:id/edit';
   static const String profile = '/profile';
   static const String admin = '/admin';
