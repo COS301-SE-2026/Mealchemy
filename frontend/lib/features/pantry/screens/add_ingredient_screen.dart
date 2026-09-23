@@ -240,8 +240,10 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
                           onChanged: _onSearchChanged,
                         ),
                         if (_showValidation && !hasName)
-                  const _ValidationText('Ingredient name is required.'),
-                if (_showValidation && _selectedIngredient == null && hasName)
+                          const _ValidationText('Ingredient name is required.'),
+                        if (_showValidation &&
+                            _selectedIngredient == null &&
+                            hasName)
                           const _ValidationText(
                             'Please select an ingredient from the catalogue.',
                           ),
@@ -262,8 +264,8 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
                         ],
                         const SizedBox(height: 14),
                         _SelectedCategoryLabel(
-                  category:
-                      _selectedIngredient?.category ?? 'Select an ingredient',
+                          category: _selectedIngredient?.category ??
+                              'Select an ingredient',
                         ),
                         const SizedBox(height: 28),
 
@@ -565,7 +567,7 @@ class _PantryHeader extends StatelessWidget {
                 child: _HeaderCircleButton(
                   icon: Icons.arrow_back,
                   onTap: () => context.pop(),
-                  background: AppColors.textMuted.withValues(alpha: 0.45),
+                  background: AppColors.textLight.withValues(alpha: 0.45),
                   iconColor: AppColors.textDark,
                 ),
               ),
