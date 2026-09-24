@@ -7,10 +7,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,6 +36,11 @@ import com.mealchemy.vault.repository.VaultMemberRepository;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.vault.repository.VaultFolderRepository;
 import com.mealchemy.auth.repository.UserRepository;
+import com.mealchemy.recipe.model.RecipeIngredient;
+import com.mealchemy.recipe.model.RecipeStep;
+import com.mealchemy.recipe.repository.RecipeIngredientRepository;
+import com.mealchemy.recipe.repository.RecipeStepRepository;
+import com.mealchemy.shared.enums.VaultType;
 
 @ExtendWith(MockitoExtension.class)
 public class VaultFolderRecipeServiceTest
@@ -53,14 +60,24 @@ public class VaultFolderRecipeServiceTest
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private RecipeIngredientRepository recipeIngredientRepository;
+
+    @Mock 
+    private RecipeStepRepository recipeStepRepository;
+
     @InjectMocks
     private VaultFolderRecipeService vaultFolderRecipeService;
+
+
 
     private VaultFolderRecipe folderRecipe;
     private Recipe recipe;
     private User user;
     private Vault vault;
+    private Vault sharedVault;
     private VaultFolder folder;
+    private VaultFolder sharedFolder;
     private VaultFolderRecipeRequest request;
     private VaultFolderRecipeMoveRequest moveRequest;
 
@@ -87,6 +104,29 @@ public class VaultFolderRecipeServiceTest
         folderRecipe.setRecipe(recipe);
         folderRecipe.setAddedBy(user);
         ReflectionTestUtils.setField(folderRecipe, "id", 1);
+
+        sharedVault = new Vault();
+        sharedVault.setOwnerId(1);
+        sharedVault.setVaultType(VaultType.SHARED);
+        ReflectionTestUtils.setField(sharedVault, "vaultId", 2);
+
+        sharedFolder = new VaultFolder();
+        sharedFolder.setVault(sharedVault);
+        ReflectionTestUtils.setField(sharedFolder, "folderId", 2);
+
+        RecipeIngredient sourceIngredient = new RecipeIngredient();
+        sourceIngredient.setRecipe(recipe);
+        sourceIngredient.setIngId(1);
+        sourceIngredient.setQuantity(BigDecimal.valueOf(2));
+        sourceIngredient.setUnit("cup");
+        sourceIngredient.setSortOrder(1);
+        recipe.getIngredients().add(sourceIngredient);
+
+        RecipeStep sourceStep = new RecipeStep();
+        sourceStep.setRecipe(recipe);
+        sourceStep.setStepNr(1);
+        sourceStep.setContent("Mix.");
+        recipe.getSteps().add(sourceStep);
 
         request = new VaultFolderRecipeRequest(1, 1);
         moveRequest = new VaultFolderRecipeMoveRequest(1);
@@ -423,5 +463,62 @@ public class VaultFolderRecipeServiceTest
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("No record found.", ex.getReason());
+    }
+
+    // recipe cloning
+    @Test
+    void createVaultFolderRecipe_whenVaultIsShared_createsClone()
+    {
+        when(vaultFolderRepository.findById(2)).thenReturn(Optional.of(sharedFolder));
+        when(recipeRepository.findAccessibleByIdAndUserId(request.recipeId(), 1)).thenReturn(Optional.of(recipe));
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+        when(recipeRepository.findExistingClone(recipe, 1, sharedVault)).thenReturn(Optional.empty());
+
+        Recipe clone = new Recipe();
+        ReflectionTestUtils.setField(clone, "recipeId", 99);
+        when(recipeRepository.save(any(Recipe.class))).thenReturn(clone);
+        when(vaultFolderRecipeRepository.save(any(VaultFolderRecipe.class))).thenReturn(folderRecipe);
+
+        vaultFolderRecipeService.createVaultFolderRecipe(request, 1, 2);
+
+        ArgumentCaptor<Recipe> cloneCaptor = ArgumentCaptor.forClass(Recipe.class);
+        verify(recipeRepository).save(cloneCaptor.capture());
+        Recipe savedClone = cloneCaptor.getValue();
+
+        assertEquals(1, savedClone.getOwnerId());
+        assertEquals(recipe, savedClone.getParentRecipe());
+        assertFalse(savedClone.getIsCommunityPublished());
+
+        verify(recipeIngredientRepository).saveAll(anyList());
+        verify(recipeStepRepository).saveAll(anyList());
+
+        ArgumentCaptor<VaultFolderRecipe> linkCaptor = ArgumentCaptor.forClass(VaultFolderRecipe.class);
+        verify(vaultFolderRecipeRepository).save(linkCaptor.capture());
+        assertEquals(clone, linkCaptor.getValue().getRecipe());
+    }
+
+    @Test
+    void createVaultFolderRecipe_whenAlreadyCloned_reusesExistingClone()
+    {
+        Recipe existingClone = new Recipe();
+        ReflectionTestUtils.setField(existingClone, "recipeId", 50);
+        existingClone.setOwnerId(1);
+        existingClone.setParentRecipe(recipe);
+
+        when(vaultFolderRepository.findById(2)).thenReturn(Optional.of(sharedFolder));
+        when(recipeRepository.findAccessibleByIdAndUserId(request.recipeId(), 1)).thenReturn(Optional.of(recipe));
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+        when(recipeRepository.findExistingClone(recipe, 1, sharedVault)).thenReturn(Optional.of(existingClone));
+        when(vaultFolderRecipeRepository.save(any(VaultFolderRecipe.class))).thenReturn(folderRecipe);
+
+        vaultFolderRecipeService.createVaultFolderRecipe(request, 1, 2);
+
+        verify(recipeRepository, never()).save(any(Recipe.class));
+        verifyNoInteractions(recipeIngredientRepository);
+        verifyNoInteractions(recipeStepRepository);
+
+        ArgumentCaptor<VaultFolderRecipe> linkCaptor = ArgumentCaptor.forClass(VaultFolderRecipe.class);
+        verify(vaultFolderRecipeRepository).save(linkCaptor.capture());
+        assertEquals(existingClone, linkCaptor.getValue().getRecipe());
     }
 }

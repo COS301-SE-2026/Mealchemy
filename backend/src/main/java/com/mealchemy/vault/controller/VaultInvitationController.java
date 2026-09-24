@@ -120,7 +120,7 @@ public class VaultInvitationController {
     }
 
 
-    // Post
+    // Delete
     @Operation(summary = "Cancel a PENDING vault invitation", description = "Cancels a PENDING invitation - marks the invitation as CANCELLED. Only the vault owner can cancel the invitation.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Invitation cancelled successfully"),

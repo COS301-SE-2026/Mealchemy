@@ -11,6 +11,7 @@ import java.util.*;
 /* Import classes */
 
 import com.mealchemy.recipe.model.Recipe;
+import com.mealchemy.vault.model.Vault;
 
 @Repository
 public interface RecipeRepository extends JpaRepository<Recipe, Integer>
@@ -89,4 +90,16 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer>
         @Param("recipeId") Integer recipeId,
         @Param("userId") Integer userId
     );
+
+
+    // find clone of recipe this user already owns within this specific vault
+    @Query("""
+            SELECT DISTINCT r
+            FROM Recipe r
+            JOIN r.vaultFolderRecipes vfr
+            WHERE r.ownerId = :newOwnerId
+                AND r.parentRecipe = :source
+                AND vfr.folder.vault = :targetVault
+    """)
+    Optional<Recipe> findExistingClone(@Param("source") Recipe source, @Param("newOwnerId") Integer newOwnerId, @Param("targetVault") Vault targetVault);
 }

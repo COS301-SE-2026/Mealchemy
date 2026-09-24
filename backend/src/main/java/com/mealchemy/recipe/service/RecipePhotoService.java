@@ -28,6 +28,8 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.util.unit.DataSize;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.mealchemy.vault.service.RecipeEditLockService;
+
 // contains upload authorization and signing logic for images
 // vailidates the image, rejects unsuported types, empty files, size>5mb
 // then validates recipe, checks authenticated user owns it
@@ -51,12 +53,15 @@ public class RecipePhotoService
     private final Duration uploadUrlExpiry;
     private final long maxFileSizeBytes;
 
+    private final RecipeEditLockService recipeEditLockService;
+
     public RecipePhotoService(
         @Lazy Storage storage,
         RecipeRepository recipeRepository,
         @Value("${recipe.photo.bucket-name:}") String bucketName,
         @Value("${recipe.photo.upload-url-expiry}") Duration uploadUrlExpiry,
-        @Value("${recipe.photo.max-file-size}") DataSize maxFileSize
+        @Value("${recipe.photo.max-file-size}") DataSize maxFileSize,
+        RecipeEditLockService recipeEditLockService
     )
     {
         this.storage = storage;
@@ -64,6 +69,7 @@ public class RecipePhotoService
         this.bucketName = bucketName;
         this.uploadUrlExpiry = uploadUrlExpiry;
         this.maxFileSizeBytes = maxFileSize.toBytes();
+        this.recipeEditLockService = recipeEditLockService;
     }
 
     public RecipePhotoUploadResponse createPhotoUploadUrl(
@@ -96,13 +102,8 @@ public class RecipePhotoService
             () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.")
         );
 
-        if (!recipe.getOwnerId().equals(ownerId))
-        {
-            throw new ResponseStatusException(
-            HttpStatus.NOT_FOUND,
-            "Recipe not found."
-            );
-        }
+        
+        recipeEditLockService.canEditRecipe(recipeId, ownerId);
 
         if (bucketName.isBlank())
         {
