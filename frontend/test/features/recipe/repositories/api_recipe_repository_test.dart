@@ -61,11 +61,17 @@ void main() {
       ],
     );
 
-    await repository.updateRecipeFull(77, recipe, removePhoto: true);
+    await repository.updateRecipeFull(
+      77,
+      recipe,
+      removePhoto: true,
+      removeVideo: true,
+    );
 
     expect(adapter.request!.method, 'PUT');
     expect(adapter.request!.path, '/recipes/edit/77');
     expect(adapter.request!.data['removePhoto'], isTrue);
+    expect(adapter.request!.data['removeVideo'], isTrue);
     expect(adapter.request!.data['photoUrl'], isNull);
     expect(adapter.request!.data['ingredients'], hasLength(1));
     expect(adapter.request!.data['steps'], hasLength(1));

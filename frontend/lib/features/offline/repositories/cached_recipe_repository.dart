@@ -129,11 +129,13 @@ class CachedRecipeRepository implements RecipeRepository {
     int id,
     Recipe recipe, {
     bool removePhoto = false,
+    bool removeVideo = false,
   }) {
     return _remote.updateRecipeFull(
       id,
       recipe,
       removePhoto: removePhoto,
+      removeVideo: removeVideo,
     );
   }
 }
