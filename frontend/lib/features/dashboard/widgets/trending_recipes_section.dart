@@ -8,7 +8,6 @@ import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/features/dashboard/models/trending_recipe_data.dart';
 import 'package:mealchemy/features/dashboard/providers/dashboard_provider.dart';
 import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
-import 'package:mealchemy/features/recipe/widgets/report_recipe_button.dart';
 
 class TrendingRecipesSection extends ConsumerWidget {
   const TrendingRecipesSection({super.key});
@@ -74,7 +73,8 @@ class _TrendingTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => context.push(
-        AppRoutes.recipeDetail.replaceFirst(':id', '${data.recipe.recipeId}'),
+        '${AppRoutes.recipeDetail.replaceFirst(':id', '${data.recipe.recipeId}')}'
+        '?report=true',
       ),
       child: Container(
         padding: const EdgeInsets.all(12),
@@ -148,14 +148,11 @@ class _TrendingTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            if (data.recipe.isCommunityPublished)
-              ReportRecipeButton(recipe: data.recipe)
-            else
-              Icon(
-                Icons.chevron_right,
-                color: AppColors.textMuted,
-                size: 20,
-              ),
+            Icon(
+              Icons.chevron_right,
+              color: AppColors.textMuted,
+              size: 20,
+            ),
           ],
         ),
       ),

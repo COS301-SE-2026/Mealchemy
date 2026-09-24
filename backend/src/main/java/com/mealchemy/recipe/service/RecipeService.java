@@ -24,11 +24,13 @@ import com.mealchemy.recipe.dto.RecipeIngredientRequest;
 import com.mealchemy.recipe.dto.RecipeStepRequest;
 import com.mealchemy.recipe.dto.RecipeResponse;
 import com.mealchemy.recipe.event.RecipePhotoCleanupEvent;
+import com.mealchemy.recipe.event.RecipeVideoCleanupEvent;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.cuisinetype.repository.FlavourProfileOptionsRepository;
 import com.mealchemy.vault.repository.VaultFolderRepository;
 import com.mealchemy.vault.service.VaultFolderRecipeService;
+import com.mealchemy.vault.service.RecipeEditLockService;
 
 @Service
 public class RecipeService
@@ -43,18 +45,21 @@ public class RecipeService
 
     private final VaultFolderRecipeService vaultFolderRecipeService;
 
+    private final RecipeEditLockService recipeEditLockService;
+
     // lets it annouce that an old photo needs cleanup without making RecipeService directly responsible for GC Storage
     private final ApplicationEventPublisher eventPublisher;
 
     public RecipeService(RecipeRepository recipeRepository, IngredientCatalogueRepository ingredientCatalogueRepository, 
         FlavourProfileOptionsRepository flavourProfileOptionsRepository, VaultFolderRepository vaultFolderRepository, 
-        VaultFolderRecipeService vaultFolderRecipeService, ApplicationEventPublisher eventPublisher)
+        VaultFolderRecipeService vaultFolderRecipeService, RecipeEditLockService recipeEditLockService, ApplicationEventPublisher eventPublisher)
     {
         this.recipeRepository = recipeRepository;
         this.ingredientCatalogueRepository = ingredientCatalogueRepository;
         this.flavourProfileOptionsRepository = flavourProfileOptionsRepository;
         this.vaultFolderRepository = vaultFolderRepository;
         this.vaultFolderRecipeService = vaultFolderRecipeService;
+        this.recipeEditLockService = recipeEditLockService;
         this.eventPublisher = eventPublisher;
     }
 
@@ -69,6 +74,12 @@ public class RecipeService
     public List<RecipeResponse> getAllCommunityPublishedRecipes()
     {
         return recipeRepository.findByIsCommunityPublishedTrue().stream().map(RecipeResponse::from).collect(Collectors.toList());
+    }
+
+    // Get all community published recipes with curated videos.
+    public List<RecipeResponse> getAllCommunitySizzles()
+    {
+        return recipeRepository.findCommunitySizzles().stream().map(RecipeResponse::from).collect(Collectors.toList());
     }
 
     // Get a single recipe by Id
@@ -149,14 +160,11 @@ public class RecipeService
 
     // Put to update an existing recipe
     @Transactional
-    public RecipeResponse updateRecipe(int id, RecipeUpdateRequest request, Integer ownerId)
+    public RecipeResponse updateRecipe(int id, RecipeUpdateRequest request, Integer userId)
     {
         Recipe recipeForReturn = recipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
         
-        if (!recipeForReturn.getOwnerId().equals(ownerId))
-        {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
-        }
+        recipeEditLockService.canEditRecipe(id, userId);
 
         if (!flavourProfileOptionsRepository.existsByValue(request.cuisineType()))
         {
@@ -164,6 +172,7 @@ public class RecipeService
         }
 
         String oldPhotoUrl = recipeForReturn.getPhotoUrl();
+        String oldVideoUrl = recipeForReturn.getVideoUrl();
 
         if (request.removePhoto() && request.photoUrl() != null && !request.photoUrl().isBlank())
         {
@@ -184,6 +193,25 @@ public class RecipeService
             newPhotoUrl = request.photoUrl();
         }
 
+        if (request.removeVideo() && request.videoUrl() != null && !request.videoUrl().isBlank())
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A replacement video URL cannot be supplied when removing the video.");
+        }
+
+        String newVideoUrl = oldVideoUrl;
+        if (request.removeVideo())
+        {
+            newVideoUrl = null;
+        }
+        else if (request.videoUrl() != null)
+        {
+            if (request.videoUrl().isBlank())
+            {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Video URL cannot be blank.");
+            }
+            newVideoUrl = request.videoUrl();
+        }
+
         List<RecipeIngredient> ingredients = request.ingredients() == null
             ? null
             : mapIngredientRequests(request.ingredients(), recipeForReturn);
@@ -198,7 +226,7 @@ public class RecipeService
         recipeForReturn.setCookingTimeMins(request.cookingTimeMins());
         recipeForReturn.setServingSize(request.servingSize());
         recipeForReturn.setPhotoUrl(newPhotoUrl);
-        recipeForReturn.setVideoUrl(request.videoUrl());
+        recipeForReturn.setVideoUrl(newVideoUrl);
         recipeForReturn.setExternalUrl(request.externalUrl());
         recipeForReturn.setIsCommunityPublished(request.isCommunityPublished());
 
@@ -225,23 +253,22 @@ public class RecipeService
 
         Recipe saved = recipeRepository.save(recipeForReturn);
         publishPhotoCleanupWhenChanged(id, oldPhotoUrl, newPhotoUrl);
+        publishVideoCleanupWhenChanged(id, oldVideoUrl, newVideoUrl);
 
         return RecipeResponse.from(saved);
     }
 
     // Delete a specific vault using id
     @Transactional
-    public void deleteRecipe(int id, Integer ownerId)
+    public void deleteRecipe(int id, Integer userId)
     {
         Recipe recipeForDeletion = recipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
-        if (!recipeForDeletion.getOwnerId().equals(ownerId))
-        {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
-        }
+        recipeEditLockService.canEditRecipe(id, userId);
 
         recipeRepository.deleteById(id);
         publishPhotoCleanup(id, recipeForDeletion.getPhotoUrl());
+        publishVideoCleanup(id, recipeForDeletion.getVideoUrl());
     }
 
     /* Mapping functions */
@@ -339,6 +366,26 @@ public class RecipeService
         if (photoUrl != null && !photoUrl.isBlank())
         {
             eventPublisher.publishEvent(new RecipePhotoCleanupEvent(recipeId, photoUrl));
+        }
+    }
+
+    private void publishVideoCleanupWhenChanged(
+        Integer recipeId,
+        String oldVideoUrl,
+        String newVideoUrl
+    )
+    {
+        if (!Objects.equals(oldVideoUrl, newVideoUrl))
+        {
+            publishVideoCleanup(recipeId, oldVideoUrl);
+        }
+    }
+
+    private void publishVideoCleanup(Integer recipeId, String videoUrl)
+    {
+        if (videoUrl != null && !videoUrl.isBlank())
+        {
+            eventPublisher.publishEvent(new RecipeVideoCleanupEvent(recipeId, videoUrl));
         }
     }
 

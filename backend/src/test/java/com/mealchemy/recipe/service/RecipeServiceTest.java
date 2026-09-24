@@ -36,11 +36,14 @@ import com.mealchemy.recipe.dto.RecipeResponse;
 import com.mealchemy.recipe.dto.RecipeIngredientRequest;
 import com.mealchemy.recipe.dto.RecipeStepRequest;
 import com.mealchemy.recipe.event.RecipePhotoCleanupEvent;
+import com.mealchemy.recipe.event.RecipeVideoCleanupEvent;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.cuisinetype.repository.FlavourProfileOptionsRepository;
 import com.mealchemy.vault.repository.VaultFolderRepository;
 import com.mealchemy.vault.service.VaultFolderRecipeService;
+import com.mealchemy.vault.service.RecipeEditLockService;
+
 import com.mealchemy.shared.enums.VaultType;
 
 @ExtendWith(MockitoExtension.class)
@@ -63,8 +66,12 @@ public class RecipeServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private RecipeEditLockService recipeEditLockService;
+
     @InjectMocks
     private RecipeService recipeService;
+
 
     private Recipe recipe;
     private Recipe sourceRecipe;
@@ -111,7 +118,7 @@ public class RecipeServiceTest {
 
         fullRequest = new RecipeFullRequest("FullReq Title", "Full Description", "Chinese", 10, 15, 2, null, null, null, false, ingredients, steps, 1);
 
-        updateRequest = new RecipeUpdateRequest("Req Title", "Description", "Chinese", 10, 15, 2, null, false, null, null, false, null, null);
+        updateRequest = new RecipeUpdateRequest("Req Title", "Description", "Chinese", 10, 15, 2, null, false, null, false, null, false, null, null);
     }
 
     @Test
@@ -185,6 +192,28 @@ public class RecipeServiceTest {
         when(recipeRepository.findByIsCommunityPublishedTrue()).thenReturn(List.of());
 
         List<RecipeResponse> result = recipeService.getAllCommunityPublishedRecipes();
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getAllCommunitySizzles_returnsVideoRecipes_whenFound()
+    {
+        recipe.setVideoUrl("https://cdn.test/recipe-1.mp4");
+        when(recipeRepository.findCommunitySizzles()).thenReturn(List.of(recipe));
+
+        List<RecipeResponse> result = recipeService.getAllCommunitySizzles();
+
+        assertEquals(1, result.size());
+        assertEquals("https://cdn.test/recipe-1.mp4", result.get(0).videoUrl());
+    }
+
+    @Test
+    void getAllCommunitySizzles_returnsEmptyList_whenNoneFound()
+    {
+        when(recipeRepository.findCommunitySizzles()).thenReturn(List.of());
+
+        List<RecipeResponse> result = recipeService.getAllCommunitySizzles();
 
         assertTrue(result.isEmpty());
     }
@@ -360,7 +389,7 @@ public class RecipeServiceTest {
         recipe.setPhotoUrl(oldPhotoUrl);
         RecipeUpdateRequest photoRequest = new RecipeUpdateRequest(
             "Req Title", "Description", "Chinese", 10, 15, 2,
-            newPhotoUrl, false, null, null, false, null, null
+            newPhotoUrl, false, null, false, null, false, null, null
         );
 
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
@@ -384,7 +413,7 @@ public class RecipeServiceTest {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
         RecipeUpdateRequest removalRequest = new RecipeUpdateRequest(
             "Req Title", "Description", "Chinese", 10, 15, 2,
-            null, true, null, null, false, null, null
+            null, true, null, false, null, false, null, null
         );
 
         when(flavourProfileOptionsRepository.existsByValue(removalRequest.cuisineType()))
@@ -405,7 +434,7 @@ public class RecipeServiceTest {
         recipe.setPhotoUrl(photoUrl);
         RecipeUpdateRequest photoRequest = new RecipeUpdateRequest(
             "Req Title", "Description", "Chinese", 10, 15, 2,
-            photoUrl, false, null, null, false, null, null
+            photoUrl, false, null, false, null, false, null, null
         );
 
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
@@ -416,6 +445,43 @@ public class RecipeServiceTest {
         recipeService.updateRecipe(1, photoRequest, 1);
 
         verifyNoInteractions(eventPublisher);
+    }
+
+    @Test
+    void updateRecipe_publishesCleanup_whenVideoIsReplaced()
+    {
+        String oldVideoUrl = "https://storage.googleapis.com/bucket/recipes/1/videos/old.mp4";
+        String newVideoUrl = "https://storage.googleapis.com/bucket/recipes/1/videos/new.mp4";
+        recipe.setVideoUrl(oldVideoUrl);
+        RecipeUpdateRequest videoRequest = new RecipeUpdateRequest(
+            "Req Title", "Description", "Chinese", 10, 15, 2,
+            null, false, newVideoUrl, false, null, false, null, null
+        );
+
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(flavourProfileOptionsRepository.existsByValue(videoRequest.cuisineType()))
+            .thenReturn(true);
+        when(recipeRepository.save(any(Recipe.class))).thenReturn(recipe);
+
+        recipeService.updateRecipe(1, videoRequest, 1);
+
+        verify(eventPublisher).publishEvent(new RecipeVideoCleanupEvent(1, oldVideoUrl));
+        assertEquals(newVideoUrl, recipe.getVideoUrl());
+    }
+
+    @Test
+    void updateRecipe_preservesVideo_whenVideoFieldsAreOmitted()
+    {
+        String videoUrl = "https://storage.googleapis.com/bucket/recipes/1/videos/video.mp4";
+        recipe.setVideoUrl(videoUrl);
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(flavourProfileOptionsRepository.existsByValue(updateRequest.cuisineType()))
+            .thenReturn(true);
+        when(recipeRepository.save(any(Recipe.class))).thenReturn(recipe);
+
+        recipeService.updateRecipe(1, updateRequest, 1);
+
+        assertEquals(videoUrl, recipe.getVideoUrl());
     }
 
     @Test
@@ -457,7 +523,7 @@ public class RecipeServiceTest {
     {
         RecipeUpdateRequest fullUpdateRequest = new RecipeUpdateRequest(
             "Req Title", "Description", "Chinese", 10, 15, 2,
-            null, false, null, null, false,
+            null, false, null, false, null, false,
             List.of(new RecipeIngredientRequest(1, BigDecimal.valueOf(3), "tbsp", 0)),
             List.of(new RecipeStepRequest(1, "Replacement step"))
         );
@@ -485,7 +551,7 @@ public class RecipeServiceTest {
         recipe.getSteps().add(new RecipeStep());
         RecipeUpdateRequest clearRequest = new RecipeUpdateRequest(
             "Req Title", "Description", "Chinese", 10, 15, 2,
-            null, false, null, null, false, List.of(), List.of()
+            null, false, null, false, null, false, List.of(), List.of()
         );
 
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
@@ -506,7 +572,7 @@ public class RecipeServiceTest {
         RecipeUpdateRequest invalidRequest = new RecipeUpdateRequest(
             "Req Title", "Description", "Chinese", 10, 15, 2,
             "https://storage.googleapis.com/bucket/recipes/1/new.jpg",
-            true, null, null, false, null, null
+            true, null, false, null, false, null, null
         );
 
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
@@ -541,6 +607,7 @@ public class RecipeServiceTest {
     void updateRecipe_throwsException_whenNotOwner()
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeEditLockService.canEditRecipe(1, 99)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.updateRecipe(1, updateRequest, 99));
 
@@ -585,6 +652,18 @@ public class RecipeServiceTest {
     }
 
     @Test
+    void deleteRecipe_publishesCleanup_whenRecipeHasVideo()
+    {
+        String videoUrl = "https://storage.googleapis.com/bucket/recipes/1/videos/video.mp4";
+        recipe.setVideoUrl(videoUrl);
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+
+        recipeService.deleteRecipe(1, 1);
+
+        verify(eventPublisher).publishEvent(new RecipeVideoCleanupEvent(1, videoUrl));
+    }
+
+    @Test
     void deleteRecipe_throwsException_whenRecipeNotFound()
     {
         when(recipeRepository.findById(99)).thenReturn(Optional.empty());
@@ -599,6 +678,7 @@ public class RecipeServiceTest {
     void deleteRecipe_throwsException_whenNotOwner()
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeEditLockService.canEditRecipe(1, 3)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
         
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.deleteRecipe(1, 3));
 

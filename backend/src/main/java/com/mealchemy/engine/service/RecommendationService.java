@@ -357,6 +357,7 @@ public class RecommendationService {
                     item.scoreBreakdown(),
                     item.pantryGapCount(),
                     item.missingIngredients(),
+                    item.transparency(),
                     RecipeResponse.from(recipe)
                 );
             })

@@ -94,7 +94,9 @@ class _RecipeCell extends StatelessWidget {
     final photoUrl = recipe.photoUrl;
 
     return GestureDetector(
-      onTap: () => context.push('/recipe/${recipe.recipeId}'),
+      onTap: () => context.push(
+        '/recipe/${recipe.recipeId}?report=true',
+      ),
       child: SizedBox(
         height: _cellHeight,
         child: Stack(

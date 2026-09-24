@@ -160,6 +160,8 @@ class _VaultFolderRowState extends ConsumerState<VaultFolderRow> {
                         for (final recipe in recipes)
                           FolderRecipeRow(
                             recipe: recipe,
+                            allowReporting:
+                                widget.vault.vaultType == VaultTypes.global,
                             mutationsEnabled: !isReadOnly,
                             onEditTap: () =>
                                 context.push('/edit-recipe/${recipe.recipeId}'),

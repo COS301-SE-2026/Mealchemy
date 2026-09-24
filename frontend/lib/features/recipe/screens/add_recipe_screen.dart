@@ -16,11 +16,15 @@ import '../models/recipe.dart';
 import '../models/recipe_ingredient.dart';
 import '../models/recipe_step.dart';
 import '../models/selected_recipe_photo.dart';
+import '../models/selected_recipe_video.dart';
 import '../providers/recipe_photo_provider.dart';
 import '../providers/recipe_provider.dart';
+import '../providers/recipe_video_provider.dart';
 import '../services/recipe_photo_picker.dart';
+import '../services/recipe_video_picker.dart';
 import '../widgets/ingredient_editor_row.dart';
 import '../widgets/recipe_photo_selector.dart';
+import '../widgets/recipe_video_selector.dart';
 import '../widgets/step_editor_row.dart';
 
 class AddRecipeScreen extends ConsumerStatefulWidget {
@@ -61,9 +65,13 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
   bool _prefilled = false;
   bool _isSaving = false;
   bool _isUploadingPhoto = false;
+  bool _isUploadingVideo = false;
   SelectedRecipePhoto? _selectedPhoto;
+  SelectedRecipeVideo? _selectedVideo;
   String? _existingPhotoUrl;
+  String? _existingVideoUrl;
   bool _removePhoto = false;
+  bool _removeVideo = false;
 
   final List<_IngredientRowData> _ingredientRows = [_IngredientRowData()];
   final List<_StepRowData> _stepRows = [_StepRowData()];
@@ -107,6 +115,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     _selectedCuisine = recipe.cuisineType;
     _publishToGlobal = recipe.isCommunityPublished;
     _existingPhotoUrl = recipe.photoUrl;
+    _existingVideoUrl = recipe.videoUrl;
 
     final ingredients = recipe.ingredients ?? const [];
     if (ingredients.isNotEmpty) {
@@ -182,8 +191,14 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     _showToast(message, kind: ToastKind.error, icon: Icons.error_outline);
   }
 
-  void _showToast(String message, {ToastKind kind = ToastKind.info,  IconData? icon,}) {
-    ref.read(feedbackProvider.notifier).showShort(message, kind: kind, icon: icon);
+  void _showToast(
+    String message, {
+    ToastKind kind = ToastKind.info,
+    IconData? icon,
+  }) {
+    ref
+        .read(feedbackProvider.notifier)
+        .showShort(message, kind: kind, icon: icon);
   }
 
   void _removeSelectedPhoto() {
@@ -209,6 +224,53 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
           );
     } finally {
       if (mounted) setState(() => _isUploadingPhoto = false);
+    }
+  }
+
+  Future<void> _pickVideo(RecipeVideoSource source) async {
+    try {
+      final video = await ref.read(recipeVideoPickerProvider).pickVideo(source);
+      if (mounted && video != null) {
+        setState(() {
+          _selectedVideo = video;
+          _removeVideo = false;
+        });
+      }
+    } catch (error) {
+      if (mounted) _showVideoError(error);
+    }
+  }
+
+  void _showVideoError(Object error) {
+    final message = error is RecipeVideoValidationException
+        ? error.message
+        : 'Could not select the video. Try again.';
+    _showToast(message, kind: ToastKind.error, icon: Icons.error_outline);
+  }
+
+  void _removeSelectedVideo() {
+    setState(() {
+      if (_selectedVideo != null) {
+        _selectedVideo = null;
+        _removeVideo = false;
+      } else if (widget.isEditing && _existingVideoUrl != null) {
+        _removeVideo = true;
+      }
+    });
+  }
+
+  Future<String> _uploadVideo(
+    int recipeId,
+    SelectedRecipeVideo video,
+  ) async {
+    setState(() => _isUploadingVideo = true);
+    try {
+      return await ref.read(recipeVideoRepositoryProvider).uploadRecipeVideo(
+            recipeId: recipeId,
+            video: video,
+          );
+    } finally {
+      if (mounted) setState(() => _isUploadingVideo = false);
     }
   }
 
@@ -256,6 +318,25 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
 
     setState(() => _isSaving = true);
 
+    String? replacementVideoUrl;
+    if (widget.isEditing && _selectedVideo != null) {
+      try {
+        replacementVideoUrl = await _uploadVideo(
+          widget.editRecipeId!,
+          _selectedVideo!,
+        );
+      } catch (_) {
+        if (!mounted) return;
+        setState(() => _isSaving = false);
+        _showToast(
+          'Could not upload the video. Changes were not saved.',
+          kind: ToastKind.error,
+          icon: Icons.error_outline,
+        );
+        return;
+      }
+    }
+
     String? replacementPhotoUrl;
     if (widget.isEditing && _selectedPhoto != null) {
       try {
@@ -286,6 +367,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       cookingTimeMins: int.tryParse(_cookTimeController.text),
       servingSize: int.tryParse(_servingsController.text),
       photoUrl: replacementPhotoUrl,
+      videoUrl: replacementVideoUrl,
       isCommunityPublished: _publishToGlobal,
       ingredients: widget.isEditing ? ingredients : null,
       steps: widget.isEditing ? steps : null,
@@ -296,6 +378,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
           folderId: widget.isEditing ? null : _selectedFolderId,
           recipeId: widget.editRecipeId,
           removePhoto: widget.isEditing && _removePhoto,
+          removeVideo: widget.isEditing && _removeVideo,
         );
     if (saved == null) {
       if (mounted) setState(() => _isSaving = false);
@@ -304,16 +387,37 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
 
     var saveFailed = false;
     var photoFailed = false;
+    var videoFailed = false;
     final selectedPhoto = _selectedPhoto;
-    if (!widget.isEditing && selectedPhoto != null) {
-      try {
-        final photoUrl = await _uploadPhoto(saved.recipeId, selectedPhoto);
-        await recipeRepo.updateRecipe(
-          saved.recipeId,
-          saved.copyWith(photoUrl: photoUrl),
-        );
-      } catch (_) {
-        photoFailed = true;
+    final selectedVideo = _selectedVideo;
+    var savedWithMedia = saved;
+    var hasUploadedMedia = false;
+    if (!widget.isEditing) {
+      if (selectedPhoto != null) {
+        try {
+          final photoUrl = await _uploadPhoto(saved.recipeId, selectedPhoto);
+          savedWithMedia = savedWithMedia.copyWith(photoUrl: photoUrl);
+          hasUploadedMedia = true;
+        } catch (_) {
+          photoFailed = true;
+        }
+      }
+      if (selectedVideo != null) {
+        try {
+          final videoUrl = await _uploadVideo(saved.recipeId, selectedVideo);
+          savedWithMedia = savedWithMedia.copyWith(videoUrl: videoUrl);
+          hasUploadedMedia = true;
+        } catch (_) {
+          videoFailed = true;
+        }
+      }
+      if (hasUploadedMedia) {
+        try {
+          await recipeRepo.updateRecipe(saved.recipeId, savedWithMedia);
+        } catch (_) {
+          if (selectedPhoto != null) photoFailed = true;
+          if (selectedVideo != null) videoFailed = true;
+        }
       }
     }
     if (!widget.isEditing) {
@@ -336,25 +440,28 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     if (!mounted) return;
     setState(() => _isSaving = false);
 
-    // saveFailed && photoFailed
-    if (saveFailed && photoFailed) {
+    final mediaFailed = photoFailed || videoFailed;
+    if (saveFailed && mediaFailed) {
       _showToast(
-        'Recipe saved, but some items and the photo did not.',
+        'Recipe saved, but some items and media did not.',
         kind: ToastKind.error,
         icon: Icons.error_outline,
       );
     } else if (saveFailed) {
       _showToast('Recipe saved, but some items did not.',
-          kind: ToastKind.error,
-          icon: Icons.error_outline);
+          kind: ToastKind.error, icon: Icons.error_outline);
+    } else if (photoFailed && videoFailed) {
+      _showToast('Recipe saved, but the photo and video did not upload.',
+          kind: ToastKind.error, icon: Icons.error_outline);
     } else if (photoFailed) {
       _showToast('Recipe saved, but the photo did not upload.',
-          kind: ToastKind.error,
-          icon: Icons.error_outline);
+          kind: ToastKind.error, icon: Icons.error_outline);
+    } else if (videoFailed) {
+      _showToast('Recipe saved, but the video did not upload.',
+          kind: ToastKind.error, icon: Icons.error_outline);
     } else {
       _showToast(widget.isEditing ? 'Changes saved' : 'Recipe saved',
-          kind: ToastKind.success,
-          icon: Icons.check_circle_outline);
+          kind: ToastKind.success, icon: Icons.check_circle_outline);
     }
 
     ref.read(addRecipeProvider.notifier).reset();
@@ -423,7 +530,8 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
           ref.invalidate(recipeDetailProvider(widget.editRecipeId!));
         }
       } else if (next.errorMessage != null) {
-        _showToast(next.errorMessage!, kind: ToastKind.error, icon: Icons.error_outline);
+        _showToast(next.errorMessage!,
+            kind: ToastKind.error, icon: Icons.error_outline);
       }
     });
 
@@ -583,6 +691,23 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
           onRemoveTap: _removeSelectedPhoto,
           disabled: isSubmitting,
           uploading: _isUploadingPhoto,
+        ),
+        const SizedBox(height: 32),
+        _sectionHeader('Recipe Video'),
+        const SizedBox(height: 8),
+        Text(
+          'Optional MP4, up to 50 MB',
+          style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+        ),
+        const SizedBox(height: 12),
+        RecipeVideoSelector(
+          video: _selectedVideo,
+          existingVideoUrl: _removeVideo ? null : _existingVideoUrl,
+          onGalleryTap: () => _pickVideo(RecipeVideoSource.gallery),
+          onCameraTap: () => _pickVideo(RecipeVideoSource.camera),
+          onRemoveTap: _removeSelectedVideo,
+          disabled: isSubmitting,
+          uploading: _isUploadingVideo,
         ),
         const SizedBox(height: 32),
         _sectionHeader('Time & Servings'),

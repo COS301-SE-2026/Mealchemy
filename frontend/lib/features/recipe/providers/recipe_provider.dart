@@ -162,8 +162,13 @@ class AddRecipeNotifier extends StateNotifier<AddRecipeState> {
     return created.folderId;
   }
 
-  Future<Recipe?> submit(Recipe recipe,
-      {int? folderId, int? recipeId, bool removePhoto = false}) async {
+  Future<Recipe?> submit(
+    Recipe recipe, {
+    int? folderId,
+    int? recipeId,
+    bool removePhoto = false,
+    bool removeVideo = false,
+  }) async {
     final missing = recipe.title.trim().isEmpty ||
         (recipe.cuisineType ?? '').isEmpty ||
         recipe.prepTimeMins == null ||
@@ -181,8 +186,12 @@ class AddRecipeNotifier extends StateNotifier<AddRecipeState> {
     try {
       final Recipe result;
       if (recipeId != null) {
-        result = await _repository.updateRecipeFull(recipeId, recipe,
-            removePhoto: removePhoto);
+        result = await _repository.updateRecipeFull(
+          recipeId,
+          recipe,
+          removePhoto: removePhoto,
+          removeVideo: removeVideo,
+        );
       } else {
         final targetFolderId = folderId ?? await _resolveDefaultFolderId();
         result = await _repository.addRecipe(recipe, targetFolderId);
@@ -231,7 +240,7 @@ final unitOptionsProvider = Provider<List<UnitOfMeasurement>>((ref) {
 
   return all.where((u) {
     if (u.system == null) return true;
-    return u.system == system.value; 
+    return u.system == system.value;
   }).toList();
 });
 

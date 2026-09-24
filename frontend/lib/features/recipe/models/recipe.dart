@@ -71,7 +71,11 @@ class Recipe {
           .toList(),
     );
   }
-  Map<String, dynamic> toFullRequestJson({bool removePhoto = false}) => {
+  Map<String, dynamic> toFullRequestJson({
+    bool removePhoto = false,
+    bool removeVideo = false,
+  }) =>
+      {
         'title': title,
         'description': description ?? '',
         'cuisineType': cuisineType,
@@ -81,6 +85,7 @@ class Recipe {
         'photoUrl': photoUrl,
         'removePhoto': removePhoto,
         'videoUrl': videoUrl,
+        'removeVideo': removeVideo,
         'externalUrl': externalUrl,
         'isCommunityPublished': isCommunityPublished,
         'ingredients': ingredients?.map((i) => i.toJson()).toList() ?? [],
