@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:mealchemy/core/providers/feedback_provider.dart';
 import '../../../core/connectivity/network_status_provider.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
@@ -91,6 +91,7 @@ class _ShoppingListDetailScreenState
           return _ShoppingListDetailContent(
             list: list,
             isReadOnly: isReadOnly,
+            ref: ref,
             unitOptions: unitOptions,
             onToggleItem: (itemId) async {
               await ref.read(shoppingListsProvider.notifier).toggleItemChecked(
@@ -175,6 +176,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
   const _ShoppingListDetailContent({
     required this.list,
     required this.isReadOnly,
+    required this.ref,
     required this.unitOptions,
     required this.onToggleItem,
     required this.onUpdateItem,
@@ -188,6 +190,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
 
   final ShoppingList list;
   final bool isReadOnly;
+  final WidgetRef ref;
   final List<String> unitOptions;
   final Future<void> Function(String itemId) onToggleItem;
   final Future<void> Function({
@@ -224,7 +227,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
 
                         if (selectedCount == 0) {
                           _showSnackBar(
-                            context,
+                            ref,
                             'No selected items to delete.',
                           );
                           return;
@@ -238,7 +241,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
                             ? '1 selected item deleted.'
                             : '$selectedCount selected items deleted.';
 
-                        _showSnackBar(context, message);
+                        _showSnackBar(ref, message);
                       },
               ),
               const SizedBox(height: 42),
@@ -284,7 +287,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
 
                       if (checkedCount == 0) {
                         _showSnackBar(
-                          context,
+                          ref,
                           'No checked items to update.',
                         );
                         return;
@@ -308,7 +311,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
                           ? '1 item sent to pantry.$skippedText'
                           : '$addedCount items sent to pantry.$skippedText';
 
-                      _showSnackBar(context, message);
+                      _showSnackBar(ref, message);
 
                       if (result?.canDeleteShoppingList != true) return;
 
@@ -329,7 +332,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
                         if (!context.mounted) return;
 
                         _showSnackBar(
-                          context,
+                          ref,
                           'Could not delete the shopping list. Try again.',
                         );
                       }
@@ -386,6 +389,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
                 ? null
                 : () => _showEditShoppingListItemDialog(
                       context: context,
+                      ref: ref,
                       item: item,
                       units: unitOptions,
                       onSave: ({
@@ -407,7 +411,7 @@ class _ShoppingListDetailContent extends StatelessWidget {
                     if (!context.mounted) return;
 
                     _showSnackBar(
-                      context,
+                      ref,
                       '${item.name} deleted.',
                     );
                   },
@@ -602,6 +606,7 @@ class _UpdatePantryButton extends StatelessWidget {
 
 Future<void> _showEditShoppingListItemDialog({
   required BuildContext context,
+  required WidgetRef ref,
   required ShoppingListItem item,
   required List<String> units,
   required Future<void> Function({
@@ -774,7 +779,7 @@ Future<void> _showEditShoppingListItemDialog({
   if (saved != true || !context.mounted) return;
 
   _showSnackBar(
-    context,
+    ref,
     '${item.name} updated.',
   );
 }
@@ -860,12 +865,6 @@ Future<bool> _showDeleteEmptyShoppingListDialog({
   return shouldDelete ?? false;
 }
 
-void _showSnackBar(BuildContext context, String message) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(message),
-      backgroundColor: AppColors.primary,
-      behavior: SnackBarBehavior.floating,
-    ),
-  );
+void _showSnackBar(WidgetRef ref, String message) {
+  ref.read(feedbackProvider.notifier).showShort(message);
 }

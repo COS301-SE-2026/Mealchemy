@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mealchemy/core/providers/feedback_provider.dart';
+import 'package:mealchemy/core/shared_widgets/atoms/app_toast.dart';
 
 import '../../../core/connectivity/network_status_provider.dart';
 import '../../../core/shared_widgets/Molecules/app_refresh.dart';
@@ -30,6 +32,7 @@ class ShoppingListsScreen extends ConsumerWidget {
             ? null
             : () => _showCreateListDialog(
                   context,
+                  ref,
                   (name) async {
                     await ref
                         .read(shoppingListsProvider.notifier)
@@ -139,6 +142,7 @@ class _ShoppingListsContent extends ConsumerWidget {
         ? <Widget>[const _EmptySearchState()]
         : _buildSections(
             context: context,
+            ref: ref,
             groupedLists: groupedLists,
             isReadOnly: isReadOnly,
             onUpdateListName: onUpdateListName,
@@ -184,6 +188,7 @@ class _ShoppingListsContent extends ConsumerWidget {
   //builds each grouped shopping list section
   List<Widget> _buildSections({
     required BuildContext context,
+    required WidgetRef ref,
     required Map<String, List<ShoppingList>> groupedLists,
     required bool isReadOnly,
     required Future<void> Function({
@@ -221,9 +226,11 @@ class _ShoppingListsContent extends ConsumerWidget {
               context: context,
               list: list,
               onUpdateListName: onUpdateListName,
+              ref: ref,
             ),
             onMoreTap: () => _showListActionsMenu(
               context: context,
+              ref: ref,
               list: list,
               onDeleteList: onDeleteList,
             ),
@@ -360,6 +367,7 @@ class _EmptySearchState extends StatelessWidget {
 
 Future<void> _showCreateListDialog(
   BuildContext context,
+  WidgetRef ref,
   Future<void> Function(String name) onCreateList,
 ) async {
   final nameController = TextEditingController();
@@ -437,17 +445,16 @@ Future<void> _showCreateListDialog(
 
   if (!context.mounted) return;
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text('$cleanedName created.'),
-      backgroundColor: AppColors.primary,
-      behavior: SnackBarBehavior.floating,
-    ),
-  );
+  ref.read(feedbackProvider.notifier).showShort(
+        '$cleanedName created.',
+        kind: ToastKind.success,
+        icon: Icons.check_circle_outline,
+      );
 }
 
 Future<void> _showListActionsMenu({
   required BuildContext context,
+  required WidgetRef ref,
   required ShoppingList list,
   required Future<void> Function(String listId) onDeleteList,
 }) async {
@@ -455,17 +462,16 @@ Future<void> _showListActionsMenu({
 
   if (!context.mounted) return;
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text('${list.title} deleted.'),
-      backgroundColor: AppColors.primary,
-      behavior: SnackBarBehavior.floating,
-    ),
-  );
+  ref.read(feedbackProvider.notifier).showShort(
+        '${list.title} deleted.',
+        kind: ToastKind.success,
+        icon: Icons.delete_outline,
+      );
 }
 
 Future<void> _showEditListNameDialog({
   required BuildContext context,
+  required WidgetRef ref,
   required ShoppingList list,
   required Future<void> Function({
     required String listId,
@@ -549,11 +555,9 @@ Future<void> _showEditListNameDialog({
 
   if (!context.mounted) return;
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text('$cleanedName saved.'),
-      backgroundColor: AppColors.primary,
-      behavior: SnackBarBehavior.floating,
-    ),
-  );
+  ref.read(feedbackProvider.notifier).showShort(
+        '$cleanedName saved.',
+        kind: ToastKind.success,
+        icon: Icons.check_circle_outline,
+      );
 }

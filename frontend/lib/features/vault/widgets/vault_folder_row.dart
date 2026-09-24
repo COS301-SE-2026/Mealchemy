@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mealchemy/core/providers/feedback_provider.dart';
+import 'package:mealchemy/core/shared_widgets/atoms/app_toast.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/vault_folder.dart';
@@ -158,6 +160,8 @@ class _VaultFolderRowState extends ConsumerState<VaultFolderRow> {
                         for (final recipe in recipes)
                           FolderRecipeRow(
                             recipe: recipe,
+                            allowReporting:
+                                widget.vault.vaultType == VaultTypes.global,
                             mutationsEnabled: !isReadOnly,
                             onEditTap: () =>
                                 context.push('/edit-recipe/${recipe.recipeId}'),
@@ -168,19 +172,19 @@ class _VaultFolderRowState extends ConsumerState<VaultFolderRow> {
                                       widget.folder.folderId),
                                 )(recipe.recipeId);
                                 if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text('Recipe deleted.')),
-                                  );
+                                  ref.read(feedbackProvider.notifier).showShort(
+                                        'Recipe deleted.',
+                                        kind: ToastKind.success,
+                                        icon: Icons.check_circle_outline,
+                                      );
                                 }
                               } catch (_) {
                                 if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                          'Could not delete recipe. Try again.'),
-                                    ),
-                                  );
+                                  ref.read(feedbackProvider.notifier).showShort(
+                                        'Could not delete recipe. Try again.',
+                                        kind: ToastKind.error,
+                                        icon: Icons.error_outline,
+                                      );
                                 }
                               }
                             },

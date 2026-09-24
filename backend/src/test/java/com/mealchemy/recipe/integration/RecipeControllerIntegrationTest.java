@@ -235,19 +235,14 @@ public class RecipeControllerIntegrationTest {
         );
     }
 
-    private RecipeUpdateRequest updateRequest(
-            String title,
-            String photoUrl,
-            boolean removePhoto,
-            List<RecipeIngredientRequest> ingredients,
-            List<RecipeStepRequest> steps) {
+private RecipeUpdateRequest updateRequest(String title, String photoUrl, boolean removePhoto, List<RecipeIngredientRequest> ingredients, List<RecipeStepRequest> steps) {
         return new RecipeUpdateRequest(
                 title, "A description.", validCuisine,
                 10, 20, 2,
-                photoUrl, removePhoto, null, null, false,
+                photoUrl, removePhoto, null, false, null, false,
                 ingredients, steps, null
         );
-    }
+}
 
     private UsernamePasswordAuthenticationToken authAs(Integer userId) {
         return new UsernamePasswordAuthenticationToken(String.valueOf(userId), null, List.of());

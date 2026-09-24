@@ -10,6 +10,7 @@ import 'package:mealchemy/features/shopping_lists/screens/shopping_lists_screen.
 import 'package:mealchemy/features/shopping_lists/widgets/shopping_list_row.dart';
 import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
 import 'package:mealchemy/features/shopping_lists/repositories/mock_shopping_list_repository.dart';
+import 'package:mealchemy/core/shared_widgets/atoms/app_toast_host.dart';
 
 void main() {
   setUpAll(() {
@@ -31,8 +32,10 @@ void main() {
           //start each test with search closed so state does not leak between them
           searchOpenProvider.overrideWith((ref) => false),
         ],
-        child: const MaterialApp(
-          home: ShoppingListsScreen(),
+        child: MaterialApp(
+          home: const ShoppingListsScreen(),
+          builder: (context, child) =>
+              AppToastHost(child: child ?? const SizedBox.shrink()),
         ),
       ),
     );

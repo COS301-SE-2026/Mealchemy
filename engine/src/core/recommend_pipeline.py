@@ -29,7 +29,7 @@ def recommend(
 
     sampled_pool = sample_for_tournament(safe_pool, seed)
 
-    scored_items = [build_recommendation_item(recipe, user_state) for recipe in sampled_pool]
+    scored_items = [build_recommendation_item(recipe, user_state, seed) for recipe in sampled_pool]
 
     deduped_items = dedup(scored_items)
 

@@ -23,9 +23,14 @@ import '../../offline/widgets/cache_freshness_label.dart';
 
 //tabs need controller with animation support
 class RecipeDetailScreen extends ConsumerStatefulWidget {
-  const RecipeDetailScreen({super.key, required this.recipeId});
+  const RecipeDetailScreen({
+    super.key,
+    required this.recipeId,
+    this.allowReporting = false,
+  });
 
   final int recipeId;
+  final bool allowReporting;
 
   @override
   ConsumerState<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
@@ -74,6 +79,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
         recipe: recipe,
         tabController: _tabController,
         onRefresh: _refresh,
+        allowReporting: widget.allowReporting,
       ),
     );
   }
@@ -84,11 +90,13 @@ class _RecipeDetailContent extends ConsumerWidget {
     required this.recipe,
     required this.tabController,
     required this.onRefresh,
+    required this.allowReporting,
   });
 
   final Recipe recipe;
   final TabController tabController;
   final Future<void> Function() onRefresh;
+  final bool allowReporting;
 
 //ingredients and steps are null on endpoint
 //sorted* guards against null
@@ -104,7 +112,10 @@ class _RecipeDetailContent extends ConsumerWidget {
       backgroundColor: AppColors.bgLight,
       body: Column(
         children: [
-          RecipeHero(recipe: recipe),
+          RecipeHero(
+            recipe: recipe,
+            allowReporting: allowReporting,
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
             child: CacheFreshnessLabel(

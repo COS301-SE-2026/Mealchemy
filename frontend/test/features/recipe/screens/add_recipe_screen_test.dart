@@ -5,18 +5,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mealchemy/core/connectivity/network_status_provider.dart';
+import 'package:mealchemy/core/shared_widgets/atoms/app_toast_host.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
 import 'package:mealchemy/features/recipe/models/selected_recipe_photo.dart';
+import 'package:mealchemy/features/recipe/models/selected_recipe_video.dart';
 import 'package:mealchemy/features/recipe/models/unit_of_measurement.dart';
 import 'package:mealchemy/features/recipe/providers/recipe_photo_provider.dart';
 import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
+import 'package:mealchemy/features/recipe/providers/recipe_video_provider.dart';
 import 'package:mealchemy/features/recipe/repositories/recipe_photo_repository.dart';
 import 'package:mealchemy/features/recipe/repositories/recipe_repository.dart';
+import 'package:mealchemy/features/recipe/repositories/recipe_video_repository.dart';
 import 'package:mealchemy/features/recipe/screens/add_recipe_screen.dart';
 import 'package:mealchemy/features/recipe/services/recipe_photo_picker.dart';
+import 'package:mealchemy/features/recipe/services/recipe_video_picker.dart';
 import 'package:mealchemy/features/vault/models/vault.dart';
 import 'package:mealchemy/features/vault/models/vault_folder.dart';
 import 'package:mealchemy/features/vault/models/vault_folder_recipe.dart';
@@ -34,6 +40,7 @@ class _RecordingRepo implements RecipeRepository {
   final List<int> savedFolderIds = [];
   final List<(int id, Recipe recipe)> updatedRecipes = [];
   final List<bool> removePhotoValues = [];
+  final List<bool> removeVideoValues = [];
   final List<String>? events;
   final List<(int recipeId, RecipeIngredient ingredient)> savedIngredients = [];
 
@@ -62,11 +69,16 @@ class _RecordingRepo implements RecipeRepository {
   }
 
   @override
-  Future<Recipe> updateRecipeFull(int id, Recipe recipe,
-      {bool removePhoto = false}) async {
+  Future<Recipe> updateRecipeFull(
+    int id,
+    Recipe recipe, {
+    bool removePhoto = false,
+    bool removeVideo = false,
+  }) async {
     events?.add('update-full');
     updatedRecipes.add((id, recipe));
     removePhotoValues.add(removePhoto);
+    removeVideoValues.add(removeVideo);
     return recipe.copyWith(recipeId: id);
   }
 
@@ -198,11 +210,60 @@ class _RecordingPhotoRepository implements RecipePhotoRepository {
   }
 }
 
+class _FakeVideoPicker implements RecipeVideoPicker {
+  _FakeVideoPicker({this.video});
+
+  final SelectedRecipeVideo? video;
+  RecipeVideoSource? selectedSource;
+
+  @override
+  Future<SelectedRecipeVideo?> pickVideo(RecipeVideoSource source) async {
+    selectedSource = source;
+    return video;
+  }
+}
+
+class _RecordingVideoRepository implements RecipeVideoRepository {
+  _RecordingVideoRepository({
+    this.events,
+    this.shouldFail = false,
+    this.uploadCompleter,
+  });
+
+  final List<String>? events;
+  final bool shouldFail;
+  final Completer<String>? uploadCompleter;
+  int? uploadedRecipeId;
+
+  @override
+  Future<String> uploadRecipeVideo({
+    required int recipeId,
+    required SelectedRecipeVideo video,
+  }) async {
+    events?.add('video-upload');
+    uploadedRecipeId = recipeId;
+    if (shouldFail) throw Exception('upload failed');
+    if (uploadCompleter != null) return uploadCompleter!.future;
+    return 'https://storage.googleapis.com/recipes/$recipeId/video.mp4';
+  }
+}
+
 final _selectedPhoto = SelectedRecipePhoto.validate(
   bytes: Uint8List.fromList([1, 2, 3]),
   fileName: 'meal.jpg',
   contentType: 'image/jpeg',
 );
+
+Future<SelectedRecipeVideo> _selectedVideo() {
+  return SelectedRecipeVideo.validate(
+    XFile.fromData(
+      Uint8List.fromList([1, 2, 3]),
+      path: 'recipe.mp4',
+      name: 'recipe.mp4',
+      mimeType: 'video/mp4',
+    ),
+  );
+}
 
 class _FakeVaultRepo implements VaultRepository {
   @override
@@ -260,6 +321,11 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
+  const unitOptions = [
+    UnitOfMeasurement(unitId: 1, name: 'g', system: 'METRIC'),
+    UnitOfMeasurement(unitId: 2, name: 'tbsp', system: null),
+  ];
+
   Widget host({
     required RecipeRepository recipeRepo,
     VaultRepository? vaultRepo,
@@ -268,6 +334,8 @@ void main() {
     List<Override> extraOverrides = const [],
     RecipePhotoPicker? photoPicker,
     RecipePhotoRepository? photoRepository,
+    RecipeVideoPicker? videoPicker,
+    RecipeVideoRepository? videoRepository,
   }) {
     final router = GoRouter(
       initialLocation: '/recipe/add',
@@ -284,17 +352,29 @@ void main() {
     return ProviderScope(
       overrides: [
         recipeRepositoryProvider.overrideWithValue(recipeRepo),
+        unitOptionsProvider.overrideWithValue(unitOptions),
         recipePhotoPickerProvider.overrideWithValue(
           photoPicker ?? _FakePhotoPicker(),
         ),
         recipePhotoRepositoryProvider.overrideWithValue(
           photoRepository ?? _RecordingPhotoRepository(),
         ),
+        recipeVideoPickerProvider.overrideWithValue(
+          videoPicker ?? _FakeVideoPicker(),
+        ),
+        recipeVideoRepositoryProvider.overrideWithValue(
+          videoRepository ?? _RecordingVideoRepository(),
+        ),
         vaultRepositoryProvider
             .overrideWithValue(vaultRepo ?? _FakeVaultRepo()),
         ...extraOverrides,
       ],
-      child: MaterialApp.router(routerConfig: router),
+      child: MaterialApp.router(
+        routerConfig: router,
+        builder: (context, child) => AppToastHost(
+          child: child ?? const SizedBox.shrink(),
+        ),
+      ),
     );
   }
 
@@ -307,6 +387,8 @@ void main() {
     List<Override> extraOverrides = const [],
     RecipePhotoPicker? photoPicker,
     RecipePhotoRepository? photoRepository,
+    RecipeVideoPicker? videoPicker,
+    RecipeVideoRepository? videoRepository,
   }) async {
     tester.view.physicalSize = const Size(414, 2200);
     tester.view.devicePixelRatio = 1.0;
@@ -320,6 +402,8 @@ void main() {
       vaultRepo: vaultRepo,
       photoPicker: photoPicker,
       photoRepository: photoRepository,
+      videoPicker: videoPicker,
+      videoRepository: videoRepository,
       editRecipeId: editRecipeId,
       initialRecipe: initialRecipe,
       extraOverrides: extraOverrides,
@@ -796,5 +880,124 @@ void main() {
     expect(recipeRepo.updatedRecipes, isEmpty);
     expect(find.text('Recipe saved, but the photo did not upload.'),
         findsOneWidget);
+  });
+
+  testWidgets('selected video uploads after creation and shows progress',
+      (tester) async {
+    final events = <String>[];
+    final recipeRepo = _RecordingRepo(events: events);
+    final uploadCompleter = Completer<String>();
+    final videoRepo = _RecordingVideoRepository(
+      events: events,
+      uploadCompleter: uploadCompleter,
+    );
+    final picker = _FakeVideoPicker(video: await _selectedVideo());
+    await pumpAddRecipe(
+      tester,
+      recipeRepo: recipeRepo,
+      videoPicker: picker,
+      videoRepository: videoRepo,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('recipe-video-gallery')));
+    await tester.pumpAndSettle();
+    expect(picker.selectedSource, RecipeVideoSource.gallery);
+    expect(find.text('recipe.mp4'), findsOneWidget);
+    expect(find.text('0.0 MB'), findsOneWidget);
+
+    await fillRequiredFields(tester);
+    await tapCreateRecipe(tester, settle: false);
+
+    expect(find.byKey(const Key('recipe-video-uploading')), findsOneWidget);
+    expect(videoRepo.uploadedRecipeId, 501);
+
+    uploadCompleter.complete(
+      'https://storage.googleapis.com/recipes/501/video.mp4',
+    );
+    await tester.pumpAndSettle();
+
+    expect(events, ['create', 'video-upload', 'update']);
+    expect(
+      recipeRepo.updatedRecipes.single.$2.videoUrl,
+      'https://storage.googleapis.com/recipes/501/video.mp4',
+    );
+  });
+
+  testWidgets('an edit uploads a replacement before saving its video url',
+      (tester) async {
+    final events = <String>[];
+    final repo = _RecordingRepo(events: events);
+    final videoRepo = _RecordingVideoRepository(events: events);
+    await pumpAddRecipe(
+      tester,
+      recipeRepo: repo,
+      editRecipeId: 77,
+      initialRecipe:
+          _editRecipe.copyWith(videoUrl: 'https://example.test/old.mp4'),
+      videoPicker: _FakeVideoPicker(video: await _selectedVideo()),
+      videoRepository: videoRepo,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Video attached'), findsOneWidget);
+    expect(find.text('Replace'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('recipe-video-gallery')));
+    await tester.pumpAndSettle();
+    await tapSaveChanges(tester);
+
+    expect(events, ['video-upload', 'update-full']);
+    expect(videoRepo.uploadedRecipeId, 77);
+    expect(
+      repo.updatedRecipes.single.$2.videoUrl,
+      'https://storage.googleapis.com/recipes/77/video.mp4',
+    );
+    expect(repo.removeVideoValues.single, isFalse);
+  });
+
+  testWidgets('an edit can explicitly remove the existing video',
+      (tester) async {
+    final repo = _RecordingRepo();
+    await pumpAddRecipe(
+      tester,
+      recipeRepo: repo,
+      editRecipeId: 77,
+      initialRecipe:
+          _editRecipe.copyWith(videoUrl: 'https://example.test/old.mp4'),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('recipe-video-remove')));
+    await tester.pumpAndSettle();
+    expect(find.text('No video selected'), findsOneWidget);
+    await tapSaveChanges(tester);
+
+    expect(repo.updatedRecipes.single.$2.videoUrl, isNull);
+    expect(repo.removeVideoValues.single, isTrue);
+  });
+
+  testWidgets('a failed video replacement does not save the edit',
+      (tester) async {
+    final repo = _RecordingRepo();
+    await pumpAddRecipe(
+      tester,
+      recipeRepo: repo,
+      editRecipeId: 77,
+      initialRecipe:
+          _editRecipe.copyWith(videoUrl: 'https://example.test/old.mp4'),
+      videoPicker: _FakeVideoPicker(video: await _selectedVideo()),
+      videoRepository: _RecordingVideoRepository(shouldFail: true),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('recipe-video-camera')));
+    await tester.pumpAndSettle();
+    await tapSaveChanges(tester);
+
+    expect(repo.updatedRecipes, isEmpty);
+    expect(
+      find.text('Could not upload the video. Changes were not saved.'),
+      findsOneWidget,
+    );
   });
 }

@@ -288,3 +288,8 @@ bool _sameSet(List<String> a, List<String> b) {
   if (a.length != b.length) return false;
   return a.toSet().containsAll(b);
 }
+
+final unitSystemProvider = Provider<PreferredUnit>((ref) {
+  final profile = ref.watch(profileProvider).valueOrNull;
+  return profile?.draft.preferredUnit ?? PreferredUnit.metric;
+});
