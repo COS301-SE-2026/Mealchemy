@@ -219,7 +219,7 @@ public class RecipeControllerIntegrationTest {
         return new RecipeRequest(
                 title, "A description.", cuisine,
                 10, 20, 2,
-                null, null, null, false, folderId
+                null, null, null, false, folderId, null
         );
     }
 
@@ -230,23 +230,19 @@ public class RecipeControllerIntegrationTest {
                 null, null, null, false,
                 List.of(new RecipeIngredientRequest(ingId, new BigDecimal("1.5"), "cups", 1)),
                 List.of(new RecipeStepRequest(1, "Mix everything.")),
-                folderId
+                folderId,
+                null
         );
     }
 
-    private RecipeUpdateRequest updateRequest(
-            String title,
-            String photoUrl,
-            boolean removePhoto,
-            List<RecipeIngredientRequest> ingredients,
-            List<RecipeStepRequest> steps) {
+private RecipeUpdateRequest updateRequest(String title, String photoUrl, boolean removePhoto, List<RecipeIngredientRequest> ingredients, List<RecipeStepRequest> steps) {
         return new RecipeUpdateRequest(
                 title, "A description.", validCuisine,
                 10, 20, 2,
                 photoUrl, removePhoto, null, false, null, false,
-                ingredients, steps
+                ingredients, steps, null
         );
-    }
+}
 
     private UsernamePasswordAuthenticationToken authAs(Integer userId) {
         return new UsernamePasswordAuthenticationToken(String.valueOf(userId), null, List.of());
@@ -626,7 +622,7 @@ public class RecipeControllerIntegrationTest {
         RecipeRequest request = new RecipeRequest(
                 "New Title", "A description.", validCuisine,
                 10, 20, 2,
-                newPhotoUrl, null, null, false, null
+                newPhotoUrl, null, null, false, null, null
         );
 
         mockMvc.perform(put("/recipes/edit/{id}", recipe.getRecipeId())

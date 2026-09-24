@@ -22,6 +22,7 @@ public record RecipeUpdateRequest(
     String externalUrl,
     boolean isCommunityPublished,
     List<@Valid RecipeIngredientRequest> ingredients,
-    List<@Valid RecipeStepRequest> steps
+    List<@Valid RecipeStepRequest> steps,
+    List<Integer> equipmentIds
 )
 {}

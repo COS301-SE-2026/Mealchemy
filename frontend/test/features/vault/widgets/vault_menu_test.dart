@@ -125,4 +125,44 @@ void main() {
     expect(find.text('Invite member'), findsOneWidget);
     expect(find.text('Delete vault'), findsOneWidget);
   });
+
+    testWidgets('the menu is disabled when offline', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          vaultSessionProvider.overrideWithValue((
+            userId: 42,
+            token: 'test-token',
+            restoring: false,
+            hasValidCredential: true,
+          )),
+          vaultConnectionProvider.overrideWithValue(NetworkStatus.offline),
+          authProvider.overrideWith((ref) => _FakeAuthNotifier(42, ref)),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: VaultMenuButton(
+              vault: vaultOwnedBy(42, type: VaultTypes.private),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    expect(find.text('Create folder'), findsNothing);
+  });
+
+  testWidgets('selecting delete opens the confirm dialog', (tester) async {
+    await tester.pumpWidget(host(
+      currentUserId: 42,
+      vault: vaultOwnedBy(42, type: VaultTypes.shared),
+    ));
+    await openMenu(tester);
+    await tester.tap(find.text('Delete vault'));
+    await tester.pumpAndSettle();
+    expect(find.text('Delete Vault'), findsOneWidget);
+    expect(find.textContaining('Team Vault'), findsOneWidget);
+  });
 }

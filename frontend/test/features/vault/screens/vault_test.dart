@@ -10,6 +10,7 @@ import 'package:mealchemy/features/vault/models/vault_folder.dart';
 import 'package:mealchemy/features/vault/providers/vault_provider.dart';
 import 'package:mealchemy/features/vault/screens/vault_screen.dart';
 import 'package:mealchemy/features/vault/widgets/vault_folder_list.dart';
+import 'package:mealchemy/features/vault/widgets/shared_vault_members_entry.dart';
 import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
 import 'package:mealchemy/features/external_links/models/link.dart';
 import 'package:mealchemy/features/external_links/providers/link_provider.dart';
@@ -40,6 +41,14 @@ void main() {
     createdAt: DateTime(2026, 1, 1),
   );
 
+  final sharedVault = Vault(
+    vaultId: 2,
+    ownerId: 1,
+    vaultType: VaultTypes.shared,
+    name: 'Family Favourites',
+    createdAt: DateTime(2026, 1, 1),
+  );
+
   final folders = [
     VaultFolder(
       folderId: 1,
@@ -60,6 +69,9 @@ void main() {
     int cartCount = 0,
     bool sharedMode = false,
     Vault? selected,
+    bool noSelection = false,
+    bool foldersFail = false,
+    bool searchFails = false,
     Map<int, List<Recipe>> recipesByFolder = const {},
     List<Link> links = const [],
   }) {
@@ -67,9 +79,17 @@ void main() {
       overrides: [
         vaultsProvider
             .overrideWith((ref) => vaultsFuture ?? Future.value([vault])),
-        selectedVaultProvider.overrideWithValue(selected ?? vault),
+        selectedVaultProvider
+            .overrideWithValue(noSelection ? null : (selected ?? vault)),
         isSharedModeProvider.overrideWith((ref) => sharedMode),
-        vaultFoldersProvider.overrideWith((ref, vaultId) async => folders),
+        vaultFoldersProvider.overrideWith((ref, vaultId) async {
+          if (foldersFail) throw Exception('folders down');
+          return folders;
+        }),
+        if (searchFails)
+          vaultSearchResultsProvider.overrideWith((ref, arg) async {
+            throw Exception('search down');
+          }),
         folderRecipeDisplayProvider.overrideWith(
           (ref, folderId) async => recipesByFolder[folderId] ?? const [],
         ),
@@ -195,11 +215,104 @@ void main() {
       expect(find.text('Unable to load vault.'), findsOneWidget);
       expect(find.textContaining('No vault found.'), findsOneWidget);
     });
-  });
 
-  testWidgets('shows cart badge when shopping lists exist', (tester) async {
-    await tester.pumpWidget(buildWidget(cartCount: 2));
-    await tester.pumpAndSettle();
-    expect(find.text('2'), findsOneWidget);
+    testWidgets('shows cart badge when shopping lists exist', (tester) async {
+      await tester.pumpWidget(buildWidget(cartCount: 2));
+      await tester.pumpAndSettle();
+      expect(find.text('2'), findsOneWidget);
+    });
+
+    testWidgets('shows the loading spinner before vaults arrive',
+        (tester) async {
+      await tester.pumpWidget(buildWidget(
+        vaultsFuture: Future.delayed(
+          const Duration(milliseconds: 100),
+          () => [vault],
+        ),
+      ));
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('shows the error state when loading fails', (tester) async {
+      await tester.pumpWidget(buildWidget(
+        vaultsFuture: Future<List<Vault>>.delayed(
+          Duration.zero,
+          () => throw Exception('network down'),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Unable to load vault.'), findsOneWidget);
+      expect(find.textContaining('network down'), findsOneWidget);
+    });
+
+    testWidgets('shows the empty message in shared mode with no vault',
+        (tester) async {
+      await tester.pumpWidget(buildWidget(sharedMode: true, noSelection: true));
+      await tester.pumpAndSettle();
+
+      expect(find.text('No shared vaults yet.'), findsOneWidget);
+    });
+
+    testWidgets('shows the members entry for a shared vault', (tester) async {
+      await tester.pumpWidget(buildWidget(
+        selected: sharedVault,
+        vaultsFuture: Future.value([sharedVault]),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SharedVaultMembersEntry), findsOneWidget);
+    });
+
+    testWidgets('shows a no-results message for an unmatched search',
+        (tester) async {
+      await tester.pumpWidget(buildWidget());
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Search this vault...'),
+        'zzz',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('No Vault results found'), findsOneWidget);
+    });
+
+    testWidgets('shows an error when the folder load fails', (tester) async {
+      await tester.pumpWidget(buildWidget(foldersFail: true));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Unable to load folders.'), findsOneWidget);
+    });
+
+    testWidgets('shows an error when the search fails', (tester) async {
+      await tester.pumpWidget(buildWidget(searchFails: true));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Search this vault...'),
+        'pancake',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Unable to search this vault.'), findsOneWidget);
+    });
+
+    testWidgets('pull to refresh reloads the vault', (tester) async {
+      await tester.pumpWidget(buildWidget());
+      await tester.pumpAndSettle();
+
+      await tester.fling(
+        find.byType(SingleChildScrollView).first,
+        const Offset(0, 400),
+        1000,
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    });
   });
 }
