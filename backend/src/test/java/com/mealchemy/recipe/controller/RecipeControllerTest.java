@@ -82,11 +82,11 @@ public class RecipeControllerTest {
         );
 
         fullRequest = new RecipeFullRequest(
-            "Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, ingredients, steps, 1
+            "Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, ingredients, steps, 1, null
         );
 
         request = new RecipeRequest(
-            "Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, 1
+            "Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, 1, null
         );
     }
 
@@ -148,7 +148,7 @@ public class RecipeControllerTest {
     @Test
     void createRecipe_returns400_whenTitleBlank() throws Exception
     {
-        RecipeRequest invalidRequest = new RecipeRequest("", "Description", "Chinese", 10, 15, 2, null, null, null, false, 1);
+        RecipeRequest invalidRequest = new RecipeRequest("", "Description", "Chinese", 10, 15, 2, null, null, null, false, 1, null);
 
         mockMvc.perform(post("/recipes/create")
             .with(csrf())
@@ -160,7 +160,7 @@ public class RecipeControllerTest {
     @Test
     void createRecipe_returns400_whenServiceRejectsNullFolderId() throws Exception
     {
-        RecipeRequest noFolderRequest = new RecipeRequest("Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, null);
+        RecipeRequest noFolderRequest = new RecipeRequest("Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, null, null);
  
         when(recipeService.createRecipe(any(RecipeRequest.class), eq(1)))
             .thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "A folder must be specified when creating a recipe."));
@@ -193,6 +193,7 @@ public class RecipeControllerTest {
             "Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false,
             List.of(new RecipeIngredientRequest(1, BigDecimal.valueOf(2.0), "cup", 1)),
             List.of(new RecipeStepRequest(1, "Mix everything together.")),
+            null,
             null
         );
  
@@ -290,7 +291,8 @@ public class RecipeControllerTest {
         RecipeUpdateRequest invalidRequest = new RecipeUpdateRequest(
             "Req Title", "Description", "Chinese", 10, 15, 2,
             null, false, null, null, false, null,
-            List.of(new RecipeStepRequest(0, ""))
+            List.of(new RecipeStepRequest(0, "")),
+            null
         );
 
         mockMvc.perform(put("/recipes/edit/1")

@@ -40,6 +40,7 @@ import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.cuisinetype.repository.FlavourProfileOptionsRepository;
 import com.mealchemy.vault.repository.VaultFolderRepository;
+import com.mealchemy.equipment.repository.EquipmentRepository;
 import com.mealchemy.vault.service.VaultFolderRecipeService;
 import com.mealchemy.vault.service.RecipeEditLockService;
 
@@ -58,6 +59,9 @@ public class RecipeServiceTest {
 
     @Mock 
     private VaultFolderRepository vaultFolderRepository;
+
+    @Mock
+    private EquipmentRepository equipmentRepository;
 
     @Mock 
     private VaultFolderRecipeService vaultFolderRecipeService;
@@ -105,7 +109,7 @@ public class RecipeServiceTest {
         privateFolder.setFolderName("My Folder");
         ReflectionTestUtils.setField(privateFolder, "folderId", 1);
 
-        request = new RecipeRequest("Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, 1);
+        request = new RecipeRequest("Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, 1, null);
 
         List<RecipeIngredientRequest> ingredients = List.of(
             new RecipeIngredientRequest(1, BigDecimal.valueOf(2.0), "cup", 1)
@@ -115,9 +119,9 @@ public class RecipeServiceTest {
             new RecipeStepRequest(1, "Mix everything together.")
         );
 
-        fullRequest = new RecipeFullRequest("FullReq Title", "Full Description", "Chinese", 10, 15, 2, null, null, null, false, ingredients, steps, 1);
+        fullRequest = new RecipeFullRequest("FullReq Title", "Full Description", "Chinese", 10, 15, 2, null, null, null, false, ingredients, steps, 1, null);
 
-        updateRequest = new RecipeUpdateRequest("Req Title", "Description", "Chinese", 10, 15, 2, null, false, null, null, false, null, null);
+        updateRequest = new RecipeUpdateRequest("Req Title", "Description", "Chinese", 10, 15, 2, null, false, null, null, false, null, null, null);
     }
 
     @Test
@@ -225,7 +229,7 @@ public class RecipeServiceTest {
     @Test
     void createRecipe_throwsException_whenFolderIdIsNull()
     {   
-        RecipeRequest noFolderRequest = new RecipeRequest("Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, null);
+        RecipeRequest noFolderRequest = new RecipeRequest("Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, null, null);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.createRecipe(noFolderRequest, 1));
 
@@ -366,7 +370,7 @@ public class RecipeServiceTest {
         recipe.setPhotoUrl(oldPhotoUrl);
         RecipeUpdateRequest photoRequest = new RecipeUpdateRequest(
             "Req Title", "Description", "Chinese", 10, 15, 2,
-            newPhotoUrl, false, null, null, false, null, null
+            newPhotoUrl, false, null, null, false, null, null, null
         );
 
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
@@ -390,7 +394,7 @@ public class RecipeServiceTest {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
         RecipeUpdateRequest removalRequest = new RecipeUpdateRequest(
             "Req Title", "Description", "Chinese", 10, 15, 2,
-            null, true, null, null, false, null, null
+            null, true, null, null, false, null, null, null
         );
 
         when(flavourProfileOptionsRepository.existsByValue(removalRequest.cuisineType()))
@@ -411,7 +415,7 @@ public class RecipeServiceTest {
         recipe.setPhotoUrl(photoUrl);
         RecipeUpdateRequest photoRequest = new RecipeUpdateRequest(
             "Req Title", "Description", "Chinese", 10, 15, 2,
-            photoUrl, false, null, null, false, null, null
+            photoUrl, false, null, null, false, null, null, null
         );
 
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
@@ -465,7 +469,8 @@ public class RecipeServiceTest {
             "Req Title", "Description", "Chinese", 10, 15, 2,
             null, false, null, null, false,
             List.of(new RecipeIngredientRequest(1, BigDecimal.valueOf(3), "tbsp", 0)),
-            List.of(new RecipeStepRequest(1, "Replacement step"))
+            List.of(new RecipeStepRequest(1, "Replacement step")),
+            null
         );
 
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
@@ -491,7 +496,7 @@ public class RecipeServiceTest {
         recipe.getSteps().add(new RecipeStep());
         RecipeUpdateRequest clearRequest = new RecipeUpdateRequest(
             "Req Title", "Description", "Chinese", 10, 15, 2,
-            null, false, null, null, false, List.of(), List.of()
+            null, false, null, null, false, List.of(), List.of(), null
         );
 
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
@@ -512,7 +517,7 @@ public class RecipeServiceTest {
         RecipeUpdateRequest invalidRequest = new RecipeUpdateRequest(
             "Req Title", "Description", "Chinese", 10, 15, 2,
             "https://storage.googleapis.com/bucket/recipes/1/new.jpg",
-            true, null, null, false, null, null
+            true, null, null, false, null, null, null
         );
 
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
