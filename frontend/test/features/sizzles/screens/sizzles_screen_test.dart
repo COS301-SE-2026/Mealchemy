@@ -19,7 +19,7 @@ void main() {
         child: MaterialApp(
           home: Scaffold(
             body: SizzlesScreen(
-              videoBuilder: (url, active, muted) => ColoredBox(
+              videoBuilder: (url, posterUrl, active, muted) => ColoredBox(
                 key: ValueKey('$url-$active-$muted'),
                 color: Colors.black,
               ),
@@ -56,7 +56,7 @@ void main() {
         child: MaterialApp(
           home: Scaffold(
             body: SizzlesScreen(
-              videoBuilder: (url, active, muted) => ColoredBox(
+              videoBuilder: (url, posterUrl, active, muted) => ColoredBox(
                 key: ValueKey('$url-$active-$muted'),
                 color: Colors.black,
               ),
