@@ -32,6 +32,7 @@ import com.mealchemy.engine.dto.EnrichedRecommendationItem;
 import com.mealchemy.engine.dto.SignalScoresResponse;
 import com.mealchemy.recipe.dto.RecipeResponse;
 import com.mealchemy.engine.dto.RecommendationFilters;
+import com.mealchemy.engine.dto.SignalHighlightResponse;
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(RecommendationController.class)
@@ -60,7 +61,12 @@ public class RecommendationControllerTest {
         EnrichedRecommendationItem item = new EnrichedRecommendationItem(
             100, "MEDITERRANEAN", new BigDecimal("0.87"),
             new SignalScoresResponse(0.9, 0.8, 0.5, 0.3, 1.0),
-            2, List.of("parmesan", "basil"), recipe
+            2, List.of("parmesan", "basil"),
+            List.of(
+                new SignalHighlightResponse("pantry_match", 90, "Matched 8 of 9 ingredients you already have on hand."),
+                new SignalHighlightResponse("cuisine", 80, "You've consistently enjoyed MEDITERRANEAN recipes.")
+            ),
+            recipe
         );
 
         response = new EnrichedRecommendationResponse(

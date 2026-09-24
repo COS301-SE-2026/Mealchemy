@@ -15,9 +15,12 @@ import com.mealchemy.recipe.dto.RecipeFullRequest;
 import com.mealchemy.recipe.dto.RecipeUpdateRequest;
 import com.mealchemy.recipe.dto.RecipePhotoUploadRequest;
 import com.mealchemy.recipe.dto.RecipePhotoUploadResponse;
+import com.mealchemy.recipe.dto.RecipeVideoUploadRequest;
+import com.mealchemy.recipe.dto.RecipeVideoUploadResponse;
 import com.mealchemy.recipe.dto.RecipeResponse;
 import com.mealchemy.recipe.service.RecipePhotoService;
 import com.mealchemy.recipe.service.RecipeService;
+import com.mealchemy.recipe.service.RecipeVideoService;
 
 // swagger 
 import com.mealchemy.shared.dto.ErrorResponse;
@@ -37,11 +40,17 @@ public class RecipeController
 {
     private final RecipeService recipeService;
     private final RecipePhotoService recipePhotoService;
+    private final RecipeVideoService recipeVideoService;
 
-    public RecipeController(RecipeService recipeService, RecipePhotoService recipePhotoService)
+    public RecipeController(
+        RecipeService recipeService,
+        RecipePhotoService recipePhotoService,
+        RecipeVideoService recipeVideoService
+    )
     {
         this.recipeService = recipeService;
         this.recipePhotoService = recipePhotoService;
+        this.recipeVideoService = recipeVideoService;
     }
 
     /* Mapping functions */
@@ -72,6 +81,18 @@ public class RecipeController
     public List<RecipeResponse> getAllCommunityPublishedRecipes()
     {
         return recipeService.getAllCommunityPublishedRecipes();
+    }
+
+    @Operation(summary = "Get all community Sizzles", description = "Returns community-published recipes with curated videos in a stable global order.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Sizzles retrieved successfully", content = @Content(array = @ArraySchema(schema = @Schema(implementation = RecipeResponse.class)))),
+        @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/community/sizzles")
+    public List<RecipeResponse> getAllCommunitySizzles()
+    {
+        return recipeService.getAllCommunitySizzles();
     }
 
 
@@ -140,6 +161,29 @@ public class RecipeController
     )
     {
         return recipePhotoService.createPhotoUploadUrl(
+            id,
+            request,
+            Integer.parseInt(ownerId)
+        );
+    }
+
+    @Operation(summary = "Create a signed video upload URL for a recipe", description = "Returns signed upload details the client can use to upload a curated recipe video directly to storage.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Upload URL created successfully", content = @Content(schema = @Schema(implementation = RecipeVideoUploadResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Validation failed on the upload request", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "403", description = "Caller does not own this recipe", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Recipe not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "503", description = "Recipe video storage is unavailable", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PostMapping("/{id}/video-upload-url")
+    public RecipeVideoUploadResponse createVideoUploadUrl(
+        @PathVariable Integer id,
+        @Valid @RequestBody RecipeVideoUploadRequest request,
+        @AuthenticationPrincipal String ownerId
+    )
+    {
+        return recipeVideoService.createVideoUploadUrl(
             id,
             request,
             Integer.parseInt(ownerId)

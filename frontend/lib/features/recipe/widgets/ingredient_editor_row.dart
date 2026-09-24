@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/shared_widgets/atoms/app_unit_dropdown.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../ingredients/models/ingredient_catalogue_item.dart';
-import '../models/unit_of_measurement.dart';
 import '../../ingredients/providers/ingredient_catalogue_provider.dart';
 import '../../ingredients/repositories/ingredient_catalogue_repository.dart';
 
@@ -13,7 +13,6 @@ class IngredientEditorRow extends ConsumerStatefulWidget {
     super.key,
     required this.selectedItem,
     required this.quantityController,
-    required this.units,
     required this.selectedUnit,
     required this.onUnitChanged,
     required this.onItemSelected,
@@ -23,7 +22,6 @@ class IngredientEditorRow extends ConsumerStatefulWidget {
 
   final IngredientCatalogueItem? selectedItem;
   final TextEditingController quantityController;
-  final List<UnitOfMeasurement> units;
   final String? selectedUnit;
   final ValueChanged<String?> onUnitChanged;
   final ValueChanged<IngredientCatalogueItem> onItemSelected;
@@ -36,15 +34,6 @@ class IngredientEditorRow extends ConsumerStatefulWidget {
 }
 
 class _IngredientEditorRowState extends ConsumerState<IngredientEditorRow> {
-  String? get _matchedUnit {
-    final sel = widget.selectedUnit;
-    if (sel == null) return null;
-    for (final u in widget.units) {
-      if (u.name.toLowerCase() == sel.toLowerCase()) return u.name;
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -53,8 +42,8 @@ class _IngredientEditorRowState extends ConsumerState<IngredientEditorRow> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // catalogue picker (tap to search)
               Expanded(
                 flex: 5,
                 child: _CataloguePickerField(
@@ -63,43 +52,28 @@ class _IngredientEditorRowState extends ConsumerState<IngredientEditorRow> {
                 ),
               ),
               const SizedBox(width: 8),
-              // quantity
               Expanded(
                 flex: 2,
-                child: TextField(
-                  controller: widget.quantityController,
-                  decoration: _fieldDecoration('Qty'),
-                  style:
-                      AppTextStyles.body.copyWith(color: AppColors.textLight),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: TextField(
+                    controller: widget.quantityController,
+                    decoration: _fieldDecoration('Qty'),
+                    style:
+                        AppTextStyles.body.copyWith(color: AppColors.textLight),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
-              // unit
               Expanded(
                 flex: 3,
-                child: DropdownButtonFormField<String>(
-                  initialValue: _matchedUnit,
-                  isExpanded: true,
-                  icon: const Icon(Icons.keyboard_arrow_down,
-                      size: 18, color: AppColors.primary),
-                  style:
-                      AppTextStyles.body.copyWith(color: AppColors.textLight),
-                  dropdownColor: AppColors.surfaceWhite,
-                  hint: Text('Unit',
-                      style: AppTextStyles.body
-                          .copyWith(color: AppColors.textMuted)),
-                  decoration: _fieldDecoration('Unit'),
-                  items: [
-                    for (final u in widget.units)
-                      DropdownMenuItem<String>(
-                        value: u.name,
-                        child: Text(u.name, overflow: TextOverflow.ellipsis),
-                      ),
-                  ],
+                child: AppUnitDropdown(
+                  label: null,
+                  hint: 'Unit',
+                  value: widget.selectedUnit,
                   onChanged: widget.onUnitChanged,
                 ),
               ),
-              // remove
               IconButton(
                 onPressed: widget.onRemove,
                 icon: const Icon(Icons.close, size: 20),

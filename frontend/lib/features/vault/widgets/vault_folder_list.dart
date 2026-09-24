@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../core/shared_widgets/atoms/app_button.dart';
-import '../../../core/shared_widgets/Molecules/app_input_dialog.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../external_links/widgets/my_links_folder_row.dart';
+import '../../favourites/widgets/my_favs_folder_row.dart';
 import '../models/vault.dart';
 import '../models/vault_folder.dart';
-import 'vault_menu.dart';
+import '../providers/vault_folder_management_provider.dart';
+import 'vault_folder_actions.dart';
 import 'vault_folder_row.dart';
-import '../providers/vault_repository_provider.dart';
-import '../providers/vault_provider.dart';
-import '../../../core/connectivity/network_status_provider.dart';
-import '../../external_links/widgets/my_links_folder_row.dart';
+import 'vault_menu.dart';
 
-//folder section vault name label plus one row per folder
 class VaultFolderList extends ConsumerWidget {
   const VaultFolderList({
     super.key,
@@ -24,63 +23,74 @@ class VaultFolderList extends ConsumerWidget {
   final Vault vault;
   final List<VaultFolder> folders;
 
-  Future<void> _createFolder(BuildContext context, WidgetRef ref) async {
-    final name = await showAppInputDialog(
-      context: context,
-      title: 'Create Folder',
-      label: 'Folder Name',
-      hint: 'e.g. Weeknight Dinners',
-      confirmLabel: 'Create',
-      prefixIcon: Icons.folder_outlined,
-    );
-    if (name == null) return;
-    await ref.read(vaultRepositoryProvider).createFolder(vault.vaultId, name);
-    ref.invalidate(vaultFoldersProvider(vault.vaultId));
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isReadOnly = ref.watch(offlineReadOnlyProvider);
     final isPrivate = vault.vaultType == VaultTypes.private;
+    final canManageFolders = ref.watch(
+      canManageVaultFoldersProvider(vault),
+    );
+    final enabled = ref.watch(
+      vaultFolderManagementEnabledProvider(vault),
+    );
+    final busy = ref.watch(
+      vaultFolderManagementProvider(vault.vaultId),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Text(
-              vault.name.toUpperCase(),
-              style: AppTextStyles.label.copyWith(
-                color: AppColors.primary,
-                fontSize: 12,
-                letterSpacing: 2,
+            Expanded(
+              child: Text(
+                vault.name.toUpperCase(),
+                style: AppTextStyles.label.copyWith(
+                  color: AppColors.primary,
+                  fontSize: 12,
+                  letterSpacing: 2,
+                ),
               ),
             ),
-            const Spacer(),
             VaultMenuButton(vault: vault),
           ],
         ),
+        if (busy)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: LinearProgressIndicator(),
+          ),
         const SizedBox(height: 8),
         if (folders.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Text(
               'No folders in this vault yet.',
-              style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.textMuted,
+              ),
             ),
           )
         else
           for (final folder in folders)
             VaultFolderRow(
+              key: ValueKey(folder.folderId),
               vault: vault,
               folder: folder,
             ),
+        if (isPrivate) const MyFavsFolderRow(),
         if (isPrivate) const MyLinksFolderRow(),
-        if (folders.length < 3) ...[
+        if (canManageFolders && folders.length < 3) ...[
           const SizedBox(height: 16),
           AppButton.dashed(
             label: 'ADD MORE FOLDERS',
-            onPressed: isReadOnly ? null : () => _createFolder(context, ref),
+            onPressed: enabled
+                ? () => showVaultFolderAction(
+                      context: context,
+                      ref: ref,
+                      vault: vault,
+                      action: VaultFolderAction.create,
+                    )
+                : null,
             leftIcon: Icons.add,
             isFullWidth: true,
           ),

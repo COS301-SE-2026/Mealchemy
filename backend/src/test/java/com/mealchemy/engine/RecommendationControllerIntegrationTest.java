@@ -33,6 +33,7 @@ import com.mealchemy.engine.dto.RecommendationRequest;
 import com.mealchemy.engine.dto.RecommendationResponse;
 import com.mealchemy.engine.dto.RecommendationDto;
 import com.mealchemy.engine.dto.SignalScoresResponse;
+import com.mealchemy.engine.dto.SignalHighlightResponse;
 
 // shared
 import com.mealchemy.shared.enums.StorageLocation;
@@ -186,7 +187,8 @@ public class RecommendationControllerIntegrationTest {
     void getRecommendations_returns200_withEnrichedRecipeData() throws Exception {
         SignalScoresResponse scoreBreakdown = new SignalScoresResponse(0.9, 0.8, 0.5, 0.3, 1.0);
         RecommendationDto dto = RecommendationDto.from(
-            testRecipeId, "MEDITERRANEAN", new BigDecimal("0.87"), scoreBreakdown, 1, List.of("parmesan")
+            testRecipeId, "MEDITERRANEAN", new BigDecimal("0.87"), scoreBreakdown, 1, List.of("parmesan"),
+            List.of(new SignalHighlightResponse("pantry_match", 90, "Matched 8 of 9 ingredients you already have on hand."))
         );
         when(engineClient.getRecommendations(any(RecommendationRequest.class)))
             .thenReturn(RecommendationResponse.from(List.of(dto), Map.of("MEDITERRANEAN", 1), 1, 1));
@@ -197,7 +199,9 @@ public class RecommendationControllerIntegrationTest {
             .andExpect(jsonPath("$.recommendations", hasSize(1)))
             .andExpect(jsonPath("$.recommendations[0].recipeId", is(testRecipeId)))
             .andExpect(jsonPath("$.recommendations[0].recipe.title", is("Hummus Bowl")))
-            .andExpect(jsonPath("$.recommendations[0].missingIngredients[0]", is("parmesan")));
+            .andExpect(jsonPath("$.recommendations[0].missingIngredients[0]", is("parmesan")))
+            .andExpect(jsonPath("$.recommendations[0].transparency", hasSize(1)))
+            .andExpect(jsonPath("$.recommendations[0].transparency[0].signal", is("pantry_match")));
     }
 
     @Test

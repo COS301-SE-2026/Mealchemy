@@ -18,6 +18,7 @@ import '../models/unit_of_measurement.dart';
 import '../repositories/api_recipe_repository.dart';
 import '../repositories/mock_recipe_repository.dart';
 import '../repositories/recipe_repository.dart';
+import '../../profile/providers/profile_provider.dart';
 
 final remoteRecipeRepositoryProvider = Provider<RecipeRepository>((ref) {
   return ApiRecipeRepository(ref.read(dioProvider));
@@ -161,8 +162,13 @@ class AddRecipeNotifier extends StateNotifier<AddRecipeState> {
     return created.folderId;
   }
 
-  Future<Recipe?> submit(Recipe recipe,
-      {int? folderId, int? recipeId, bool removePhoto = false}) async {
+  Future<Recipe?> submit(
+    Recipe recipe, {
+    int? folderId,
+    int? recipeId,
+    bool removePhoto = false,
+    bool removeVideo = false,
+  }) async {
     final missing = recipe.title.trim().isEmpty ||
         (recipe.cuisineType ?? '').isEmpty ||
         recipe.prepTimeMins == null ||
@@ -180,8 +186,12 @@ class AddRecipeNotifier extends StateNotifier<AddRecipeState> {
     try {
       final Recipe result;
       if (recipeId != null) {
-        result = await _repository.updateRecipeFull(recipeId, recipe,
-            removePhoto: removePhoto);
+        result = await _repository.updateRecipeFull(
+          recipeId,
+          recipe,
+          removePhoto: removePhoto,
+          removeVideo: removeVideo,
+        );
       } else {
         final targetFolderId = folderId ?? await _resolveDefaultFolderId();
         result = await _repository.addRecipe(recipe, targetFolderId);
@@ -222,6 +232,16 @@ final addRecipeProvider =
 final unitsProvider = FutureProvider<List<UnitOfMeasurement>>((ref) {
   final repository = ref.watch(recipeRepositoryProvider);
   return repository.getUnits();
+});
+
+final unitOptionsProvider = Provider<List<UnitOfMeasurement>>((ref) {
+  final all = ref.watch(unitsProvider).valueOrNull ?? const [];
+  final system = ref.watch(unitSystemProvider);
+
+  return all.where((u) {
+    if (u.system == null) return true;
+    return u.system == system.value;
+  }).toList();
 });
 
 final deleteRecipeProvider = Provider((ref) {
