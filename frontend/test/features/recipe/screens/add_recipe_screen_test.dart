@@ -35,6 +35,7 @@ class _RecordingRepo implements RecipeRepository {
   final List<int> savedFolderIds = [];
   final List<(int id, Recipe recipe)> updatedRecipes = [];
   final List<bool> removePhotoValues = [];
+  final List<bool> removeVideoValues = [];
   final List<String>? events;
   final List<(int recipeId, RecipeIngredient ingredient)> savedIngredients = [];
 
@@ -63,11 +64,16 @@ class _RecordingRepo implements RecipeRepository {
   }
 
   @override
-  Future<Recipe> updateRecipeFull(int id, Recipe recipe,
-      {bool removePhoto = false}) async {
+  Future<Recipe> updateRecipeFull(
+    int id,
+    Recipe recipe, {
+    bool removePhoto = false,
+    bool removeVideo = false,
+  }) async {
     events?.add('update-full');
     updatedRecipes.add((id, recipe));
     removePhotoValues.add(removePhoto);
+    removeVideoValues.add(removeVideo);
     return recipe.copyWith(recipeId: id);
   }
 

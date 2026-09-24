@@ -127,6 +127,7 @@ class _RecipeRepositoryStub implements RecipeRepository {
     int id,
     Recipe recipe, {
     bool removePhoto = false,
+    bool removeVideo = false,
   }) =>
       throw UnimplementedError();
 }

@@ -28,7 +28,6 @@ const _validRecipe = Recipe(
   servingSize: 4,
 );
 
-
 class _RecordingRepo implements RecipeRepository {
   final List<(Recipe, int)> saved = [];
   final List<(int, Recipe, bool)> updated = [];
@@ -44,8 +43,12 @@ class _RecordingRepo implements RecipeRepository {
       throw UnimplementedError();
 
   @override
-  Future<Recipe> updateRecipeFull(int id, Recipe recipe,
-      {bool removePhoto = false}) async {
+  Future<Recipe> updateRecipeFull(
+    int id,
+    Recipe recipe, {
+    bool removePhoto = false,
+    bool removeVideo = false,
+  }) async {
     updated.add((id, recipe, removePhoto));
     return recipe.copyWith(recipeId: id);
   }
