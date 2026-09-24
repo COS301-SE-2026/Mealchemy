@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../recipe/widgets/recipe_network_image.dart';
+
 class SizzleVideoPlayer extends StatefulWidget {
   const SizzleVideoPlayer({
     super.key,
     required this.videoUrl,
     required this.active,
     required this.muted,
+    this.posterUrl,
   });
 
   final String videoUrl;
   final bool active;
   final bool muted;
+  final String? posterUrl;
 
   @override
   State<SizzleVideoPlayer> createState() => _SizzleVideoPlayerState();
@@ -101,22 +105,24 @@ class _SizzleVideoPlayerState extends State<SizzleVideoPlayer>
   @override
   Widget build(BuildContext context) {
     if (_failed) {
-      return const ColoredBox(
-        color: Colors.black,
-        child: Center(
-          child: Icon(Icons.videocam_off_outlined, color: Colors.white70),
+      return _SizzlePoster(
+        photoUrl: widget.posterUrl,
+        child: const Icon(
+          Icons.videocam_off_outlined,
+          color: Colors.white70,
         ),
       );
     }
     if (!_initialized) {
-      return const ColoredBox(
-        color: Colors.black,
-        child: Center(child: CircularProgressIndicator()),
+      return _SizzlePoster(
+        photoUrl: widget.posterUrl,
+        child: const CircularProgressIndicator(),
       );
     }
 
     final size = _controller.value.size;
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: _togglePlayback,
       child: Stack(
         fit: StackFit.expand,
@@ -137,6 +143,34 @@ class _SizzleVideoPlayerState extends State<SizzleVideoPlayer>
                 size: 64,
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SizzlePoster extends StatelessWidget {
+  const _SizzlePoster({
+    required this.photoUrl,
+    required this.child,
+  });
+
+  final String? photoUrl;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: Colors.black,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          RecipeNetworkImage(
+            key: const ValueKey('sizzle-video-poster'),
+            photoUrl: photoUrl,
+            placeholder: const SizedBox.shrink(),
+          ),
+          Center(child: child),
         ],
       ),
     );
