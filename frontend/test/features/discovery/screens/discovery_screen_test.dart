@@ -67,8 +67,12 @@ void main() {
     );
   }
 
-  Future<void> pump(WidgetTester tester, DiscoveryRepository repo) async {
-    tester.view.physicalSize = const Size(1080, 2400);
+  Future<void> pump(
+    WidgetTester tester,
+    DiscoveryRepository repo, {
+    Size size = const Size(1080, 2400),
+  }) async {
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
       tester.view.resetPhysicalSize();
@@ -79,22 +83,9 @@ void main() {
   }
 
   group('DiscoveryScreen', () {
-    testWidgets('renders the Discover header', (tester) async {
+    testWidgets('renders the search bar', (tester) async {
       await pump(tester, _FakeDiscoveryRepo());
-      expect(find.text('Discover'), findsOneWidget);
-    });
-
-    testWidgets('renders the filter bar options', (tester) async {
-      await pump(tester, _FakeDiscoveryRepo());
-      expect(find.text('Favourites'), findsOneWidget);
-      expect(find.text('History'), findsOneWidget);
-      expect(find.text('Following'), findsOneWidget);
-      expect(find.text('Trending'), findsOneWidget);
-    });
-
-    testWidgets('renders the Popular Categories section', (tester) async {
-      await pump(tester, _FakeDiscoveryRepo());
-      expect(find.text('Popular Categories'), findsOneWidget);
+      expect(find.text('Search recipes...'), findsOneWidget);
     });
 
     testWidgets('renders formatted cuisine chips after data loads',
@@ -112,11 +103,36 @@ void main() {
       expect(find.text('Beet Salad'), findsOneWidget);
     });
 
+    testWidgets('typing filters the explore grid', (tester) async {
+      await pump(tester, _FakeDiscoveryRepo());
+
+      await tester.enterText(find.byType(TextField).first, 'ramen');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Ramen'), findsOneWidget);
+      expect(find.text('Beet Salad'), findsNothing);
+    });
+
+    testWidgets('shows an empty message when the search matches nothing',
+        (tester) async {
+      await pump(tester, _FakeDiscoveryRepo());
+
+      await tester.enterText(find.byType(TextField).first, 'zzz');
+      await tester.pumpAndSettle();
+
+      expect(find.text('No recipes found for "zzz".'), findsOneWidget);
+    });
+
     testWidgets('does not crash when the repository throws', (tester) async {
       await pump(tester, _ThrowingDiscoveryRepo());
       // The load error is caught in the notifier; the screen still builds.
       expect(find.byType(DiscoveryScreen), findsOneWidget);
-      expect(find.text('Discover'), findsOneWidget);
+      expect(find.text('Search recipes...'), findsOneWidget);
+    });
+
+    testWidgets('lays out without overflow on a small screen', (tester) async {
+      await pump(tester, _FakeDiscoveryRepo(), size: const Size(360, 640));
+      expect(tester.takeException(), isNull);
     });
   });
 }

@@ -12,12 +12,19 @@ const double _cellHeight = 130.0;
 const double _gap = 2;
 
 class ExploreSection extends ConsumerWidget {
-  const ExploreSection({super.key});
+  const ExploreSection({super.key, this.query = ''});
+
+  final String query;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(discoveryProvider);
-    final recipes = state.visibleRecipes;
+    final cleaned = query.trim().toLowerCase();
+    final recipes = cleaned.isEmpty
+        ? state.visibleRecipes
+        : state.visibleRecipes
+            .where((r) => r.title.toLowerCase().contains(cleaned))
+            .toList();
 
     final title = state.selectedCuisine != null
         ? 'Explore ${_formatCuisine(state.selectedCuisine!)}'
@@ -32,9 +39,13 @@ class ExploreSection extends ConsumerWidget {
             child: AppSectionHeader(title: title),
           ),
           const SizedBox(height: 12),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Text('No published recipes yet.'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Text(
+              cleaned.isEmpty
+                  ? 'No published recipes yet.'
+                  : 'No recipes found for "$query".',
+            ),
           ),
         ],
       );
