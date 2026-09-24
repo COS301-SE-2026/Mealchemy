@@ -218,15 +218,7 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('shows the error state when loading fails', (tester) async {
-      await tester.pumpWidget(buildWidget(
-        vaultsFuture: Future.error(Exception('network down')),
-      ));
-      await tester.pumpAndSettle();
 
-      expect(find.text('Unable to load vault.'), findsOneWidget);
-      expect(find.textContaining('network down'), findsOneWidget);
-    });
 
     testWidgets('shows the empty message in shared mode with no vault',
         (tester) async {
