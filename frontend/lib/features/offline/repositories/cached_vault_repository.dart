@@ -5,6 +5,7 @@ import '../../vault/models/vault_member.dart';
 import '../../vault/repositories/vault_repository.dart';
 import '../data/offline_cache_policy.dart';
 import '../data/offline_cache_store.dart';
+import '../../vault/models/vault_invitation.dart';
 
 class CachedVaultRepository implements VaultRepository {
   CachedVaultRepository({
@@ -162,7 +163,48 @@ class CachedVaultRepository implements VaultRepository {
   }
 
   @override
-  Future<void> removeMember(int vaultId, String email) {
-    return _remote.removeMember(vaultId, email);
+  Future<void> removeMember(int vaultId, int userId) {
+    return _remote.removeMember(vaultId, userId);
+  }
+  // Invitations and permissions are always read from the backend
+  // They are not cached or queued for offline mutation
+
+  @override
+  Future<VaultMember> changeMemberRole(
+    int vaultId,
+    int userId,
+    VaultMemberRole role,
+  ) {
+    return _remote.changeMemberRole(vaultId, userId, role);
+  }
+
+  @override
+  Future<VaultInvitation> createInvitation(int vaultId, String email) {
+    return _remote.createInvitation(vaultId, email);
+  }
+
+  @override
+  Future<List<VaultInvitation>> getVaultInvitations(int vaultId) {
+    return _remote.getVaultInvitations(vaultId);
+  }
+
+  @override
+  Future<List<VaultInvitation>> getMyInvitations() {
+    return _remote.getMyInvitations();
+  }
+
+  @override
+  Future<VaultMember> acceptInvitation(int invitationId) {
+    return _remote.acceptInvitation(invitationId);
+  }
+
+  @override
+  Future<VaultInvitation> declineInvitation(int invitationId) {
+    return _remote.declineInvitation(invitationId);
+  }
+
+  @override
+  Future<void> cancelInvitation(int invitationId) {
+    return _remote.cancelInvitation(invitationId);
   }
 }

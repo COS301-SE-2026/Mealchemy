@@ -81,6 +81,12 @@ jobs:
           java-version: '21'
           cache: maven
 
+      - name: Cache Maven Wrapper distribution
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: ~/.m2/wrapper/dists
+          key: maven-wrapper-${{ runner.os }}-${{ hashFiles('backend/.mvn/wrapper/maven-wrapper.properties') }}
+
       - name: Run Checkstyle
         run: ./mvnw checkstyle:check --no-transfer-progress
 
@@ -103,6 +109,12 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
+
+      - name: Cache Maven Wrapper distribution
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: ~/.m2/wrapper/dists
+          key: maven-wrapper-${{ runner.os }}-${{ hashFiles('backend/.mvn/wrapper/maven-wrapper.properties') }}
 
       - name: Run unit tests
         run: ./mvnw test --no-transfer-progress -Dtest="*UnitTest" -DfailIfNoTests=true
@@ -143,6 +155,12 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
+
+      - name: Cache Maven Wrapper distribution
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: ~/.m2/wrapper/dists
+          key: maven-wrapper-${{ runner.os }}-${{ hashFiles('backend/.mvn/wrapper/maven-wrapper.properties') }}
 
       # Runs all tests (unit + integration) so JaCoCo gets complete coverage.
       # Unit tests also run in backend-unit-tests for fast feedback without DB.

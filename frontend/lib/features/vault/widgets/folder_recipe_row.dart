@@ -5,7 +5,6 @@ import '../../../core/theme/app_typography.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
 import '../../../core/shared_widgets/Molecules/app_confirm_dialog.dart';
-import 'package:mealchemy/features/recipe/widgets/report_recipe_button.dart';
 
 //single recipe row inside a vault folder
 class FolderRecipeRow extends StatelessWidget {
@@ -15,12 +14,14 @@ class FolderRecipeRow extends StatelessWidget {
     this.onEditTap,
     this.onDeleteConfirmed,
     this.mutationsEnabled = true,
+    this.allowReporting = false,
   });
 
   final Recipe recipe;
   final VoidCallback? onEditTap;
   final VoidCallback? onDeleteConfirmed;
   final bool mutationsEnabled;
+  final bool allowReporting;
 
   String get _subtitle {
     final total = (recipe.prepTimeMins ?? 0) + (recipe.cookingTimeMins ?? 0);
@@ -55,7 +56,10 @@ class FolderRecipeRow extends StatelessWidget {
         color: AppColors.surfaceWhite,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          onTap: () => context.push('/recipe/${recipe.recipeId}'),
+          onTap: () => context.push(
+            '/recipe/${recipe.recipeId}'
+            '${allowReporting ? '?report=true' : ''}',
+          ),
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(12),
@@ -91,8 +95,6 @@ class FolderRecipeRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                if (recipe.isCommunityPublished)
-                  ReportRecipeButton(recipe: recipe),
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [

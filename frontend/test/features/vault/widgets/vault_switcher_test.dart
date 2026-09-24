@@ -21,7 +21,6 @@ void main() {
     ),
   ];
 
-
   Widget host({
     required bool sharedMode,
     Future<List<Vault>>? vaultsFuture,
@@ -42,7 +41,8 @@ void main() {
 
   testWidgets('renders nothing until vaults have loaded', (tester) async {
     final pending = Completer<List<Vault>>();
-    await tester.pumpWidget(host(sharedMode: false, vaultsFuture: pending.future));
+    await tester
+        .pumpWidget(host(sharedMode: false, vaultsFuture: pending.future));
     await tester.pump();
 
     // Still loading valueOrNull is null, so the switcher collapses.
@@ -92,7 +92,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Open the popup 
+    // Open the popup
     await tester.tap(find.text('Private Vault'));
     await tester.pumpAndSettle();
 
