@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mealchemy/features/auth/providers/auth_provider.dart';
 import 'package:mealchemy/features/cook_mode/models/cook_session.dart';
 import 'package:mealchemy/features/cook_mode/providers/cook_session_provider.dart';
+import 'package:mealchemy/features/recipe/models/equipment.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
@@ -40,6 +41,9 @@ const _fixture = Recipe(
   steps: [
     RecipeStep(stepNr: 1, content: 'Warm the stock.'),
     RecipeStep(stepNr: 2, content: 'Toast the rice.'),
+  ],
+  equipment: [
+    Equipment(id: 2, value: 'STOVETOP', label: 'Stovetop'),
   ],
 );
 
@@ -253,5 +257,47 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('320 g'), findsOneWidget);
+  });
+
+  testWidgets('lists the equipment on the overview', (tester) async {
+    await tester.pumpWidget(_host(
+      const RecipeDetailScreen(recipeId: 1),
+      [recipeDetailProvider(1).overrideWith((ref) async => _fixture)],
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Stovetop'), findsOneWidget);
+    expect(find.byIcon(Icons.local_fire_department_outlined), findsWidgets);
+  });
+
+  testWidgets('the Equipment tab shows the recipe equipment', (tester) async {
+    await tester.pumpWidget(_host(
+      const RecipeDetailScreen(recipeId: 1),
+      [recipeDetailProvider(1).overrideWith((ref) async => _fixture)],
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(Tab, 'Equipment'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Stovetop'), findsWidgets);
+  });
+
+  testWidgets('hides the overview section and explains an empty tab',
+      (tester) async {
+    final noEquipment = _fixture.copyWith(equipment: const []);
+    await tester.pumpWidget(_host(
+      const RecipeDetailScreen(recipeId: 1),
+      [recipeDetailProvider(1).overrideWith((ref) async => noEquipment)],
+    ));
+    await tester.pumpAndSettle();
+
+    // only the tab label, no overview section title
+    expect(find.text('Equipment'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(Tab, 'Equipment'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No equipment listed for this recipe.'), findsOneWidget);
   });
 }
