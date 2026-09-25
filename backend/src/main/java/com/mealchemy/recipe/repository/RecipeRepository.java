@@ -14,7 +14,7 @@ import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.vault.model.Vault;
 
 @Repository
-public interface RecipeRepository extends JpaRepository<Recipe, Integer>
+public interface RecipeRepository extends JpaRepository<Recipe, Integer>, RecipeRepositoryCustom
 {
     Recipe findByRecipeId(Integer recipeId);
     
@@ -37,85 +37,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer>
     """)
     List<Recipe> findCommunitySizzles();
 
-    @Query("""
-        SELECT DISTINCT recipe
-        FROM Recipe recipe
-        WHERE (
-                recipe.ownerId = :userId
-                AND recipe.recipeId NOT IN (
-                    SELECT lostAccess.recipe.recipeId
-                    FROM VaultFolderRecipe lostAccess
-                    WHERE lostAccess.folder.vault.vaultType = com.mealchemy.shared.enums.VaultType.SHARED
-                        AND lostAccess.folder.vault.ownerId <> :userId
-                        AND lostAccess.folder.vault.vaultId NOT IN (
-                            SELECT stillMember.vault.vaultId
-                            FROM VaultMember stillMember
-                            WHERE stillMember.user.userId = :userId
-                        )
-                )
-            )
-            OR recipe.isCommunityPublished = true
-            OR EXISTS (
-                SELECT folderRecipe.id
-                FROM VaultFolderRecipe folderRecipe
-                WHERE folderRecipe.recipe = recipe
-                    AND (
-                        folderRecipe.folder.vault.ownerId = :userId
-                        OR EXISTS (
-                            SELECT member.id
-                            FROM VaultMember member
-                            WHERE member.vault = folderRecipe.folder.vault
-                                AND member.user.userId = :userId
-                        )
-                    )
-            )
-        """)
-    
-    // returns all recipes accessible through ownership, (minus revoked shared vault ownership), community publication, vault ownership, or vault membership
-    List<Recipe> findAllAccessibleByUserId(@Param("userId") Integer userId);
-
-    @Query("""
-        SELECT DISTINCT recipe
-        FROM Recipe recipe
-        WHERE recipe.recipeId = :recipeId
-            AND (
-                (
-                    recipe.ownerId = :userId
-                    AND recipe.recipeId NOT IN (
-                        SELECT lostAccess.recipe.recipeId
-                        FROM VaultFolderRecipe lostAccess
-                        WHERE lostAccess.folder.vault.vaultType = com.mealchemy.shared.enums.VaultType.SHARED
-                            AND lostAccess.folder.vault.ownerId <> :userId
-                            AND lostAccess.folder.vault.vaultId NOT IN (
-                                SELECT stillMember.vault.vaultId
-                                FROM VaultMember stillMember
-                                WHERE stillMember.user.userId = :userId
-                        )
-                    )
-                )
-                OR recipe.isCommunityPublished = true
-                OR EXISTS (
-                    SELECT folderRecipe.id
-                    FROM VaultFolderRecipe folderRecipe
-                    WHERE folderRecipe.recipe = recipe
-                        AND (
-                            folderRecipe.folder.vault.ownerId = :userId
-                            OR EXISTS (
-                                SELECT member.id
-                                FROM VaultMember member
-                                WHERE member.vault = folderRecipe.folder.vault
-                                    AND member.user.userId = :userId
-                            )
-                        )
-                )
-            )
-        """)
-    //same rules to one recipe
-    //distinct to prevent duplicates
-    Optional<Recipe> findAccessibleByIdAndUserId(
-        @Param("recipeId") Integer recipeId,
-        @Param("userId") Integer userId
-    );
+   //removed findAllAccessibleByUserId and findAccessibleByIdAndUserId - use custom recvipe repository
 
 
     // find clone of recipe this user already owns within this specific vault
