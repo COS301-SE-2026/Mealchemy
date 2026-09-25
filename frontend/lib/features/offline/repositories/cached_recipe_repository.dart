@@ -2,6 +2,7 @@ import '../../recipe/models/recipe.dart';
 import '../../recipe/models/recipe_ingredient.dart';
 import '../../recipe/models/recipe_step.dart';
 import '../../recipe/models/unit_of_measurement.dart';
+import '../../recipe/models/equipment.dart';
 import '../../recipe/repositories/recipe_repository.dart';
 import '../data/offline_cache_policy.dart';
 import '../data/offline_cache_store.dart';
@@ -137,5 +138,15 @@ class CachedRecipeRepository implements RecipeRepository {
       removePhoto: removePhoto,
       removeVideo: removeVideo,
     );
+  }
+// equipment isn't in the offline cache yet so offline returns none
+  @override
+  Future<List<Equipment>> getRecipeEquipment(int recipeId) async {
+    try {
+      return await _remote.getRecipeEquipment(recipeId);
+    } catch (error) {
+      if (!isOfflineTransportFailure(error)) rethrow;
+      return const [];
+    }
   }
 }
