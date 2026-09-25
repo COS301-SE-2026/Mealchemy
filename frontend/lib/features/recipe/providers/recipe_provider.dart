@@ -19,6 +19,7 @@ import '../repositories/api_recipe_repository.dart';
 import '../repositories/mock_recipe_repository.dart';
 import '../repositories/recipe_repository.dart';
 import '../../profile/providers/profile_provider.dart';
+import '../models/equipment.dart';
 
 final remoteRecipeRepositoryProvider = Provider<RecipeRepository>((ref) {
   return ApiRecipeRepository(ref.read(dioProvider));
@@ -64,10 +65,12 @@ final recipeDetailProvider =
       repository.getRecipeById(id),
       repository.getRecipeIngredients(id),
       repository.getRecipeSteps(id),
+      repository.getRecipeEquipment(id),
     ]);
     return (results[0] as Recipe).copyWith(
       ingredients: results[1] as List<RecipeIngredient>,
       steps: results[2] as List<RecipeStep>,
+      equipment: results[3] as List<Equipment>,
     );
   }
 
@@ -79,10 +82,12 @@ final recipeDetailProvider =
       repository.getRecipeById(id),
       repository.getRecipeIngredients(id),
       repository.getRecipeSteps(id),
+      repository.getRecipeEquipment(id),
     ]);
     final completeRecipe = (results[0] as Recipe).copyWith(
       ingredients: results[1] as List<RecipeIngredient>,
       steps: results[2] as List<RecipeStep>,
+      equipment: results[3] as List<Equipment>,
     );
     if (viewerUserId != null) {
       await cache.storeCompleteRecipe(

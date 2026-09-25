@@ -3,6 +3,7 @@ import '../models/recipe_ingredient.dart';
 import '../models/recipe_step.dart';
 import 'recipe_repository.dart';
 import '../models/unit_of_measurement.dart';
+import '../models/equipment.dart';
 
 class MockRecipeRepository implements RecipeRepository {
   static final List<Recipe> _recipes = [
@@ -591,4 +592,10 @@ class MockRecipeRepository implements RecipeRepository {
 
   @override
   Future<void> deleteRecipe(int recipeId) async {}
+
+  @override
+  Future<List<Equipment>> getRecipeEquipment(int recipeId) async {
+    final recipe = await getRecipeById(recipeId);
+    return recipe.equipment ?? const [];
+  }
 }

@@ -5,6 +5,7 @@ import 'recipe_repository.dart';
 import '../models/recipe_step.dart';
 import '../models/recipe_ingredient.dart';
 import '../models/unit_of_measurement.dart';
+import '../models/equipment.dart';
 
 //placeholder for api integration
 class ApiRecipeRepository implements RecipeRepository {
@@ -35,6 +36,7 @@ class ApiRecipeRepository implements RecipeRepository {
     });
     return Recipe.fromJson(response.data as Map<String, dynamic>);
   }
+
   //For metadata and photo url updates
   @override
   Future<Recipe> updateRecipe(int id, Recipe recipe) async {
@@ -117,5 +119,14 @@ class ApiRecipeRepository implements RecipeRepository {
   @override
   Future<void> deleteRecipe(int recipeId) async {
     await _dio.delete('/recipes/delete/$recipeId');
+  }
+
+  @override
+  Future<List<Equipment>> getRecipeEquipment(int recipeId) async {
+    final response = await _dio.get('/recipeequipment/recipe/$recipeId');
+    final data = response.data as List<dynamic>;
+    return data
+        .map((e) => Equipment.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

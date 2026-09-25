@@ -32,6 +32,18 @@ void main() {
         },
         'pantryGapCount': 1,
         'missingIngredients': ['parmesan'],
+        'transparency': [
+          {
+            'signal': 'pantry_match',
+            'percentage': 90,
+            'message': 'Matched 8 of 9 ingredients you already have on hand.',
+          },
+          {
+            'signal': 'novelty',
+            'percentage': 100,
+            'message': "You haven't tried this recipe before.",
+          },
+        ],
         'recipe': recipeJson(),
       };
 
@@ -65,6 +77,26 @@ void main() {
       final rec = Recommendation.fromJson(json);
 
       expect(rec.missingIngredients, isEmpty);
+    });
+
+    test('parses transparency signals in order', () {
+      final rec = Recommendation.fromJson(recommendationJson());
+
+      expect(rec.transparency, hasLength(2));
+      expect(rec.transparency.first.type, 'pantry_match');
+      expect(rec.transparency.first.percentage, 90);
+      expect(rec.transparency.last.type, 'novelty');
+      expect(rec.transparency.last.message, "You haven't tried this recipe before.");
+    });
+
+    test('defaults transparency to empty when null or absent', () {
+      final fromNull =
+          Recommendation.fromJson(recommendationJson()..['transparency'] = null);
+      final absent =
+          Recommendation.fromJson(recommendationJson()..remove('transparency'));
+
+      expect(fromNull.transparency, isEmpty);
+      expect(absent.transparency, isEmpty);
     });
   });
 

@@ -7,11 +7,14 @@ import 'package:mealchemy/core/shared_widgets/atoms/app_toast.dart';
 
 import '../../../core/shared_widgets/Molecules/app_confirm_dialog.dart';
 import '../../../core/shared_widgets/atoms/app_button.dart';
+import '../../../core/shared_widgets/atoms/app_multi_select.dart';
 import '../../../core/shared_widgets/atoms/app_text_field.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../vault/providers/vault_provider.dart';
 import '../../ingredients/models/ingredient_catalogue_item.dart';
+import '../../profile/providers/profile_provider.dart';
+import '../models/equipment.dart';
 import '../models/recipe.dart';
 import '../models/recipe_ingredient.dart';
 import '../models/recipe_step.dart';
@@ -88,6 +91,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
   String? _existingVideoUrl;
   bool _removePhoto = false;
   bool _removeVideo = false;
+  List<Equipment> _equipment = [];
 
   final List<_IngredientRowData> _ingredientRows = [_IngredientRowData()];
   final List<_StepRowData> _stepRows = [_StepRowData()];
@@ -172,6 +176,8 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
         }));
       if (_stepRows.isEmpty) _stepRows.add(_StepRowData());
     }
+
+    _equipment = [...?recipe.equipment];
   }
 
   Future<void> _recoverLostPhoto() async {
@@ -450,6 +456,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       isCommunityPublished: _publishToGlobal,
       ingredients: widget.isEditing ? ingredients : null,
       steps: widget.isEditing ? steps : null,
+      equipment: _equipment,
     );
 
     if (!_canContinueSaving()) return;
@@ -876,6 +883,13 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
                 int.tryParse(_servingsController.text) == null))
           const _FieldError('Prep, cook, and servings are all required.'),
         const SizedBox(height: 32),
+        _sectionHeader('Equipment'),
+        const SizedBox(height: 16),
+        _EquipmentPicker(
+          selected: _equipment,
+          onChanged: (list) => setState(() => _equipment = list),
+        ),
+        const SizedBox(height: 32),
         if (!widget.isEditing) ...[
           _sectionHeader('Save To'),
           const SizedBox(height: 16),
@@ -1104,6 +1118,48 @@ class _StepRowData {
   bool get isValid => content.text.trim().isNotEmpty;
 
   void dispose() => content.dispose();
+}
+
+class _EquipmentPicker extends ConsumerWidget {
+  const _EquipmentPicker({required this.selected, required this.onChanged});
+
+  final List<Equipment> selected;
+  final ValueChanged<List<Equipment>> onChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final optionsAsync = ref.watch(equipmentProvider);
+
+    return optionsAsync.when(
+      loading: () => const LinearProgressIndicator(),
+      error: (_, __) => Text('Could not load equipment.',
+          style: AppTextStyles.bodySmall.copyWith(color: AppColors.error)),
+      data: (options) {
+        final usable = options.where((o) => o.id != null).toList();
+
+        return AppMultiSelect(
+          options: [
+            for (final o in usable)
+              MultiSelectOption(value: o.value, label: o.label),
+          ],
+          selectedValues: selected.map((e) => e.value).toList(),
+          addLabel: 'Add equipment',
+          emptyHint: 'What does this recipe need?',
+          onToggle: (value) {
+            if (selected.any((e) => e.value == value)) {
+              onChanged(selected.where((e) => e.value != value).toList());
+              return;
+            }
+            final o = usable.firstWhere((o) => o.value == value);
+            onChanged([
+              ...selected,
+              Equipment(id: o.id!, value: o.value, label: o.label),
+            ]);
+          },
+        );
+      },
+    );
+  }
 }
 
 class _FolderDropdown extends ConsumerWidget {

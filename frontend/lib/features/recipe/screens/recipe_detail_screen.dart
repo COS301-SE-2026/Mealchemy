@@ -7,10 +7,12 @@ import '../../../core/shared_widgets/Molecules/app_refresh.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../cook_mode/providers/cook_session_provider.dart';
+import '../models/equipment.dart';
 import '../models/recipe.dart';
 import '../models/recipe_ingredient.dart';
 import '../models/recipe_step.dart';
 import '../providers/recipe_provider.dart';
+import '../widgets/recipe_equipment_section.dart';
 import '../widgets/recipe_hero.dart';
 import '../widgets/recipe_ingredient_row.dart';
 import '../widgets/recipe_nutrition_tab.dart';
@@ -43,10 +45,10 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
-//4 tabs are overview, ingredients, steops and nutrition
+//5 tabs are overview, ingredients, equipment, steops and nutrition
   @override
   void dispose() {
     _tabController.dispose();
@@ -139,6 +141,10 @@ class _RecipeDetailContent extends ConsumerWidget {
                   ingredients: ingredients,
                   onRefresh: onRefresh,
                 ),
+                _EquipmentTab(
+                  equipment: recipe.equipment ?? const [],
+                  onRefresh: onRefresh,
+                ),
                 _StepsTab(steps: steps, onRefresh: onRefresh),
                 AppRefresh(
                   onRefresh: onRefresh,
@@ -196,6 +202,12 @@ class _OverviewTab extends StatelessWidget {
             recipeId: recipe.recipeId,
             baseServings: recipe.servingSize ?? 1,
           ),
+          if (recipe.equipment?.isNotEmpty ?? false) ...[
+            const SizedBox(height: 26),
+            const _SectionTitle(title: 'Equipment'),
+            const SizedBox(height: 12),
+            RecipeEquipmentSection(equipment: recipe.equipment!),
+          ],
           const SizedBox(height: 26),
           const _SectionTitle(title: 'Ingredients'),
           const SizedBox(height: 12),
@@ -243,6 +255,35 @@ class _IngredientsTab extends StatelessWidget {
               baseServings: recipe.servingSize ?? 1,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EquipmentTab extends StatelessWidget {
+  const _EquipmentTab({required this.equipment, required this.onRefresh});
+
+  final List<Equipment> equipment;
+  final Future<void> Function() onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppRefresh(
+      onRefresh: onRefresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
+        children: [
+          const _SectionTitle(title: 'Equipment'),
+          const SizedBox(height: 12),
+          if (equipment.isEmpty)
+            Text(
+              'No equipment listed for this recipe.',
+              style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+            )
+          else
+            RecipeEquipmentSection(equipment: equipment),
         ],
       ),
     );
