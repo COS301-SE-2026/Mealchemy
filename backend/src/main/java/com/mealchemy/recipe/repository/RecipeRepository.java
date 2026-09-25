@@ -40,7 +40,22 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer>
     @Query("""
         SELECT DISTINCT recipe
         FROM Recipe recipe
-        WHERE recipe.ownerId = :userId
+        WHERE (
+                recipe.ownerId = :userId
+                AND NOT EXISTS (
+                SELECT lostAccess.id
+                FROM VaultFolderRecipe lostAccess
+                WHERE lostAccess.recipe = recipe
+                    AND lostAccess.folder.vault.vaultType = com.mealchemy.shared.enums.VaultType.SHARED
+                    AND lostAccess.folder.vault.ownerId <> :userId
+                    AND NOT EXISTS (
+                        SELECT stillMember.id
+                        FROM VaultMember stillMember
+                        WHERE stillMember.vault = lostAccess.folder.vault
+                            AND stillMember.user.userId = :userId
+                    )
+                )
+            )
             OR recipe.isCommunityPublished = true
             OR EXISTS (
                 SELECT folderRecipe.id
@@ -58,7 +73,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer>
             )
         """)
     
-    // returns all recipes accessible through ownership, community publication, vault ownership, or vault membership
+    // returns all recipes accessible through ownership, (minus revoked shared vault ownership), community publication, vault ownership, or vault membership
     List<Recipe> findAllAccessibleByUserId(@Param("userId") Integer userId);
 
     @Query("""
@@ -66,7 +81,22 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer>
         FROM Recipe recipe
         WHERE recipe.recipeId = :recipeId
             AND (
-                recipe.ownerId = :userId
+                (
+                    recipe.ownerId = :userId
+                    AND NOT EXISTS (
+                        SELECT lostAccess.id
+                        FROM VaultFolderRecipe lostAccess
+                        WHERE lostAccess.recipe = recipe
+                            AND lostAccess.folder.vault.vaultType = com.mealchemy.shared.enums.VaultType.SHARED
+                            AND lostAccess.folder.vault.ownerId <> :userId
+                            AND NOT EXISTS (
+                                SELECT stillMember.id
+                                FROM VaultMember stillMember
+                                WHERE stillMember.vault = lostAccess.folder.vault
+                                    AND stillMember.user.userId = :userId
+                            )
+                    )
+                )
                 OR recipe.isCommunityPublished = true
                 OR EXISTS (
                     SELECT folderRecipe.id

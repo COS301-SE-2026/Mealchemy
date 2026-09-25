@@ -16,6 +16,7 @@ import com.mealchemy.vault.model.VaultFolder;
 import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.recipe.model.RecipeIngredient;
 import com.mealchemy.recipe.model.RecipeStep;
+import com.mealchemy.recipe.model.RecipeEquipment;
 import com.mealchemy.auth.model.User;
 import com.mealchemy.vault.dto.VaultFolderRecipeResponse;
 import com.mealchemy.vault.dto.VaultFolderRecipeRequest;
@@ -27,6 +28,7 @@ import com.mealchemy.vault.repository.VaultFolderRepository;
 import com.mealchemy.auth.repository.UserRepository;
 import com.mealchemy.recipe.repository.RecipeIngredientRepository;
 import com.mealchemy.recipe.repository.RecipeStepRepository;
+import com.mealchemy.recipe.repository.RecipeEquipmentRepository;
 
 import com.mealchemy.shared.enums.VaultType;
 
@@ -40,6 +42,8 @@ public class VaultFolderRecipeService {
 
     private final RecipeStepRepository recipeStepRepository;
 
+    private final RecipeEquipmentRepository recipeEquipmentRepository;
+
     private final VaultMemberRepository vaultMemberRepository;
 
     private final VaultFolderRepository vaultFolderRepository;
@@ -47,12 +51,13 @@ public class VaultFolderRecipeService {
     private final UserRepository userRepository;
 
     public VaultFolderRecipeService(VaultFolderRecipeRepository vaultFolderRecipeRepository, RecipeRepository recipeRepository, RecipeIngredientRepository recipeIngredientRepository,
-        RecipeStepRepository recipeStepRepository, VaultMemberRepository vaultMemberRepository, VaultFolderRepository vaultFolderRepository, UserRepository userRepository)
+        RecipeStepRepository recipeStepRepository, RecipeEquipmentRepository recipeEquipmentRepository, VaultMemberRepository vaultMemberRepository, VaultFolderRepository vaultFolderRepository, UserRepository userRepository)
     {
         this.vaultFolderRecipeRepository = vaultFolderRecipeRepository;
         this.recipeRepository = recipeRepository;
         this.recipeIngredientRepository = recipeIngredientRepository;
         this.recipeStepRepository = recipeStepRepository;
+        this.recipeEquipmentRepository = recipeEquipmentRepository;
         this.vaultMemberRepository = vaultMemberRepository;
         this.vaultFolderRepository = vaultFolderRepository;
         this.userRepository = userRepository;
@@ -227,8 +232,16 @@ public class VaultFolderRecipeService {
             return stepClone;
         }).collect(Collectors.toList());
 
+        List<RecipeEquipment> clonedEquipment = source.getEquipment().stream().map(sourceEquipment -> {
+            RecipeEquipment equipmentClone = new RecipeEquipment();
+            equipmentClone.setRecipe(savedClone);
+            equipmentClone.setEquipment(sourceEquipment.getEquipment());
+            return equipmentClone;
+        }).collect(Collectors.toList());
+
         recipeIngredientRepository.saveAll(clonedIngedients);
         recipeStepRepository.saveAll(clonedSteps);
+        recipeEquipmentRepository.saveAll(clonedEquipment);
 
         return savedClone;
     }

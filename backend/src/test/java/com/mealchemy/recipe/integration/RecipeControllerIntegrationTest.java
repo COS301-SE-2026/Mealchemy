@@ -379,6 +379,24 @@ private RecipeUpdateRequest updateRequest(String title, String photoUrl, boolean
                 .andExpect(jsonPath("$.message").value("Recipe not found."));
     }
 
+    @Test 
+    void getRecipeById_returns404_whenOwnerRemovedFromSharedVault() throws Exception
+    {
+        Vault sharedVault = saveVault(owner, VaultType.SHARED, "Shared Vault");
+        VaultFolder sharedFolder = saveFolder(sharedVault, "Shared Folder");
+        addVaultMember(sharedVault, otherUser);
+        Recipe copy = saveRecipe(otherUser, "Other's Copy");
+        addRecipeToFolder(copy, sharedFolder);
+
+        // remove other user from shared vault
+        vaultMemberRepository.deleteAll();
+
+        mockMvc.perform(get("/recipes/single/{id}", copy.getRecipeId())
+                .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Recipe not found."));
+    }
+
     // POST /recipes/create
 
     @Test
