@@ -15,6 +15,8 @@ import com.mealchemy.recipe.model.RecipeIngredient;
 import com.mealchemy.recipe.model.RecipeStep;
 import com.mealchemy.vault.model.VaultFolder;
 import com.mealchemy.vault.model.Vault;
+import com.mealchemy.recipe.model.RecipeEquipment;
+import com.mealchemy.equipment.model.Equipment;
 import com.mealchemy.shared.enums.VaultType;
 import com.mealchemy.vault.dto.VaultFolderRecipeRequest;
 import com.mealchemy.recipe.dto.RecipeRequest;
@@ -29,6 +31,7 @@ import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.cuisinetype.repository.FlavourProfileOptionsRepository;
 import com.mealchemy.vault.repository.VaultFolderRepository;
+import com.mealchemy.equipment.repository.EquipmentRepository;
 import com.mealchemy.vault.service.VaultFolderRecipeService;
 import com.mealchemy.vault.service.RecipeEditLockService;
 
@@ -43,6 +46,8 @@ public class RecipeService
 
     private final VaultFolderRepository vaultFolderRepository;
 
+    private final EquipmentRepository equipmentRepository;
+
     private final VaultFolderRecipeService vaultFolderRecipeService;
 
     private final RecipeEditLockService recipeEditLockService;
@@ -51,13 +56,14 @@ public class RecipeService
     private final ApplicationEventPublisher eventPublisher;
 
     public RecipeService(RecipeRepository recipeRepository, IngredientCatalogueRepository ingredientCatalogueRepository, 
-        FlavourProfileOptionsRepository flavourProfileOptionsRepository, VaultFolderRepository vaultFolderRepository, 
+        FlavourProfileOptionsRepository flavourProfileOptionsRepository, VaultFolderRepository vaultFolderRepository, EquipmentRepository equipmentRepository,
         VaultFolderRecipeService vaultFolderRecipeService, RecipeEditLockService recipeEditLockService, ApplicationEventPublisher eventPublisher)
     {
         this.recipeRepository = recipeRepository;
         this.ingredientCatalogueRepository = ingredientCatalogueRepository;
         this.flavourProfileOptionsRepository = flavourProfileOptionsRepository;
         this.vaultFolderRepository = vaultFolderRepository;
+        this.equipmentRepository = equipmentRepository;
         this.vaultFolderRecipeService = vaultFolderRecipeService;
         this.recipeEditLockService = recipeEditLockService;
         this.eventPublisher = eventPublisher;
@@ -109,6 +115,7 @@ public class RecipeService
         validateFolderIsInPrivateVault(request.folderId(), ownerId);
 
         Recipe recipeForReturn = mapRequestToEntity(request, ownerId);
+        recipeForReturn.setEquipment(mapEquipmentRequests(request.equipmentIds(), recipeForReturn));
         Recipe saved = recipeRepository.save(recipeForReturn);
 
         vaultFolderRecipeService.createVaultFolderRecipe(
@@ -146,7 +153,8 @@ public class RecipeService
 
         recipeForReturn.setIngredients(ingredients);
         recipeForReturn.setSteps(steps);
-
+        recipeForReturn.setEquipment(mapEquipmentRequests(request.equipmentIds(), recipeForReturn));    
+           
         Recipe saved = recipeRepository.save(recipeForReturn);
 
         vaultFolderRecipeService.createVaultFolderRecipe(
@@ -215,9 +223,14 @@ public class RecipeService
         List<RecipeIngredient> ingredients = request.ingredients() == null
             ? null
             : mapIngredientRequests(request.ingredients(), recipeForReturn);
+
         List<RecipeStep> steps = request.steps() == null
             ? null
             : mapStepRequests(request.steps(), recipeForReturn);
+
+        List<RecipeEquipment> equipment = request.equipmentIds() == null
+            ? null
+            : mapEquipmentRequests(request.equipmentIds(), recipeForReturn);
 
         recipeForReturn.setTitle(request.title());
         recipeForReturn.setDescription(request.description());
@@ -238,7 +251,11 @@ public class RecipeService
         {
             recipeForReturn.getSteps().clear();
         }
-        if (ingredients != null || steps != null)
+        if (equipment != null)
+        {
+            recipeForReturn.getEquipment().clear();
+        }
+        if (ingredients != null || steps != null || equipment != null)
         {
             recipeRepository.saveAndFlush(recipeForReturn);
         }
@@ -249,6 +266,10 @@ public class RecipeService
         if (steps != null)
         {
             recipeForReturn.getSteps().addAll(steps);
+        }
+        if (equipment != null)
+        {
+            recipeForReturn.getEquipment().addAll(equipment);
         }
 
         Recipe saved = recipeRepository.save(recipeForReturn);
@@ -344,6 +365,29 @@ public class RecipeService
             recipeStep.setRecipe(recipe);
             return recipeStep;
         }).toList();
+    }
+
+    private List<RecipeEquipment> mapEquipmentRequests(
+        List<Integer> equipmentIds,
+        Recipe recipe
+    )
+    {
+        // check ids not null
+        if (equipmentIds == null)
+        {
+            return List.of(); //empty list
+        }
+
+        return equipmentIds.stream().map(equipmentId -> {
+            Equipment equipmentItem = equipmentRepository.findById(equipmentId)
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "One of the equipment items you want to add does not exist."));
+
+            RecipeEquipment recipeEquipment = new RecipeEquipment();
+            recipeEquipment.setEquipment(equipmentItem);
+            recipeEquipment.setRecipe(recipe);
+            return recipeEquipment;
+        }).toList();
+
     }
 
     /* Helper */

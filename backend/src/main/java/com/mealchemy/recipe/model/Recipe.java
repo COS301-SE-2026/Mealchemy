@@ -71,6 +71,9 @@ public class Recipe
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RecipeStep> steps = new ArrayList<>();
 
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RecipeEquipment> equipment = new ArrayList<>();
+
     @ManyToOne
     @JoinColumn(name = "parent_recipe_id")
     private Recipe parentRecipe;
@@ -159,6 +162,11 @@ public class Recipe
     {
         return steps;
     }
+    
+    public List<RecipeEquipment> getEquipment()
+    {
+        return equipment;
+    }
 
     public Recipe getParentRecipe()
     {
@@ -241,6 +249,12 @@ public class Recipe
     {
         steps = stepsIn;
     }
+
+    public void setEquipment(List<RecipeEquipment> equipmentIn)
+    {
+        equipment = equipmentIn;
+    }
+
 
     public void setParentRecipe(Recipe parentRecipeIn)
     {

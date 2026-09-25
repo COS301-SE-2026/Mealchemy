@@ -12,6 +12,8 @@ import '../../../core/connectivity/network_status_provider.dart';
 import '../../../core/shared_widgets/Molecules/app_search_bar.dart';
 import '../../external_links/widgets/link_row.dart';
 import '../widgets/folder_recipe_row.dart';
+import '../../external_links/providers/link_provider.dart';
+import '../../favourites/providers/fav_provider.dart';
 import '../providers/shared_vault_access_provider.dart';
 import '../widgets/shared_vault_members_entry.dart';
 
@@ -43,6 +45,8 @@ class VaultScreen extends ConsumerWidget {
           ref.invalidate(vaultFoldersProvider);
           ref.invalidate(folderRecipesProvider);
           ref.invalidate(vaultSearchResultsProvider);
+          ref.invalidate(favsProvider);
+          ref.invalidate(linksProvider);
 
           ref.invalidate(vaultsProvider);
 

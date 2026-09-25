@@ -93,8 +93,12 @@ void main() {
     );
   }
 
-  Future<void> pump(WidgetTester tester, Widget child) async {
-    tester.view.physicalSize = const Size(1080, 2400);
+  Future<void> pump(
+    WidgetTester tester,
+    Widget child, {
+    Size size = const Size(1080, 2400),
+  }) async {
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
       tester.view.resetPhysicalSize();
@@ -110,11 +114,10 @@ void main() {
       expect(find.text('Recommended for You'), findsOneWidget);
     });
 
-    testWidgets('renders View all trailing label', (tester) async {
+    testWidgets('does not render a View all label', (tester) async {
       await pump(tester, const RecommendedRecipesSection());
       await tester.pump();
-      expect(find.text('View all'), findsOneWidget);
+      expect(find.text('View all'), findsNothing);
     });
-
   });
 }

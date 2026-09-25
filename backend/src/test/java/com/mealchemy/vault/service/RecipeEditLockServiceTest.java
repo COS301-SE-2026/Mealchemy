@@ -24,6 +24,7 @@ import jakarta.persistence.EntityManager;
 /* Import classes */
 import com.mealchemy.vault.model.RecipeEditLock;
 import com.mealchemy.vault.model.VaultMember;
+import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.repository.RecipeEditLockRepository;
 import com.mealchemy.vault.repository.VaultMemberRepository;
 import com.mealchemy.vault.dto.RecipeLockResponse;
@@ -31,7 +32,9 @@ import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.auth.model.User;
 import com.mealchemy.auth.repository.UserRepository;
+import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.shared.enums.VaultMemberRole;
+import com.mealchemy.shared.enums.VaultType;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -40,6 +43,7 @@ public class RecipeEditLockServiceTest {
     @Mock private RecipeEditLockRepository recipeEditLockRepository;
     @Mock private RecipeRepository recipeRepository;
     @Mock private VaultMemberRepository vaultMemberRepository;
+    @Mock private VaultRepository vaultRepository;
     @Mock private UserRepository userRepository; 
     @Mock private EntityManager entityManager;
 
@@ -50,6 +54,7 @@ public class RecipeEditLockServiceTest {
     private User owner;
     private User editor;
     private VaultMember editorMembership;
+    private Vault sharedVault;
 
     @BeforeEach
     void setUp() 
@@ -71,6 +76,11 @@ public class RecipeEditLockServiceTest {
 
         editorMembership = new VaultMember();
         editorMembership.setRole(VaultMemberRole.EDITOR);
+
+        sharedVault = new Vault();
+        sharedVault.setOwnerId(1);
+        sharedVault.setVaultType(VaultType.SHARED);
+        ReflectionTestUtils.setField(sharedVault, "vaultId", 10);
     }
 
     // ========== Helpers =========
@@ -181,6 +191,7 @@ public class RecipeEditLockServiceTest {
     {
         // Arrange
         when(recipeRepository.findAccessibleByIdAndUserId(1, 99)).thenReturn(Optional.of(ownedRecipe));
+        when(vaultRepository.findVaultByRecipeId(1)).thenReturn(Optional.of(sharedVault));
         when(vaultMemberRepository.findVaultMembershipForRecipe(1, 99)).thenReturn(Optional.empty());
 
         // Act 
@@ -255,6 +266,27 @@ public class RecipeEditLockServiceTest {
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
     }
 
+    @Test 
+    void acquireLock_editorDemotedToViewer_whileHoldingLock_rejectOnLockRefresh()
+    {
+        // Arrange
+        VaultMember demotedMember = new VaultMember();
+        demotedMember.setRole(VaultMemberRole.VIEWER);
+
+        when(recipeRepository.findAccessibleByIdAndUserId(1, 2)).thenReturn(Optional.of(ownedRecipe));
+        when(vaultRepository.findVaultByRecipeId(1)).thenReturn(Optional.of(sharedVault));
+        when(vaultMemberRepository.findVaultMembershipForRecipe(1, 2)).thenReturn(Optional.of(demotedMember));
+
+        // Act 
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> recipeEditLockService.acquireLock(1, 2)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        verifyNoInteractions(entityManager);
+    }
+
 
     // release lock
     @Test
@@ -282,7 +314,6 @@ public class RecipeEditLockServiceTest {
         when(recipeRepository.findAccessibleByIdAndUserId(1, 1)).thenReturn(Optional.of(ownedRecipe));
         when(recipeEditLockRepository.findById(1)).thenReturn(Optional.empty());
 
-        // Act
         // Act 
         ResponseStatusException ex = assertThrows(
             ResponseStatusException.class,
@@ -327,6 +358,7 @@ public class RecipeEditLockServiceTest {
     {
         // Arrange
         when(recipeRepository.findAccessibleByIdAndUserId(1, 2)).thenReturn(Optional.of(ownedRecipe));
+        when(vaultRepository.findVaultByRecipeId(1)).thenReturn(Optional.of(sharedVault));
         when(vaultMemberRepository.findVaultMembershipForRecipe(1, 2)).thenReturn(Optional.of(editorMembership));
         when(recipeEditLockRepository.findById(1)).thenReturn(Optional.empty());
 
@@ -339,11 +371,29 @@ public class RecipeEditLockServiceTest {
     {
         // Arrange
         when(recipeRepository.findAccessibleByIdAndUserId(1, 2)).thenReturn(Optional.of(ownedRecipe));
+        when(vaultRepository.findVaultByRecipeId(1)).thenReturn(Optional.of(sharedVault));
         when(vaultMemberRepository.findVaultMembershipForRecipe(1, 2)).thenReturn(Optional.of(editorMembership));
         when(recipeEditLockRepository.findById(1)).thenReturn(Optional.of(liveLock(editor)));
 
         // Act and Assert
         assertTrue(recipeEditLockService.canEditRecipe(1, 2));
+    }
+
+    @Test 
+    void canEditRecipe_forVaultOwner_otherMembersRecipe_returnsTrue() 
+    {
+        // Arrange
+        Recipe editorsCopy = new Recipe();
+        editorsCopy.setOwnerId(2);
+        ReflectionTestUtils.setField(editorsCopy, "recipeId", 1);
+
+        when(recipeRepository.findAccessibleByIdAndUserId(1, 1)).thenReturn(Optional.of(editorsCopy));
+        when(vaultRepository.findVaultByRecipeId(1)).thenReturn(Optional.of(sharedVault));
+        when(recipeEditLockRepository.findById(1)).thenReturn(Optional.empty());
+
+        // Act and Assert
+        assertTrue(recipeEditLockService.canEditRecipe(1, 1));
+
     }
 
     @Test
@@ -368,6 +418,7 @@ public class RecipeEditLockServiceTest {
     {
         // Arrange
         when(recipeRepository.findAccessibleByIdAndUserId(1, 99)).thenReturn(Optional.of(ownedRecipe));
+        when(vaultRepository.findVaultByRecipeId(1)).thenReturn(Optional.of(sharedVault));
         when(vaultMemberRepository.findVaultMembershipForRecipe(1, 99)).thenReturn(Optional.empty());
 
         // Act 
@@ -388,6 +439,7 @@ public class RecipeEditLockServiceTest {
         viewerMembership.setRole(VaultMemberRole.VIEWER);
 
         when(recipeRepository.findAccessibleByIdAndUserId(1, 3)).thenReturn(Optional.of(ownedRecipe));
+        when(vaultRepository.findVaultByRecipeId(1)).thenReturn(Optional.of(sharedVault));
         when(vaultMemberRepository.findVaultMembershipForRecipe(1, 3)).thenReturn(Optional.of(viewerMembership));
 
         // Act 

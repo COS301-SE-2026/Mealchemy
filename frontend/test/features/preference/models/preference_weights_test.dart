@@ -16,16 +16,48 @@ void main() {
       expect(w.total, closeTo(1.0, 0.0001));
     });
 
-    test('shareOf returns a value\'s proportion of the total', () {
+    test('rebalance holds the total at 1.0 and applies the new value', () {
+      final w = PreferenceWeights.defaults.rebalance(0, 0.6);
+      expect(w.pantryMatch, closeTo(0.6, 0.0001));
+      expect(w.total, closeTo(1.0, 0.0001));
+    });
+
+    test('rebalance shrinks the others but keeps their proportions', () {
       const w = PreferenceWeights(
-        pantryMatch: 3,
-        cuisine: 1,
+        pantryMatch: 0.2,
+        cuisine: 0.4,
+        nutrition: 0.2,
+        freshness: 0.1,
+        novelty: 0.1,
+      );
+
+      final r = w.rebalance(0, 0.6);
+
+      expect(r.cuisine, lessThan(w.cuisine));
+      expect(r.cuisine / r.nutrition, closeTo(w.cuisine / w.nutrition, 0.0001));
+    });
+
+    test('rebalance splits evenl  when the others are all  zero', () {
+      const w = PreferenceWeights(
+        pantryMatch: 1,
+        cuisine: 0,
         nutrition: 0,
         freshness: 0,
         novelty: 0,
       );
-      expect(w.shareOf(w.pantryMatch), closeTo(0.75, 0.0001));
-      expect(w.shareOf(w.cuisine), closeTo(0.25, 0.0001));
+
+      final r = w.rebalance(0, 0.6);
+
+      expect(r.cuisine, closeTo(0.1, 0.0001));
+      expect(r.novelty, closeTo(0.1, 0.0001));
+      expect(r.total, closeTo(1.0, 0.0001));
+    });
+
+    test('rebalance to 1.0 zeroe  the other four', () {
+      final w = PreferenceWeights.defaults.rebalance(2, 1.0);
+      expect(w.nutrition, closeTo(1.0, 0.0001));
+      expect(w.pantryMatch, closeTo(0, 0.0001));
+      expect(w.total, closeTo(1.0, 0.0001));
     });
 
     test('normalized scales the weights to sum 1.0, keeping proportions', () {

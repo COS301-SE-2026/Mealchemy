@@ -58,22 +58,19 @@ void main() {
       expect(find.text('Password'), findsOneWidget);
     });
 
-    //checking if forgot password button appears
-    testWidgets('renders forgot password button', (tester) async {
-      await tester.pumpWidget(buildWidget());
-      expect(find.text('Forgot Password?'), findsOneWidget);
-    });
-
     //checking if login button appears
     testWidgets('renders login button', (tester) async {
       await tester.pumpWidget(buildWidget());
       expect(find.text('Log In'), findsOneWidget);
     });
 
-    //checking if Google sign in button appears
-    testWidgets('renders Google sign in button', (tester) async {
+    //checking the removed sign in options are gone
+    testWidgets('does not render Google sign in or forgot password',
+        (tester) async {
       await tester.pumpWidget(buildWidget());
-      expect(find.text('Sign in with Google'), findsOneWidget);
+      expect(find.text('Sign in with Google'), findsNothing);
+      expect(find.text('Forgot Password?'), findsNothing);
+      expect(find.text('OR CONTINUE WITH'), findsNothing);
     });
 
     //checking if create account link appears
