@@ -77,6 +77,25 @@ class CookActiveTimer extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: compact ? 2 : 4),
+                  if (timer.name != null) ...[
+                    SizedBox(
+                      width: compact ? 92 : 128,
+                      child: Text(
+                        timer.name!,
+                        key: Key(
+                          'cook-active-timer-name-${timer.notificationId}',
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                  ],
                   Text(
                     'Step ${timer.stepNumber}',
                     key: Key('cook-active-timer-step-${timer.notificationId}'),

@@ -14,6 +14,7 @@ void main() {
       stepNumber: 1,
       startedAt: startedAt,
       endsAt: startedAt.add(const Duration(minutes: 20)),
+      name: 'Pasta sauce',
     );
 
     await tester.pumpWidget(MaterialApp(
@@ -31,6 +32,7 @@ void main() {
     expect(timerFinder, findsOneWidget);
     expect(tester.getSize(timerFinder), const Size.square(164));
     expect(find.text('15:00'), findsOneWidget);
+    expect(find.text('Pasta sauce'), findsOneWidget);
     expect(find.text('Step 1'), findsOneWidget);
   });
 

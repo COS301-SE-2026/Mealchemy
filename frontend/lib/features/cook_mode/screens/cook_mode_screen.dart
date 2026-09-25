@@ -275,7 +275,8 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
         _voiceModeEnabled = false;
         _voiceAvailable = false;
         _voiceInitialized = false;
-        _voiceMessage = 'On-device voice unavailable. Tap Speak to try again.';
+        _voiceMessage =
+            'Voice recognition unavailable. Tap Speak to try again or check Device Settings';
       }
     });
     if (timedOut && _voiceModeEnabled) _scheduleListening();
@@ -347,6 +348,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
 
   Future<void> _startTimer(
     Duration duration, {
+    String? name,
     bool resumeListening = false,
   }) async {
     await _stopVoiceListening();
@@ -359,6 +361,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
       stepIndex: mode.currentStepIndex,
       stepNumber: step.stepNr,
       duration: duration,
+      name: name,
     );
     if (!mounted) return;
     setState(() {
@@ -694,7 +697,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
                 suggestedDuration: detectCookStepDuration(
                   widget.steps[state.currentStepIndex].content,
                 ),
-                onStart: _startTimer,
+                onStart: (duration, name) => _startTimer(duration, name: name),
                 onCancel: _timerController.cancel,
               ),
               CookModeActionDock(

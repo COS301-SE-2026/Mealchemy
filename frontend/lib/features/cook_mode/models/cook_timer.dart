@@ -9,6 +9,7 @@ class CookTimer {
     required this.stepNumber,
     required this.startedAt,
     required this.endsAt,
+    this.name,
   });
 
   final int notificationId;
@@ -18,8 +19,14 @@ class CookTimer {
   final int stepNumber;
   final DateTime startedAt;
   final DateTime endsAt;
+  final String? name;
 
-  String get label => '$recipeTitle, step $stepNumber';
+  String get label {
+    final timerName = name;
+    return timerName == null
+        ? '$recipeTitle, step $stepNumber'
+        : '$timerName, $recipeTitle, step $stepNumber';
+  }
 
   Duration remainingAt(DateTime now) {
     final remaining = endsAt.difference(now.toUtc());
@@ -36,9 +43,12 @@ class CookTimer {
         'stepNumber': stepNumber,
         'startedAt': startedAt.toUtc().toIso8601String(),
         'endsAt': endsAt.toUtc().toIso8601String(),
+        if (name != null) 'name': name,
       };
 
   factory CookTimer.fromJson(Map<String, dynamic> json) {
+    final storedName = json['name'];
+    final normalizedName = storedName is String ? storedName.trim() : '';
     return CookTimer(
       notificationId: json['notificationId'] as int,
       recipeId: json['recipeId'] as int,
@@ -47,6 +57,7 @@ class CookTimer {
       stepNumber: json['stepNumber'] as int,
       startedAt: DateTime.parse(json['startedAt'] as String).toUtc(),
       endsAt: DateTime.parse(json['endsAt'] as String).toUtc(),
+      name: normalizedName.isEmpty ? null : normalizedName,
     );
   }
 }

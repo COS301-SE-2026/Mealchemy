@@ -14,7 +14,7 @@ void main() {
         body: CookTimerControls(
           state: CookTimerState(now: now, isInitialized: true),
           suggestedDuration: const Duration(minutes: 20),
-          onStart: (duration) async => started = duration,
+          onStart: (duration, _) async => started = duration,
           onCancel: (_) async {},
         ),
       ),
@@ -48,7 +48,7 @@ void main() {
             timers: [timer],
           ),
           suggestedDuration: null,
-          onStart: (_) async {},
+          onStart: (_, __) async {},
           onCancel: (value) async => cancelled = value,
         ),
       ),
@@ -62,5 +62,44 @@ void main() {
     await tester.tap(find.byTooltip('Cancel Pasta, step 2'));
     await tester.pumpAndSettle();
     expect(cancelled, timer);
+  });
+
+  testWidgets('starts a manually named timer with a typed duration',
+      (tester) async {
+    Duration? started;
+    String? name;
+    final now = DateTime.utc(2026, 9, 15, 12);
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: CookTimerControls(
+          state: CookTimerState(now: now, isInitialized: true),
+          suggestedDuration: null,
+          onStart: (duration, timerName) async {
+            started = duration;
+            name = timerName;
+          },
+          onCancel: (_) async {},
+        ),
+      ),
+    ));
+
+    await tester.tap(find.byKey(const Key('manage-cook-timers')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.descendant(
+        of: find.byKey(const Key('manual-timer-name')),
+        matching: find.byType(TextField),
+      ),
+      'Pasta sauce',
+    );
+    await tester.enterText(
+      find.byKey(const Key('manual-timer-duration-input')),
+      '12',
+    );
+    await tester.tap(find.byKey(const Key('start-manual-timer')));
+    await tester.pumpAndSettle();
+
+    expect(started, const Duration(minutes: 12));
+    expect(name, 'Pasta sauce');
   });
 }

@@ -88,9 +88,11 @@ void main() {
       stepIndex: 1,
       stepNumber: 2,
       duration: const Duration(minutes: 5),
+      name: '  Sauce  ',
     );
 
     expect(controller.state.activeTimers, [timer]);
+    expect(timer.name, 'Sauce');
     expect(store.timers, [timer]);
     expect(notifications.scheduled, [timer]);
 

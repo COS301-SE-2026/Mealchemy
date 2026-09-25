@@ -103,9 +103,16 @@ class CookTimerController extends StateNotifier<CookTimerState> {
     required int stepIndex,
     required int stepNumber,
     required Duration duration,
+    String? name,
   }) async {
     await initialize();
     final startedAt = _now().toUtc();
+    final trimmedName = name?.trim();
+    final normalizedName = trimmedName == null || trimmedName.isEmpty
+        ? null
+        : trimmedName.length > 40
+            ? trimmedName.substring(0, 40)
+            : trimmedName;
     final timer = CookTimer(
       notificationId: _nextNotificationId(startedAt),
       recipeId: recipeId,
@@ -114,6 +121,7 @@ class CookTimerController extends StateNotifier<CookTimerState> {
       stepNumber: stepNumber,
       startedAt: startedAt,
       endsAt: startedAt.add(duration),
+      name: normalizedName,
     );
     state = state.copyWith(
       timers: [...state.timers, timer],
