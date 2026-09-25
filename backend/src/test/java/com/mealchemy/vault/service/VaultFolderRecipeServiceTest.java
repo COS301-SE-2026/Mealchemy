@@ -27,6 +27,8 @@ import com.mealchemy.vault.model.VaultMember;
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.model.VaultFolder;
 import com.mealchemy.recipe.model.Recipe;
+import com.mealchemy.recipe.model.RecipeEquipment;
+import com.mealchemy.equipment.model.Equipment;
 import com.mealchemy.auth.model.User;
 import com.mealchemy.vault.dto.VaultFolderRecipeResponse;
 import com.mealchemy.vault.dto.VaultFolderRecipeRequest;
@@ -40,6 +42,7 @@ import com.mealchemy.recipe.model.RecipeIngredient;
 import com.mealchemy.recipe.model.RecipeStep;
 import com.mealchemy.recipe.repository.RecipeIngredientRepository;
 import com.mealchemy.recipe.repository.RecipeStepRepository;
+import com.mealchemy.recipe.repository.RecipeEquipmentRepository;
 import com.mealchemy.shared.enums.VaultType;
 
 @ExtendWith(MockitoExtension.class)
@@ -65,6 +68,9 @@ public class VaultFolderRecipeServiceTest
 
     @Mock 
     private RecipeStepRepository recipeStepRepository;
+
+    @Mock 
+    private RecipeEquipmentRepository recipeEquipmentRepository;
 
     @InjectMocks
     private VaultFolderRecipeService vaultFolderRecipeService;
@@ -127,6 +133,13 @@ public class VaultFolderRecipeServiceTest
         sourceStep.setStepNr(1);
         sourceStep.setContent("Mix.");
         recipe.getSteps().add(sourceStep);
+
+        RecipeEquipment sourceEquipment = new RecipeEquipment();
+        sourceEquipment.setRecipe(recipe);
+        Equipment sourceEquipmentItem = new Equipment();
+        ReflectionTestUtils.setField(sourceEquipmentItem, "equipmentId", 3);
+        sourceEquipment.setEquipment(sourceEquipmentItem);
+        recipe.getEquipment().add(sourceEquipment);
 
         request = new VaultFolderRecipeRequest(1, 1);
         moveRequest = new VaultFolderRecipeMoveRequest(1);
@@ -491,6 +504,7 @@ public class VaultFolderRecipeServiceTest
 
         verify(recipeIngredientRepository).saveAll(anyList());
         verify(recipeStepRepository).saveAll(anyList());
+        verify(recipeEquipmentRepository).saveAll(anyList());
 
         ArgumentCaptor<VaultFolderRecipe> linkCaptor = ArgumentCaptor.forClass(VaultFolderRecipe.class);
         verify(vaultFolderRecipeRepository).save(linkCaptor.capture());
@@ -516,6 +530,7 @@ public class VaultFolderRecipeServiceTest
         verify(recipeRepository, never()).save(any(Recipe.class));
         verifyNoInteractions(recipeIngredientRepository);
         verifyNoInteractions(recipeStepRepository);
+        verifyNoInteractions(recipeEquipmentRepository);
 
         ArgumentCaptor<VaultFolderRecipe> linkCaptor = ArgumentCaptor.forClass(VaultFolderRecipe.class);
         verify(vaultFolderRecipeRepository).save(linkCaptor.capture());
