@@ -23,6 +23,8 @@ import 'package:mealchemy/features/recipe/screens/shared_recipe_edit_screen.dart
 import 'package:mealchemy/features/vault/providers/shared_vault_access_provider.dart';
 import 'package:mealchemy/features/vault/providers/vault_repository_provider.dart';
 import 'package:mealchemy/features/vault/repositories/vault_repository.dart';
+import 'package:mealchemy/features/recipe/models/equipment.dart';
+import 'package:mealchemy/features/profile/providers/profile_provider.dart';
 
 const _target = (
   vaultId: 2,
@@ -113,6 +115,16 @@ class _Recipes implements RecipeRepository {
   String title = 'Shared pasta';
   int updates = 0;
   Completer<Recipe>? pendingSave;
+  Recipe? lastSubmittedRecipe;
+
+  @override
+  Future<List<Equipment>> getRecipeEquipment(int recipeId) async => const [
+        Equipment(
+          id: 3,
+          value: 'OVEN',
+          label: 'Oven',
+        ),
+      ];
 
   Recipe get recipe => Recipe(
         recipeId: 99,
@@ -154,6 +166,7 @@ class _Recipes implements RecipeRepository {
   }) async {
     events.add('save');
     updates++;
+    lastSubmittedRecipe = recipe;
     return pendingSave == null ? recipe : await pendingSave!.future;
   }
 
@@ -189,6 +202,7 @@ class _Fixture {
         events.add('access');
         return allowed;
       }),
+      equipmentProvider.overrideWith((ref) async => []),
     ],
   );
 
@@ -265,6 +279,13 @@ void main() {
             .initialRecipe!
             .recipeId,
         99,
+      );
+      final editor =
+          tester.widget<AddRecipeScreen>(find.byType(AddRecipeScreen));
+
+      expect(
+        editor.initialRecipe!.equipment!.map((item) => item.id).toList(),
+        [3],
       );
 
       await fixture.advance(tester, const Duration(seconds: 30));
@@ -399,6 +420,12 @@ void main() {
       await tester.pump();
 
       expect(fixture.recipes.updates, 1);
+      expect(
+        fixture.recipes.lastSubmittedRecipe!.equipment!
+            .map((item) => item.id)
+            .toList(),
+        [3],
+      );
       expect(fixture.locks.releases, 0);
 
       await fixture.advance(tester, const Duration(seconds: 30));

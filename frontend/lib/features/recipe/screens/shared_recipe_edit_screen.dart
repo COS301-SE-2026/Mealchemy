@@ -177,6 +177,9 @@ class _SharedRecipeEditScreenState extends ConsumerState<SharedRecipeEditScreen>
       final steps = await repository.getRecipeSteps(id);
       if (!stillHoldsLease()) return;
 
+      final equipment = await repository.getRecipeEquipment(id);
+      if (!stillHoldsLease()) return;
+
       final current = ref.read(recipeEditLockProvider(id));
 
       if (current.phase == RecipeEditLockPhase.reloadRequired) {
@@ -189,6 +192,7 @@ class _SharedRecipeEditScreenState extends ConsumerState<SharedRecipeEditScreen>
         _recipe = recipe.copyWith(
           ingredients: ingredients,
           steps: steps,
+          equipment: equipment,
         );
         _needsFreshRecipe = false;
         _revision++;
