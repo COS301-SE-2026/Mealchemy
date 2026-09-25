@@ -42,18 +42,16 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer>
         FROM Recipe recipe
         WHERE (
                 recipe.ownerId = :userId
-                AND NOT EXISTS (
-                SELECT lostAccess.id
-                FROM VaultFolderRecipe lostAccess
-                WHERE lostAccess.recipe = recipe
-                    AND lostAccess.folder.vault.vaultType = com.mealchemy.shared.enums.VaultType.SHARED
-                    AND lostAccess.folder.vault.ownerId <> :userId
-                    AND NOT EXISTS (
-                        SELECT stillMember.id
-                        FROM VaultMember stillMember
-                        WHERE stillMember.vault = lostAccess.folder.vault
-                            AND stillMember.user.userId = :userId
-                    )
+                AND recipe.recipeId NOT IN (
+                    SELECT lostAccess.recipe.recipeId
+                    FROM VaultFolderRecipe lostAccess
+                    WHERE lostAccess.folder.vault.vaultType = com.mealchemy.shared.enums.VaultType.SHARED
+                        AND lostAccess.folder.vault.ownerId <> :userId
+                        AND lostAccess.folder.vault.vaultId NOT IN (
+                            SELECT stillMember.vault.vaultId
+                            FROM VaultMember stillMember
+                            WHERE stillMember.user.userId = :userId
+                        )
                 )
             )
             OR recipe.isCommunityPublished = true
@@ -83,18 +81,16 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer>
             AND (
                 (
                     recipe.ownerId = :userId
-                    AND NOT EXISTS (
-                        SELECT lostAccess.id
+                    AND recipe.recipeId NOT IN (
+                        SELECT lostAccess.recipe.recipeId
                         FROM VaultFolderRecipe lostAccess
-                        WHERE lostAccess.recipe = recipe
-                            AND lostAccess.folder.vault.vaultType = com.mealchemy.shared.enums.VaultType.SHARED
+                        WHERE lostAccess.folder.vault.vaultType = com.mealchemy.shared.enums.VaultType.SHARED
                             AND lostAccess.folder.vault.ownerId <> :userId
-                            AND NOT EXISTS (
-                                SELECT stillMember.id
+                            AND lostAccess.folder.vault.vaultId NOT IN (
+                                SELECT stillMember.vault.vaultId
                                 FROM VaultMember stillMember
-                                WHERE stillMember.vault = lostAccess.folder.vault
-                                    AND stillMember.user.userId = :userId
-                            )
+                                WHERE stillMember.user.userId = :userId
+                        )
                     )
                 )
                 OR recipe.isCommunityPublished = true
