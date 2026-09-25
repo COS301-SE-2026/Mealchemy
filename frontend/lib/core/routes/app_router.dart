@@ -4,6 +4,7 @@ import 'app_shell.dart';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/admin/screens/admin_screen.dart';
@@ -32,6 +33,9 @@ import '../../features/help/screens/help_screen.dart';
 
 import '../../features/recipe/models/recipe.dart';
 
+import '../../features/recipe/providers/shared_recipe_edit_provider.dart';
+import '../../features/vault/providers/shared_vault_access_provider.dart';
+
 final appRouter = GoRouter(
   initialLocation: AppRoutes.login,
   // Sets the first screen shown when the app launches.
@@ -57,18 +61,14 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: AppRoutes.recipeEdit,
-      builder: (context, state) {
-        final id = int.parse(state.pathParameters['id']!);
-        return AddRecipeScreen(editRecipeId: id);
-      },
+      builder: (context, state) => _buildRecipeEditor(state),
     ),
     GoRoute(
       path: AppRoutes.editRecipe,
-      builder: (context, state) {
-        final id = int.parse(state.pathParameters['id']!);
-        final recipe = state.extra as Recipe?;
-        return AddRecipeScreen(editRecipeId: id, initialRecipe: recipe);
-      },
+      builder: (context, state) => _buildRecipeEditor(
+        state,
+        allowInitialRecipe: true,
+      ),
     ),
     GoRoute(
       path: AppRoutes.cookMode,
@@ -244,4 +244,52 @@ CustomTransitionPage<void> _sheetPage(LocalKey key, Widget child) {
       );
     },
   );
+}
+
+Widget _buildRecipeEditor(
+  GoRouterState state, {
+  bool allowInitialRecipe = false,
+}) {
+  final id = int.tryParse(state.pathParameters['id'] ?? '');
+
+  try {
+    if (id == null || id <= 0) {
+      throw const FormatException('Invalid recipe ID.');
+    }
+
+    final sharedContext = sharedRecipeContextFromUri(
+      state.uri,
+      recipeId: id,
+    );
+
+    if (sharedContext == null) {
+      final initialRecipe = allowInitialRecipe && state.extra is Recipe
+          ? state.extra as Recipe
+          : null;
+
+      return AddRecipeScreen(
+        editRecipeId: id,
+        initialRecipe: initialRecipe?.recipeId == id ? initialRecipe : null,
+      );
+    }
+
+    return Consumer(
+      builder: (context, ref, _) {
+        final session = ref.watch(vaultSessionProvider);
+
+        return AddRecipeScreen(
+          key: ValueKey((sharedContext, session)),
+          editRecipeId: id,
+          sharedContext: sharedContext,
+        );
+      },
+    );
+  } on FormatException {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Edit recipe')),
+      body: const Center(
+        child: Text('Invalid recipe or shared-vault link.'),
+      ),
+    );
+  }
 }
