@@ -3,6 +3,7 @@ package com.mealchemy.vault.service;
 // models
 import com.mealchemy.vault.model.RecipeEditLock;
 import com.mealchemy.vault.model.VaultMember;
+import com.mealchemy.vault.model.Vault;
 import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.auth.model.User;
 
@@ -12,6 +13,7 @@ import com.mealchemy.vault.dto.RecipeLockResponse;
 // repositories
 import com.mealchemy.vault.repository.RecipeEditLockRepository;
 import com.mealchemy.vault.repository.VaultMemberRepository;
+import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.auth.repository.UserRepository;
 
@@ -34,16 +36,18 @@ public class RecipeEditLockService
     private final RecipeEditLockRepository recipeEditLockRepository;
     private final RecipeRepository recipeRepository;
     private final VaultMemberRepository vaultMemberRepository;
+    private final VaultRepository vaultRepository;
     private final UserRepository userRepository;
     private final EntityManager entityManager;
 
     private static final long LOCK_TTL_SECONDS = 90;
 
-    public RecipeEditLockService(RecipeEditLockRepository recipeEditLockRepository, RecipeRepository recipeRepository, VaultMemberRepository vaultMemberRepository, UserRepository userRepository, EntityManager entityManager)
+    public RecipeEditLockService(RecipeEditLockRepository recipeEditLockRepository, RecipeRepository recipeRepository, VaultMemberRepository vaultMemberRepository, VaultRepository vaultRepository, UserRepository userRepository, EntityManager entityManager)
     {
         this.recipeEditLockRepository = recipeEditLockRepository;
         this.recipeRepository = recipeRepository;
         this.vaultMemberRepository = vaultMemberRepository;
+        this.vaultRepository = vaultRepository;
         this.userRepository = userRepository;
         this.entityManager = entityManager;
     }
@@ -70,13 +74,10 @@ public class RecipeEditLockService
         Recipe recipeForCheck = recipeRepository.findAccessibleByIdAndUserId(recipeId, userId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
    
-        // checks if user is owner 
-        boolean isOwner = recipeForCheck.getOwnerId().equals(userId);
-
-        if (!isOwner) // user is not the recipe owner (oerson that uploaded the recipe to the vault)
+        // can user edit recipe
+        if (!hasEditorAccess(recipeForCheck, recipeId, userId))
         {
-            // checks if user is editor 
-            requiresEditorRole(recipeId, userId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
         }
 
         // find existing recipe lock or existing lock is null
@@ -171,10 +172,10 @@ public class RecipeEditLockService
         Recipe recipeForCheck = recipeRepository.findAccessibleByIdAndUserId(recipeId, userId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
-        boolean isOwner = recipeForCheck.getOwnerId().equals(userId);
-        if (!isOwner)
+        if (!hasEditorAccess(recipeForCheck, recipeId, userId))
         {
-            requiresEditorRole(recipeId, userId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
+
         }
 
         RecipeEditLock activeLock = recipeEditLockRepository.findById(recipeId)
@@ -190,16 +191,28 @@ public class RecipeEditLockService
         throw new ResponseStatusException(HttpStatus.CONFLICT, "This recipe is currently being edited by another user.");
     }
 
-    private void requiresEditorRole(Integer recipeId, Integer userId)
+    private boolean hasEditorAccess(Recipe recipe, Integer recipeId, Integer userId)
     {
-        // check if user is an owner or editor
-        VaultMember member = vaultMemberRepository.findVaultMembershipForRecipe(recipeId, userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.")); 
-                
-        if (!member.getRole().equals(VaultMemberRole.EDITOR)) 
+        if (recipe.getOwnerId().equals(userId))
         {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."); 
+            return true;
         }
+
+        Vault vault = vaultRepository.findVaultByRecipeId(recipeId).orElse(null);
+        if (vault == null)
+        {
+            return false;
+        }
+
+        // is vault owner
+        if (vault != null && vault.getOwnerId().equals(userId))
+        {
+            return true;
+        }
+
+        return vaultMemberRepository.findVaultMembershipForRecipe(recipeId, userId)
+                                    .map(member -> member.getRole() == VaultMemberRole.EDITOR)
+                                    .orElse(false);
     }
 
     private boolean isActive(RecipeEditLock lock)
