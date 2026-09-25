@@ -380,7 +380,7 @@ private RecipeUpdateRequest updateRequest(String title, String photoUrl, boolean
     }
 
     @Test 
-    void getRecipeById_returns404_whenOwnerRemovedFromSharedVault() throws Exception
+    void getRecipeById_returns404_whenMemberRemovedFromSharedVault_losesAccessToOwnCopy() throws Exception
     {
         Vault sharedVault = saveVault(owner, VaultType.SHARED, "Shared Vault");
         VaultFolder sharedFolder = saveFolder(sharedVault, "Shared Folder");
@@ -392,7 +392,7 @@ private RecipeUpdateRequest updateRequest(String title, String photoUrl, boolean
         vaultMemberRepository.deleteAll();
 
         mockMvc.perform(get("/recipes/single/{id}", copy.getRecipeId())
-                .with(authentication(authAs(owner.getUserId()))))
+                .with(authentication(authAs(otherUser.getUserId()))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Recipe not found."));
     }
