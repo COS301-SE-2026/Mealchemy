@@ -35,6 +35,11 @@ class AddRecipeScreen extends ConsumerStatefulWidget {
     this.editRecipeId,
     this.initialRecipe,
     this.sharedContext,
+    this.beforeSave,
+    this.canContinueSave,
+    this.onSavingChanged,
+    this.onSaveComplete,
+    this.onSaveFailure,
   });
 
   final int? editRecipeId;
@@ -44,6 +49,11 @@ class AddRecipeScreen extends ConsumerStatefulWidget {
   bool get isEditing => editRecipeId != null;
 
   final SharedRecipeContext? sharedContext;
+  final Future<bool> Function()? beforeSave;
+  final bool Function()? canContinueSave;
+  final ValueChanged<bool>? onSavingChanged;
+  final Future<void> Function()? onSaveComplete;
+  final VoidCallback? onSaveFailure;
 
   @override
   ConsumerState<AddRecipeScreen> createState() => _AddRecipeScreenState();
@@ -69,6 +79,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
   // pre filled once in edit mode when data resolves
   bool _prefilled = false;
   bool _isSaving = false;
+  bool _submitInProgress = false;
   bool _isUploadingPhoto = false;
   bool _isUploadingVideo = false;
   SelectedRecipePhoto? _selectedPhoto;
@@ -280,6 +291,50 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
   }
 
   Future<void> _handleSubmit() async {
+    if (_submitInProgress) return;
+
+    _submitInProgress = true;
+    widget.onSavingChanged?.call(true);
+
+    try {
+      await _submitChanges();
+    } catch (_) {
+      if (!mounted) return;
+
+      widget.onSaveFailure?.call();
+      _showToast(
+        'Could not confirm that your changes were saved. '
+        'Check the recipe before trying again.',
+        kind: ToastKind.error,
+        icon: Icons.error_outline,
+      );
+    } finally {
+      _submitInProgress = false;
+
+      if (mounted) {
+        setState(() => _isSaving = false);
+        widget.onSavingChanged?.call(false);
+      }
+    }
+  }
+
+  bool _canContinueSaving() {
+    if (!mounted) return false;
+
+    if (widget.canContinueSave?.call() ?? true) {
+      return true;
+    }
+
+    _showToast(
+      'Editing access changed. No further changes will be submitted. '
+      'Your draft is still available in this editor.',
+      kind: ToastKind.error,
+      icon: Icons.lock_outline,
+    );
+    return false;
+  }
+
+  Future<void> _submitChanges() async {
     if (_isSaving) return;
     final titleValid = _titleController.text.trim().isNotEmpty;
     final cuisineValid = _selectedCuisine != null;
@@ -308,6 +363,12 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
 
     if (!await _checkSharedEditAccess()) return;
     if (!mounted || _isSaving) return;
+
+    final beforeSave = widget.beforeSave;
+    if (beforeSave != null && !await beforeSave()) return;
+    if (!mounted) return;
+    if (!_canContinueSaving()) return;
+
     final recipeRepo = ref.read(recipeRepositoryProvider);
 
     if (_publishToGlobal && !widget.isEditing) {
@@ -318,7 +379,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
             'This recipe will be added to the Global Vault. Everyone will be able to see it. Are you sure you want to publish it?',
         confirmLabel: 'Publish',
       );
-      if (ok != true) return;
+      if (!mounted || ok != true) return;
     }
 
     final ingredients = _collectIngredients();
@@ -326,6 +387,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
 
     setState(() => _isSaving = true);
 
+    if (!_canContinueSaving()) return;
     String? replacementVideoUrl;
     if (widget.isEditing && _selectedVideo != null) {
       try {
@@ -336,8 +398,12 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       } catch (_) {
         if (!mounted) return;
         setState(() => _isSaving = false);
+        widget.onSaveFailure?.call();
         _showToast(
-          'Could not upload the video. Changes were not saved.',
+          widget.beforeSave == null
+              ? 'Could not upload the video. Changes were not saved.'
+              : 'Could not confirm the video upload. Recipe details were '
+                  'not submitted. Reload before trying again.',
           kind: ToastKind.error,
           icon: Icons.error_outline,
         );
@@ -345,6 +411,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       }
     }
 
+    if (!_canContinueSaving()) return;
     String? replacementPhotoUrl;
     if (widget.isEditing && _selectedPhoto != null) {
       try {
@@ -355,8 +422,12 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       } catch (_) {
         if (!mounted) return;
         setState(() => _isSaving = false);
+        widget.onSaveFailure?.call();
         _showToast(
-          'Could not upload the photo. Changes were not saved.',
+          widget.beforeSave == null
+              ? 'Could not upload the photo. Changes were not saved.'
+              : 'Could not confirm the photo upload. Recipe details were '
+                  'not submitted. Reload before trying again.',
           kind: ToastKind.error,
           icon: Icons.error_outline,
         );
@@ -381,6 +452,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       steps: widget.isEditing ? steps : null,
     );
 
+    if (!_canContinueSaving()) return;
     final saved = await ref.read(addRecipeProvider.notifier).submit(
           recipe,
           folderId: widget.isEditing ? null : _selectedFolderId,
@@ -388,8 +460,11 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
           removePhoto: widget.isEditing && _removePhoto,
           removeVideo: widget.isEditing && _removeVideo,
         );
+    if (!mounted) return;
+
     if (saved == null) {
-      if (mounted) setState(() => _isSaving = false);
+      setState(() => _isSaving = false);
+      widget.onSaveFailure?.call();
       return;
     }
 
@@ -471,6 +546,13 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       _showToast(widget.isEditing ? 'Changes saved' : 'Recipe saved',
           kind: ToastKind.success, icon: Icons.check_circle_outline);
     }
+
+    final onSaveComplete = widget.onSaveComplete;
+    if (onSaveComplete != null) {
+      await onSaveComplete();
+    }
+
+    if (!mounted) return;
 
     ref.read(addRecipeProvider.notifier).reset();
     if (context.canPop()) context.pop();

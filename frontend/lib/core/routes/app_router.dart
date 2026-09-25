@@ -30,7 +30,7 @@ import '../../features/shopping_lists/screens/shopping_list_detail_screen.dart';
 import '../../features/shopping_lists/screens/add_shopping_list_item_screen.dart';
 import '../../features/guided_discovery/screens/guided_discovery_screen.dart';
 import '../../features/help/screens/help_screen.dart';
-
+import '../../features/recipe/screens/shared_recipe_edit_screen.dart';
 import '../../features/recipe/models/recipe.dart';
 
 import '../../features/recipe/providers/shared_recipe_edit_provider.dart';
@@ -277,10 +277,9 @@ Widget _buildRecipeEditor(
       builder: (context, ref, _) {
         final session = ref.watch(vaultSessionProvider);
 
-        return AddRecipeScreen(
+        return SharedRecipeEditScreen(
           key: ValueKey((sharedContext, session)),
-          editRecipeId: id,
-          sharedContext: sharedContext,
+          target: sharedContext,
         );
       },
     );
