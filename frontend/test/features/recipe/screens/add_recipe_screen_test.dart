@@ -498,8 +498,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text(label).last);
     await tester.pumpAndSettle();
-    await tester.tapAt(const Offset(5, 5));
-    await tester.pumpAndSettle();
+    if (trigger.evaluate().isNotEmpty) {
+      await tester.tapAt(const Offset(5, 5));
+      await tester.pumpAndSettle();
+    }
   }
 
   testWidgets('shows a loading indicator while cuisines are loading',

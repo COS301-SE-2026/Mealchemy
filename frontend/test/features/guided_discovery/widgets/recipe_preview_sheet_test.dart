@@ -111,7 +111,7 @@ void main() {
       (tester) async {
     await pumpSheet(tester, recWithReasons);
     expect(
-      find.text('Matched 8 of 9 ingredients  you already have on hand.'),
+      find.text('Matched 8 of 9 ingredients you already have on hand.'),
       findsOneWidget,
     );
     expect(find.text("You haven't tried this recipe before."), findsOneWidget);
