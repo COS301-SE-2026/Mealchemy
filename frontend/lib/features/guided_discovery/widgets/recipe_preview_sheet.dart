@@ -4,6 +4,7 @@ import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/recommendation.dart';
 import '../models/signal_scores.dart';
+import '../models/signal.dart';
 
 // Quick look sheet for a recommended card
 class RecipePreviewSheet extends StatelessWidget {
@@ -63,7 +64,10 @@ class RecipePreviewSheet extends StatelessWidget {
             const SizedBox(height: 20),
             _PreviewStats(recommendation: recommendation),
             const SizedBox(height: 18),
-            _MatchReasonCard(signals: recommendation.scoreBreakdown),
+            _MatchReasonCard(
+              signals: recommendation.scoreBreakdown,
+              highlights: recommendation.transparency,
+            ),
             if (recommendation.pantryGapCount > 0) ...[
               const SizedBox(height: 18),
               _MissingIngredients(
@@ -242,9 +246,10 @@ class _PreviewStat extends StatelessWidget {
 
 // Turned the top score signals into a short human readable explanation of why this recipe was recommended
 class _MatchReasonCard extends StatelessWidget {
-  const _MatchReasonCard({required this.signals});
+  const _MatchReasonCard({required this.signals, required this.highlights});
 
   final SignalScores signals;
+  final List<Signal> highlights;
 
   @override
   Widget build(BuildContext context) {
@@ -256,32 +261,38 @@ class _MatchReasonCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.12)),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.auto_awesome, color: AppColors.accent, size: 20),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Why this matches you',
-                  style: AppTextStyles.label.copyWith(
-                    color: AppColors.primary,
-                    fontSize: 11,
-                  ),
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome, color: AppColors.accent, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'Why this matches you',
+                style: AppTextStyles.label.copyWith(
+                  color: AppColors.primary,
+                  fontSize: 11,
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  _reason(signals),
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.tertiaryMuted,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
+          const SizedBox(height: 12),
+          if (highlights.isEmpty)
+            Text(
+              _reason(signals),
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.tertiaryMuted,
+              ),
+            )
+          else
+            for (var i = 0; i < highlights.length; i++) ...[
+              if (i > 0) const SizedBox(height: 12),
+              _HighlightRow(
+                highlight: highlights[i],
+                color: i == 0 ? AppColors.primary : AppColors.accent,
+              ),
+            ],
         ],
       ),
     );
@@ -300,6 +311,123 @@ class _MatchReasonCard extends StatelessWidget {
     if (top.isEmpty) return 'A solid all-round match for your profile.';
     if (top.length == 1) return 'Recommended because ${top.first}.';
     return 'Recommended because ${top.first}, and ${top.last}.';
+  }
+}
+
+class _HighlightRow extends StatelessWidget {
+  const _HighlightRow({required this.highlight, required this.color});
+
+  final Signal highlight;
+  final Color color;
+
+  static const _icons = {
+    'pantry_match': Icons.kitchen_outlined,
+    'cuisine': Icons.restaurant_menu,
+    'nutrition': Icons.fitness_center,
+    'freshness': Icons.eco_outlined,
+    'novelty': Icons.explore_outlined,
+  };
+
+  // novelty and freshness signals
+  static const _tags = {
+    'novelty': 'NEW',
+    'freshness': 'USE SOON',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = highlight.percentage.clamp(0, 100);
+
+    return Row(
+      children: [
+        Icon(
+          _icons[highlight.type] ?? Icons.auto_awesome,
+          color: color,
+          size: 18,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            highlight.message,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textLight,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        _tags.containsKey(highlight.type)
+            ? _Tag(label: _tags[highlight.type]!, color: color)
+            : _Ring(pct: pct, color: color),
+      ],
+    );
+  }
+}
+
+class _Ring extends StatelessWidget {
+  const _Ring({required this.pct, required this.color});
+
+  final int pct;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 32,
+      height: 32,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox.expand(
+            child: CircularProgressIndicator(
+              value: pct / 100,
+              strokeWidth: 2.5,
+              strokeCap: StrokeCap.round,
+              backgroundColor: color.withValues(alpha: 0.12),
+              valueColor: AlwaysStoppedAnimation(color),
+            ),
+          ),
+          Text.rich(
+            TextSpan(
+              text: '$pct',
+              children: const [
+                TextSpan(
+                  text: '%',
+                  style: TextStyle(fontSize: 5.5),
+                ),
+              ],
+            ),
+            style: AppTextStyles.bodyBold.copyWith(
+              color: color,
+              fontSize: 8,
+              height: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Tag extends StatelessWidget {
+  const _Tag({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        label,
+        style: AppTextStyles.label.copyWith(color: color, fontSize: 8),
+      ),
+    );
   }
 }
 
@@ -323,7 +451,9 @@ class _MissingIngredients extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            gapCount == 1 ? "You're missing 1 item" : "You're missing $gapCount items",
+            gapCount == 1
+                ? "You're missing 1 item"
+                : "You're missing $gapCount items",
             style: AppTextStyles.title.copyWith(color: AppColors.primary),
           ),
           if (missing.isNotEmpty) ...[

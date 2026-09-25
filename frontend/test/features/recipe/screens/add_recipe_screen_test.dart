@@ -8,6 +8,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/core/shared_widgets/atoms/app_toast_host.dart';
+import 'package:mealchemy/features/profile/models/preference_option.dart';
+import 'package:mealchemy/features/profile/providers/profile_provider.dart';
+import 'package:mealchemy/features/recipe/models/equipment.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
@@ -115,6 +118,9 @@ class _RecordingRepo implements RecipeRepository {
 
   @override
   Future<List<RecipeStep>> getRecipeSteps(int recipeId) async => const [];
+
+  @override
+  Future<List<Equipment>> getRecipeEquipment(int recipeId) async => const [];
 
   @override
   Future<void> deleteRecipe(int recipeId) async {}
@@ -302,6 +308,11 @@ class _FakeVaultRepo implements VaultRepository {
       throw UnimplementedError('${invocation.memberName} not stubbed');
 }
 
+const _equipmentOptions = [
+  PreferenceOption(id: 1, value: 'OVEN', label: 'Oven'),
+  PreferenceOption(id: 2, value: 'STOVETOP', label: 'Stovetop'),
+];
+
 const _editRecipe = Recipe(
   recipeId: 77,
   title: 'Existing Risotto',
@@ -353,6 +364,7 @@ void main() {
       overrides: [
         recipeRepositoryProvider.overrideWithValue(recipeRepo),
         unitOptionsProvider.overrideWithValue(unitOptions),
+        equipmentProvider.overrideWith((ref) async => _equipmentOptions),
         recipePhotoPickerProvider.overrideWithValue(
           photoPicker ?? _FakePhotoPicker(),
         ),
@@ -478,6 +490,20 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> pickEquipment(WidgetTester tester, String label) async {
+    final trigger = find.text('Add equipment');
+    await tester.ensureVisible(trigger);
+    await tester.pumpAndSettle();
+    await tester.tap(trigger);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(label).last);
+    await tester.pumpAndSettle();
+    if (trigger.evaluate().isNotEmpty) {
+      await tester.tapAt(const Offset(5, 5));
+      await tester.pumpAndSettle();
+    }
+  }
+
   testWidgets('shows a loading indicator while cuisines are loading',
       (tester) async {
     await pumpAddRecipe(tester, recipeRepo: _SlowCuisinesRepo());
@@ -500,6 +526,7 @@ void main() {
     expect(find.text('Recipe Details'), findsOneWidget);
     expect(find.text('Recipe Photo'), findsOneWidget);
     expect(find.text('Time & Servings'), findsOneWidget);
+    expect(find.text('Equipment'), findsOneWidget);
     expect(find.text('Save To'), findsOneWidget);
     expect(find.text('Ingredients'), findsOneWidget);
     expect(find.text('Preparation Steps'), findsOneWidget);
@@ -658,6 +685,23 @@ void main() {
     expect(repo.savedRecipes.first.description, isNull);
   });
 
+  testWidgets('picked equipment is saved with a new recipe', (tester) async {
+    final repo = _RecordingRepo();
+    await pumpAddRecipe(tester, recipeRepo: repo);
+    await tester.pumpAndSettle();
+
+    await fillRequiredFields(tester);
+    await pickEquipment(tester, 'Oven');
+
+    expect(find.text('Oven'), findsOneWidget);
+
+    await tapCreateRecipe(tester);
+
+    final equipment = repo.savedRecipes.single.equipment;
+    expect(equipment?.single.id, 1);
+    expect(equipment?.single.value, 'OVEN');
+  });
+
   testWidgets('edit mode prefills the form and shows edit labels',
       (tester) async {
     await pumpAddRecipe(
@@ -675,6 +719,30 @@ void main() {
     expect(find.text('Creamy and rich'), findsOneWidget);
     expect(find.text('Toast the rice'), findsOneWidget);
     expect(find.text('Add stock slowly'), findsOneWidget);
+  });
+
+  testWidgets('edit mode prefills equipment and saves the full list',
+      (tester) async {
+    final repo = _RecordingRepo();
+    await pumpAddRecipe(
+      tester,
+      recipeRepo: repo,
+      editRecipeId: 77,
+      initialRecipe: _editRecipe.copyWith(
+        equipment: const [
+          Equipment(id: 2, value: 'STOVETOP', label: 'Stovetop'),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Stovetop'), findsOneWidget);
+
+    await pickEquipment(tester, 'Oven');
+    await tapSaveChanges(tester);
+
+    final ids = repo.updatedRecipes.single.$2.equipment?.map((e) => e.id);
+    expect(ids, [2, 1]);
   });
 
   testWidgets('saving an edit calls updateRecipeFull with the recipe id',

@@ -15,7 +15,8 @@ class RecipeTabBar extends StatelessWidget {
       color: AppColors.bgLight,
       child: TabBar(
         controller: controller,
-        isScrollable: false,
+        isScrollable: true,
+        tabAlignment: TabAlignment.start,
         labelColor: AppColors.primary,
         unselectedLabelColor: AppColors.textMuted,
         indicatorColor: AppColors.primary,
@@ -27,6 +28,7 @@ class RecipeTabBar extends StatelessWidget {
         tabs: const [
           Tab(text: 'Overview'),
           Tab(text: 'Ingredients'),
+          Tab(text: 'Equipment'),
           Tab(text: 'Steps'),
           Tab(text: 'Nutrition'),
         ],
