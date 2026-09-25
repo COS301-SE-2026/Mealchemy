@@ -620,7 +620,7 @@ void main() {
     voice.callbacks?.onError('error_language_unavailable');
     await tester.pumpAndSettle();
     expect(
-      find.text('On-device voice unavailable. Tap Speak to try again.'),
+      find.text('Voice recognition unavailable. Tap Speak to try again or check Device Settings'),
       findsOneWidget,
     );
     await tester.tap(find.byKey(const Key('cook-next-button')));

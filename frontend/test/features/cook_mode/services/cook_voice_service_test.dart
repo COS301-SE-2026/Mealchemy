@@ -60,7 +60,7 @@ SpeechRecognitionResult _result(String words, ResultType type) =>
     );
 
 void main() {
-  test('requires on-device recognition and ignores partial results', () async {
+  test('uses platform recognition and ignores partial results', () async {
     final speech = _FakeSpeechToText();
     final service = SpeechToTextCookVoiceService(speech: speech);
     final results = <CookVoiceResult>[];
@@ -75,7 +75,7 @@ void main() {
     expect(available, isTrue);
 
     await service.listen();
-    expect(speech.options?.onDevice, isTrue);
+    expect(speech.options?.onDevice, isFalse);
     expect(speech.options?.partialResults, isFalse);
     expect(listening.last, isTrue);
     speech.soundLevelListener?.call(4.2);

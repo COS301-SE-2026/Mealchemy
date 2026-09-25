@@ -25,6 +25,24 @@ void main() {
     expect(restored.endsAt.isUtc, isTrue);
   });
 
+  test('persists an optional timer name and includes it in the label', () {
+    final namedTimer = CookTimer(
+      notificationId: 43,
+      recipeId: 7,
+      recipeTitle: 'Tomato soup',
+      stepIndex: 1,
+      stepNumber: 2,
+      startedAt: startedAt,
+      endsAt: startedAt.add(const Duration(minutes: 20)),
+      name: 'Croutons',
+    );
+
+    final restored = CookTimer.fromJson(namedTimer.toJson());
+
+    expect(restored.name, 'Croutons');
+    expect(restored.label, 'Croutons, Tomato soup, step 2');
+  });
+
   test('calculates remaining time without returning negative durations', () {
     expect(
       timer.remainingAt(startedAt.add(const Duration(minutes: 5))),

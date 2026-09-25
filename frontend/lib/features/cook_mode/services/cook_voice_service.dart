@@ -94,7 +94,7 @@ class SpeechToTextCookVoiceService implements CookVoiceService {
           _callbacks?.onSoundLevel(level);
         },
         listenOptions: SpeechListenOptions(
-          onDevice: true,
+          onDevice: false,
           partialResults: false,
           cancelOnError: true,
           listenMode: ListenMode.confirmation,
