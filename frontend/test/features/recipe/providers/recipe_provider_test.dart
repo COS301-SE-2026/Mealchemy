@@ -7,6 +7,7 @@ import 'package:mealchemy/features/offline/data/offline_cache_database.dart';
 import 'package:mealchemy/features/offline/data/offline_cache_store.dart';
 import 'package:mealchemy/features/offline/providers/offline_cache_provider.dart';
 import 'package:mealchemy/features/offline/repositories/cached_recipe_repository.dart';
+import 'package:mealchemy/features/recipe/models/equipment.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
@@ -79,6 +80,9 @@ class _RecordingRepo implements RecipeRepository {
   Future<List<RecipeStep>> getRecipeSteps(int recipeId) async => const [];
 
   @override
+  Future<List<Equipment>> getRecipeEquipment(int recipeId) async => const [];
+
+  @override
   Future<void> deleteRecipe(int recipeId) async {}
 }
 
@@ -130,6 +134,12 @@ class _CompleteRecipeRepo extends _RecordingRepo {
     return const [
       RecipeStep(stepId: 1, recipeId: 7, stepNr: 1, content: 'Mix'),
     ];
+  }
+
+  @override
+  Future<List<Equipment>> getRecipeEquipment(int recipeId) async {
+    if (error case final error?) throw error;
+    return const [Equipment(id: 3, value: 'OVEN', label: 'Oven')];
   }
 }
 
@@ -266,6 +276,7 @@ void main() {
 
       expect(recipe.ingredients?.single.name, 'Milk');
       expect(recipe.steps?.single.content, 'Mix');
+      expect(recipe.equipment?.single.label, 'Oven');
       expect(cached?.ingredients?.single.name, 'Milk');
       expect(cached?.steps?.single.content, 'Mix');
     });
@@ -347,6 +358,7 @@ void main() {
 
       expect(recipe.ingredients?.single.name, 'Milk');
       expect(recipe.steps?.single.content, 'Mix');
+      expect(recipe.equipment?.single.value, 'OVEN');
     });
   });
 
@@ -461,6 +473,22 @@ void main() {
       expect(repo.updated.single.$2, _validRecipe);
       expect(repo.updated.single.$3, isTrue);
       expect(container.read(addRecipeProvider).isSuccess, true);
+    });
+
+    test('edit submit passes the chosen equipment through to the repo',
+        () async {
+      final repo = _RecordingRepo();
+      final container = makeContainer(recipeRepo: repo);
+      addTearDown(container.dispose);
+
+      final withOven = _validRecipe.copyWith(
+        equipment: const [Equipment(id: 3, value: 'OVEN', label: 'Oven')],
+      );
+      await container
+          .read(addRecipeProvider.notifier)
+          .submit(withOven, recipeId: 77);
+
+      expect(repo.updated.single.$2.equipment?.single.id, 3);
     });
 
     test('reset returns the state to its defaults', () async {
