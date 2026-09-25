@@ -26,12 +26,15 @@ import '../widgets/ingredient_editor_row.dart';
 import '../widgets/recipe_photo_selector.dart';
 import '../widgets/recipe_video_selector.dart';
 import '../widgets/step_editor_row.dart';
+import '../providers/shared_recipe_edit_provider.dart';
+import '../../vault/providers/shared_vault_access_provider.dart';
 
 class AddRecipeScreen extends ConsumerStatefulWidget {
   const AddRecipeScreen({
     super.key,
     this.editRecipeId,
     this.initialRecipe,
+    this.sharedContext,
   });
 
   final int? editRecipeId;
@@ -39,6 +42,8 @@ class AddRecipeScreen extends ConsumerStatefulWidget {
   final Recipe? initialRecipe;
 
   bool get isEditing => editRecipeId != null;
+
+  final SharedRecipeContext? sharedContext;
 
   @override
   ConsumerState<AddRecipeScreen> createState() => _AddRecipeScreenState();
@@ -275,6 +280,7 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
   }
 
   Future<void> _handleSubmit() async {
+    if (_isSaving) return;
     final titleValid = _titleController.text.trim().isNotEmpty;
     final cuisineValid = _selectedCuisine != null;
     final timeValid = int.tryParse(_prepTimeController.text) != null &&
@@ -300,6 +306,8 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       return;
     }
 
+    if (!await _checkSharedEditAccess()) return;
+    if (!mounted || _isSaving) return;
     final recipeRepo = ref.read(recipeRepositoryProvider);
 
     if (_publishToGlobal && !widget.isEditing) {
@@ -535,6 +543,43 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       }
     });
 
+    final sharedContext = widget.sharedContext;
+
+    if (sharedContext != null) {
+      if (sharedContext.recipeId != widget.editRecipeId) {
+        return _sharedAccessPage(
+          loading: false,
+          message: 'This shared-recipe link is invalid.',
+        );
+      }
+
+      final access = ref.watch(
+        sharedRecipeEditAccessProvider(sharedContext),
+      );
+
+      if (access.isLoading) {
+        return _sharedAccessPage(
+          loading: true,
+          message: 'Checking shared-recipe editing access…',
+        );
+      }
+
+      if (access.hasError) {
+        return _sharedAccessPage(
+          loading: false,
+          message: 'This shared recipe is unavailable, or editing access '
+              'could not be verified. Check your connection and try again.',
+        );
+      }
+
+      if (access.valueOrNull != true) {
+        return _sharedAccessPage(
+          loading: false,
+          message: 'You can view this recipe, but you do not have '
+              'permission to edit it.',
+        );
+      }
+    }
     final isReadOnly = ref.watch(offlineReadOnlyProvider);
     if (isReadOnly) {
       return Scaffold(
@@ -861,6 +906,94 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Future<bool> _checkSharedEditAccess() async {
+    final target = widget.sharedContext;
+    if (target == null) return true;
+
+    final session = ref.read(vaultSessionProvider);
+
+    try {
+      ref.invalidate(sharedRecipeEditAccessProvider(target));
+
+      final allowed = await ref.read(
+        sharedRecipeEditAccessProvider(target).future,
+      );
+
+      if (!mounted || ref.read(vaultSessionProvider) != session) {
+        return false;
+      }
+
+      if (!allowed) {
+        _showToast(
+          'You do not have permission to edit this shared recipe.',
+          kind: ToastKind.error,
+          icon: Icons.error_outline,
+        );
+      }
+
+      return allowed;
+    } catch (_) {
+      if (mounted && ref.read(vaultSessionProvider) == session) {
+        _showToast(
+          'Could not verify editing access. Your changes have not been saved.',
+          kind: ToastKind.error,
+          icon: Icons.error_outline,
+        );
+      }
+
+      return false;
+    }
+  }
+
+  Widget _sharedAccessPage({
+    required bool loading,
+    required String message,
+  }) {
+    return Scaffold(
+      backgroundColor: AppColors.bgLight,
+      appBar: AppBar(
+        title: const Text('Edit shared recipe'),
+        leading: IconButton(
+          tooltip: 'Back',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/vault');
+            }
+          },
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (loading) ...[
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+              ],
+              Text(message, textAlign: TextAlign.center),
+              if (!loading) ...[
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () {
+                    ref.invalidate(
+                      sharedRecipeEditAccessProvider(widget.sharedContext!),
+                    );
+                  },
+                  child: const Text('Check again'),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
