@@ -12,14 +12,17 @@ import '../../vault/models/vault_folder.dart';
 import '../../vault/providers/vault_provider.dart';
 import '../../vault/providers/vault_repository_provider.dart';
 import '../../../core/connectivity/network_status_provider.dart';
+import '../../vault/models/vault_folder_recipe.dart';
+import '../../vault/providers/shared_vault_access_provider.dart';
+import '../providers/recipe_provider.dart';
 
 // You pick a vault, then a folder in it, then save the recipe into that folder.
-Future<void> showSaveToVaultSheet({
+Future<VaultFolderRecipe?> showSaveToVaultSheet({
   required BuildContext context,
   required WidgetRef ref,
   required int recipeId,
 }) {
-  return showDialog(
+  return showDialog<VaultFolderRecipe>(
     context: context,
     builder: (_) => Dialog(
       backgroundColor: AppColors.surfaceWhite,
@@ -57,7 +60,6 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
         children: [
           _header(),
           const SizedBox(height: 24),
-
           Text('VAULT',
               style: AppTextStyles.label
                   .copyWith(color: AppColors.brown, letterSpacing: 1.5)),
@@ -70,7 +72,6 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
             data: (vaults) => _vaultPicker(vaults),
           ),
           const SizedBox(height: 18),
-
           Text('FOLDER',
               style: AppTextStyles.label
                   .copyWith(color: AppColors.brown, letterSpacing: 1.5)),
@@ -80,7 +81,6 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
           else
             _folderSection(_vaultId!),
           const SizedBox(height: 26),
-
           AppButton.primary(
             label: 'Save Recipe',
             isFullWidth: true,
@@ -235,26 +235,60 @@ class _SaveToVaultSheetState extends ConsumerState<_SaveToVaultSheet> {
   }
 
   Future<void> _save() async {
-    setState(() => _saving = true);
-    final feedback = ref.read(feedbackProvider.notifier);
+    if (_saving || _vaultId == null || _folderId == null) return;
+
+    final vaultId = _vaultId!;
+    final folderId = _folderId!;
     final folderName = _folderName;
+    final session = ref.read(vaultSessionProvider);
+    final feedback = ref.read(feedbackProvider.notifier);
+
+    final vaults = ref.read(vaultsProvider).valueOrNull ?? [];
+    final isShared = vaults.any(
+      (vault) =>
+          vault.vaultId == vaultId && vault.vaultType == VaultTypes.shared,
+    );
+
+    setState(() => _saving = true);
+
     try {
-      await ref
+      final association = await ref
           .read(vaultRepositoryProvider)
-          .addRecipeToFolder(_folderId!, widget.recipeId);
-      ref.invalidate(vaultFoldersProvider(_vaultId!));
-      ref.invalidate(folderRecipesProvider(_folderId!));
-      ref.invalidate(folderRecipeDisplayProvider(_folderId!));
-      if (mounted) Navigator.pop(context);
+          .addRecipeToFolder(folderId, widget.recipeId);
+
+      if (!mounted || ref.read(vaultSessionProvider) != session) return;
+
+      if (association.folderId != folderId || association.recipeId <= 0) {
+        throw const FormatException('Unexpected saved recipe response.');
+      }
+
+      ref.invalidate(vaultFoldersProvider(vaultId));
+      ref.invalidate(folderRecipesProvider(folderId));
+      ref.invalidate(folderRecipeDisplayProvider(folderId));
+
+      //backend may return a different ID for a shared copy
+      ref.invalidate(recipeByIdProvider(association.recipeId));
+      ref.invalidate(recipeDetailProvider(association.recipeId));
+
       feedback.showShort(
-        folderName != null ? 'Saved to $folderName' : 'Recipe saved to vault',
+        isShared
+            ? 'Shared recipe copy saved'
+            : folderName != null
+                ? 'Saved to $folderName'
+                : 'Recipe saved to vault',
         kind: ToastKind.success,
         icon: Icons.bookmark_added,
       );
+
+      Navigator.pop(context, association);
     } catch (_) {
+      if (!mounted || ref.read(vaultSessionProvider) != session) return;
+
       setState(() => _saving = false);
+
       feedback.showShort(
-        'Could not save. Try again.',
+        'Could not confirm the save. Check the destination folder '
+        'before trying again.',
         kind: ToastKind.error,
         icon: Icons.error_outline,
       );
