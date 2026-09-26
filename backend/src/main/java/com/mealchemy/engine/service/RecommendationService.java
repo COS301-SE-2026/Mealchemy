@@ -280,10 +280,9 @@ public class RecommendationService {
     }
 
     // Helper function to build the user state object
-    private UserStateRequest buildUserState(Integer userId)
+    private UserStateRequest buildUserState(Integer userId, List<PantryEntryRequest> pantryOverride)
     {
         UserPreferences preferences = userPreferencesRepository.findByUserId(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User preferences not initialized."));
-
         UserPreferenceWeights weights = userPreferenceWeightsRepository.findByUserId(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User preference weights not initialized."));
 
         List<UserCuisineAffinities> affinities = userCuisineAffinitiesRepository.findAllByUserId(userId);
@@ -291,20 +290,19 @@ public class RecommendationService {
 
         PreferenceWeightsRequest weightsRequest = buildNormalizedWeights(weights);
 
-        return new UserStateRequest(
-            userId,
-            preferences.getAllergies(),
-            preferences.getDislikedIngredients(),
-            preferences.getDietaryRestrictions(),
-            preferences.getNutritionalGoals(),
-            weightsRequest,
-            cuisineAffinityMap,
-            buildPantryEntries(userId),
-            buildSwipeHistory(userId)
-        );
+        return new UserStateRequest(userId, preferences.getAllergies(), preferences.getDislikedIngredients(),
+            preferences.getDietaryRestrictions(), preferences.getNutritionalGoals(), weightsRequest,
+            cuisineAffinityMap, pantryOverride, buildSwipeHistory(userId));
+    }
+
+    // Private overload, keeps original getRecommendations intact
+    private UserStateRequest buildUserState(Integer userId)
+    {
+        return buildUserState(userId, buildPantryEntries(userId));
     }
 
     // get all recommended recipes 
+    // Original method after tail-factorisation
     public EnrichedRecommendationResponse getRecommendations(Integer userId, Integer batchSize, List<Integer> excludeRecipeIds, Integer seed, RecommendationFilters filters)
     {
         if (batchSize != null && batchSize <= 0)
@@ -313,25 +311,37 @@ public class RecommendationService {
         }
 
         List<String> requiredTags = validateAndResolveFilters(filters);
-
         UserStateRequest userState = buildUserState(userId);
-
         CandidatePoolResult candidatePoolResult = buildCandidatePool(userId, filters);
 
-        // If returned pool is empty here already, don't even go to the engine
+        return runRecommendation(userState, candidatePoolResult, batchSize, excludeRecipeIds, seed, requiredTags);
+    }
+
+    // Overload used by MealPlanRecommendationService
+    public EnrichedRecommendationResponse getRecommendations(Integer userId, Integer batchSize, List<Integer> excludeRecipeIds, Integer seed,
+        List<PantryEntryRequest> pantryOverride, List<String> requiredTags)
+    {
+        if (batchSize != null && batchSize <= 0)
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "batchSize must be greater than 0.");
+        }
+
+        UserStateRequest userState = buildUserState(userId, pantryOverride);
+        CandidatePoolResult candidatePoolResult = buildCandidatePool(userId, RecommendationFilters.none());
+
+        return runRecommendation(userState, candidatePoolResult, batchSize, excludeRecipeIds, seed, requiredTags);
+    }
+
+    // Factorised tail
+    private EnrichedRecommendationResponse runRecommendation(UserStateRequest userState, CandidatePoolResult candidatePoolResult,
+        Integer batchSize, List<Integer> excludeRecipeIds, Integer seed, List<String> requiredTags)
+    {
         if (candidatePoolResult.pool().isEmpty())
         {
             return EnrichedRecommendationResponse.empty();
         }
 
-        RecommendationRequest request = new RecommendationRequest(
-            userState,
-            candidatePoolResult.pool(),
-            batchSize,
-            excludeRecipeIds,
-            seed,
-            requiredTags
-        );
+        RecommendationRequest request = new RecommendationRequest(userState, candidatePoolResult.pool(), batchSize, excludeRecipeIds, seed, requiredTags);
 
         RecommendationResponse engineResponse;
         try
@@ -346,31 +356,17 @@ public class RecommendationService {
         List<EnrichedRecommendationItem> enrichedItems = engineResponse.recommendations().stream()
             .map(item -> {
                 Recipe recipe = candidatePoolResult.recipeById().get(item.recipeId());
-                if (recipe == null)
-                {
-                    return null;
-                }
-                return new EnrichedRecommendationItem(
-                    item.recipeId(),
-                    item.cuisineType(),
-                    item.score(),
-                    item.scoreBreakdown(),
-                    item.pantryGapCount(),
-                    item.missingIngredients(),
-                    item.transparency(),
-                    RecipeResponse.from(recipe)
-                );
+                if (recipe == null) return null;
+                return new EnrichedRecommendationItem(item.recipeId(), item.cuisineType(), item.score(), item.scoreBreakdown(),
+                    item.pantryGapCount(), item.missingIngredients(), item.transparency(), RecipeResponse.from(recipe));
             })
             .filter(Objects::nonNull)
             .toList();
 
-        return new EnrichedRecommendationResponse(
-            enrichedItems,
-            engineResponse.cuisineAllocation(),
-            engineResponse.totalCandidatesAfterFilter(),
-            engineResponse.totalRecipesConsidered()
-        );
+        return new EnrichedRecommendationResponse(enrichedItems, engineResponse.cuisineAllocation(),
+            engineResponse.totalCandidatesAfterFilter(), engineResponse.totalRecipesConsidered());
     }
+
 
     // Helper function to build the swipe history object
     private List<SwipeHistoryEntryRequest> buildSwipeHistory(Integer userId)
@@ -386,22 +382,22 @@ public class RecommendationService {
 
     // Helper to ensure weights are normalized
     private PreferenceWeightsRequest buildNormalizedWeights(UserPreferenceWeights weights) {
-    BigDecimal total = weights.getPantryMatch()
-        .add(weights.getCuisine())
-        .add(weights.getNutrition())
-        .add(weights.getFreshness())
-        .add(weights.getNovelty());
+        BigDecimal total = weights.getPantryMatch()
+            .add(weights.getCuisine())
+            .add(weights.getNutrition())
+            .add(weights.getFreshness())
+            .add(weights.getNovelty());
 
-    if (total.compareTo(BigDecimal.ZERO) <= 0) {
-        total = BigDecimal.ONE;
+        if (total.compareTo(BigDecimal.ZERO) <= 0) {
+            total = BigDecimal.ONE;
+        }
+
+        BigDecimal pantryMatch = weights.getPantryMatch().divide(total, 10, RoundingMode.HALF_UP);
+        BigDecimal cuisine = weights.getCuisine().divide(total, 10, RoundingMode.HALF_UP);
+        BigDecimal nutrition = weights.getNutrition().divide(total, 10, RoundingMode.HALF_UP);
+        BigDecimal freshness = weights.getFreshness().divide(total, 10, RoundingMode.HALF_UP);
+        BigDecimal novelty = BigDecimal.ONE.subtract(pantryMatch).subtract(cuisine).subtract(nutrition).subtract(freshness);
+
+        return new PreferenceWeightsRequest(pantryMatch, cuisine, nutrition, freshness, novelty);
     }
-
-    BigDecimal pantryMatch = weights.getPantryMatch().divide(total, 10, RoundingMode.HALF_UP);
-    BigDecimal cuisine = weights.getCuisine().divide(total, 10, RoundingMode.HALF_UP);
-    BigDecimal nutrition = weights.getNutrition().divide(total, 10, RoundingMode.HALF_UP);
-    BigDecimal freshness = weights.getFreshness().divide(total, 10, RoundingMode.HALF_UP);
-    BigDecimal novelty = BigDecimal.ONE.subtract(pantryMatch).subtract(cuisine).subtract(nutrition).subtract(freshness);
-
-    return new PreferenceWeightsRequest(pantryMatch, cuisine, nutrition, freshness, novelty);
-}
 }
