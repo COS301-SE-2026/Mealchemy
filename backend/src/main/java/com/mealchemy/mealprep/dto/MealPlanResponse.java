@@ -1,4 +1,4 @@
-package com.mealchemy.backend.dto.mealplan;
+package com.mealchemy.mealprep.dto.mealplan;
 
 /* Import libraries */
 
