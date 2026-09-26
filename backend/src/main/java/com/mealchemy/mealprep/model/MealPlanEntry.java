@@ -104,7 +104,7 @@ public class MealPlanEntry {
         return createdAt;
     }
 
-    public OffsetDateTime getupdatedAt()
+    public OffsetDateTime getUpdatedAt()
     {
         return updatedAt;
     }
@@ -120,6 +120,41 @@ public class MealPlanEntry {
     }
 
     /* Setters */
+
+    public void setRecipeId(Integer recipeIdIn)
+    {
+        recipeId = recipeIdIn;
+    }
+
+    public void setEntryDate(LocalDate entryDateIn)
+    {
+        entryDate = entryDateIn;
+    }
+
+    public void setMealSlot(MealSlot mealSlotIn)
+    {
+        mealSlot = mealSlotIn;
+    }
+
+    public void setMealTime(LocalTime mealTimeIn)
+    {
+        mealTime = mealTimeIn;
+    }
+
+    public void setSource(MealPlanEntrySource sourceIn)
+    {
+        source = sourceIn;
+    }
+
+    public void setNote(String noteIn)
+    {
+        note = noteIn;
+    }
+
+    public void setTitle(String titleIn)
+    {
+        title = titleIn;
+    }
 }
 
 
