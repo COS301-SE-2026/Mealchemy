@@ -93,7 +93,7 @@ public class RecommendationService {
     }
 
     // Helper function to build the pantry entries object
-    private List<PantryEntryRequest> buildPantryEntries(Integer userId)
+    public List<PantryEntryRequest> buildPantryEntries(Integer userId)
     {
         List<PantryIngredient> pantryItems = pantryIngredientRepository.findByUserId(userId);
         if (pantryItems == null || pantryItems.isEmpty()) return Collections.emptyList();
