@@ -10,6 +10,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 /* Import classes */
 
+@Entity
+@Table(name = "meal_plans")
 public class MealPlan
 {
     /* Declaring fields */
@@ -19,22 +21,22 @@ public class MealPlan
     @Column(name = "plan_id")
     private Integer planId;
 
-    @Column(name = "vault_id")
+    @Column(name = "vault_id", nullable = false)
     private Integer vaultId;
 
-    @Column(name = "created_by")
+    @Column(name = "created_by", nullable = false)
     private Integer createdBy;
 
     @CreationTimestamp
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    @JoinColumn(mappedBy = "plan")
-    private List<MealPlanEntry> entries;
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MealPlanEntry> entries = new ArrayList<>();
 
     /* Getters */
 
@@ -69,6 +71,16 @@ public class MealPlan
     }
 
     /* Setters */
+
+    public void setVaultId(Integer vaultIdIn)
+    {
+        vaultId = vaultIdIn;
+    }
+
+    public void setCreatedBy(Integer createdByIn)
+    {
+        createdBy = createdByIn;
+    }
 
     public void setEntries(List<MealPlanEntry> entriesIn)
     {
