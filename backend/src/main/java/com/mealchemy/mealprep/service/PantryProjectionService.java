@@ -29,4 +29,24 @@ public class PantryProjectionService {
         this.mealPlanEntryRepository = mealPlanEntryRepository;
         this.recipeIngredientRepository = recipeIngredientRepository;
     }
+
+    // builds a projection of the pantry after all the days before's recipe ingredients have been deducted
+    public List<PantryEntryRequest> buildProjectedPantry(Integer userId, Integer planId, LocalDate beforeDate)
+    {
+        List<PantryEntryRequest> pantry = recommendationService.buildPantryEntries(userId);
+
+        List<MealPlanEntry> priorEntries = mealPlanEntryRepository
+            .findByPlan_PlanIdAndEntryDateLessThanOrderByEntryDateAscMealTimeAsc(planId, beforeDate);
+
+        for (MealPlanEntry entry : priorEntries)
+        {
+            pantry = applyConsumption(pantry, entry.getRecipeId());
+        }
+
+        return pantry;
+    }
+
+    // Function used to "consume" ingredients and build the projection
+    public List<PantryEntryRequest> applyConsumption(List<PantryEntryRequest> pantry, Integer recipeId)
+    {}
 }
