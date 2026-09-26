@@ -6,11 +6,13 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 /* Import classes */
 
-public class MealPlanEntry {
+@Entity
+@Table(name = "meal_plan_recommendation_signals")
+public class MealPlanRecommendationSignal {
     /* Declaring fields */
 
     @Id
@@ -27,6 +29,7 @@ public class MealPlanEntry {
     @Column(name = "cuisine", nullable = false)
     private String cuisine;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "signal_scores", nullable = false)
     private Map<String, Double> signalScores;
 
