@@ -1,8 +1,7 @@
 package com.mealchemy.mealprep.dto;
 
 /* Import libraries */
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import java.util.List;
 
 /* Import classes */
