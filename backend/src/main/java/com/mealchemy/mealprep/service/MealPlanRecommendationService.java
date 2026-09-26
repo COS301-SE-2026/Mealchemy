@@ -39,4 +39,24 @@ public class MealPlanRecommendationService {
         this.mealPlanRepository = mealPlanRepository;
         this.vaultRepository = vaultRepository;
     }
+
+    List<String> mapGoalsToRequiredTags(Integer userId)
+    {
+        UserPreferences preferences = userPreferencesRepository.findByUserId(userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User preferences not initialized."));
+
+        List<String> goals = preferences.getNutritionalGoals();
+        if (goals == null || goals.isEmpty())
+        {
+            return null;
+        }
+
+        List<String> requiredTags = new ArrayList<>();
+        if (goals.stream().anyMatch(goal -> "MEAL_PREP".equalsIgnoreCase(goal)))
+        {
+            requiredTags.add("MEAL_PREP");
+        }
+
+        return requiredTags.isEmpty() ? null : requiredTags;
+    }
 }
