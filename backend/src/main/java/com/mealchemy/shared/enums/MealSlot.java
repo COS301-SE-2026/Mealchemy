@@ -19,7 +19,7 @@ public enum MealSlot
         this.latest = latest;
     }
 
-    boolean allows(LocalTime time)
+    public boolean allows(LocalTime time)
     {
         if (earliest == null || latest == null)
         {
