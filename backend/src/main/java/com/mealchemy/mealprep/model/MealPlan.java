@@ -20,7 +20,7 @@ public class MealPlan
     private Integer planId;
 
     @Column(name = "vault_id")
-    private Integer vaultIt;
+    private Integer vaultId;
 
     @Column(name = "created_by")
     private Integer createdBy;
@@ -37,6 +37,36 @@ public class MealPlan
     private List<MealPlanEntry> entries;
 
     /* Getters */
+
+    private Integer getPlanId()
+    {
+        return planId;
+    }
+
+    private Integer getVaultId()
+    {
+        return vaultId;
+    }
+
+    private Integer getCreatedBy()
+    {
+        return createdBy;
+    }
+
+    private OffsetDateTime getCreatedAt()
+    {
+        return createdAt;
+    }
+
+    private OffsetDateTime getUpdatedAt()
+    {
+        return updatedAt;
+    }
+
+    private List<MealPlanEntry> getEntries()
+    {
+        return entries;
+    }
 
     /* Setters */
 }
