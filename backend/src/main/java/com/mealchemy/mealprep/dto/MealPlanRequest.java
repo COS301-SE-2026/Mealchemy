@@ -1,4 +1,4 @@
-package com.mealchemy.mealprep.dto.mealplan;
+package com.mealchemy.mealprep.dto;
 
 /* Import libraries */
 import jakarta.validation.constraints.NotNull;
