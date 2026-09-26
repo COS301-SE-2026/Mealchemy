@@ -247,7 +247,6 @@ public class RecommendationService {
 
         return recipeTags.stream()
             .map(RecipeTags::getTag)
-            .filter(tag -> Boolean.TRUE.equals(tag.getIsDietary()))
             .map(Tags::getTagName)
             .toList();    
     }
