@@ -59,6 +59,66 @@ public class MealPlanEntry {
 
     /* Getters */
 
+    public Integer getEntryId()
+    {
+        return entryId;        
+    }
+
+    public MealPlan getPlan()
+    {
+        return plan;
+    }
+
+    public Integer getRecipeId()
+    {
+        return recipeId;
+    }
+
+    public LocalDate getEntryDate()
+    {
+        return entryDate;
+    }
+
+    public MealSlot getMealSlot()
+    {
+        return mealSlot;
+    }
+
+    public LocalTime getMealTime()
+    {
+        return mealTime;
+    }
+
+    public MealPlanEntrySource getSource()
+    {
+        return source;
+    }
+
+    public Integer getAddedBy()
+    {
+        return addedBy;
+    }
+
+    public OffsetDateTime getCreatedAt()
+    {
+        return createdAt;
+    }
+
+    public OffsetDateTime getupdatedAt()
+    {
+        return updatedAt;
+    }
+
+    public String getNote()
+    {
+        return note;
+    }
+
+    public String getTitle()
+    {
+        return title;
+    }
+
     /* Setters */
 }
 
