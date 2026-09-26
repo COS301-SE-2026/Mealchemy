@@ -40,6 +40,27 @@ public class MealPlanRecommendationService {
         this.vaultRepository = vaultRepository;
     }
 
+    public DayRecommendationResponse getDayRecommendations(Integer userId, Integer planId, LocalDate date, DayRecommendationRequest request)
+    {
+        assertPrivateVaultPlan(planId);
+
+        if (request.count() != null && request.count() <= 0)
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "count must be greater than 0.");
+        }
+
+        List<Integer> excludeRecipeIds = request.excludeRecipeIds() != null ? request.excludeRecipeIds() : Collections.emptyList();
+
+        List<PantryEntryRequest> projectedPantry = pantryProjectionService.buildProjectedPantry(userId, planId, date);
+        List<String> requiredTags = mapGoalsToRequiredTags(userId);
+
+        EnrichedRecommendationResponse response = recommendationService.getRecommendations(
+            userId, request.count(), excludeRecipeIds, null, projectedPantry, requiredTags
+        );
+
+        return new DayRecommendationResponse(date, request.mealSlot(), response.recommendations());
+    }
+
     void assertPrivateVaultPlan(Integer planId)
     {
         MealPlan plan = mealPlanRepository.findById(planId)
