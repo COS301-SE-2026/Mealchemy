@@ -2,9 +2,9 @@ package com.mealchemy.mealprep.model;
 
 /* Import libraries */
 import jakarta.persistence.*;
-import java.time.LocalDate;
-import java.util.*;
+import java.time.*;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -13,7 +13,7 @@ import com.mealchemy.shared.enums.MealSlot;
 import com.mealchemy.shared.enums.MealPlanEntrySource;
 
 @Entity
-@Table(name = "meal_plan_entry")
+@Table(name = "meal_plan_entries", uniqueConstraints = @UniqueConstraint(columnNames = {"plan_id", "entry_date", "meal_slot"}))
 public class MealPlanEntry {
     /* Declaring fields */
 
@@ -22,7 +22,8 @@ public class MealPlanEntry {
     @Column(name = "entry_id")
     private Integer entryId;
 
-    @Column(name = "plan", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "plan_id", nullable = false)
     private MealPlan plan;
 
     @Column(name = "recipe_id", nullable = false)
@@ -31,14 +32,18 @@ public class MealPlanEntry {
     @Column(name = "entry_date", nullable = false)
     private LocalDate entryDate;
 
-    @Column(name = "meal_slot", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "meal_slot", nullable = false, columnDefinition = "meal_slot")
     private MealSlot mealSlot;
 
     @Column(name = "meal_time", nullable = false)
     private LocalTime mealTime;
 
-    @Column(name = "source", nullable = false)
-    private MealPlanEntrySource source;
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "source", nullable = false, columnDefinition = "meal_plan_entry_source")
+    private MealPlanEntrySource source = MealPlanEntrySource.MANUAL;
 
     @Column(name = "added_by", nullable = false)
     private Integer addedBy;
@@ -54,7 +59,7 @@ public class MealPlanEntry {
     @Column(name = "note", nullable = true)
     private String note;
 
-    @Column(name = "title", nullable = false)
+    @Column(name = "title", nullable = true)
     private String title;
 
     /* Getters */
@@ -121,6 +126,11 @@ public class MealPlanEntry {
 
     /* Setters */
 
+    public void setPlan(MealPlan planIn)
+    {
+        plan = planIn;
+    }
+
     public void setRecipeId(Integer recipeIdIn)
     {
         recipeId = recipeIdIn;
@@ -144,6 +154,11 @@ public class MealPlanEntry {
     public void setSource(MealPlanEntrySource sourceIn)
     {
         source = sourceIn;
+    }
+
+    public void setAddedBy(Integer addedByIn)
+    {
+        addedBy = addedByIn; 
     }
 
     public void setNote(String noteIn)
