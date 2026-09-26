@@ -38,35 +38,40 @@ public class MealPlan
 
     /* Getters */
 
-    private Integer getPlanId()
+    public Integer getPlanId()
     {
         return planId;
     }
 
-    private Integer getVaultId()
+    public Integer getVaultId()
     {
         return vaultId;
     }
 
-    private Integer getCreatedBy()
+    public Integer getCreatedBy()
     {
         return createdBy;
     }
 
-    private OffsetDateTime getCreatedAt()
+    public OffsetDateTime getCreatedAt()
     {
         return createdAt;
     }
 
-    private OffsetDateTime getUpdatedAt()
+    public OffsetDateTime getUpdatedAt()
     {
         return updatedAt;
     }
 
-    private List<MealPlanEntry> getEntries()
+    public List<MealPlanEntry> getEntries()
     {
         return entries;
     }
 
     /* Setters */
+
+    public void setEntries(List<MealPlanEntry> entriesIn)
+    {
+        entries = entriesIn;
+    }
 }
