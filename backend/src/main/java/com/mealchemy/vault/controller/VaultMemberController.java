@@ -9,7 +9,6 @@ import jakarta.validation.Valid;
 
 /* Import classes */
 import com.mealchemy.vault.dto.VaultMemberResponse;
-import com.mealchemy.vault.dto.VaultMemberRequest;
 import com.mealchemy.vault.dto.VaultMemberRoleRequest;
 import com.mealchemy.vault.service.VaultMemberService;
 
@@ -51,25 +50,6 @@ public class VaultMemberController {
     {
         return vaultMemberService.getVaultMembersByVaultId(vaultId, Integer.parseInt(userId));
     }
-
-
-    // Post
-    @Operation(summary = "Add a member to a vault", description = "Adds a registered user to a shared vault by email. Only the vault owner may add members. Memebers cannot be added to a private vault.")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Member added successfully", content = @Content(schema = @Schema(implementation = VaultMemberResponse.class))),
-        @ApiResponse(responseCode = "400", description = "Unable to add member", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "The vault is PRIVATE, so members cannot be added", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Vault not found, or not owned by the caller", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @PostMapping("/{vaultId}/members/create")
-    public VaultMemberResponse addVaultMember(@PathVariable Integer vaultId, @Valid @RequestBody VaultMemberRequest request,
-        @AuthenticationPrincipal String ownerId)
-    {
-        return vaultMemberService.addVaultMember(vaultId, request, Integer.parseInt(ownerId));
-    }
-
 
     // Delete
     @Operation(summary = "Removes a member from a vault", description = "Removes a member from a shared vault by email. Only the vault owner may remove members.")

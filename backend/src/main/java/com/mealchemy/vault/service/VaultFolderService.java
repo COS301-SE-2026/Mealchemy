@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import java.util.List;
 import org.springframework.web.server.*;
 import org.springframework.http.*;
+import org.springframework.transaction.annotation.Transactional;
 
 /* Import classes */
 import com.mealchemy.vault.model.VaultFolder;
@@ -17,8 +18,12 @@ import com.mealchemy.vault.repository.VaultFolderRepository;
 import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.vault.repository.VaultMemberRepository;
 
+import com.mealchemy.vault.event.NotificationEvent;
+
 import com.mealchemy.shared.enums.VaultMemberRole;
 import com.mealchemy.shared.enums.VaultType;
+import com.mealchemy.shared.enums.NotificationType;
+
 
 @Service
 public class VaultFolderService {
@@ -28,11 +33,14 @@ public class VaultFolderService {
     
     private final VaultRepository vaultRepository;
 
-    public VaultFolderService(VaultFolderRepository vaultFolderRepository, VaultMemberRepository vaultMemberRepository, VaultRepository vaultRepository)
+    private final NotificationService notificationService; 
+
+    public VaultFolderService(VaultFolderRepository vaultFolderRepository, VaultMemberRepository vaultMemberRepository, VaultRepository vaultRepository, NotificationService notificationService)
     {
         this.vaultFolderRepository = vaultFolderRepository;
         this.vaultMemberRepository = vaultMemberRepository;
         this.vaultRepository = vaultRepository;
+        this.notificationService = notificationService;
     }
 
     // Get all folders relating to one vault
@@ -81,14 +89,29 @@ public class VaultFolderService {
     }
 
     // Post to create a new vault folder
+    @Transactional
     public VaultFolderResponse createVaultFolder(VaultFolderRequest request, Integer userId)
     {
         Vault vaultForCheck = vaultRepository.findById(request.vaultId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
         
         isOwnerOrEditor(vaultForCheck, userId);
 
-        VaultFolder vaultFolderForReturn = mapRequestToEntity(request, vaultForCheck);
-        return VaultFolderResponse.from(vaultFolderRepository.save(vaultFolderForReturn));
+        VaultFolder saved = vaultFolderRepository.save(mapRequestToEntity(request, vaultForCheck));
+
+        // Notification
+        String folderMessage = notificationService.getDisplayName(userId) + " created the folder " + saved.getFolderName() + " in vault " + vaultForCheck.getName();
+
+        notificationService.publish(new NotificationEvent(
+            notificationService.getVaultParticipantIds(vaultForCheck.getVaultId(), userId), // who receives it
+            userId, // actor
+            NotificationType.FOLDER_CREATED,
+            folderMessage,
+            vaultForCheck.getVaultId(),
+            null, // not a recipe
+            null
+        ));
+
+        return VaultFolderResponse.from(saved);
     }
 
     // Put to update an existing folder
@@ -107,16 +130,34 @@ public class VaultFolderService {
     }
 
     // Delete a specific folder using id
+    @Transactional
     public void deleteVaultFolder(int id, Integer vaultId, Integer ownerId)
     {
         Vault vaultForCheck = vaultRepository.findById(vaultId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vault not found."));
         
         isOwnerOrEditor(vaultForCheck, ownerId);
 
-        vaultFolderRepository.findByVault_VaultIdAndFolderId(vaultId, id)
+
+        // Notification 
+        VaultFolder folder = vaultFolderRepository.findByVault_VaultIdAndFolderId(vaultId, id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
 
+        String folderName = folder.getFolderName();
+
         vaultFolderRepository.deleteById(id);
+
+        String deleteMessage = notificationService.getDisplayName(ownerId) + " deleted the folder " + folderName + " from " + vaultForCheck.getName();
+
+        notificationService.publish(new NotificationEvent(
+            notificationService.getVaultParticipantIds(vaultId, ownerId), // who receives it
+            ownerId, // actor
+            NotificationType.FOLDER_DELETED,
+            deleteMessage,
+            vaultId,
+            null, // not a recipe
+            null
+        ));
+
     }
 
     /* Mapping functions */

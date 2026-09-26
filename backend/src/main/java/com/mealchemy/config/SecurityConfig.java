@@ -33,6 +33,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/register").permitAll()
                 .requestMatchers("/auth/login").permitAll()
+                .requestMatchers("/ws", "/ws/**").permitAll() // auth happends at STOMP CONNECT frame
                 .requestMatchers("/actuator/**").permitAll()
 
                 // OpenAPI spec and Swagger UI.

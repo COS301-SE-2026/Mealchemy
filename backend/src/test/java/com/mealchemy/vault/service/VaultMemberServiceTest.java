@@ -145,66 +145,6 @@ public class VaultMemberServiceTest {
     }
 
     @Test
-    void addVaultMember_returnsCreatedVaultMember()
-    {
-        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
-        when(userRepository.findByEmail("testUser@gmail.com")).thenReturn(Optional.of(user));
-        when(vaultMemberRepository.save(any(VaultMember.class))).thenReturn(vaultMember);
-
-        VaultMemberResponse result = vaultMemberService.addVaultMember(1, request, 1);
-
-        assertNotNull(result);
-        assertEquals(1, result.userId());
-        verify(vaultMemberRepository, times(1)).save(any(VaultMember.class));
-    }
-
-    @Test
-    void addVaultMember_throwsException_whenVaultNotFound()
-    {
-        when(vaultRepository.findById(99)).thenReturn(Optional.empty());
-
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.addVaultMember(99, request, 1));
-
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-        assertEquals("Vault not found.", ex.getReason());
-    }
-
-    @Test
-    void addVaultMember_throwsException_whenNotOwner()
-    {
-        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
-
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.addVaultMember(1, request, 3));
-
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-        assertEquals("Vault not found.", ex.getReason());
-    }
-
-    @Test
-    void addVaultMember_throwsException_whenVaultTypeIsPrivate()
-    {
-        vault.setVaultType(VaultType.PRIVATE);
-        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
-
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.addVaultMember(1, request, 1));
-
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Members can't be added to a private vault.", ex.getReason());
-    }
-
-    @Test
-    void addVaultMember_throwsException_whenUserNotFound()
-    {
-        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
-        when(userRepository.findByEmail("testUser@gmail.com")).thenReturn(Optional.empty());
-
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.addVaultMember(1, request, 1));
-
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
-        assertEquals("Unable to add member.", ex.getReason());
-    }
-
-    @Test
     void removeVaultMember_callsDelete_whenOwner()
     {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));

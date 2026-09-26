@@ -28,10 +28,14 @@ import com.mealchemy.vault.repository.VaultMemberRepository;
 import com.mealchemy.vault.repository.VaultInvitationRepository;
 import com.mealchemy.auth.repository.UserRepository;
 
+// event
+import com.mealchemy.vault.event.NotificationEvent;
+
 // enums
 import com.mealchemy.shared.enums.VaultType;
 import com.mealchemy.shared.enums.InvitationStatus;
 import com.mealchemy.shared.enums.VaultMemberRole;
+import com.mealchemy.shared.enums.NotificationType;
 
 @Service
 public class VaultInvitationService
@@ -40,16 +44,19 @@ public class VaultInvitationService
     private final VaultMemberRepository vaultMemberRepository;
     private final VaultInvitationRepository vaultInvitationRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
-    public VaultInvitationService(VaultRepository vaultRepository, VaultMemberRepository vaultMemberRepository, VaultInvitationRepository vaultInvitationRepository, UserRepository userRepository)
+    public VaultInvitationService(VaultRepository vaultRepository, VaultMemberRepository vaultMemberRepository, VaultInvitationRepository vaultInvitationRepository, UserRepository userRepository, NotificationService notificationService)
     {
         this.vaultRepository = vaultRepository;
         this.vaultMemberRepository = vaultMemberRepository;
         this.vaultInvitationRepository = vaultInvitationRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     // POST - create invitation (owner of a vault invites a user to the vault)
+    @Transactional
     public VaultInvitationResponse createInvitation(Integer vaultId, VaultInvitationRequest request, Integer ownerId) 
     {
         // check vault exists
@@ -103,7 +110,18 @@ public class VaultInvitationService
 
         VaultInvitation saved = vaultInvitationRepository.save(newInvitation);
 
-        // TODO: Vault invitation notification 
+        // Vault invitation notification 
+        String inviteMessage = notificationService.getDisplayName(ownerId) + " invited you to join " + selectedVault.getName();
+        
+        notificationService.publish(new NotificationEvent(
+            List.of(invitedUser.getUserId()),
+            ownerId,
+            NotificationType.VAULT_INVITE,
+            inviteMessage,
+            vaultId,
+            null,
+            saved.getInvitationId()
+        ));
 
         return VaultInvitationResponse.from(saved);
     }
@@ -171,7 +189,23 @@ public class VaultInvitationService
         invite.setRespondedAt(OffsetDateTime.now());
         vaultInvitationRepository.save(invite);
 
-        // TODO: Notification - invitation accepted
+        // notify everyone in the vault that someone has joined
+        Vault vault = invite.getVault();
+        Integer newMemberId = invite.getInvitedUser().getUserId();
+
+        // List of vault members ywho are recipients
+        List<Integer> recipients = notificationService.getVaultParticipantIds(vault.getVaultId(), newMemberId);
+        String message = notificationService.getDisplayName(newMemberId) + " joined " + vault.getName();
+
+        notificationService.publish(new NotificationEvent(
+            recipients, // who receives it
+            newMemberId, // actor
+            NotificationType.INVITATION_ACCEPTED,
+            message,
+            vault.getVaultId(),
+            null, // not a recipe
+            invite.getInvitationId()
+        ));
 
         return VaultMemberResponse.from(savedMember);
     }
@@ -200,7 +234,20 @@ public class VaultInvitationService
         
         VaultInvitation saved = vaultInvitationRepository.save(invite);
 
-        // TODO: Notification - invitation declined
+        // Notification - invitation declined
+        Vault vault = invite.getVault();
+        
+        String declineMessage = notificationService.getDisplayName(userId) + " declined your invitation to " + vault.getName();
+
+        notificationService.publish(new NotificationEvent(
+            List.of(vault.getOwnerId()), // who receives it
+            userId, // actor
+            NotificationType.INVITATION_DECLINED,
+            declineMessage,
+            vault.getVaultId(),
+            null, // not a recipe
+            saved.getInvitationId()
+        ));
 
         return VaultInvitationResponse.from(saved);
     }
@@ -227,7 +274,20 @@ public class VaultInvitationService
         invite.setStatus(InvitationStatus.CANCELLED);
         invite.setRespondedAt(OffsetDateTime.now());
 
-        // TODO: Notification - invitation accepted
+        // Notification - invitation cancelled
+        Vault vault = invite.getVault();
+        
+        String cancelMessage = notificationService.getDisplayName(ownerId) + " cancelled your invitation to " + vault.getName();
+
+        notificationService.publish(new NotificationEvent(
+            List.of(invite.getInvitedUser().getUserId()), // who receives it
+            ownerId, // actor
+            NotificationType.INVITATION_CANCELLED,
+            cancelMessage,
+            vault.getVaultId(),
+            null, // not a recipe
+            invite.getInvitationId()
+        ));
         
         vaultInvitationRepository.save(invite);
     }

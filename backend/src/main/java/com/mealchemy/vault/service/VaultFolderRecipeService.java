@@ -30,7 +30,10 @@ import com.mealchemy.recipe.repository.RecipeIngredientRepository;
 import com.mealchemy.recipe.repository.RecipeStepRepository;
 import com.mealchemy.recipe.repository.RecipeEquipmentRepository;
 
+import com.mealchemy.vault.event.NotificationEvent;
+
 import com.mealchemy.shared.enums.VaultType;
+import com.mealchemy.shared.enums.NotificationType;
 
 @Service
 public class VaultFolderRecipeService {
@@ -50,8 +53,10 @@ public class VaultFolderRecipeService {
 
     private final UserRepository userRepository;
 
-    public VaultFolderRecipeService(VaultFolderRecipeRepository vaultFolderRecipeRepository, RecipeRepository recipeRepository, RecipeIngredientRepository recipeIngredientRepository,
-        RecipeStepRepository recipeStepRepository, RecipeEquipmentRepository recipeEquipmentRepository, VaultMemberRepository vaultMemberRepository, VaultFolderRepository vaultFolderRepository, UserRepository userRepository)
+    private final NotificationService notificationService; 
+
+    public VaultFolderRecipeService(VaultFolderRecipeRepository vaultFolderRecipeRepository, RecipeRepository recipeRepository, RecipeIngredientRepository recipeIngredientRepository, RecipeStepRepository recipeStepRepository, 
+        RecipeEquipmentRepository recipeEquipmentRepository, VaultMemberRepository vaultMemberRepository, VaultFolderRepository vaultFolderRepository, UserRepository userRepository, NotificationService notificationService)
     {
         this.vaultFolderRecipeRepository = vaultFolderRecipeRepository;
         this.recipeRepository = recipeRepository;
@@ -61,6 +66,7 @@ public class VaultFolderRecipeService {
         this.vaultMemberRepository = vaultMemberRepository;
         this.vaultFolderRepository = vaultFolderRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     // Get all recipes using folderId
@@ -114,9 +120,26 @@ public class VaultFolderRecipeService {
         // if vault is shared create and return clone else return recipe
         Recipe resulantRecipe = vaultForCheck.getVaultType().equals(VaultType.SHARED) ? findOrCreateSharedVaultClone(recipeForReturn, userId, vaultForCheck) : recipeForReturn;
 
-        VaultFolderRecipe vaultFolderRecipeForReturn = mapRequestToEntity(vaultFolderForReturn, resulantRecipe, userForReturn);
-        return VaultFolderRecipeResponse.from(vaultFolderRecipeRepository.save(vaultFolderRecipeForReturn));
+        VaultFolderRecipe saved = vaultFolderRecipeRepository.save(mapRequestToEntity(vaultFolderForReturn, resulantRecipe, userForReturn));
+
+        // Notification
+        Recipe vaultRecipe = saved.getRecipe();
+
+        String addMessage = notificationService.getDisplayName(userId) + " added " + vaultRecipe.getTitle() + " to " + vaultForCheck.getName(); 
+
+        notificationService.publish(new NotificationEvent(
+            notificationService.getVaultParticipantIds(vaultForCheck.getVaultId(), userId), // who receives it
+            userId, // actor
+            NotificationType.RECIPE_ADDED,
+            addMessage,
+            vaultForCheck.getVaultId(),
+            vaultRecipe.getRecipeId(), // recipe
+            null
+        ));
+
+        return VaultFolderRecipeResponse.from(saved);
     }
+
 
     // Put to update a record
     public VaultFolderRecipeResponse updateVaultFolderRecipe(int id, VaultFolderRecipeMoveRequest request, Integer userId)
@@ -135,13 +158,31 @@ public class VaultFolderRecipeService {
     }
 
     // Delete a specific record using id
+    @Transactional
     public void deleteVaultFolderRecipe(int id, Integer userId)
     {
         VaultFolderRecipe vaultFolderRecipeForReturn = vaultFolderRecipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No record found."));
 
         canDelete(vaultFolderRecipeForReturn.getFolder().getVault(), vaultFolderRecipeForReturn.getAddedBy().getUserId(), userId, "No record found.");
 
+        Vault vault = vaultFolderRecipeForReturn.getFolder().getVault();
+        Integer recipeId = vaultFolderRecipeForReturn.getRecipe().getRecipeId();
+        String recipeTitle = vaultFolderRecipeForReturn.getRecipe().getTitle();
+
         vaultFolderRecipeRepository.deleteById(id);
+        
+        String removeMessage = notificationService.getDisplayName(userId) + " removed " + recipeTitle + " from " + vault.getName();
+
+        notificationService.publish(new NotificationEvent(
+            notificationService.getVaultParticipantIds(vault.getVaultId(), userId), // who receives it
+            userId, // actor
+            NotificationType.RECIPE_REMOVED,
+            removeMessage,
+            vault.getVaultId(),
+            recipeId, // not a recipe
+            null
+        ));
+        
     }
 
     /* Mapping functions */
