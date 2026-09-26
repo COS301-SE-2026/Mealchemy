@@ -1,4 +1,4 @@
-package com.mealchemy.mealplan.dto;
+package com.mealchemy.mealprep.dto;
 
 /* Import libraries */
 import java.math.BigDecimal;
