@@ -5,7 +5,7 @@ package com.mealchemy.mealprep.dto;
 /* Import classes */
 
 public record MealPlanResponse(
-    Long planId,
-    Long vaultId,
-    Long createdBy
+    Integer planId,
+    Integer vaultId,
+    Integer createdBy
 ){}

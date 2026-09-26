@@ -8,7 +8,7 @@ import java.time.*;
 import com.mealchemy.shared.enums.MealSlot;
 
 public record MealPlanEntryRequest(
-    @NotNull Long recipeId,
+    @NotNull Integer recipeId,
     @NotNull LocalDate entryDate,
     @NotNull MealSlot mealSlot,
     @NotNull LocalTime mealTime,

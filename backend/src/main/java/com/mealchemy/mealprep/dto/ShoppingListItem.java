@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 /* Import classes */
 
 public record ShoppingListItem(
-    Long ingId,
+    Integer ingId,
     String name,
     BigDecimal neededQuantity,
     String unit,

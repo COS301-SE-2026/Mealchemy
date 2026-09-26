@@ -8,14 +8,14 @@ import com.mealchemy.shared.enums.MealPlanEntrySource;
 import com.mealchemy.shared.enums.MealSlot;
 
 public record MealPlanEntryResponse(
-    Long entryId,
-    Long planId,
-    Long recipeId,
+    Integer entryId,
+    Integer planId,
+    Integer recipeId,
     LocalDate entryDate,
     MealSlot mealSlot,
     LocalTime mealTime,
     String title,
     String note,
     MealPlanEntrySource source,
-    Long addedBy
+    Integer addedBy
 ){}
