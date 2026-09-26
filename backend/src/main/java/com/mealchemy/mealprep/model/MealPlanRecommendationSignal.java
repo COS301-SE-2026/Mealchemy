@@ -30,6 +30,7 @@ public class MealPlanEntry {
     @Column(name = "signal_scores", nullable = false)
     private Map<String, Double> signalScores;
 
+    @CreationTimestamp
     @Column(name = "captured_at", nullable = false)
     private OffsetDateTime capturedAt;
 
@@ -37,6 +38,41 @@ public class MealPlanEntry {
     private OffsetDateTime processedAt;
 
     /* Getters */
+
+    public Integer getSignalId()
+    {
+        return signalId;
+    }
+
+    public Integer getEntryId()
+    {
+        return entryId;
+    }
+
+    public Integer getRecipeId()
+    {
+        return recipeId;
+    }
+
+    public String getCuisine()
+    {
+        return cuisine;
+    }
+
+    public Map<String, Double> getSignalScores()
+    {
+        return signalScores;
+    }
+
+    public OffsetDateTime getCapturedAt()
+    {
+        return capturedAt;
+    }
+
+    public OffsetDateTime getProcessedAt()
+    {
+        return preocessedAt;
+    }
 
     /* Setters */
 }
