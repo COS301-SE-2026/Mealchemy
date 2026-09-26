@@ -71,8 +71,33 @@ public class MealPlanEntry {
 
     public OffsetDateTime getProcessedAt()
     {
-        return preocessedAt;
+        return processedAt;
     }
 
     /* Setters */
+
+    public void setEntryId(Integer entryIdIn)
+    {
+        entryId = entryIdIn;
+    }
+
+    public void setRecipeId(Integer recipeIdIn)
+    {
+        recipeId = recipeIdIn;
+    }
+
+    public void setCuisine(String cuisineIn)
+    {
+        cuisine = cuisineIn;
+    }
+
+    public void setSignalScores(Map<String, Double> signalScoresIn)
+    {
+        signalScores = signalScoresIn;
+    }
+
+    public void setProcessedAt(OffsetDateTime processedAtIn)
+    {
+        processedAt = processedAtIn;
+    }
 }
