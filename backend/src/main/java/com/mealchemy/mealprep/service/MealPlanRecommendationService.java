@@ -40,6 +40,21 @@ public class MealPlanRecommendationService {
         this.vaultRepository = vaultRepository;
     }
 
+    void assertPrivateVaultPlan(Integer planId)
+    {
+        MealPlan plan = mealPlanRepository.findById(planId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Meal plan not found."));
+
+        Vault vault = vaultRepository.findById(plan.getVaultId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Vault not found for meal plan."));
+
+        if (vault.getVaultType() != VaultType.PRIVATE)
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                "Recommendation-based meal planning is only available for private vaults.");
+        }
+    }
+
     List<String> mapGoalsToRequiredTags(Integer userId)
     {
         UserPreferences preferences = userPreferencesRepository.findByUserId(userId)
