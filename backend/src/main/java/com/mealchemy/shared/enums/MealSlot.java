@@ -1,7 +1,7 @@
 package com.mealchemy.shared.enums;
 
 /* Import libraries */
-import java.time.*;
+import java.time.LocalTime;
 
 public enum MealSlot
 {
