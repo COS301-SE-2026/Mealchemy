@@ -13,6 +13,9 @@ import '../providers/recipe_edit_lock_provider.dart';
 import '../providers/recipe_provider.dart';
 import '../providers/shared_recipe_edit_provider.dart';
 import 'add_recipe_screen.dart';
+import '../../notifications/models/vault_live_event.dart';
+import '../../notifications/providers/notification_realtime_provider.dart';
+import '../models/recipe_draft_controller.dart';
 
 class SharedRecipeEditScreen extends ConsumerStatefulWidget {
   const SharedRecipeEditScreen({
@@ -38,6 +41,8 @@ class _SharedRecipeEditScreenState extends ConsumerState<SharedRecipeEditScreen>
   bool _active = true;
   bool _needsFreshRecipe = true;
   int _revision = 0;
+  final _draftController = RecipeDraftController();
+  bool _resumeAfterSave = false;
 
   RecipeEditLockNotifier get _lock => ref.read(
         recipeEditLockProvider(widget.target.recipeId).notifier,
@@ -74,17 +79,39 @@ class _SharedRecipeEditScreenState extends ConsumerState<SharedRecipeEditScreen>
     if (state == AppLifecycleState.resumed) {
       _active = true;
 
-      //an upload already in progress is allowed to finish, but next mutation cannot start until paused lock is checked again
-      if (!_saving && !_checking) {
+      if (_saving) {
+        _resumeAfterSave = true;
+      } else if (!_checking) {
         unawaited(_checkAndLoad());
       }
+
       return;
     }
 
     _active = false;
-    _lock.pause(
-      message: 'Editing is paused while the app is in the background.',
-    );
+
+    //do not invalidate/release an acquisition underneath an in-flight
+    // save or media upload. Block the next mutation immediately
+    _lock.holdWhileBackgrounded();
+
+    if (!_saving) {
+      unawaited(_lock.suspend());
+    }
+  }
+
+  void _savingChanged(bool saving) {
+    if (!mounted) return;
+
+    setState(() => _saving = saving);
+
+    if (saving) return;
+
+    if (!_active) {
+      unawaited(_lock.suspend());
+    } else if (_resumeAfterSave) {
+      _resumeAfterSave = false;
+      unawaited(_checkAndLoad());
+    }
   }
 
   Future<bool> _checkAccess() async {
@@ -253,6 +280,7 @@ class _SharedRecipeEditScreenState extends ConsumerState<SharedRecipeEditScreen>
 
   Future<void> _saveComplete() async {
     if (!_sameSession) return;
+    _resumeAfterSave = false;
 
     await _lock.close();
     if (!mounted || !_sameSession) return;
@@ -321,6 +349,25 @@ class _SharedRecipeEditScreenState extends ConsumerState<SharedRecipeEditScreen>
     ref.watch(vaultSessionProvider);
     ref.watch(vaultConnectionProvider);
 
+    ref.listen(vaultLiveEventsProvider, (_, next) {
+      final event = next.asData?.value;
+
+      if (!_sameSession ||
+          event == null ||
+          event.vaultId != widget.target.vaultId ||
+          event.recipeId != widget.target.recipeId ||
+          event.type != VaultLiveEventType.lockAcquired ||
+          event.actorUserId == _session.userId) {
+        return;
+      }
+
+      _lock.handleLiveLockAcquired(actorUserId: event.actorUserId);
+
+      setState(() {
+        _needsFreshRecipe = true;
+      });
+    });
+
     final editable = _recipe != null && !_checking && _canContinueSave;
 
     final needsReload = _recipe != null &&
@@ -348,13 +395,10 @@ class _SharedRecipeEditScreenState extends ConsumerState<SharedRecipeEditScreen>
                   initialRecipe: _recipe,
                   beforeSave: _beforeSave,
                   canContinueSave: () => _canContinueSave,
-                  onSavingChanged: (saving) {
-                    if (mounted) {
-                      setState(() => _saving = saving);
-                    }
-                  },
+                  onSavingChanged: _savingChanged,
                   onSaveComplete: _saveComplete,
                   onSaveFailure: _saveFailed,
+                  draftController: _draftController,
                 ),
               ),
             ),
@@ -399,8 +443,23 @@ class _SharedRecipeEditScreenState extends ConsumerState<SharedRecipeEditScreen>
                       if (_recipe != null) ...[
                         const SizedBox(height: 12),
                         const Text(
-                          'Your draft stays here until you reload or leave.',
+                          'Your draft stays here until you reload or leave. '
+                          'You can select and copy the text below.',
                           textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceWhite,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: SelectableText(
+                            _draftController.read(),
+                            key: const ValueKey('shared-recipe-draft'),
+                            style: AppTextStyles.body,
+                          ),
                         ),
                       ],
                       if (!waiting) ...[
