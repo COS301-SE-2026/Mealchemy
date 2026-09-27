@@ -27,6 +27,7 @@ class AppRoutes {
   static const String help = '/help';
   static const String editRecipe = '/edit-recipe/:id';
   static const recommendationSettings = '/recommendation-settings';
+  static const String notifications = '/notifications';
 
   static String cookModeLocation(int recipeId, {int? stepIndex}) {
     return Uri(

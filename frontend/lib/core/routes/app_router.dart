@@ -35,6 +35,7 @@ import '../../features/recipe/models/recipe.dart';
 
 import '../../features/recipe/providers/shared_recipe_edit_provider.dart';
 import '../../features/vault/providers/shared_vault_access_provider.dart';
+import '../../features/notifications/screens/notification_inbox_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: AppRoutes.login,
@@ -89,6 +90,9 @@ final appRouter = GoRouter(
         return RecipeDetailScreen(
           recipeId: id,
           allowReporting: state.uri.queryParameters['report'] == 'true',
+          sharedVaultId: int.tryParse(
+            state.uri.queryParameters['vaultId'] ?? '',
+          ),
         );
       },
     ),
@@ -178,6 +182,10 @@ final appRouter = GoRouter(
 
         return VaultMembersScreen(vaultId: vaultId);
       },
+    ),
+    GoRoute(
+      path: AppRoutes.notifications,
+      builder: (context, state) => const NotificationInboxScreen(),
     ),
 
     // main destinations header + bottom nav supplied once by AppShell.

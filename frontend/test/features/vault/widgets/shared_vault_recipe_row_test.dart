@@ -9,14 +9,22 @@ import 'package:mealchemy/features/vault/models/vault.dart';
 import 'package:mealchemy/features/vault/models/vault_member.dart';
 import 'package:mealchemy/features/vault/providers/shared_vault_access_provider.dart';
 import 'package:mealchemy/features/vault/widgets/shared_vault_recipe_row.dart';
+import 'package:mealchemy/features/recipe/models/recipe_edit_lock.dart';
+import 'package:mealchemy/features/recipe/providers/shared_recipe_lock_provider.dart';
+import 'package:mealchemy/features/recipe/providers/shared_recipe_edit_provider.dart';
 
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
-  Future<void> showRow(
+  Future<GoRouter> showRow(
     WidgetTester tester, {
     required VaultMemberRole role,
     int recipeOwnerId = 9,
+    RecipeEditLock? lock,
+    Future<bool> Function()? checkDeleteAccess,
+    VoidCallback? onDelete,
+    VoidCallback? onAccessLoad,
+    VoidCallback? onLockLoad,
   }) async {
     final userId = role == VaultMemberRole.owner ? 7 : 8;
 
@@ -54,7 +62,7 @@ void main() {
                 ownerId: recipeOwnerId,
                 title: 'Shared copy',
               ),
-              onDeleteConfirmed: () {},
+              onDeleteConfirmed: onDelete ?? () {},
             ),
           ),
         ),
@@ -81,6 +89,14 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          sharedRecipeLockProvider.overrideWith((ref, target) async {
+            onLockLoad?.call();
+            return lock;
+          }),
+          sharedRecipeEditAccessProvider.overrideWith((ref, target) async {
+            return await (checkDeleteAccess?.call() ??
+                Future<bool>.value(true));
+          }),
           vaultSessionProvider.overrideWithValue((
             userId: userId,
             token: 'preview-token',
@@ -88,13 +104,17 @@ void main() {
             hasValidCredential: true,
           )),
           vaultConnectionProvider.overrideWithValue(NetworkStatus.online),
-          sharedVaultAccessProvider.overrideWith((ref, id) async => access),
+          sharedVaultAccessProvider.overrideWith((ref, id) async {
+            onAccessLoad?.call();
+            return access;
+          }),
         ],
         child: MaterialApp.router(routerConfig: router),
       ),
     );
 
     await tester.pumpAndSettle();
+    return router;
   }
 
   testWidgets('Editor opens the copied recipe with vault context',
@@ -134,5 +154,168 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Viewing 99'), findsOneWidget);
+  });
+
+  testWidgets('another holder disables Edit and shows their identity',
+      (tester) async {
+    await showRow(
+      tester,
+      role: VaultMemberRole.editor,
+      lock: RecipeEditLock(
+        recipeId: 99,
+        lockedByUserId: 10,
+        lockedByEmail: 'gabriela@example.com',
+        acquiredAt: DateTime.utc(2026, 9, 27),
+        expiresAt: DateTime.utc(2026, 9, 27, 0, 1, 30),
+      ),
+    );
+
+    final editButton = find.ancestor(
+      of: find.byIcon(Icons.edit_outlined),
+      matching: find.byType(IconButton),
+    );
+
+    expect(tester.widget<IconButton>(editButton).onPressed, isNull);
+    expect(
+      find.text('Being edited by gabriela@example.com.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('returning from editing refreshes access and lock status',
+      (tester) async {
+    var accessLoads = 0;
+    var lockLoads = 0;
+
+    final router = await showRow(
+      tester,
+      role: VaultMemberRole.editor,
+      onAccessLoad: () => accessLoads++,
+      onLockLoad: () => lockLoads++,
+    );
+
+    await tester.tap(find.byIcon(Icons.edit_outlined));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Editing 99 in 5 folder 12'), findsOneWidget);
+
+    final accessLoadsBeforeReturn = accessLoads;
+    final lockLoadsBeforeReturn = lockLoads;
+
+    router.pop();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Shared copy'), findsOneWidget);
+    expect(accessLoads, greaterThan(accessLoadsBeforeReturn));
+    expect(lockLoads, greaterThan(lockLoadsBeforeReturn));
+  });
+
+  testWidgets('confirmed deletion checks current access before deleting',
+      (tester) async {
+    final calls = <String>[];
+
+    await showRow(
+      tester,
+      role: VaultMemberRole.editor,
+      checkDeleteAccess: () async {
+        calls.add('check access');
+        return true;
+      },
+      onDelete: () => calls.add('delete'),
+    );
+
+    await tester.tap(find.byTooltip('Delete recipe'));
+    await tester.pumpAndSettle();
+
+    // Opening the confirmation must not delete or check mutation access.
+    expect(calls, isEmpty);
+
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+
+    expect(calls, ['check access', 'delete']);
+    expect(
+      find.text('Could not verify permission to delete this recipe.'),
+      findsNothing,
+    );
+  });
+
+  testWidgets('cancelled deletion performs no permission check or mutation',
+      (tester) async {
+    var checks = 0;
+    var deletions = 0;
+
+    await showRow(
+      tester,
+      role: VaultMemberRole.editor,
+      checkDeleteAccess: () async {
+        checks++;
+        return true;
+      },
+      onDelete: () => deletions++,
+    );
+
+    await tester.tap(find.byTooltip('Delete recipe'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(checks, 0);
+    expect(deletions, 0);
+    expect(find.text('Shared copy'), findsOneWidget);
+  });
+
+  testWidgets('revoked deletion permission blocks the callback',
+      (tester) async {
+    var checks = 0;
+    var deletions = 0;
+
+    await showRow(
+      tester,
+      role: VaultMemberRole.editor,
+      checkDeleteAccess: () async {
+        checks++;
+        return false;
+      },
+      onDelete: () => deletions++,
+    );
+
+    await tester.tap(find.byTooltip('Delete recipe'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+
+    expect(checks, 1);
+    expect(deletions, 0);
+    expect(
+      find.text('Could not verify permission to delete this recipe.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('failed deletion access lookup shows an error without deleting',
+      (tester) async {
+    var deletions = 0;
+
+    await showRow(
+      tester,
+      role: VaultMemberRole.editor,
+      checkDeleteAccess: () async {
+        throw StateError('Access lookup unavailable');
+      },
+      onDelete: () => deletions++,
+    );
+
+    await tester.tap(find.byTooltip('Delete recipe'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+
+    expect(deletions, 0);
+    expect(
+      find.text('Could not verify permission to delete this recipe.'),
+      findsOneWidget,
+    );
   });
 }

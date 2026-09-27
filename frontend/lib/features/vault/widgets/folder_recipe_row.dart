@@ -17,6 +17,9 @@ class FolderRecipeRow extends StatelessWidget {
     this.allowReporting = false,
     this.showEditAction = true,
     this.showDeleteAction = true,
+    this.editEnabled = true,
+    this.editDisabledReason = 'Editing unavailable',
+    this.detailLocation,
   });
 
   final Recipe recipe;
@@ -26,6 +29,9 @@ class FolderRecipeRow extends StatelessWidget {
   final bool allowReporting;
   final bool showEditAction;
   final bool showDeleteAction;
+  final bool editEnabled;
+  final String editDisabledReason;
+  final String? detailLocation;
 
   String get _subtitle {
     final total = (recipe.prepTimeMins ?? 0) + (recipe.cookingTimeMins ?? 0);
@@ -61,8 +67,9 @@ class FolderRecipeRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           onTap: () => context.push(
-            '/recipe/${recipe.recipeId}'
-            '${allowReporting ? '?report=true' : ''}',
+            detailLocation ??
+                '/recipe/${recipe.recipeId}'
+                    '${allowReporting ? '?report=true' : ''}',
           ),
           borderRadius: BorderRadius.circular(16),
           child: Padding(
@@ -122,18 +129,20 @@ class FolderRecipeRow extends StatelessWidget {
                       ),
                     if (showEditAction)
                       IconButton(
-                        onPressed: mutationsEnabled
+                        onPressed: mutationsEnabled && editEnabled
                             ? onEditTap ??
                                 () => context
                                     .push('/edit-recipe/${recipe.recipeId}')
                             : null,
-                        tooltip: mutationsEnabled
-                            ? 'Edit recipe'
-                            : 'Unavailable offline',
+                        tooltip: !mutationsEnabled
+                            ? 'Unavailable offline'
+                            : !editEnabled
+                                ? editDisabledReason
+                                : 'Edit recipe',
                         icon: Icon(
                           Icons.edit_outlined,
                           size: 18,
-                          color: mutationsEnabled
+                          color: mutationsEnabled && editEnabled
                               ? AppColors.primary
                               : AppColors.textMuted,
                         ),
