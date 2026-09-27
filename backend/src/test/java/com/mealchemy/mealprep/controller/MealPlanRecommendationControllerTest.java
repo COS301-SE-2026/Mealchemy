@@ -23,6 +23,7 @@ import com.mealchemy.config.WithMockJwtUser;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -69,6 +70,7 @@ public class MealPlanRecommendationControllerTest {
             .thenReturn(response);
 
         mockMvc.perform(post("/api/meal-plans/{planId}/days/{date}/recommendations", PLAN_ID, "2026-10-01")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"mealSlot\":\"DINNER\",\"count\":3}"))
             .andExpect(status().isOk())
@@ -82,6 +84,7 @@ public class MealPlanRecommendationControllerTest {
             .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Recommendation-based meal planning is only available for private vaults."));
 
         mockMvc.perform(post("/api/meal-plans/{planId}/days/{date}/recommendations", PLAN_ID, "2026-10-01")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"mealSlot\":\"DINNER\",\"count\":3}"))
             .andExpect(status().isForbidden());
@@ -90,6 +93,7 @@ public class MealPlanRecommendationControllerTest {
     @Test
     void getDayRecommendations_returns400_whenMissingRequiredField() throws Exception {
         mockMvc.perform(post("/api/meal-plans/{planId}/days/{date}/recommendations", PLAN_ID, "2026-10-01")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"count\":3}"))
             .andExpect(status().isBadRequest());
@@ -109,6 +113,7 @@ public class MealPlanRecommendationControllerTest {
             + "\"slotTimes\":{\"DINNER\":\"18:00:00\"},\"overwriteRecommended\":false}";
 
         mockMvc.perform(post("/api/meal-plans/{planId}/recommendations/generate", PLAN_ID)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isOk())
@@ -125,6 +130,7 @@ public class MealPlanRecommendationControllerTest {
             + "\"slotTimes\":{\"DINNER\":\"18:00:00\"},\"overwriteRecommended\":false}";
 
         mockMvc.perform(post("/api/meal-plans/{planId}/recommendations/generate", PLAN_ID)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isBadRequest());
@@ -136,6 +142,7 @@ public class MealPlanRecommendationControllerTest {
             + "\"overwriteRecommended\":false}";
 
         mockMvc.perform(post("/api/meal-plans/{planId}/recommendations/generate", PLAN_ID)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isBadRequest());
@@ -154,6 +161,7 @@ public class MealPlanRecommendationControllerTest {
             + "\"cuisineType\":\"ITALIAN\",\"scoreBreakdown\":{\"pantryMatch\":0.5,\"cuisine\":0.5,\"nutrition\":0.5,\"freshness\":0.5,\"novelty\":0.5}}";
 
         mockMvc.perform(post("/api/meal-plans/{planId}/entries/from-recommendation", PLAN_ID)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isOk())
@@ -170,6 +178,7 @@ public class MealPlanRecommendationControllerTest {
             + "\"cuisineType\":\"ITALIAN\",\"scoreBreakdown\":{\"pantryMatch\":0.5,\"cuisine\":0.5,\"nutrition\":0.5,\"freshness\":0.5,\"novelty\":0.5}}";
 
         mockMvc.perform(post("/api/meal-plans/{planId}/entries/from-recommendation", PLAN_ID)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isConflict());
@@ -181,6 +190,7 @@ public class MealPlanRecommendationControllerTest {
             + "\"cuisineType\":\"ITALIAN\"}";
 
         mockMvc.perform(post("/api/meal-plans/{planId}/entries/from-recommendation", PLAN_ID)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isBadRequest());

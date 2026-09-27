@@ -247,8 +247,14 @@ public class RecommendationService {
 
         return recipeTags.stream()
             .map(RecipeTags::getTag)
+            .filter(RecommendationService::isDietaryTag)
             .map(Tags::getTagName)
             .toList();    
+    }
+    
+    private static boolean isDietaryTag(Tags tag)
+    {
+        return Boolean.TRUE.equals(tag.getIsDietary());
     }
 
     // Helper function to build ingredients object
