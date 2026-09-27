@@ -66,5 +66,12 @@ final notificationRealtimeProvider =
 //live lock hints separate from stored inbox notifications
 final vaultLiveEventsProvider =
     StreamProvider.autoDispose<VaultLiveEvent>((ref) {
+  //reset previously delivered event when account changes
+  ref.watch(vaultSessionProvider);
   return ref.watch(notificationRealtimeProvider).vaultEvents;
+});
+
+final notificationConnectionsProvider = StreamProvider.autoDispose<int>((ref) {
+  ref.watch(vaultSessionProvider);
+  return ref.watch(notificationRealtimeProvider).connections;
 });

@@ -42,6 +42,10 @@ class NotificationRealtimeService {
   final Future<void> Function(bool includeInbox) _reconcile;
 
   final _events = StreamController<VaultLiveEvent>.broadcast();
+  final _connections = StreamController<int>.broadcast();
+  int _connectionRevision = 0;
+
+  Stream<int> get connections => _connections.stream;
 
   Stream<VaultLiveEvent> get vaultEvents => _events.stream;
 
@@ -152,6 +156,7 @@ class NotificationRealtimeService {
         _connectTimer?.cancel();
         _connectTimer = null;
         status = NotificationConnectionStatus.connected;
+        _connections.add(++_connectionRevision);
 
         // Messages missed while disconnected are recovered through REST.
         _refreshFromRest();
@@ -247,5 +252,6 @@ class NotificationRealtimeService {
     _disposed = true;
     _stopConnection();
     unawaited(_events.close());
+    unawaited(_connections.close());
   }
 }
