@@ -97,7 +97,6 @@ public class MealPlanService
         return responses;
     }
 
-    // TODO: Paul check 
     // add entry 
     public MealPlanEntryResponse addEntry(Integer planId, Integer userId, LocalDate date, LocalTime mealTime, MealSlot mealSlot, String title, String note, Integer recipeId, MealPlanEntrySource source, boolean overwrite)
     {
@@ -168,6 +167,14 @@ public class MealPlanService
         if (!request.mealSlot().allows(request.mealTime()))
         {
             throw new InvalidMealSlotTimeException("mealTime " + request.mealTime() + " is outside the valid range for " + request.mealSlot() + ".");
+        }
+
+        // if there is an aleady existing meal at this time
+        Optional<MealPlanEntry> existing = mealPlanEntryRepository.findByPlan_PlanIdAndEntryDateAndMealSlot(planId, request.entryDate(), request.mealSlot());
+
+        if (existing.isPresent() && !existing.get().getEntryId().equals(entryId)) // not the same entry
+        {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "An entry already exists for " + request.entryDate() + " " + request.mealSlot() + ".");   
         }
 
         // fire skipped before update commits
