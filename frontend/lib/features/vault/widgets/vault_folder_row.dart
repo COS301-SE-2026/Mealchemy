@@ -11,6 +11,7 @@ import '../providers/vault_provider.dart';
 import 'folder_recipe_row.dart';
 import 'folder_menu.dart';
 import '../models/vault.dart';
+import 'shared_vault_recipe_row.dart';
 
 //folder row that expands in place to reveal its recipes
 class VaultFolderRow extends ConsumerStatefulWidget {
@@ -46,6 +47,30 @@ class _VaultFolderRowState extends ConsumerState<VaultFolderRow> {
       'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  Future<void> _deleteRecipe(int recipeId) async {
+    try {
+      await ref.read(
+        deleteFolderRecipeProvider(widget.folder.folderId),
+      )(recipeId);
+
+      if (!mounted) return;
+
+      ref.read(feedbackProvider.notifier).showShort(
+            'Recipe deleted.',
+            kind: ToastKind.success,
+            icon: Icons.check_circle_outline,
+          );
+    } catch (_) {
+      if (!mounted) return;
+
+      ref.read(feedbackProvider.notifier).showShort(
+            'Could not delete recipe. Try again.',
+            kind: ToastKind.error,
+            icon: Icons.error_outline,
+          );
+    }
   }
 
   @override
@@ -158,37 +183,26 @@ class _VaultFolderRowState extends ConsumerState<VaultFolderRow> {
                   : Column(
                       children: [
                         for (final recipe in recipes)
-                          FolderRecipeRow(
-                            recipe: recipe,
-                            allowReporting:
-                                widget.vault.vaultType == VaultTypes.global,
-                            mutationsEnabled: !isReadOnly,
-                            onEditTap: () =>
-                                context.push('/edit-recipe/${recipe.recipeId}'),
-                            onDeleteConfirmed: () async {
-                              try {
-                                await ref.read(
-                                  deleteFolderRecipeProvider(
-                                      widget.folder.folderId),
-                                )(recipe.recipeId);
-                                if (context.mounted) {
-                                  ref.read(feedbackProvider.notifier).showShort(
-                                        'Recipe deleted.',
-                                        kind: ToastKind.success,
-                                        icon: Icons.check_circle_outline,
-                                      );
-                                }
-                              } catch (_) {
-                                if (context.mounted) {
-                                  ref.read(feedbackProvider.notifier).showShort(
-                                        'Could not delete recipe. Try again.',
-                                        kind: ToastKind.error,
-                                        icon: Icons.error_outline,
-                                      );
-                                }
-                              }
-                            },
-                          ),
+                          if (widget.vault.vaultType == VaultTypes.shared)
+                            SharedVaultRecipeRow(
+                              vaultId: widget.vault.vaultId,
+                              folderId: widget.folder.folderId,
+                              recipe: recipe,
+                              onDeleteConfirmed: () =>
+                                  _deleteRecipe(recipe.recipeId),
+                            )
+                          else
+                            FolderRecipeRow(
+                              recipe: recipe,
+                              allowReporting:
+                                  widget.vault.vaultType == VaultTypes.global,
+                              mutationsEnabled: !isReadOnly,
+                              onEditTap: () => context.push(
+                                '/edit-recipe/${recipe.recipeId}',
+                              ),
+                              onDeleteConfirmed: () =>
+                                  _deleteRecipe(recipe.recipeId),
+                            ),
                       ],
                     ),
             ),

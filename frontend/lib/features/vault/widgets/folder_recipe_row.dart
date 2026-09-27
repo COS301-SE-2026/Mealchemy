@@ -15,6 +15,8 @@ class FolderRecipeRow extends StatelessWidget {
     this.onDeleteConfirmed,
     this.mutationsEnabled = true,
     this.allowReporting = false,
+    this.showEditAction = true,
+    this.showDeleteAction = true,
   });
 
   final Recipe recipe;
@@ -22,6 +24,8 @@ class FolderRecipeRow extends StatelessWidget {
   final VoidCallback? onDeleteConfirmed;
   final bool mutationsEnabled;
   final bool allowReporting;
+  final bool showEditAction;
+  final bool showDeleteAction;
 
   String get _subtitle {
     final total = (recipe.prepTimeMins ?? 0) + (recipe.cookingTimeMins ?? 0);
@@ -98,42 +102,44 @@ class FolderRecipeRow extends StatelessWidget {
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
-                      onPressed: mutationsEnabled
-                          ? () => _handleDeleteTap(context)
-                          : null,
-                      tooltip: mutationsEnabled
-                          ? 'Delete recipe'
-                          : 'Unavailable offline',
-                      icon: Icon(
-                        Icons.delete_outline,
-                        size: 18,
-                        color: mutationsEnabled
-                            ? AppColors.primary
-                            : AppColors.textMuted,
+                    if (showDeleteAction)
+                      IconButton(
+                        onPressed: mutationsEnabled
+                            ? () => _handleDeleteTap(context)
+                            : null,
+                        tooltip: mutationsEnabled
+                            ? 'Delete recipe'
+                            : 'Unavailable offline',
+                        icon: Icon(
+                          Icons.delete_outline,
+                          size: 18,
+                          color: mutationsEnabled
+                              ? AppColors.primary
+                              : AppColors.textMuted,
+                        ),
+                        constraints: const BoxConstraints(),
+                        padding: const EdgeInsets.all(6),
                       ),
-                      constraints: const BoxConstraints(),
-                      padding: const EdgeInsets.all(6),
-                    ),
-                    IconButton(
-                      onPressed: mutationsEnabled
-                          ? onEditTap ??
-                              () => context
-                                  .push('/edit-recipe/${recipe.recipeId}')
-                          : null,
-                      tooltip: mutationsEnabled
-                          ? 'Edit recipe'
-                          : 'Unavailable offline',
-                      icon: Icon(
-                        Icons.edit_outlined,
-                        size: 18,
-                        color: mutationsEnabled
-                            ? AppColors.primary
-                            : AppColors.textMuted,
+                    if (showEditAction)
+                      IconButton(
+                        onPressed: mutationsEnabled
+                            ? onEditTap ??
+                                () => context
+                                    .push('/edit-recipe/${recipe.recipeId}')
+                            : null,
+                        tooltip: mutationsEnabled
+                            ? 'Edit recipe'
+                            : 'Unavailable offline',
+                        icon: Icon(
+                          Icons.edit_outlined,
+                          size: 18,
+                          color: mutationsEnabled
+                              ? AppColors.primary
+                              : AppColors.textMuted,
+                        ),
+                        constraints: const BoxConstraints(),
+                        padding: const EdgeInsets.all(6),
                       ),
-                      constraints: const BoxConstraints(),
-                      padding: const EdgeInsets.all(6),
-                    ),
                   ],
                 ),
               ],

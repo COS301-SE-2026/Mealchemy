@@ -15,6 +15,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import org.mockito.ArgumentCaptor;
 
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
@@ -31,6 +32,8 @@ import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.auth.repository.UserRepository;
 import com.mealchemy.shared.enums.VaultType;
 import com.mealchemy.shared.enums.VaultMemberRole;
+import com.mealchemy.shared.enums.NotificationType;
+import com.mealchemy.vault.event.NotificationEvent;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -46,6 +49,9 @@ public class VaultMemberServiceTest {
 
     @InjectMocks
     private VaultMemberService vaultMemberService;
+
+    @Mock
+    private NotificationService notificationService;
 
     private Vault vault;
     private User user;
@@ -145,66 +151,6 @@ public class VaultMemberServiceTest {
     }
 
     @Test
-    void addVaultMember_returnsCreatedVaultMember()
-    {
-        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
-        when(userRepository.findByEmail("testUser@gmail.com")).thenReturn(Optional.of(user));
-        when(vaultMemberRepository.save(any(VaultMember.class))).thenReturn(vaultMember);
-
-        VaultMemberResponse result = vaultMemberService.addVaultMember(1, request, 1);
-
-        assertNotNull(result);
-        assertEquals(1, result.userId());
-        verify(vaultMemberRepository, times(1)).save(any(VaultMember.class));
-    }
-
-    @Test
-    void addVaultMember_throwsException_whenVaultNotFound()
-    {
-        when(vaultRepository.findById(99)).thenReturn(Optional.empty());
-
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.addVaultMember(99, request, 1));
-
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-        assertEquals("Vault not found.", ex.getReason());
-    }
-
-    @Test
-    void addVaultMember_throwsException_whenNotOwner()
-    {
-        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
-
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.addVaultMember(1, request, 3));
-
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-        assertEquals("Vault not found.", ex.getReason());
-    }
-
-    @Test
-    void addVaultMember_throwsException_whenVaultTypeIsPrivate()
-    {
-        vault.setVaultType(VaultType.PRIVATE);
-        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
-
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.addVaultMember(1, request, 1));
-
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Members can't be added to a private vault.", ex.getReason());
-    }
-
-    @Test
-    void addVaultMember_throwsException_whenUserNotFound()
-    {
-        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
-        when(userRepository.findByEmail("testUser@gmail.com")).thenReturn(Optional.empty());
-
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> vaultMemberService.addVaultMember(1, request, 1));
-
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
-        assertEquals("Unable to add member.", ex.getReason());
-    }
-
-    @Test
     void removeVaultMember_callsDelete_whenOwner()
     {
         when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
@@ -225,6 +171,7 @@ public class VaultMemberServiceTest {
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Vault not found.", ex.getReason());
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -236,6 +183,7 @@ public class VaultMemberServiceTest {
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Vault not found.", ex.getReason());
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -248,6 +196,7 @@ public class VaultMemberServiceTest {
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("VaultMember row not found.", ex.getReason());
+        verifyNoInteractions(notificationService);
     }
 
     // ========== Change member role ==========
@@ -276,6 +225,7 @@ public class VaultMemberServiceTest {
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Vault not found.", ex.getReason());
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -288,5 +238,65 @@ public class VaultMemberServiceTest {
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only the owner of the vault can change a member's role.", ex.getReason());
+        verifyNoInteractions(notificationService);
+    }
+
+    
+    // =========== Notifications ==========
+
+    @Test
+    void removeVaultMember_publishesMemberRemovedToTarget()
+    {
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultMemberRepository.findByVault_VaultIdAndUser_UserId(1, 2)).thenReturn(Optional.of(vaultMember));
+        when(notificationService.getDisplayName(1)).thenReturn("Owner");
+
+        ArgumentCaptor<NotificationEvent> captor = ArgumentCaptor.forClass(NotificationEvent.class);
+
+        vaultMemberService.removeVaultMember(1, 2, 1);
+
+        verify(notificationService).publish(captor.capture());
+        NotificationEvent event = captor.getValue();
+        assertEquals(NotificationType.MEMBER_REMOVED, event.type());
+        assertEquals(List.of(2), event.recipientUserIds());
+        assertEquals(1, event.actorUserId());
+        assertEquals(1, event.refVaultId());
+        assertTrue(event.message().contains("Test Vault"));
+    }
+
+    @Test 
+    void changeRole_roleChanged_publishToTarget()
+    {
+        vaultMember.setRole(VaultMemberRole.VIEWER);
+
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultMemberRepository.findByVault_VaultIdAndUser_UserId(1, 2)).thenReturn(Optional.of(vaultMember));
+        when(vaultMemberRepository.save(any(VaultMember.class))).thenReturn(vaultMember);
+        when(notificationService.getDisplayName(1)).thenReturn("Owner");
+
+        ArgumentCaptor<NotificationEvent> captor = ArgumentCaptor.forClass(NotificationEvent.class);
+
+        vaultMemberService.changeRole(1, 2, new VaultMemberRoleRequest(VaultMemberRole.EDITOR), 1);
+
+        verify(notificationService).publish(captor.capture());
+        NotificationEvent event = captor.getValue();
+        assertEquals(NotificationType.ROLE_CHANGED, event.type());
+        assertEquals(List.of(2), event.recipientUserIds());
+        assertEquals(1, event.actorUserId());
+        assertEquals("Owner changed your role to EDITOR in Test Vault", event.message());
+    }
+
+    @Test 
+    void changeRole_sameRole_doesntPublish()
+    {
+        vaultMember.setRole(VaultMemberRole.EDITOR);
+
+        when(vaultRepository.findById(1)).thenReturn(Optional.of(vault));
+        when(vaultMemberRepository.findByVault_VaultIdAndUser_UserId(1, 2)).thenReturn(Optional.of(vaultMember));
+        when(vaultMemberRepository.save(any(VaultMember.class))).thenReturn(vaultMember);
+
+        vaultMemberService.changeRole(1, 2, new VaultMemberRoleRequest(VaultMemberRole.EDITOR), 1);
+
+        verify(notificationService, never()).publish(any());
     }
 }

@@ -16,7 +16,7 @@ import '../../external_links/providers/link_provider.dart';
 import '../../favourites/providers/fav_provider.dart';
 import '../providers/shared_vault_access_provider.dart';
 import '../widgets/shared_vault_members_entry.dart';
-
+import '../widgets/shared_vault_recipe_row.dart';
 import '../widgets/vault_hero.dart';
 import '../../offline/data/offline_cache_store.dart';
 import '../../offline/widgets/cache_freshness_label.dart';
@@ -210,6 +210,7 @@ class _VaultSearchResultsView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isReadOnly = ref.watch(offlineReadOnlyProvider);
+    final selectedVault = ref.watch(selectedVaultProvider);
 
     if (results.isEmpty) {
       return Padding(
@@ -255,12 +256,18 @@ class _VaultSearchResultsView extends ConsumerWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            FolderRecipeRow(
-              recipe: result.recipe,
-              mutationsEnabled: false,
-              allowReporting: ref.watch(selectedVaultProvider)?.vaultType ==
-                  VaultTypes.global,
-            ),
+            if (selectedVault?.vaultType == VaultTypes.shared)
+              SharedVaultRecipeRow(
+                vaultId: selectedVault!.vaultId,
+                folderId: result.folder.folderId,
+                recipe: result.recipe,
+              )
+            else
+              FolderRecipeRow(
+                recipe: result.recipe,
+                mutationsEnabled: false,
+                allowReporting: selectedVault?.vaultType == VaultTypes.global,
+              ),
             const SizedBox(height: 8),
           ],
         ],

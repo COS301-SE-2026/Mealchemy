@@ -94,6 +94,12 @@
 			<version>${google-cloud-storage.version}</version>
 		</dependency>
 
+		<!-- websockets -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket</artifactId>
+		</dependency>
+
         <!-- engine auth interceptor -->
         <dependency>
             <groupId>com.google.auth</groupId>
