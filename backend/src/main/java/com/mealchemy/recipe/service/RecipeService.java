@@ -34,6 +34,7 @@ import com.mealchemy.vault.repository.VaultFolderRepository;
 import com.mealchemy.equipment.repository.EquipmentRepository;
 import com.mealchemy.vault.service.VaultFolderRecipeService;
 import com.mealchemy.vault.service.RecipeEditLockService;
+import com.mealchemy.mealprep.repository.MealPlanEntryRepository;
 
 @Service
 public class RecipeService
@@ -55,9 +56,11 @@ public class RecipeService
     // lets it annouce that an old photo needs cleanup without making RecipeService directly responsible for GC Storage
     private final ApplicationEventPublisher eventPublisher;
 
+    private final MealPlanEntryRepository mealPlanEntryRepository;
+
     public RecipeService(RecipeRepository recipeRepository, IngredientCatalogueRepository ingredientCatalogueRepository, 
         FlavourProfileOptionsRepository flavourProfileOptionsRepository, VaultFolderRepository vaultFolderRepository, EquipmentRepository equipmentRepository,
-        VaultFolderRecipeService vaultFolderRecipeService, RecipeEditLockService recipeEditLockService, ApplicationEventPublisher eventPublisher)
+        VaultFolderRecipeService vaultFolderRecipeService, RecipeEditLockService recipeEditLockService, ApplicationEventPublisher eventPublisher, MealPlanEntryRepository mealPlanEntryRepository)
     {
         this.recipeRepository = recipeRepository;
         this.ingredientCatalogueRepository = ingredientCatalogueRepository;
@@ -67,6 +70,7 @@ public class RecipeService
         this.vaultFolderRecipeService = vaultFolderRecipeService;
         this.recipeEditLockService = recipeEditLockService;
         this.eventPublisher = eventPublisher;
+        this.mealPlanEntryRepository = mealPlanEntryRepository;
     }
 
     // Get all recipes
@@ -279,13 +283,18 @@ public class RecipeService
         return RecipeResponse.from(saved);
     }
 
-    // Delete a specific vault using id
+    // Delete a specific recipe using id
     @Transactional
     public void deleteRecipe(int id, Integer userId)
     {
         Recipe recipeForDeletion = recipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         recipeEditLockService.canEditRecipe(id, userId);
+
+        if (mealPlanEntryRepository.existsByRecipeId(id))
+        {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This recipe is used in one or more meal plans and cannot be deleted. Remove recipe from meal plan first.");
+        }
 
         recipeRepository.deleteById(id);
         publishPhotoCleanup(id, recipeForDeletion.getPhotoUrl());
