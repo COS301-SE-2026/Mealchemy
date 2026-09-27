@@ -786,7 +786,7 @@ public class ShoppingListService {
 
     // POST request - builds a shopping list from every recipe in a meal plan date range
     @Transactional
-    public SmartAddMealPlanResponse smartAddMealPlanToShoppingList(Integer userId, Integer shoppingListId, Integer planId, LocalDate startDate, LocalDate endDate) {
+    public SmartAddMealPlanResponse smartAddMealPlanToShoppingList(Integer userId, Integer shoppingListId, Integer planId, LocalDate startDate, LocalDate endDate, boolean compareToPantry) {
         // get shopping list and check ownership
         ShoppingList selectedList = shoppingListRepository.findById(shoppingListId)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
@@ -819,7 +819,9 @@ public class ShoppingListService {
         }
 
         // shopping list currently has all recipes' ingredients - subtract wat is in pantry to get difference in list
-        subtractPantryFromList(userId, shoppingListId);
+        if (compareToPantry) {
+            subtractPantryFromList(userId, shoppingListId);
+        }
 
         PreferredUnit preferredUnit = getPreferredUnit(userId);
 
