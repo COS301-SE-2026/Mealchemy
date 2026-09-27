@@ -6,6 +6,8 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /* Import classes */
 import com.mealchemy.engine.dto.SignalScoresResponse;
@@ -19,6 +21,8 @@ import com.mealchemy.swipes.service.LearningUpdateService;
 
 @Service
 public class MealPlanLearningSignalService {
+    private static final Logger log = LoggerFactory.getLogger(MealPlanLearningSignalService.class);
+
     private final MealPlanRecommendationSignalRepository signalRepository;
     private final MealPlanEntryRepository mealPlanEntryRepository;
     private final LearningUpdateService learningUpdateService;
