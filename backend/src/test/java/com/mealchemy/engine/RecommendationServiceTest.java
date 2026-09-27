@@ -321,7 +321,7 @@ public class RecommendationServiceTest {
         assertEquals(0, response.totalRecipesConsidered());
     }
 
-    // ========== Enrichment — Defensive Skip ==========
+    // ========== Enrichment Defensive Skip ==========
 
     @Test
     void getRecommendations_whenEngineReturnsUnknownRecipeId_skipsItSilently() {
