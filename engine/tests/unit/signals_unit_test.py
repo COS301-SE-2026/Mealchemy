@@ -60,6 +60,12 @@ class TestNoveltyScore:
 
         assert novelty_score(1, [other_recipe_swipe]) == 1.0
 
+    def test_unliked_returns_neutral(self, swipe_factory):
+        swipe = swipe_factory(1, "UNLIKED", datetime.now(UTC) - timedelta(days=1))
+
+        assert novelty_score(1, [swipe]) == NEUTRAL_SIGNAL_VALUE
+
+
 
 class TestNoveltyDetail:
     def test_never_seen_returns_that_state(self):
@@ -80,6 +86,11 @@ class TestNoveltyDetail:
 
     def test_dislike_returns_neutral_state(self, swipe_factory):
         swipe = swipe_factory(1, "DISLIKED", datetime.now(UTC) - timedelta(days=1))
+        state, _ = novelty_detail(1, [swipe])
+        assert state == "neutral"
+
+    def test_unlike_returns_neutral_state(self, swipe_factory):
+        swipe = swipe_factory(1, "UNLIKED", datetime.now(UTC) - timedelta(days=1))
         state, _ = novelty_detail(1, [swipe])
         assert state == "neutral"
 

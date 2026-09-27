@@ -173,6 +173,14 @@ class TestUpdateWeightsFromSwipeSkipped:
         assert result["freshness"] == pytest.approx(weights["freshness"])
         assert result["nutrition"] == pytest.approx(weights["nutrition"])
 
+class TestUpdateWeightsFromSwipeUnliked:
+    def test_unliked_leaves_weights_unchanged(self):
+        weights = _weights()
+        signals = _signal_scores(pantry_match=0.95, cuisine=0.95, freshness=0.95)
+
+        result = update_weights_from_swipe(weights, "UNLIKED", signals, ALPHA)
+
+        assert result == weights
 
 class TestUpdateCuisineAffinityFromSwipe:
     def test_liked_pushes_affinity_toward_one(self):
@@ -225,6 +233,13 @@ class TestUpdateCuisineAffinityFromSwipe:
         result = update_cuisine_affinity_from_swipe(affinities, "", "LIKED", ALPHA)
 
         assert result == {"ITALIAN": 0.5}
+
+    def test_unliked_leaves_affinity_unchanged(self):
+        affinities = {"ITALIAN": 0.5}
+
+        result = update_cuisine_affinity_from_swipe(affinities, "ITALIAN", "UNLIKED", ALPHA)
+
+        assert result["ITALIAN"] == pytest.approx(0.5)
 
 
 class TestRenormalise:
