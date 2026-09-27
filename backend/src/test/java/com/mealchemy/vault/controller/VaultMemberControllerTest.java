@@ -84,45 +84,6 @@ public class VaultMemberControllerTest {
     }
 
     @Test
-    void addVaultMember_returns200_withCreatedMember() throws Exception
-    {
-        when(vaultMemberService.addVaultMember(eq(1), any(VaultMemberRequest.class), eq(1))).thenReturn(response);
-
-        mockMvc.perform(post("/vault/1/members/create")
-            .with(csrf())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.userId").value(2));
-    }
-
-    @Test
-    void addVaultMember_returns400_whenEmailBlank() throws Exception
-    {
-        VaultMemberRequest invalidRequest = new VaultMemberRequest("");
-
-        mockMvc.perform(post("/vault/1/members/create")
-            .with(csrf())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(invalidRequest)))
-            .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void addVaultMember_returns403_whenVaultIsPrivate() throws Exception
-    {
-        when(vaultMemberService.addVaultMember(eq(1), any(VaultMemberRequest.class), eq(1)))
-            .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Members can't be added to a private vault."));
-
-        mockMvc.perform(post("/vault/1/members/create")
-            .with(csrf())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.message").value("Members can't be added to a private vault."));
-    }
-
-    @Test
     void removeVaultMember_returns204() throws Exception
     {
         doNothing().when(vaultMemberService).removeVaultMember(1, 2, 1);

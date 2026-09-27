@@ -2,7 +2,6 @@ package com.mealchemy.vault.service;
 
 // models
 import com.mealchemy.vault.model.RecipeEditLock;
-import com.mealchemy.vault.model.VaultMember;
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.auth.model.User;
@@ -17,8 +16,14 @@ import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.auth.repository.UserRepository;
 
+// events
+import com.mealchemy.vault.event.NotificationEvent;
+import com.mealchemy.vault.event.VaultLiveEvent;
+
 // enums
 import com.mealchemy.shared.enums.VaultMemberRole;
+import com.mealchemy.shared.enums.NotificationType;
+import com.mealchemy.shared.enums.VaultType;
 
 /* Import libraries */
 import org.springframework.stereotype.Service;
@@ -39,10 +44,12 @@ public class RecipeEditLockService
     private final VaultRepository vaultRepository;
     private final UserRepository userRepository;
     private final EntityManager entityManager;
+    private final NotificationService notificationService;
 
     private static final long LOCK_TTL_SECONDS = 90;
 
-    public RecipeEditLockService(RecipeEditLockRepository recipeEditLockRepository, RecipeRepository recipeRepository, VaultMemberRepository vaultMemberRepository, VaultRepository vaultRepository, UserRepository userRepository, EntityManager entityManager)
+    public RecipeEditLockService(RecipeEditLockRepository recipeEditLockRepository, RecipeRepository recipeRepository, VaultMemberRepository vaultMemberRepository, 
+        VaultRepository vaultRepository, UserRepository userRepository, EntityManager entityManager, NotificationService notificationService)
     {
         this.recipeEditLockRepository = recipeEditLockRepository;
         this.recipeRepository = recipeRepository;
@@ -50,6 +57,7 @@ public class RecipeEditLockService
         this.vaultRepository = vaultRepository;
         this.userRepository = userRepository;
         this.entityManager = entityManager;
+        this.notificationService = notificationService;
     }
 
     // Get lock
@@ -104,12 +112,16 @@ public class RecipeEditLockService
             // same holder refreshing the lock - extends TTL and acquiredAt stays exactly the same
             existingLock.setExpiresAt(OffsetDateTime.now().plusSeconds(LOCK_TTL_SECONDS));
             saved = recipeEditLockRepository.save(existingLock);
+            // so refresh doesn't trigger notification
+            return RecipeLockResponse.from(saved);
         }
         else // no row exists (no current lock holder) or row is expired
         {
             // if the existing lock is not null but is locked by the current user - refresh the lock
             if (existingLock != null)
             {
+                notifyIfEdited(existingLock); // recipe has been edited
+
                 recipeEditLockRepository.delete(existingLock);
                 recipeEditLockRepository.flush();
             }
@@ -134,7 +146,9 @@ public class RecipeEditLockService
             }
         }
 
-        // TODO: Notification service mediator - broadcast that recipe is locked
+        // Notification
+        publishLockEvent(NotificationType.LOCK_ACQUIRED, recipeId, userId);
+
         return RecipeLockResponse.from(saved);
     }
 
@@ -158,9 +172,13 @@ public class RecipeEditLockService
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the lock holder can release this lock.");
         }
 
+        // Notification - before delete
+        notifyIfEdited(existingLock);
+        
         recipeEditLockRepository.delete(existingLock);
 
-        // TODO: Notification mediator
+        // Notification
+        publishLockEvent(NotificationType.LOCK_RELEASED, recipeId, userId);
     }
 
     // ========= Helper function ==========
@@ -220,4 +238,58 @@ public class RecipeEditLockService
         return lock.getExpiresAt().isAfter(OffsetDateTime.now());
     }
 
+    // ========== Notification Helpers ==========
+
+    // live lock event - to vault members except actor
+    private void publishLockEvent(NotificationType type, Integer recipeId, Integer actorId)
+    {
+        Vault vault = vaultRepository.findVaultByRecipeId(recipeId).filter(v -> v.getVaultType() == VaultType.SHARED) // if vault is shared
+                                                                   .orElse(null);
+
+        if (vault == null)
+        {
+            return;
+        }
+
+        notificationService.publishLiveEvent(new VaultLiveEvent(
+            notificationService.getVaultParticipantIds(vault.getVaultId(), actorId),
+            type,
+            vault.getVaultId(),
+            recipeId,
+            actorId
+        ));
+    }
+
+    // For RECIPE_EDIT - recipe saved during lock session
+    private void notifyIfEdited(RecipeEditLock lock)
+    {
+        Recipe recipe = recipeRepository.findById(lock.getRecipeId()).orElse(null);
+
+        if (recipe == null || recipe.getUpdatedAt() == null || !recipe.getUpdatedAt().isAfter(lock.getAcquiredAt())) // recipe has not been updated or updae was before lock was acquired
+        {
+            return;
+        }
+
+        Vault vault = vaultRepository.findVaultByRecipeId(recipe.getRecipeId()).filter(v -> v.getVaultType() == VaultType.SHARED) // if vault is shared
+                                                                   .orElse(null);
+
+        if (vault == null)
+        {
+            return;
+        }
+
+        Integer editorId = lock.getLockedByUser().getUserId();
+
+        String message = notificationService.getDisplayName(editorId) + " edited " + recipe.getTitle() + " in " + vault.getName();
+
+        notificationService.publish(new NotificationEvent(
+            notificationService.getVaultParticipantIds(vault.getVaultId(), editorId), // who receives it
+            editorId, // actor
+            NotificationType.RECIPE_EDITED,
+            message,
+            vault.getVaultId(),
+            recipe.getRecipeId(), // recipeId
+            null
+        ));
+    }
 }
