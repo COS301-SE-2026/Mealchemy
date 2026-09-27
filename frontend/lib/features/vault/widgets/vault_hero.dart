@@ -11,6 +11,7 @@ import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provid
 import '../providers/incoming_vault_invitations_provider.dart';
 import 'vault_switcher.dart';
 import 'shared_vault_strip.dart';
+import '../../notifications/widgets/notification_bell.dart';
 
 class VaultHero extends ConsumerWidget {
   const VaultHero({super.key});
@@ -52,6 +53,7 @@ class VaultHero extends ConsumerWidget {
               ],
             ),
           ),
+          const NotificationBell(color: AppColors.textLight),
           Stack(
             clipBehavior: Clip.none,
             children: [
