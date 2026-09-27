@@ -14,7 +14,7 @@ import com.mealchemy.mealprep.dto.MealPlanResponse;
 import com.mealchemy.mealprep.dto.MealPlanEntryRequest;
 import com.mealchemy.mealprep.dto.MealPlanEntryResponse;
 import com.mealchemy.mealprep.service.MealPlanService;
-import com.mealchemy.mealprep.service.ShoppingListService;
+import com.mealchemy.shoppinglist.service.ShoppingListService;
 
 // swagger
 import com.mealchemy.shared.dto.ErrorResponse;
