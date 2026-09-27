@@ -23,7 +23,8 @@ class RecipeTabBar extends StatelessWidget {
         indicatorWeight: 2.5,
         indicatorSize: TabBarIndicatorSize.label,
         dividerColor: AppColors.divider.withValues(alpha: 0.5),
-        labelStyle: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w700),
+        labelStyle:
+            AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w700),
         unselectedLabelStyle: AppTextStyles.bodySmall,
         tabs: const [
           Tab(text: 'Overview'),

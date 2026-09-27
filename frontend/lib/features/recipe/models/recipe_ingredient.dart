@@ -18,7 +18,7 @@ class RecipeIngredient {
     this.sortOrder = 0,
   });
 
- factory RecipeIngredient.fromJson(Map<String, dynamic> json) {
+  factory RecipeIngredient.fromJson(Map<String, dynamic> json) {
     return RecipeIngredient(
       ingredientId: json['ingredientId'] as int?,
       recipeId: json['recipeId'] as int?,

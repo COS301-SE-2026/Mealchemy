@@ -31,7 +31,8 @@ class RecipeEquipmentSection extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
               children: [
-                const CircleAvatar(radius: 4, backgroundColor: AppColors.accent),
+                const CircleAvatar(
+                    radius: 4, backgroundColor: AppColors.accent),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
