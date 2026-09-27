@@ -35,6 +35,7 @@ import com.mealchemy.equipment.repository.EquipmentRepository;
 import com.mealchemy.vault.service.VaultFolderRecipeService;
 import com.mealchemy.vault.service.RecipeEditLockService;
 import com.mealchemy.mealprep.repository.MealPlanEntryRepository;
+import com.mealchemy.shared.unitconverter.UnitConverter;
 
 @Service
 public class RecipeService
@@ -352,10 +353,12 @@ public class RecipeService
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One of the ingredients you want to add does not exist.");
             }
 
+            UnitConverter.NormalisedQuantity normalised = UnitConverter.normaliseIngredient(request.quantity(), request.unit());
+
             RecipeIngredient recipeIngredient = new RecipeIngredient();
             recipeIngredient.setIngId(request.ingId());
-            recipeIngredient.setQuantity(request.quantity());
-            recipeIngredient.setUnit(request.unit());
+            recipeIngredient.setQuantity(normalised.quantity());
+            recipeIngredient.setUnit(normalised.unit());
             recipeIngredient.setSortOrder(request.sortOrder());
             recipeIngredient.setRecipe(recipe);
             return recipeIngredient;

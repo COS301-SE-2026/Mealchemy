@@ -169,6 +169,14 @@ public class MealPlanService
             throw new InvalidMealSlotTimeException("mealTime " + request.mealTime() + " is outside the valid range for " + request.mealSlot() + ".");
         }
 
+        // if there is an aleady existing meal at this time
+        Optional<MealPlanEntry> existing = mealPlanEntryRepository.findByPlan_PlanIdAndEntryDateAndMealSlot(planId, request.entryDate(), request.mealSlot());
+
+        if (existing.isPresent() && !existing.get().getEntryId().equals(entryId)) // not the same entry
+        {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "An entry already exists for " + request.entryDate() + " " + request.mealSlot() + ".");   
+        }
+
         // fire skipped before update commits
         if (entry.getSource() == MealPlanEntrySource.RECOMMENDED)
         {
