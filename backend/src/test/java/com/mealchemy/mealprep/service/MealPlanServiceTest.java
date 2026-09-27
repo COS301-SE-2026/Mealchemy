@@ -145,7 +145,7 @@ public class MealPlanServiceTest {
 
         // Act
         ResponseStatusException ex = assertThrows(
-            ResponseStatusException.class,removeEntry_manualEntry_doesNotFireSkipSignal
+            ResponseStatusException.class,
             () -> mealPlanService.getOrCreatePlan(10, 99)
         );
 
