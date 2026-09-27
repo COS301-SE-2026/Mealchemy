@@ -64,6 +64,17 @@ void main() {
       );
     });
 
+    test('parses named pause and resume commands', () {
+      expect(
+        parseCookVoiceIntent('pause rice timer'),
+        CookVoiceCommand.pauseNamedTimer('rice'),
+      );
+      expect(
+        parseCookVoiceIntent('resume the pasta sauce timer'),
+        CookVoiceCommand.resumeNamedTimer('pasta sauce'),
+      );
+    });
+
     test('rejects open-ended or incomplete timer requests', () {
       expect(parseCookVoiceIntent('set a timer'), isNull);
       expect(parseCookVoiceIntent('cook it longer'), isNull);

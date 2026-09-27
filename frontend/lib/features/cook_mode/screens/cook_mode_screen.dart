@@ -238,7 +238,6 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
         _voiceListening &&
         _voiceSessionActive &&
         _voiceModeEnabled;
-    if (shouldResume) _voiceSessionActive = false;
     setState(() {
       _voiceListening = listening;
       if (listening) {
@@ -247,7 +246,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
         _voiceSoundLevel = 0;
       }
     });
-    if (shouldResume) _scheduleListening();
+    if (shouldResume) _scheduleListening(endCurrentSession: true);
   }
 
   void _onSoundLevel(double level) {
@@ -261,35 +260,63 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
     setState(() => _voiceSoundLevel = normalized);
   }
 
+  static const _noMatchRetryDelays = [
+    Duration(seconds: 1),
+    Duration(seconds: 2),
+    Duration(seconds: 4),
+  ];
+
+  int _noMatchRetryCount = 0;
+
   void _onVoiceError(String message) {
     if (!mounted || !_isForeground) return;
     _voiceSessionActive = false;
-    final timedOut = message.contains('error_speech_timeout') ||
-        message.contains('error_no_match');
+    final noMatch = message.contains('error_no_match');
+    final timedOut = message.contains('error_speech_timeout');
+    final recoverable = noMatch || timedOut;
+    if (noMatch) _noMatchRetryCount++;
+    final retryNoMatch =
+        noMatch && _noMatchRetryCount <= _noMatchRetryDelays.length;
     setState(() {
       _voiceListening = false;
       _voiceSoundLevel = 0;
-      if (timedOut) {
+      if (retryNoMatch || timedOut) {
         _voiceMessage = null;
+      } else if (noMatch) {
+        _voiceModeEnabled = false;
+        _voiceMessage = 'No command heard. Tap Speak to try again.';
       } else {
         _voiceModeEnabled = false;
         _voiceAvailable = false;
         _voiceInitialized = false;
-        _voiceMessage = 'On-device voice unavailable. Tap Speak to try again.';
+        _voiceMessage =
+            'Voice recognition unavailable. Tap Speak to try again or check Device Settings';
       }
     });
-    if (timedOut && _voiceModeEnabled) _scheduleListening();
+    if (retryNoMatch && _voiceModeEnabled) {
+      _scheduleListening(
+        delay: _noMatchRetryDelays[_noMatchRetryCount - 1],
+      );
+    } else if (timedOut && _voiceModeEnabled) {
+      _scheduleListening(delay: const Duration(seconds: 1));
+    } else if (!recoverable || !retryNoMatch) {
+      _voiceGeneration++;
+      _listenDelay?.cancel();
+      _listenDelay = null;
+    }
   }
 
   void _onVoiceResult(CookVoiceResult result) {
     if (!mounted || !_isForeground || !_voiceSessionActive) return;
+    _noMatchRetryCount = 0;
     _voiceSessionActive = false;
     final command = parseCookVoiceIntent(result.words);
-    if (command == null ||
-        (result.confidence != null && result.confidence! < 0.5)) {
+    if (command == null) {
+      final heard = result.words.trim();
       setState(() {
-        _voiceMessage =
-            "Didn't catch that. Try next, back, repeat, or set a timer.";
+        _voiceMessage = heard.isEmpty
+            ? "Didn't catch that. Try next, back, repeat, set, pause, or resume a timer."
+            : 'Heard "$heard". Try next, back, repeat, set, pause, or resume a timer.';
       });
       unawaited(_restartVoiceListening());
       return;
@@ -326,6 +353,10 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
         await _startTimer(command.duration!, resumeListening: true);
       case CookVoiceCommandType.startSuggestedTimer:
         await _startSuggestedTimer(resumeListening: true);
+      case CookVoiceCommandType.pauseTimer:
+        await _setTimerPausedFromVoice(command, shouldPause: true);
+      case CookVoiceCommandType.resumeTimer:
+        await _setTimerPausedFromVoice(command, shouldPause: false);
     }
   }
 
@@ -347,6 +378,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
 
   Future<void> _startTimer(
     Duration duration, {
+    String? name,
     bool resumeListening = false,
   }) async {
     await _stopVoiceListening();
@@ -359,6 +391,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
       stepIndex: mode.currentStepIndex,
       stepNumber: step.stepNr,
       duration: duration,
+      name: name,
     );
     if (!mounted) return;
     setState(() {
@@ -367,7 +400,77 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
     if (resumeListening) _scheduleListening();
   }
 
-  void _scheduleListening() {
+  Future<void> _setTimerPausedFromVoice(
+    CookVoiceCommand command, {
+    required bool shouldPause,
+  }) async {
+    final timerState = ref.read(cookTimerControllerProvider(_userId));
+    var candidates = timerState.activeTimers
+        .where((timer) => timer.isPaused != shouldPause)
+        .toList(growable: false);
+    final requestedName = command.timerName;
+
+    if (requestedName != null) {
+      final normalizedName = _normalizeTimerTarget(requestedName);
+      candidates = candidates
+          .where(
+            (timer) =>
+                timer.name != null &&
+                _normalizeTimerTarget(timer.name!) == normalizedName,
+          )
+          .toList(growable: false);
+    }
+
+    if (candidates.isEmpty) {
+      if (!mounted) return;
+      final action = shouldPause ? 'pause' : 'resume';
+      final stateDescription = shouldPause ? 'running' : 'paused';
+      setState(() {
+        _voiceMessage = requestedName == null
+            ? 'No $stateDescription timers to $action.'
+            : 'No $stateDescription timer named "$requestedName".';
+      });
+      unawaited(_restartVoiceListening());
+      return;
+    }
+
+    if (candidates.length > 1) {
+      if (!mounted) return;
+      final action = shouldPause ? 'pause' : 'resume';
+      setState(() {
+        _voiceMessage = 'Which timer? Say $action followed by its timer name.';
+      });
+      unawaited(_restartVoiceListening());
+      return;
+    }
+
+    await _stopVoiceListening();
+    final timer = candidates.single;
+    final changed = shouldPause
+        ? await _timerController.pause(timer)
+        : await _timerController.resume(timer);
+    if (!mounted) return;
+    final subject = timer.name == null ? 'Timer' : '${timer.name} timer';
+    setState(() {
+      _voiceMessage = changed == null
+          ? 'That timer is no longer available.'
+          : '$subject ${shouldPause ? 'paused' : 'resumed'}.';
+    });
+    _scheduleListening();
+  }
+
+  String _normalizeTimerTarget(String value) {
+    return value
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9\s]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  void _scheduleListening({
+    bool endCurrentSession = false,
+    Duration? delay,
+  }) {
     if (!_voiceModeEnabled ||
         !_voiceInitialized ||
         !_voiceAvailable ||
@@ -377,7 +480,11 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
     }
     final generation = ++_voiceGeneration;
     _listenDelay?.cancel();
-    _listenDelay = Timer(const Duration(milliseconds: 300), () {
+    final restartDelay = delay ??
+        (endCurrentSession
+            ? const Duration(milliseconds: 750)
+            : const Duration(milliseconds: 300));
+    _listenDelay = Timer(restartDelay, () {
       _listenDelay = null;
       if (!mounted ||
           generation != _voiceGeneration ||
@@ -385,6 +492,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
           !_voiceModeEnabled) {
         return;
       }
+      if (endCurrentSession) _voiceSessionActive = false;
       unawaited(_startVoiceListening());
     });
   }
@@ -456,6 +564,7 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
   }
 
   Future<void> _toggleVoiceMode() async {
+    _noMatchRetryCount = 0;
     if (_voiceModeEnabled) {
       setState(() {
         _voiceModeEnabled = false;
@@ -694,7 +803,13 @@ class _CookModeContentState extends ConsumerState<_CookModeContent> {
                 suggestedDuration: detectCookStepDuration(
                   widget.steps[state.currentStepIndex].content,
                 ),
-                onStart: _startTimer,
+                onStart: (duration, name) => _startTimer(duration, name: name),
+                onPause: (timer) async {
+                  await _timerController.pause(timer);
+                },
+                onResume: (timer) async {
+                  await _timerController.resume(timer);
+                },
                 onCancel: _timerController.cancel,
               ),
               CookModeActionDock(
