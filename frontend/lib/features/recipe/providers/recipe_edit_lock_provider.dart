@@ -39,8 +39,8 @@ class RecipeEditLockState {
       phase == RecipeEditLockPhase.refreshing;
 }
 
-//shared runtime information remains available during asynchronous cleanup
-//prevents an old controller from releasing a lock using new account
+// Keeps session information available during asynchronous cleanup.
+// Prevents an old controller from releasing a lock using another account.
 class RecipeLockRuntime {
   RecipeLockRuntime({
     required this.session,
@@ -52,7 +52,8 @@ class RecipeLockRuntime {
   bool active = true;
 }
 
-//serialises operations for each recipe, including cleanup from an old controller before a replacement controller acquires same recipe
+// Serialises operations for each recipe, including cleanup from an old
+// controller before a replacement controller acquires the same recipe.
 class RecipeLockQueue {
   final Map<int, Future<void>> _tails = {};
 
@@ -109,13 +110,16 @@ class RecipeEditLockNotifier extends StateNotifier<RecipeEditLockState> {
 
   Timer? _renewalTimer;
   Timer? _expiryTimer;
+
   Future<bool>? _request;
   Future<void>? _closing;
+  Future<void>? _suspending;
 
   RecipeEditLock? _ownedLock;
 
   bool _stopped = false;
   bool _paused = false;
+  bool _backgrounded = false;
   bool _mayHoldLock = false;
   bool _needsReload = false;
   int _generation = 0;
@@ -140,11 +144,13 @@ class RecipeEditLockNotifier extends StateNotifier<RecipeEditLockState> {
         );
   }
 
-  //check immediately before starting a save, not just when rendering UI
+  // Check immediately before starting each mutation, not only when
+  // rendering the editor.
   bool get canSave =>
       mounted &&
       !_stopped &&
       !_paused &&
+      !_backgrounded &&
       _sameSession &&
       _online &&
       !_needsReload &&
@@ -160,7 +166,9 @@ class RecipeEditLockNotifier extends StateNotifier<RecipeEditLockState> {
   }
 
   Future<bool> acquire() async {
-    if (!mounted || _stopped || _paused) return false;
+    if (!mounted || _stopped || _paused || _backgrounded) {
+      return false;
+    }
 
     final pending = _request;
     if (pending != null) return pending;
@@ -205,6 +213,9 @@ class RecipeEditLockNotifier extends StateNotifier<RecipeEditLockState> {
   Future<bool> _acquire(int generation) async {
     if (!_isCurrentRequest(generation)) return false;
 
+    // A queued acquisition must not start after backgrounding.
+    if (_backgrounded) return false;
+
     if (!_online) {
       state = RecipeEditLockState(
         phase: RecipeEditLockPhase.unavailable,
@@ -215,7 +226,8 @@ class RecipeEditLockNotifier extends StateNotifier<RecipeEditLockState> {
     }
 
     try {
-      //timeout does not prove that the backend failed to acquire the lock
+      // A timeout does not prove that the backend failed to acquire
+      // the lock.
       _mayHoldLock = true;
 
       final lock = await _repository.acquireLock(recipeId);
@@ -236,7 +248,7 @@ class RecipeEditLockNotifier extends StateNotifier<RecipeEditLockState> {
       final previous = _ownedLock;
 
       if (previous != null && previous.acquiredAt != lock.acquiredAt) {
-        //another editing session may have changed recipe in between
+        // Another editing session may have changed the recipe.
         _needsReload = true;
       }
 
@@ -280,7 +292,7 @@ class RecipeEditLockNotifier extends StateNotifier<RecipeEditLockState> {
             otherLock = result;
           }
         } catch (_) {
-          //original conflict still applies if the holder lookup fails
+          // The original conflict still applies if holder lookup fails.
         }
 
         if (!_isCurrentRequest(generation)) return false;
@@ -314,11 +326,13 @@ class RecipeEditLockNotifier extends StateNotifier<RecipeEditLockState> {
   void _scheduleTimers(RecipeEditLock lock) {
     _cancelTimers();
 
+    if (_backgrounded) return;
+
     final remaining =
         lock.expiresAt.difference(_now().toUtc()) - expirySafetyMargin;
 
     _expiryTimer = Timer(remaining, () {
-      if (!mounted || _stopped || _paused) return;
+      if (!mounted || _stopped || _paused || _backgrounded) return;
 
       ++_generation;
       _needsReload = true;
@@ -333,13 +347,11 @@ class RecipeEditLockNotifier extends StateNotifier<RecipeEditLockState> {
     });
 
     _renewalTimer = Timer(renewalInterval, () {
-      if (!mounted || _stopped || _paused) return;
+      if (!mounted || _stopped || _paused || _backgrounded) return;
       unawaited(acquire());
     });
   }
 
-  //pause when connectivity becomes uncertain or the app backgrounds
-  //background timers are not relied on to keep a lock alive
   void pause({
     String message = 'Editing is paused. Check access before continuing.',
   }) {
@@ -356,26 +368,91 @@ class RecipeEditLockNotifier extends StateNotifier<RecipeEditLockState> {
     );
   }
 
-  //caller invokes this on resume or an explicit retry
+  // Stops new mutations and renewals without releasing a lock underneath
+  // a save or upload that has already started.
+  void holdWhileBackgrounded() {
+    if (!mounted || _stopped) return;
+
+    _backgrounded = true;
+    _cancelTimers();
+  }
+
+  // Call only once the screen has no save or upload in flight.
+  Future<void> suspend() {
+    final pending = _suspending;
+    if (pending != null) return pending;
+
+    if (!mounted || _stopped) return Future<void>.value();
+
+    _backgrounded = true;
+
+    if (_ownedLock != null || _mayHoldLock) {
+      _needsReload = true;
+    }
+
+    pause(
+      message: 'Editing paused. Your draft has been kept. '
+          'Check access and reload before saving again.',
+    );
+
+    final operation = _queue.run<void>(recipeId, () async {
+      await _releaseNow();
+    });
+
+    _suspending = operation;
+
+    return operation.whenComplete(() {
+      if (identical(_suspending, operation)) {
+        _suspending = null;
+      }
+    });
+  }
+
+  // A takeover hint stops further submissions immediately.
+  // REST acquisition and an explicit reload establish a safe baseline.
+  void handleLiveLockAcquired({required int actorUserId}) {
+    if (!mounted ||
+        _stopped ||
+        !_sameSession ||
+        actorUserId == _session.userId) {
+      return;
+    }
+
+    _needsReload = true;
+
+    // The event says another user now holds the lock.
+    _mayHoldLock = false;
+
+    pause(
+      message: 'Another member may now be editing this recipe. '
+          'Saving has stopped. Copy your draft before reloading.',
+    );
+  }
+
+  // Called on foreground resume or an explicit retry.
   Future<bool> resume() async {
     if (!mounted || _stopped) return false;
 
-    //finish an older request before beginning a new generation
+    final suspension = _suspending;
+    if (suspension != null) await suspension;
+
     final pending = _request;
     if (pending != null) await pending;
 
     if (!mounted || _stopped) return false;
 
+    _backgrounded = false;
     _paused = false;
     return acquire();
   }
 
-  //call only after fresh recipe data has been loaded while lease is held
-  //supplying acquiredAt prevents a late reload acknowledging a different lease
+  // Call only after fresh recipe data has loaded while the lease is held.
+  // acquiredAt prevents acknowledging a different editing lease.
   bool confirmReloaded({required DateTime acquiredAt}) {
     if (!mounted ||
         _stopped ||
         _paused ||
+        _backgrounded ||
         !_sameSession ||
         !_online ||
         !_leaseIsValid ||
@@ -398,6 +475,7 @@ class RecipeEditLockNotifier extends StateNotifier<RecipeEditLockState> {
   Future<void> close() {
     final closing = _closing;
     if (closing != null) return closing;
+
     if (!mounted || _stopped) return Future<void>.value();
 
     _stopped = true;
@@ -440,7 +518,7 @@ class RecipeEditLockNotifier extends StateNotifier<RecipeEditLockState> {
     } on DioException catch (error) {
       final status = error.response?.statusCode;
 
-      //nothing remains for client to release
+      // Nothing remains for this client to release.
       if (status == 403 || status == 404) return null;
 
       return 'Lock release could not be confirmed. '

@@ -90,6 +90,9 @@ final appRouter = GoRouter(
         return RecipeDetailScreen(
           recipeId: id,
           allowReporting: state.uri.queryParameters['report'] == 'true',
+          sharedVaultId: int.tryParse(
+            state.uri.queryParameters['vaultId'] ?? '',
+          ),
         );
       },
     ),

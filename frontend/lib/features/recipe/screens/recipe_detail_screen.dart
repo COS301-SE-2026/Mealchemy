@@ -22,6 +22,7 @@ import '../widgets/recipe_step_row.dart';
 import '../widgets/recipe_tab_bar.dart';
 import '../../offline/data/offline_cache_store.dart';
 import '../../offline/widgets/cache_freshness_label.dart';
+import '../widgets/shared_recipe_lock_status.dart';
 
 //tabs need controller with animation support
 class RecipeDetailScreen extends ConsumerStatefulWidget {
@@ -29,10 +30,12 @@ class RecipeDetailScreen extends ConsumerStatefulWidget {
     super.key,
     required this.recipeId,
     this.allowReporting = false,
+    this.sharedVaultId,
   });
 
   final int recipeId;
   final bool allowReporting;
+  final int? sharedVaultId;
 
   @override
   ConsumerState<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
@@ -82,6 +85,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
         tabController: _tabController,
         onRefresh: _refresh,
         allowReporting: widget.allowReporting,
+        sharedVaultId: widget.sharedVaultId,
       ),
     );
   }
@@ -93,12 +97,14 @@ class _RecipeDetailContent extends ConsumerWidget {
     required this.tabController,
     required this.onRefresh,
     required this.allowReporting,
+    required this.sharedVaultId,
   });
 
   final Recipe recipe;
   final TabController tabController;
   final Future<void> Function() onRefresh;
   final bool allowReporting;
+  final int? sharedVaultId;
 
 //ingredients and steps are null on endpoint
 //sorted* guards against null
@@ -118,6 +124,13 @@ class _RecipeDetailContent extends ConsumerWidget {
             recipe: recipe,
             allowReporting: allowReporting,
           ),
+          if (sharedVaultId != null && sharedVaultId! > 0)
+            SharedRecipeLockStatus(
+              target: (
+                vaultId: sharedVaultId!,
+                recipeId: recipe.recipeId,
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
             child: CacheFreshnessLabel(
