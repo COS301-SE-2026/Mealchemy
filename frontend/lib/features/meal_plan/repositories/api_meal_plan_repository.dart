@@ -2,11 +2,14 @@ import 'package:dio/dio.dart';
 import 'meal_plan_repository.dart';
 import '../models/meal_plan.dart';
 import '../models/meal_plan_entry.dart';
+import '../models/meal_slot.dart';
+import '../../recipe/models/recipe.dart';
 
 class ApiMealPlanRepository implements MealPlanRepository {
   final Dio _dio;
 
   ApiMealPlanRepository(this._dio);
+
   @override
   Future<MealPlan> getOrCreatePlan(int vaultId) async {
     final res = await _dio.post('/api/meal-plans', data: {'vaultId': vaultId});
@@ -31,6 +34,7 @@ class ApiMealPlanRepository implements MealPlanRepository {
     final res = await _dio.post('/api/meal-plans/$planId/entries', data: entry.toRequestJson());
     return MealPlanEntry.fromJson(res.data);
   }
+
   @override
   Future<MealPlanEntry> updateEntry(int planId, MealPlanEntry entry) async {
     final res = await _dio.put(
@@ -43,5 +47,27 @@ class ApiMealPlanRepository implements MealPlanRepository {
   @override
   Future<void> deleteEntry(int planId, int entryId) async {
     await _dio.delete('/api/meal-plans/$planId/entries/$entryId');
+  }
+
+  @override
+  Future<List<Recipe>> previewRecommendations(int planId, DateTime date, MealSlot slot) async {
+    final res = await _dio.get(
+      '/api/meal-plans/$planId/days/${MealPlanEntry.formatDate(date)}/recommendations',
+      queryParameters: {'mealSlot': slot.value},
+    );
+    final data = res.data;
+    final list = data is List ? data : (data['recommendations'] as List? ?? []);
+    return list
+        .map((j) => Recipe.fromJson((j['recipe'] ?? j) as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<MealPlanEntry> acceptRecommendation(int planId, MealPlanEntry entry) async {
+    final res = await _dio.post(
+      '/api/meal-plans/$planId/entries/from-recommendation',
+      data: entry.toRequestJson(),
+    );
+    return MealPlanEntry.fromJson(res.data);
   }
 }

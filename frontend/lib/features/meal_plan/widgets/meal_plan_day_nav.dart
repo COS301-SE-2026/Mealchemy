@@ -23,7 +23,7 @@ class MealPlanDayNav extends StatelessWidget {
     'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
   ];
 
-  String _ordinal(int n) {
+  static String _ordinal(int n) {
     if (n >= 11 && n <= 13) return '${n}th';
     switch (n % 10) {
       case 1:
@@ -36,6 +36,7 @@ class MealPlanDayNav extends StatelessWidget {
         return '${n}th';
     }
   }
+    static String formatDay(DateTime d) => '${_weekdays[d.weekday - 1]} ${_ordinal(d.day)}';
 
   bool get _isToday {
     final now = DateTime.now();

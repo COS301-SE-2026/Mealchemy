@@ -1,5 +1,7 @@
 import '../models/meal_plan.dart';
 import '../models/meal_plan_entry.dart';
+import '../models/meal_slot.dart';
+import '../../recipe/models/recipe.dart';
 
 abstract class MealPlanRepository {
   Future<MealPlan> getOrCreatePlan(int vaultId);
@@ -7,4 +9,6 @@ abstract class MealPlanRepository {
   Future<MealPlanEntry> addEntry(int planId, MealPlanEntry entry);
   Future<MealPlanEntry> updateEntry(int planId, MealPlanEntry entry);
   Future<void> deleteEntry(int planId, int entryId);
+  Future<List<Recipe>> previewRecommendations(int planId, DateTime date, MealSlot slot);
+  Future<MealPlanEntry> acceptRecommendation(int planId, MealPlanEntry entry);
 }

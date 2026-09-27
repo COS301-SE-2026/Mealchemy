@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/constants/app_config.dart';
 import 'package:mealchemy/core/providers/api_service_provider.dart';
+import 'package:mealchemy/features/recipe/models/recipe.dart';
 import '../models/meal_plan.dart';
 import '../models/meal_plan_entry.dart';
 import '../models/meal_slot.dart';
@@ -114,11 +115,19 @@ class MealPlanNotifier extends StateNotifier<MealPlanState> {
   void previousDay() => selectDay(state.selectedDay.subtract(const Duration(days: 1)));
   void goToToday() => selectDay(DateTime.now());
 
-  Future<String?> addEntry(MealPlanEntry entry) async {
+  Future<String?> addEntry(MealPlanEntry entry) =>
+      _add(entry, fromSuggestion: false);
+
+  Future<String?> acceptRecommendation(MealPlanEntry entry) =>
+      _add(entry, fromSuggestion: true);
+
+  Future<String?> _add(MealPlanEntry entry, {required bool fromSuggestion}) async {
     final plan = state.plan;
     if (plan == null) return 'Meal plan not loaded yet';
     try {
-      final saved = await _repository.addEntry(plan.planId, entry);
+      final saved = fromSuggestion
+          ? await _repository.acceptRecommendation(plan.planId, entry)
+          : await _repository.addEntry(plan.planId, entry);
       if (_inWindow(saved.entryDate)) {
         state = state.copyWith(entries: [...state.entries, saved]);
       }
@@ -189,4 +198,14 @@ class MealPlanNotifier extends StateNotifier<MealPlanState> {
 final mealPlanProvider =
     StateNotifierProvider.family<MealPlanNotifier, MealPlanState, int>((ref, vaultId) {
   return MealPlanNotifier(ref.watch(mealPlanRepositoryProvider), vaultId);
+});
+
+final mealSuggestionsProvider = FutureProvider.autoDispose
+    .family<List<Recipe>, ({int vaultId, DateTime date, MealSlot slot})>(
+        (ref, key) async {
+  final plan = ref.watch(mealPlanProvider(key.vaultId).select((s) => s.plan));
+  if (plan == null) return const [];
+  return ref
+      .watch(mealPlanRepositoryProvider)
+      .previewRecommendations(plan.planId, key.date, key.slot);
 });

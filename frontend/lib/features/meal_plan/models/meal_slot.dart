@@ -7,7 +7,7 @@ enum MealSlot {
       TimeOfDay(hour: 11, minute: 0), TimeOfDay(hour: 16, minute: 0)),
   dinner('DINNER', 'Dinner', Icons.dinner_dining_outlined,
       TimeOfDay(hour: 16, minute: 0), TimeOfDay(hour: 23, minute: 0)),
-  snack('SNACK', 'Snack', Icons.cookie_outlined, null, null);
+    snack('SNACK', 'Other', Icons.cookie_outlined, null, null);
 
   final String value;
   final String label;
