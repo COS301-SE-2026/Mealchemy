@@ -97,7 +97,6 @@ public class MealPlanService
         return responses;
     }
 
-    // TODO: Paul check 
     // add entry 
     public MealPlanEntryResponse addEntry(Integer planId, Integer userId, LocalDate date, LocalTime mealTime, MealSlot mealSlot, String title, String note, Integer recipeId, MealPlanEntrySource source, boolean overwrite)
     {
