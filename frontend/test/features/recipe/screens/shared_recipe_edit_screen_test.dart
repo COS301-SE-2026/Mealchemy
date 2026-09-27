@@ -25,6 +25,8 @@ import 'package:mealchemy/features/vault/providers/vault_repository_provider.dar
 import 'package:mealchemy/features/vault/repositories/vault_repository.dart';
 import 'package:mealchemy/features/recipe/models/equipment.dart';
 import 'package:mealchemy/features/profile/providers/profile_provider.dart';
+import 'package:mealchemy/features/notifications/models/vault_live_event.dart';
+import 'package:mealchemy/features/notifications/providers/notification_realtime_provider.dart';
 
 const _target = (
   vaultId: 2,
@@ -186,9 +188,11 @@ class _Fixture {
 
   late final locks = _Locks(events, () => now);
   late final recipes = _Recipes(events);
+  final liveEvents = StreamController<VaultLiveEvent>.broadcast();
 
   late final container = ProviderContainer(
     overrides: [
+      vaultLiveEventsProvider.overrideWith((ref) => liveEvents.stream),
       vaultSessionProvider.overrideWithValue(_session),
       vaultConnectionProvider.overrideWithValue(NetworkStatus.online),
       offlineReadOnlyProvider.overrideWithValue(false),
@@ -253,6 +257,7 @@ class _Fixture {
     await tester.pump();
     router.dispose();
     container.dispose();
+    unawaited(liveEvents.close());
     await tester.pump();
   }
 }
@@ -345,11 +350,15 @@ void main() {
 
       fixture.recipes.title = 'Updated by another member';
 
+      await tester.ensureVisible(find.text('Check again'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Check again'));
       await tester.pumpAndSettle();
 
       expect(find.text('Reload latest recipe'), findsOneWidget);
 
+      await tester.ensureVisible(find.text('Reload latest recipe'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Reload latest recipe'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Keep draft'));
@@ -366,6 +375,8 @@ void main() {
         1,
       );
 
+      await tester.ensureVisible(find.text('Reload latest recipe'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Reload latest recipe'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Discard draft and reload'));
@@ -517,11 +528,97 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(fixture.locks.acquisitions, 2);
-      expect(find.text('Edit Recipe'), findsOneWidget);
+      expect(fixture.locks.releases, 1);
+      expect(find.text('Reload latest recipe'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('shared-recipe-draft')),
+        findsOneWidget,
+      );
     } finally {
       await fixture.close(tester);
       resumeApp();
       await tester.pump();
+    }
+  });
+  testWidgets('takeover preserves the current draft as selectable text',
+      (tester) async {
+    final fixture = _Fixture();
+
+    try {
+      await fixture.open(tester);
+
+      final title = find.byWidgetPredicate(
+        (widget) =>
+            widget is EditableText && widget.controller.text == 'Shared pasta',
+      );
+
+      await tester.enterText(title, 'My unsaved pasta changes');
+
+      fixture.liveEvents.add(
+        const VaultLiveEvent(
+          rawType: 'LOCK_ACQUIRED',
+          vaultId: 2,
+          recipeId: 99,
+          actorUserId: 9,
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(
+        fixture.container.read(recipeEditLockProvider(99).notifier).canSave,
+        isFalse,
+      );
+
+      final draft = tester.widget<SelectableText>(
+        find.byKey(const ValueKey('shared-recipe-draft')),
+      );
+
+      expect(draft.data, contains('My unsaved pasta changes'));
+      expect(find.text('Reload latest recipe'), findsOneWidget);
+      expect(fixture.recipes.updates, 0);
+
+      await fixture.advance(tester, const Duration(seconds: 30));
+      expect(fixture.locks.acquisitions, 1);
+    } finally {
+      await fixture.close(tester);
+    }
+  });
+
+  testWidgets('unrelated lock events do not interrupt the editor',
+      (tester) async {
+    final fixture = _Fixture();
+
+    try {
+      await fixture.open(tester);
+
+      fixture.liveEvents.add(
+        const VaultLiveEvent(
+          rawType: 'LOCK_ACQUIRED',
+          vaultId: 2,
+          recipeId: 100,
+          actorUserId: 9,
+        ),
+      );
+
+      fixture.liveEvents.add(
+        const VaultLiveEvent(
+          rawType: 'LOCK_ACQUIRED',
+          vaultId: 2,
+          recipeId: 99,
+          actorUserId: 1,
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(
+        fixture.container.read(recipeEditLockProvider(99).notifier).canSave,
+        isTrue,
+      );
+      expect(find.text('Edit Recipe'), findsOneWidget);
+    } finally {
+      await fixture.close(tester);
     }
   });
 }
