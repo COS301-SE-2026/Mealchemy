@@ -38,6 +38,11 @@ import com.mealchemy.shoppinglist.dto.UpdateShoppingListItemRequest;
 import com.mealchemy.shoppinglist.dto.UpdateShoppingListRequest;
 import com.mealchemy.shoppinglist.dto.DeleteBatchItemsRequest;
 import com.mealchemy.shoppinglist.dto.CompleteShopResponse;
+import com.mealchemy.mealprep.dto.MealPlanEntryResponse;
+import com.mealchemy.shoppinglist.dto.SmartAddMealPlanResponse;
+
+// service
+import com.mealchemy.mealprep.service.MealPlanService;
 
 //enum for shopping list status
 import com.mealchemy.shared.enums.ShoppingListStatus;
@@ -49,6 +54,7 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.Optional;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -73,10 +79,12 @@ public class ShoppingListService {
 
     private final UserProfileRepository userProfileRepository;
 
+    private final MealPlanService mealPlanService;
+
 
     // constructor
     public ShoppingListService(ShoppingListRepository shoppingListRepository, ShoppingListItemRepository shoppingListItemRepository, IngredientCatalogueRepository ingredientCatalogueRepository, IngredientCategoryRepository ingredientCategoryRepository, PantryIngredientRepository pantryIngredientRepository, 
-                               RecipeRepository recipeRepository, RecipeIngredientRepository recipeIngredientRepository, VaultFolderRecipeRepository vaultFolderRecipeRepository, VaultMemberRepository vaultMemberRepository,UserProfileRepository userProfileRepository) {
+                               RecipeRepository recipeRepository, RecipeIngredientRepository recipeIngredientRepository, VaultFolderRecipeRepository vaultFolderRecipeRepository, VaultMemberRepository vaultMemberRepository,UserProfileRepository userProfileRepository, MealPlanService mealPlanService) {
         this.shoppingListRepository = shoppingListRepository;
         this.shoppingListItemRepository = shoppingListItemRepository;
 
@@ -92,6 +100,8 @@ public class ShoppingListService {
         this.vaultMemberRepository = vaultMemberRepository;
 
         this.userProfileRepository = userProfileRepository;
+
+        this.mealPlanService = mealPlanService;
     }
 
     // ========== Shopping List Level ==========
@@ -770,6 +780,99 @@ public class ShoppingListService {
             skippedManualItemNames,
             canDeleteShoppingList
         );
+    }
+
+    // ========== Smart Add from Meal Plan ==========
+
+    // POST request - builds a shopping list from every recipe in a meal plan date range
+    @Transactional
+    public SmartAddMealPlanResponse smartAddMealPlanToShoppingList(Integer userId, Integer shoppingListId, Integer planId, LocalDate startDate, LocalDate endDate) {
+        // get shopping list and check ownership
+        ShoppingList selectedList = shoppingListRepository.findById(shoppingListId)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
+
+        if(!selectedList.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found");  
+        }
+
+        // list of all MealPlan entries within specified date range
+        List<MealPlanEntryResponse> entries = mealPlanService.getEntries(planId, userId, startDate, endDate);
+
+        // list of entry's recipeIds
+        List<Integer> entryRecipeIds = entries.stream()
+                                              .map(MealPlanEntryResponse::recipeId)
+                                              .toList();
+        
+        // Add all recipe ingredients
+        AddRecipeToShoppingListRequest noPantryComparison = new AddRecipeToShoppingListRequest(false);
+
+        List<Integer> skippedRecipeIds = new ArrayList<>();
+
+        for (Integer recipeId : entryRecipeIds) {
+            try {
+                // add all the ingredients to the shopping list and will subtract pantry amounts later
+                addRecipeIngredientsToShoppingList(userId, shoppingListId, recipeId, noPantryComparison);
+            }
+            catch (ResponseStatusException ex) {
+                skippedRecipeIds.add(recipeId);
+            }
+        }
+
+        // shopping list currently has all recipes' ingredients - subtract wat is in pantry to get difference in list
+        subtractPantryFromList(userId, shoppingListId);
+
+        PreferredUnit preferredUnit = getPreferredUnit(userId);
+
+        // get shopping list items in user's preferred measurement system
+        List<ShoppingListItemResponse> items = convertItemResponses(shoppingListItemRepository.getSpecificShoppingListItems(shoppingListId), preferredUnit);
+
+        ShoppingListWithItemsResponse listResponse = new ShoppingListWithItemsResponse(
+                                                            selectedList.getShoppingListId(),
+                                                            selectedList.getUserId(),
+                                                            selectedList.getName(),
+                                                            selectedList.getStatus(),
+                                                            selectedList.getCreatedAt(),
+                                                            items.size(),
+                                                            items
+                                                        );
+
+        return new SmartAddMealPlanResponse(listResponse, skippedRecipeIds.stream().distinct().toList());
+    }
+
+    private void subtractPantryFromList(Integer userId, Integer shoppingListId) {
+        // get shopping list items - summation from meal plan entry ingredients
+        List<ShoppingListItem> items = shoppingListItemRepository.findByShoppingListId(shoppingListId);
+
+        for (ShoppingListItem item : items) {
+            if (item.getIngId() == null) {
+                continue; // manual item - do nothing
+            }
+            
+            // current pantry ingredient that match the current shopping list item (multiple rows for same ingredient added at different times)
+            List<PantryIngredient> pantryRows = pantryIngredientRepository.findByUserIdAndIngId(userId, item.getIngId());
+
+            // getting total amount of that ingredient in the pantry
+            BigDecimal totalOwned = BigDecimal.ZERO;
+            for (PantryIngredient p : pantryRows) {
+                totalOwned = totalOwned.add(p.getQuantity());
+            }
+
+            if (totalOwned.compareTo(BigDecimal.ZERO) <= 0) {
+                continue; // nothing owned therefor need entire quantity
+            }
+
+            // difference of quantity needed minus what's already in the pantry
+            BigDecimal remaining = item.getQuantity().subtract(totalOwned);
+
+            // enough in pantry to cover amount needed in recipe entries
+            if (remaining.compareTo(BigDecimal.ZERO) <= 0) {
+                shoppingListItemRepository.delete(item);
+            }
+            else {
+                item.setQuantity(remaining);
+                shoppingListItemRepository.save(item);
+            }
+        }
     }
 
 
