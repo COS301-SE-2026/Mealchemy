@@ -66,7 +66,6 @@ class TestNoveltyScore:
         assert novelty_score(1, [swipe]) == NEUTRAL_SIGNAL_VALUE
 
 
-
 class TestNoveltyDetail:
     def test_never_seen_returns_that_state(self):
         state, days_ago = novelty_detail(1, [])
