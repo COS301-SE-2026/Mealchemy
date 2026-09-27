@@ -9,6 +9,8 @@ import 'package:mealchemy/features/vault/models/vault.dart';
 import 'package:mealchemy/features/vault/models/vault_member.dart';
 import 'package:mealchemy/features/vault/providers/shared_vault_access_provider.dart';
 import 'package:mealchemy/features/vault/widgets/shared_vault_recipe_row.dart';
+import 'package:mealchemy/features/recipe/models/recipe_edit_lock.dart';
+import 'package:mealchemy/features/recipe/providers/shared_recipe_lock_provider.dart';
 
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
@@ -17,6 +19,7 @@ void main() {
     WidgetTester tester, {
     required VaultMemberRole role,
     int recipeOwnerId = 9,
+    RecipeEditLock? lock,
   }) async {
     final userId = role == VaultMemberRole.owner ? 7 : 8;
 
@@ -81,6 +84,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          sharedRecipeLockProvider.overrideWith((ref, target) async => lock),
           vaultSessionProvider.overrideWithValue((
             userId: userId,
             token: 'preview-token',
@@ -134,5 +138,31 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Viewing 99'), findsOneWidget);
+  });
+
+  testWidgets('another holder disables Edit and shows their identity',
+      (tester) async {
+    await showRow(
+      tester,
+      role: VaultMemberRole.editor,
+      lock: RecipeEditLock(
+        recipeId: 99,
+        lockedByUserId: 10,
+        lockedByEmail: 'gabriela@example.com',
+        acquiredAt: DateTime.utc(2026, 9, 27),
+        expiresAt: DateTime.utc(2026, 9, 27, 0, 1, 30),
+      ),
+    );
+
+    final editButton = find.ancestor(
+      of: find.byIcon(Icons.edit_outlined),
+      matching: find.byType(IconButton),
+    );
+
+    expect(tester.widget<IconButton>(editButton).onPressed, isNull);
+    expect(
+      find.text('Being edited by gabriela@example.com.'),
+      findsOneWidget,
+    );
   });
 }
