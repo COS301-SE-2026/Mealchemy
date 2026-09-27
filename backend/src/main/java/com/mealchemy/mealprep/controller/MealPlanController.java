@@ -14,7 +14,6 @@ import com.mealchemy.mealprep.dto.MealPlanResponse;
 import com.mealchemy.mealprep.dto.MealPlanEntryRequest;
 import com.mealchemy.mealprep.dto.MealPlanEntryResponse;
 import com.mealchemy.mealprep.service.MealPlanService;
-import com.mealchemy.shoppinglist.service.ShoppingListService;
 
 // swagger
 import com.mealchemy.shared.dto.ErrorResponse;
@@ -33,12 +32,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class MealPlanController
 {
     private final MealPlanService mealPlanService;
-    private final ShoppingListService shoppingListService; 
 
-    public MealPlanController(MealPlanService mealPlanService, ShoppingListService shoppingListService)
+    public MealPlanController(MealPlanService mealPlanService)
     {
         this.mealPlanService = mealPlanService;
-        this.shoppingListService = shoppingListService;
     }
 
     /* Mapping Functions */
