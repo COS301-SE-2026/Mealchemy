@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/constants/app_config.dart';
-import 'package:mealchemy/features/dashboard/models/trending_recipe_data.dart';
 import 'package:mealchemy/features/dashboard/repositories/api_dashboard_repository.dart';
 import 'package:mealchemy/features/dashboard/repositories/dashboard_repository.dart';
 import 'package:mealchemy/features/dashboard/repositories/mock_dashboard_repository.dart';
@@ -23,7 +22,6 @@ class DashboardState {
   final int smartSuggestionItemsAway;
   final int smartSuggestionRecipeCount;
   final List<Recommendation> recommendedRecipes;
-  final List<TrendingRecipeData> trendingRecipes;
 
   const DashboardState({
     this.isLoading = false,
@@ -33,7 +31,6 @@ class DashboardState {
     this.smartSuggestionItemsAway = 0,
     this.smartSuggestionRecipeCount = 0,
     this.recommendedRecipes = const [],
-    this.trendingRecipes = const [],
   });
 
   DashboardState copyWith({
@@ -44,7 +41,6 @@ class DashboardState {
     int? smartSuggestionItemsAway,
     int? smartSuggestionRecipeCount,
     List<Recommendation>? recommendedRecipes,
-    List<TrendingRecipeData>? trendingRecipes,
   }) {
     return DashboardState(
       isLoading: isLoading ?? this.isLoading,
@@ -56,7 +52,6 @@ class DashboardState {
       smartSuggestionRecipeCount:
           smartSuggestionRecipeCount ?? this.smartSuggestionRecipeCount,
       recommendedRecipes: recommendedRecipes ?? this.recommendedRecipes,
-      trendingRecipes: trendingRecipes ?? this.trendingRecipes,
     );
   }
 }
@@ -80,7 +75,6 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
       final pantryItemCount = await _repository.getPantryItemCount();
       final itemsAway = await _repository.getSmartSuggestionItemsAway();
       final recipeCount = await _repository.getSmartSuggestionRecipeCount();
-      final trending = await _repository.getTrendingRecipes();
 
       state = state.copyWith(
         isLoading: false,
@@ -89,7 +83,6 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
         smartSuggestionItemsAway: itemsAway,
         smartSuggestionRecipeCount: recipeCount,
         recommendedRecipes: recommended,
-        trendingRecipes: trending,
       );
     } catch (e) {
       state = state.copyWith(

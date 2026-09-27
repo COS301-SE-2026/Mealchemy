@@ -11,7 +11,6 @@ import 'package:mealchemy/features/dashboard/widgets/continue_cooking_row.dart';
 import 'package:mealchemy/features/dashboard/widgets/dashboard_active_timers.dart';
 import 'package:mealchemy/features/dashboard/widgets/dashboard_cards_row.dart';
 import 'package:mealchemy/features/dashboard/widgets/recommended_recipes_section.dart';
-import 'package:mealchemy/features/dashboard/widgets/trending_recipes_section.dart';
 import 'package:mealchemy/features/pantry/providers/pantry_provider.dart';
 import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
 
@@ -64,8 +63,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             const SizedBox(height: 28),
             const RecommendedRecipesSection(),
             const SizedBox(height: 28),
-            const TrendingRecipesSection(),
-            const SizedBox(height: 32),
           ],
         ),
       ),
