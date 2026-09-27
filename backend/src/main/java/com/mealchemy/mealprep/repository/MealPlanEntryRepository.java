@@ -24,4 +24,6 @@ public interface MealPlanEntryRepository extends JpaRepository<MealPlanEntry, In
     
     @Query("SELECT e.recipeId FROM MealPlanEntry e WHERE e.plan.planId = :planId")
     List<Integer> findRecipeIdsByPlanId(@Param("planId") Integer planId);
+
+    boolean existsByRecipeId(Integer recipeId);
 }
