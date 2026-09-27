@@ -15,6 +15,8 @@ void main() {
           state: CookTimerState(now: now, isInitialized: true),
           suggestedDuration: const Duration(minutes: 20),
           onStart: (duration, _) async => started = duration,
+          onPause: (_) async {},
+          onResume: (_) async {},
           onCancel: (_) async {},
         ),
       ),
@@ -49,6 +51,8 @@ void main() {
           ),
           suggestedDuration: null,
           onStart: (_, __) async {},
+          onPause: (_) async {},
+          onResume: (_) async {},
           onCancel: (value) async => cancelled = value,
         ),
       ),
@@ -57,7 +61,8 @@ void main() {
     expect(find.text('1 active timer'), findsOneWidget);
     await tester.tap(find.byKey(const Key('manage-cook-timers')));
     await tester.pumpAndSettle();
-    expect(find.text('Pasta, step 2'), findsOneWidget);
+    expect(find.text('Timer'), findsOneWidget);
+    expect(find.text('5m remaining - Step 2'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Cancel Pasta, step 2'));
     await tester.pumpAndSettle();
@@ -78,6 +83,8 @@ void main() {
             started = duration;
             name = timerName;
           },
+          onPause: (_) async {},
+          onResume: (_) async {},
           onCancel: (_) async {},
         ),
       ),
@@ -101,5 +108,54 @@ void main() {
 
     expect(started, const Duration(minutes: 12));
     expect(name, 'Pasta sauce');
+  });
+
+  testWidgets('pauses and resumes timers from the active list', (tester) async {
+    CookTimer? paused;
+    CookTimer? resumed;
+    final now = DateTime.utc(2026, 9, 15, 12);
+    final runningTimer = CookTimer(
+      notificationId: 8,
+      recipeId: 3,
+      recipeTitle: 'Pasta',
+      stepIndex: 0,
+      stepNumber: 1,
+      startedAt: now,
+      endsAt: now.add(const Duration(minutes: 10)),
+      name: 'Sauce',
+    );
+
+    Future<void> pumpControls(CookTimer timer) async {
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: CookTimerControls(
+            state: CookTimerState(
+              now: now,
+              isInitialized: true,
+              timers: [timer],
+            ),
+            suggestedDuration: null,
+            onStart: (_, __) async {},
+            onPause: (value) async => paused = value,
+            onResume: (value) async => resumed = value,
+            onCancel: (_) async {},
+          ),
+        ),
+      ));
+      await tester.tap(find.byKey(const Key('manage-cook-timers')));
+      await tester.pumpAndSettle();
+    }
+
+    await pumpControls(runningTimer);
+    await tester.tap(find.byKey(const Key('pause-cook-timer-8')));
+    await tester.pumpAndSettle();
+    expect(paused, runningTimer);
+
+    final pausedTimer = runningTimer.pauseAt(now);
+    await pumpControls(pausedTimer);
+    expect(find.text('Paused - Step 1'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('resume-cook-timer-8')));
+    await tester.pumpAndSettle();
+    expect(resumed, pausedTimer);
   });
 }

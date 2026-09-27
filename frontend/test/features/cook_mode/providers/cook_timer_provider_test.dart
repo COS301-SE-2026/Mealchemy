@@ -119,4 +119,38 @@ void main() {
     expect(controller.state.activeTimers, hasLength(1));
     expect(controller.state.warningMessage, contains('exact background'));
   });
+
+  test('pauses, persists, and reschedules a timer with its remaining time',
+      () async {
+    final timer = await controller.start(
+      recipeId: 7,
+      recipeTitle: 'Soup',
+      stepIndex: 0,
+      stepNumber: 1,
+      duration: const Duration(minutes: 10),
+      name: 'Rice',
+    );
+
+    now = now.add(const Duration(minutes: 2));
+    final paused = await controller.pause(timer);
+    expect(paused?.isPaused, isTrue);
+    expect(paused?.remainingAt(now), const Duration(minutes: 8));
+    expect(notifications.cancelled, [timer.notificationId]);
+    expect(store.timers.single.isPaused, isTrue);
+
+    now = now.add(const Duration(minutes: 20));
+    controller.refresh();
+    expect(controller.state.activeTimers, hasLength(1));
+    expect(
+      controller.state.activeTimers.single.remainingAt(now),
+      const Duration(minutes: 8),
+    );
+
+    final resumed = await controller.resume(paused!);
+    expect(resumed?.isPaused, isFalse);
+    expect(resumed?.endsAt.difference(now), const Duration(minutes: 8));
+    expect(notifications.scheduled, hasLength(2));
+    expect(notifications.scheduled.last, resumed);
+    expect(store.timers.single.isPaused, isFalse);
+  });
 }

@@ -29,7 +29,9 @@ class CookActiveTimer extends StatelessWidget {
     final ringDimension = dimension - 10;
 
     return Semantics(
-      label: '${formatCookTimerClock(remaining)} remaining on ${timer.label}',
+      label: timer.isPaused
+          ? '${formatCookTimerClock(remaining)} remaining, paused, on ${timer.label}'
+          : '${formatCookTimerClock(remaining)} remaining on ${timer.label}',
       liveRegion: true,
       child: ExcludeSemantics(
         child: SizedBox.square(
@@ -52,7 +54,9 @@ class CookActiveTimer extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    Icons.timer_outlined,
+                    timer.isPaused
+                        ? Icons.pause_circle_outline
+                        : Icons.timer_outlined,
                     color: AppColors.primary,
                     size: compact ? 20 : 26,
                   ),
@@ -77,6 +81,19 @@ class CookActiveTimer extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: compact ? 2 : 4),
+                  if (timer.isPaused) ...[
+                    Text(
+                      'Paused',
+                      key: Key(
+                        'cook-active-timer-paused-${timer.notificationId}',
+                      ),
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                  ],
                   if (timer.name != null) ...[
                     SizedBox(
                       width: compact ? 92 : 128,

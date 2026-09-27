@@ -10,6 +10,7 @@ class CookTimer {
     required this.startedAt,
     required this.endsAt,
     this.name,
+    this.pausedAt,
   });
 
   final int notificationId;
@@ -20,6 +21,9 @@ class CookTimer {
   final DateTime startedAt;
   final DateTime endsAt;
   final String? name;
+  final DateTime? pausedAt;
+
+  bool get isPaused => pausedAt != null;
 
   String get label {
     final timerName = name;
@@ -29,11 +33,51 @@ class CookTimer {
   }
 
   Duration remainingAt(DateTime now) {
-    final remaining = endsAt.difference(now.toUtc());
+    final referenceTime = pausedAt ?? now.toUtc();
+    final remaining = endsAt.difference(referenceTime);
     return remaining.isNegative ? Duration.zero : remaining;
   }
 
-  bool isFinishedAt(DateTime now) => !endsAt.isAfter(now.toUtc());
+  bool isFinishedAt(DateTime now) => remainingAt(now) == Duration.zero;
+
+  CookTimer pauseAt(DateTime now) {
+    final pauseTime = now.toUtc();
+    if (isPaused || isFinishedAt(pauseTime)) return this;
+    return _copyWith(pausedAt: pauseTime);
+  }
+
+  CookTimer resumeAt(DateTime now) {
+    final pauseTime = pausedAt;
+    if (pauseTime == null) return this;
+    final resumeTime = now.toUtc();
+    final pausedDuration = resumeTime.isAfter(pauseTime)
+        ? resumeTime.difference(pauseTime)
+        : Duration.zero;
+    return _copyWith(
+      startedAt: startedAt.add(pausedDuration),
+      endsAt: endsAt.add(pausedDuration),
+      clearPausedAt: true,
+    );
+  }
+
+  CookTimer _copyWith({
+    DateTime? startedAt,
+    DateTime? endsAt,
+    DateTime? pausedAt,
+    bool clearPausedAt = false,
+  }) {
+    return CookTimer(
+      notificationId: notificationId,
+      recipeId: recipeId,
+      recipeTitle: recipeTitle,
+      stepIndex: stepIndex,
+      stepNumber: stepNumber,
+      startedAt: startedAt ?? this.startedAt,
+      endsAt: endsAt ?? this.endsAt,
+      name: name,
+      pausedAt: clearPausedAt ? null : pausedAt ?? this.pausedAt,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'notificationId': notificationId,
@@ -44,11 +88,13 @@ class CookTimer {
         'startedAt': startedAt.toUtc().toIso8601String(),
         'endsAt': endsAt.toUtc().toIso8601String(),
         if (name != null) 'name': name,
+        if (pausedAt != null) 'pausedAt': pausedAt!.toUtc().toIso8601String(),
       };
 
   factory CookTimer.fromJson(Map<String, dynamic> json) {
     final storedName = json['name'];
     final normalizedName = storedName is String ? storedName.trim() : '';
+    final storedPausedAt = json['pausedAt'];
     return CookTimer(
       notificationId: json['notificationId'] as int,
       recipeId: json['recipeId'] as int,
@@ -58,6 +104,9 @@ class CookTimer {
       startedAt: DateTime.parse(json['startedAt'] as String).toUtc(),
       endsAt: DateTime.parse(json['endsAt'] as String).toUtc(),
       name: normalizedName.isEmpty ? null : normalizedName,
+      pausedAt: storedPausedAt is String
+          ? DateTime.parse(storedPausedAt).toUtc()
+          : null,
     );
   }
 }

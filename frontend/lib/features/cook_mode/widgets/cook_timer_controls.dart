@@ -16,12 +16,16 @@ class CookTimerControls extends StatelessWidget {
     required this.state,
     required this.suggestedDuration,
     required this.onStart,
+    required this.onPause,
+    required this.onResume,
     required this.onCancel,
   });
 
   final CookTimerState state;
   final Duration? suggestedDuration;
   final Future<void> Function(Duration duration, String? name) onStart;
+  final Future<void> Function(CookTimer timer) onPause;
+  final Future<void> Function(CookTimer timer) onResume;
   final Future<void> Function(CookTimer timer) onCancel;
 
   @override
@@ -112,6 +116,8 @@ class CookTimerControls extends StatelessWidget {
         activeTimers: activeTimers,
         now: state.now,
         onStart: onStart,
+        onPause: onPause,
+        onResume: onResume,
         onCancel: onCancel,
       ),
     );
@@ -123,12 +129,16 @@ class _CookTimerSheet extends StatefulWidget {
     required this.activeTimers,
     required this.now,
     required this.onStart,
+    required this.onPause,
+    required this.onResume,
     required this.onCancel,
   });
 
   final List<CookTimer> activeTimers;
   final DateTime now;
   final Future<void> Function(Duration duration, String? name) onStart;
+  final Future<void> Function(CookTimer timer) onPause;
+  final Future<void> Function(CookTimer timer) onResume;
   final Future<void> Function(CookTimer timer) onCancel;
 
   @override
@@ -182,6 +192,15 @@ class _CookTimerSheetState extends State<_CookTimerSheet> {
 
   Future<void> _cancelTimer(CookTimer timer) async {
     await widget.onCancel(timer);
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  Future<void> _toggleTimer(CookTimer timer) async {
+    if (timer.isPaused) {
+      await widget.onResume(timer);
+    } else {
+      await widget.onPause(timer);
+    }
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -300,14 +319,35 @@ class _CookTimerSheetState extends State<_CookTimerSheet> {
                           return ListTile(
                             contentPadding: EdgeInsets.zero,
                             leading: const Icon(Icons.timer_outlined),
-                            title: Text(timer.name ?? timer.label),
+                            title: Text(timer.name ?? 'Timer'),
                             subtitle: Text(
-                              '${formatCookDuration(timer.remainingAt(widget.now))} remaining - Step ${timer.stepNumber}',
+                              timer.isPaused
+                                  ? 'Paused - Step ${timer.stepNumber}'
+                                  : '${formatCookDuration(timer.remainingAt(widget.now))} remaining - Step ${timer.stepNumber}',
                             ),
-                            trailing: IconButton(
-                              tooltip: 'Cancel ${timer.label}',
-                              onPressed: () => _cancelTimer(timer),
-                              icon: const Icon(Icons.close),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  key: Key(
+                                    '${timer.isPaused ? 'resume' : 'pause'}-cook-timer-${timer.notificationId}',
+                                  ),
+                                  tooltip: timer.isPaused
+                                      ? 'Resume ${timer.label}'
+                                      : 'Pause ${timer.label}',
+                                  onPressed: () => _toggleTimer(timer),
+                                  icon: Icon(
+                                    timer.isPaused
+                                        ? Icons.play_arrow
+                                        : Icons.pause,
+                                  ),
+                                ),
+                                IconButton(
+                                  tooltip: 'Cancel ${timer.label}',
+                                  onPressed: () => _cancelTimer(timer),
+                                  icon: const Icon(Icons.close),
+                                ),
+                              ],
                             ),
                           );
                         },

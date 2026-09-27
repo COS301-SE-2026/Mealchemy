@@ -53,6 +53,31 @@ void main() {
     expect(timer.isFinishedAt(timer.endsAt), isTrue);
   });
 
+  test('freezes while paused and preserves progress when resumed', () {
+    final pausedAt = startedAt.add(const Duration(minutes: 5));
+    final paused = timer.pauseAt(pausedAt);
+
+    expect(paused.isPaused, isTrue);
+    expect(
+      paused.remainingAt(startedAt.add(const Duration(hours: 1))),
+      const Duration(minutes: 15),
+    );
+
+    final restored = CookTimer.fromJson(paused.toJson());
+    expect(restored.pausedAt, pausedAt);
+    expect(restored.isPaused, isTrue);
+
+    final resumedAt = pausedAt.add(const Duration(minutes: 10));
+    final resumed = restored.resumeAt(resumedAt);
+    expect(resumed.isPaused, isFalse);
+    expect(resumed.startedAt, startedAt.add(const Duration(minutes: 10)));
+    expect(
+      resumed.endsAt,
+      timer.endsAt.add(const Duration(minutes: 10)),
+    );
+    expect(resumed.remainingAt(resumedAt), const Duration(minutes: 15));
+  });
+
   test('formats compact cooking durations', () {
     expect(formatCookDuration(const Duration(hours: 1, minutes: 15)), '1h 15m');
     expect(formatCookDuration(const Duration(minutes: 4, seconds: 9)), '4m 9s');
