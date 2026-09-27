@@ -60,6 +60,54 @@ public class MealPlanLearningSignalService {
         signalRepository.save(signal);
     }
 
+    public void processDueLikedSignals()
+    {
+        List<MealPlanRecommendationSignal> unprocessed = signalRepository.findByProcessedAtIsNull();
+        if (unprocessed.isEmpty())
+        {
+            return;
+        }
+
+        LocalDate today = LocalDate.now();
+
+        List<Integer> entryIds = unprocessed.stream().map(MealPlanRecommendationSignal::getEntryId).toList();
+        Map<Integer, MealPlanEntry> entryById = mealPlanEntryRepository.findAllById(entryIds).stream()
+            .collect(Collectors.toMap(MealPlanEntry::getEntryId, e -> e));
+
+        Map<Integer, List<MealPlanRecommendationSignal>> dueByUserId = unprocessed.stream()
+            .filter(signal -> {
+                MealPlanEntry entry = entryById.get(signal.getEntryId());
+                return entry != null && !entry.getEntryDate().isAfter(today);
+            })
+            .collect(Collectors.groupingBy(signal -> entryById.get(signal.getEntryId()).getAddedBy()));
+
+        List<MealPlanRecommendationSignal> successfullyProcessed = new ArrayList<>();
+
+        dueByUserId.forEach((userId, signals) -> {
+            List<SwipeUpdateDto> dtos = signals.stream()
+                .map(signal -> toSwipeUpdateDto(signal, SwipeAction.LIKED))
+                .toList();
+
+            try
+            {
+                learningUpdateService.applyLearningUpdate(userId, dtos);
+
+                OffsetDateTime now = OffsetDateTime.now();
+                signals.forEach(signal -> signal.setProcessedAt(now));
+                successfullyProcessed.addAll(signals);
+            }
+            catch (Exception ex)
+            {
+                log.warn("Learning update failed for user {} during meal-plan LIKED sweep, will retry on next sweep", userId, ex);
+            }
+        });
+
+        if (!successfullyProcessed.isEmpty())
+        {
+            signalRepository.saveAll(successfullyProcessed);
+        }
+    }
+
     // Converts a captured signal row back into the shape LearningUpdateService already knows
     private SwipeUpdateDto toSwipeUpdateDto(MealPlanRecommendationSignal signal, SwipeAction action)
     {
