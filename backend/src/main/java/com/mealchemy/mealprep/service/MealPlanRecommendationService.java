@@ -32,6 +32,7 @@ import com.mealchemy.shared.enums.MealSlot;
 import com.mealchemy.shared.enums.VaultType;
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.repository.VaultRepository;
+import com.mealchemy.mealprep.dto.MealPlanEntryFromRecommendationRequest;
 
 @Service
 public class MealPlanRecommendationService {
@@ -82,7 +83,7 @@ public class MealPlanRecommendationService {
 
     public GenerateRecommendationsResponse generate(Integer userId, Integer planId, GenerateRecommendationsRequest request)
     {
-        assertPersonalVaultPlan(planId);
+        assertPrivateVaultPlan(planId);
 
         if (request.startDate().isAfter(request.endDate()))
         {
@@ -164,6 +165,26 @@ public class MealPlanRecommendationService {
         }
 
         return new GenerateRecommendationsResponse(generatedEntries, skippedDates);
+    }
+
+    // function to add entry when selected from recommended list
+    public MealPlanEntryResponse addEntryFromRecommendation(Integer planId, Integer userId, MealPlanEntryFromRecommendationRequest request)
+    {
+        assertPrivateVaultPlan(planId);
+
+        MealPlanEntryResponse entryResponse = mealPlanService.addEntry(
+            planId, userId, request.entryDate(), request.mealTime(), request.mealSlot(),
+            request.title(), request.note(), request.recipeId(), MealPlanEntrySource.RECOMMENDED, false
+        );
+
+        MealPlanRecommendationSignal signal = new MealPlanRecommendationSignal();
+        signal.setEntryId(entryResponse.entryId());
+        signal.setRecipeId(request.recipeId());
+        signal.setCuisine(request.cuisineType());
+        signal.setSignalScores(toScoreMap(request.scoreBreakdown()));
+        signalRepository.save(signal);
+
+        return entryResponse;
     }
 
     void assertPrivateVaultPlan(Integer planId)
