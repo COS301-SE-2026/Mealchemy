@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-SwipeAction = Literal["LIKED", "DISLIKED", "SKIPPED"]
+SwipeAction = Literal["LIKED", "DISLIKED", "SKIPPED", "UNLIKED"]
 
 
 class PreferenceWeights(BaseModel):
