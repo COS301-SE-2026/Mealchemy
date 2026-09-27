@@ -207,9 +207,10 @@ class _CookTimerSheetState extends State<_CookTimerSheet> {
   @override
   Widget build(BuildContext context) {
     final activeTimers = widget.activeTimers;
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
     return SafeArea(
       child: FractionallySizedBox(
-        heightFactor: 0.72,
+        heightFactor: keyboardVisible ? 0.92 : 0.72,
         child: Padding(
           padding: EdgeInsets.fromLTRB(
             24,

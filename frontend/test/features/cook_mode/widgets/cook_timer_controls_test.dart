@@ -110,6 +110,36 @@ void main() {
     expect(name, 'Pasta sauce');
   });
 
+  testWidgets('does not overflow while the keyboard is visible',
+      (tester) async {
+    tester.view.physicalSize = const Size(430, 932);
+    tester.view.devicePixelRatio = 1;
+    tester.view.viewInsets = const FakeViewPadding(bottom: 330);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetViewInsets);
+
+    final now = DateTime.utc(2026, 9, 15, 12);
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: CookTimerControls(
+          state: CookTimerState(now: now, isInitialized: true),
+          suggestedDuration: null,
+          onStart: (_, __) async {},
+          onPause: (_) async {},
+          onResume: (_) async {},
+          onCancel: (_) async {},
+        ),
+      ),
+    ));
+
+    await tester.tap(find.byKey(const Key('manage-cook-timers')));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(const Key('start-manual-timer')), findsOneWidget);
+  });
+
   testWidgets('pauses and resumes timers from the active list', (tester) async {
     CookTimer? paused;
     CookTimer? resumed;
