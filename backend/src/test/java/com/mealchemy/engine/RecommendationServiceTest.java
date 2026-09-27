@@ -399,7 +399,7 @@ public class RecommendationServiceTest {
     // ========== Dietary Tags ==========
 
     @Test
-    void getRecommendations_dietaryTagsFilteredToOnlyDietaryOnes() {
+    void getRecommendations_dietaryTagsIncludesEveryRecipeTag_dietaryAndNonDietary() {
         // Arrange
         Tags dietaryTag = new Tags();
         dietaryTag.setTagName("VEGAN");
@@ -427,11 +427,11 @@ public class RecommendationServiceTest {
 
         // Assert
         CandidatePoolEntryRequest candidate = captor.getValue().candidatePool().get(0);
-        assertEquals(List.of("VEGAN"), candidate.dietaryTags());
+        assertEquals(List.of("VEGAN", "QUICK_MEAL"), candidate.dietaryTags());
     }
 
-   @Test
-    void getRecommendations_dietaryTagWithNullIsDietaryFlag_treatedAsNotDietary() {
+    @Test
+    void getRecommendations_dietaryTagWithNullIsDietaryFlag_stillIncluded() {
         // Arrange
         Tags tagWithNullDietaryFlag = new Tags();
         tagWithNullDietaryFlag.setTagName("VEGAN");
@@ -449,9 +449,9 @@ public class RecommendationServiceTest {
         // Act
         recommendationService.getRecommendations(USER_ID, 10, List.of(), null, RecommendationFilters.none());
 
-        // Assert 
+        // Assert
         CandidatePoolEntryRequest candidate = captor.getValue().candidatePool().get(0);
-        assertTrue(candidate.dietaryTags().isEmpty());
+        assertEquals(List.of("VEGAN"), candidate.dietaryTags());
     }
 
     // ========== Nutrition ==========
