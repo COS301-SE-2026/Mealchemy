@@ -621,4 +621,160 @@ void main() {
       await fixture.close(tester);
     }
   });
+
+  for (final resumeBeforeResponse in [false, true]) {
+    testWidgets(
+      resumeBeforeResponse
+          ? 'foreground return during a save preserves draft and rechecks access'
+          : 'background release waits for the pending save response',
+      (tester) async {
+        final fixture = _Fixture();
+        final pendingSave = Completer<Recipe>();
+        fixture.recipes.pendingSave = pendingSave;
+
+        void resumeApp() {
+          if (tester.binding.lifecycleState == AppLifecycleState.paused) {
+            tester.binding.handleAppLifecycleStateChanged(
+              AppLifecycleState.hidden,
+            );
+          }
+
+          if (tester.binding.lifecycleState == AppLifecycleState.hidden) {
+            tester.binding.handleAppLifecycleStateChanged(
+              AppLifecycleState.inactive,
+            );
+          }
+
+          if (tester.binding.lifecycleState != AppLifecycleState.resumed) {
+            tester.binding.handleAppLifecycleStateChanged(
+              AppLifecycleState.resumed,
+            );
+          }
+        }
+
+        try {
+          resumeApp();
+          await fixture.open(tester);
+
+          final titleField = find.byWidgetPredicate(
+            (widget) =>
+                widget is EditableText &&
+                widget.controller.text == 'Shared pasta',
+          );
+
+          await tester.enterText(
+            titleField,
+            'Draft kept while save is pending',
+          );
+
+          await tester.scrollUntilVisible(
+            find.text('Save Changes'),
+            400,
+            scrollable: find.byType(Scrollable).first,
+          );
+
+          await tester.tap(find.text('Save Changes'));
+          await tester.pump();
+          await tester.pump();
+
+          expect(fixture.recipes.updates, 1);
+          expect(fixture.locks.releases, 0);
+
+          final accessChecksBeforeBackground =
+              fixture.events.where((event) => event == 'access').length;
+
+          tester.binding.handleAppLifecycleStateChanged(
+            AppLifecycleState.inactive,
+          );
+          tester.binding.handleAppLifecycleStateChanged(
+            AppLifecycleState.hidden,
+          );
+          tester.binding.handleAppLifecycleStateChanged(
+            AppLifecycleState.paused,
+          );
+
+          await tester.pump(Duration.zero);
+
+          // The pending request must retain its lock until it finishes.
+          expect(fixture.locks.releases, 0);
+          expect(
+            fixture.container.read(recipeEditLockProvider(99).notifier).canSave,
+            isFalse,
+          );
+
+          if (resumeBeforeResponse) {
+            resumeApp();
+            await tester.pump();
+
+            // Returning to the foreground must not start recovery
+            // while the original save is still pending.
+            expect(
+              fixture.events.where((event) => event == 'access').length,
+              accessChecksBeforeBackground,
+            );
+            expect(fixture.locks.releases, 0);
+          }
+
+          pendingSave.complete(fixture.recipes.recipe);
+
+          // Flush asynchronous save completion even if frames are paused.
+          await tester.pump(Duration.zero);
+          await tester.pump(Duration.zero);
+
+          if (!resumeBeforeResponse) {
+            // Check release before returning to the foreground.
+            expect(fixture.locks.releases, 1);
+            expect(
+              fixture.events.indexOf('release'),
+              greaterThan(fixture.events.indexOf('save')),
+            );
+
+            resumeApp();
+          }
+
+          // The app is now resumed, so recovery UI can render.
+          await tester.pumpAndSettle();
+
+          expect(fixture.recipes.updates, 1);
+          expect(find.byType(SharedRecipeEditScreen), findsOneWidget);
+
+          final draftFinder = find.byKey(const ValueKey('shared-recipe-draft'));
+
+          expect(draftFinder, findsOneWidget);
+
+          final draft = tester.widget<SelectableText>(draftFinder);
+          expect(
+            draft.data,
+            contains('Draft kept while save is pending'),
+          );
+
+          expect(find.text('Reload latest recipe'), findsOneWidget);
+
+          expect(
+            fixture.events.where((event) => event == 'access').length,
+            greaterThan(accessChecksBeforeBackground),
+          );
+
+          // The editor may have reacquired a valid lock, but saving must
+          // remain blocked until the preserved draft is explicitly reloaded.
+          final editor = tester.widget<AddRecipeScreen>(
+            find.byType(AddRecipeScreen, skipOffstage: false),
+          );
+
+          expect(editor.canContinueSave!(), isFalse);
+        } finally {
+          if (!pendingSave.isCompleted) {
+            pendingSave.complete(fixture.recipes.recipe);
+          }
+
+          // Resume before unmounting widgets and disposing their providers.
+          resumeApp();
+          await tester.pumpAndSettle();
+
+          await fixture.close(tester);
+          await tester.pump(Duration.zero);
+        }
+      },
+    );
+  }
 }
