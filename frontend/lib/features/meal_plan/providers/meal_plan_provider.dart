@@ -4,6 +4,7 @@ import 'package:mealchemy/core/constants/app_config.dart';
 import 'package:mealchemy/core/providers/api_service_provider.dart';
 import '../models/meal_plan.dart';
 import '../models/meal_plan_entry.dart';
+import '../models/meal_slot.dart';
 import '../repositories/meal_plan_repository.dart';
 import '../repositories/mock_meal_plan_repository.dart';
 import '../repositories/api_meal_plan_repository.dart';
@@ -35,6 +36,14 @@ class MealPlanState {
     final day = entries.where((e) => _sameDay(e.entryDate, selectedDay)).toList();
     day.sort((a, b) => a.mealSlot.index.compareTo(b.mealSlot.index));
     return day;
+  }
+
+  MealSlot get firstFreeSlot {
+    final taken = dayEntries.map((e) => e.mealSlot).toSet();
+    return [MealSlot.breakfast, MealSlot.lunch, MealSlot.dinner]
+            .where((s) => !taken.contains(s))
+            .firstOrNull ??
+        MealSlot.snack;
   }
 
   bool get hasLoaded => windowStart != null;
@@ -148,6 +157,14 @@ class MealPlanNotifier extends StateNotifier<MealPlanState> {
     }
   }
 
+  Future<String?> clearDay() async {
+    for (final e in state.dayEntries) {
+      final error = await deleteEntry(e.entryId!);
+      if (error != null) return error;
+    }
+    return null;
+  }
+
   bool _inWindow(DateTime d) {
     final start = state.windowStart;
     if (start == null) return false;
@@ -168,7 +185,6 @@ class MealPlanNotifier extends StateNotifier<MealPlanState> {
     return 'Something went wrong';
   }
 }
-
 
 final mealPlanProvider =
     StateNotifierProvider.family<MealPlanNotifier, MealPlanState, int>((ref, vaultId) {

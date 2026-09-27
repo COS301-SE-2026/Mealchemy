@@ -28,7 +28,7 @@ class MealPlanEntryCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: AppColors.surfaceWhite,
           borderRadius: BorderRadius.circular(20),
@@ -43,10 +43,10 @@ class MealPlanEntryCard extends StatelessWidget {
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               child: SizedBox(
-                width: 76,
-                height: 76,
+                width: 60,
+                height: 60,
                 child: RecipeNetworkImage(
                   photoUrl: entry.recipe?.photoUrl,
                   placeholder: Container(
@@ -54,23 +54,21 @@ class MealPlanEntryCard extends StatelessWidget {
                     child: const Icon(
                       Icons.soup_kitchen_outlined,
                       color: AppColors.textDark,
-                      size: 28,
+                      size: 24,
                     ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      if (entry.source == MealEntrySource.recommended) ...[
-                        const Icon(Icons.auto_awesome, size: 12, color: AppColors.accentMuted),
-                        const SizedBox(width: 4),
-                      ],
+                      Icon(entry.mealSlot.icon, size: 13, color: AppColors.accentMuted),
+                      const SizedBox(width: 4),
                       Text(
                         entry.mealSlot.label.toUpperCase(),
                         style: AppTextStyles.label.copyWith(
@@ -78,19 +76,21 @@ class MealPlanEntryCard extends StatelessWidget {
                           letterSpacing: 1,
                         ),
                       ),
+                      if (entry.source == MealEntrySource.recommended) ...[
+                        const SizedBox(width: 6),
+                        const Icon(Icons.auto_awesome, size: 11, color: AppColors.accent),
+                      ],
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     entry.displayTitle,
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.heading2.copyWith(
-                      fontSize: 17,
-                      color: AppColors.textLight,
-                    ),
+                    style: AppTextStyles.cardTitle.copyWith(
+                      color: AppColors.textLight
+                      ),
                   ),
-                  const SizedBox(height: 2),
                   Text(
                     subtitle,
                     maxLines: 1,
