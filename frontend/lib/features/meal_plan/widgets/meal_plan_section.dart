@@ -171,6 +171,7 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
             onPrevious: notifier.previousDay,
             onNext: notifier.nextDay,
             onToday: notifier.goToToday,
+            onDateSelected: notifier.selectDay,
           ),
           const SizedBox(height: 16),
           _buildBody(state, notifier),
