@@ -16,6 +16,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import org.mockito.ArgumentCaptor;
 
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
@@ -33,6 +34,9 @@ import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.vault.repository.VaultMemberRepository;
 import com.mealchemy.shared.enums.VaultType;
 import com.mealchemy.shared.enums.VaultMemberRole;
+import com.mealchemy.shared.enums.NotificationType;
+import com.mealchemy.vault.event.NotificationEvent;
+
 
 @ExtendWith(MockitoExtension.class)
 public class VaultFolderServiceTest
@@ -48,6 +52,9 @@ public class VaultFolderServiceTest
 
     @InjectMocks
     private VaultFolderService vaultFolderService;
+
+    @Mock
+    private NotificationService notificationService;
 
     private VaultFolder folder;
     private Vault vault;
@@ -325,6 +332,7 @@ public class VaultFolderServiceTest
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Vault not found.", ex.getReason());
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -337,6 +345,7 @@ public class VaultFolderServiceTest
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only a vault owner/editor can modify folders.", ex.getReason());
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -353,6 +362,7 @@ public class VaultFolderServiceTest
         assertNotNull(result);
         assertEquals("Updated General", result.folderName());
         verify(vaultFolderRepository, times(1)).save(any(VaultFolder.class));
+        
     }
 
     @Test 
@@ -415,6 +425,7 @@ public class VaultFolderServiceTest
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Folder not found.", ex.getReason());
         verify(vaultFolderRepository, never()).deleteById(any());
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -439,4 +450,48 @@ public class VaultFolderServiceTest
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         assertEquals("Only a vault owner/editor can modify folders.", ex.getReason());
     }
+
+
+    // ========== Notifications =========
+
+    @Test 
+    void createVaultFolder_publishesFolderCreatedToVaultMember()
+    {
+        when(vaultRepository.findById(request.vaultId())).thenReturn(Optional.of(vault));
+        when(vaultFolderRepository.save(any(VaultFolder.class))).thenReturn(folder);
+        when(notificationService.getDisplayName(1)).thenReturn("Owner");
+        when(notificationService.getVaultParticipantIds(1, 1)).thenReturn(List.of(3));
+
+        ArgumentCaptor<NotificationEvent> captor = ArgumentCaptor.forClass(NotificationEvent.class);
+
+        vaultFolderService.createVaultFolder(request, 1);
+
+        verify(notificationService).publish(captor.capture());
+        NotificationEvent event = captor.getValue();
+        assertEquals(NotificationType.FOLDER_CREATED, event.type());
+        assertEquals(List.of(3), event.recipientUserIds());
+        assertEquals(1, event.actorUserId());
+        assertEquals(1, event.refVaultId());
+        assertTrue(event.message().contains("General"));
+
+    }  
+    
+    @Test 
+    void deleteVaultFolder_publishesFolderDeleted()
+    {
+        when(vaultRepository.findById(request.vaultId())).thenReturn(Optional.of(vault));
+        when(vaultFolderRepository.findByVault_VaultIdAndFolderId(1, 1)).thenReturn(Optional.of(folder));
+        when(notificationService.getDisplayName(1)).thenReturn("Owner");
+        when(notificationService.getVaultParticipantIds(1, 1)).thenReturn(List.of(3));
+
+        ArgumentCaptor<NotificationEvent> captor = ArgumentCaptor.forClass(NotificationEvent.class);
+
+        vaultFolderService.deleteVaultFolder(1, 1, 1);
+
+        verify(notificationService).publish(captor.capture());
+        NotificationEvent event = captor.getValue();
+        assertEquals(NotificationType.FOLDER_DELETED, event.type());
+        assertEquals(List.of(3), event.recipientUserIds());
+        assertTrue(event.message().contains("General"));
+    }  
 }

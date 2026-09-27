@@ -45,14 +45,34 @@ void main() {
       final source = _FakeNetworkInterfaceSource(initialValue: false);
       final reachability = _FakeBackendReachability(true);
       final notifier = _notifier(source, reachability);
+
       addTearDown(notifier.dispose);
       await notifier.initialize();
 
-      source.emit(true);
-      await Future<void>.delayed(const Duration(milliseconds: 1));
+      expect(notifier.state, NetworkStatus.offline);
+      expect(reachability.calls, 0);
 
-      expect(notifier.state, NetworkStatus.online);
-      expect(reachability.calls, 1);
+      final becameOnline = Completer<void>();
+
+      final removeListener = notifier.addListener(
+        (status) {
+          if (status == NetworkStatus.online && !becameOnline.isCompleted) {
+            becameOnline.complete();
+          }
+        },
+        fireImmediately: false,
+      );
+
+      try {
+        source.emit(true);
+
+        await becameOnline.future.timeout(const Duration(seconds: 5));
+
+        expect(notifier.state, NetworkStatus.online);
+        expect(reachability.calls, 1);
+      } finally {
+        removeListener();
+      }
     });
 
     test('HTTP errors prove reachability but transport errors do not',

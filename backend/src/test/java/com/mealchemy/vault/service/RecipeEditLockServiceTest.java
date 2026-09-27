@@ -11,10 +11,12 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.OffsetDateTime;
 import java.util.Optional;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import org.mockito.ArgumentCaptor;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -35,6 +37,10 @@ import com.mealchemy.auth.repository.UserRepository;
 import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.shared.enums.VaultMemberRole;
 import com.mealchemy.shared.enums.VaultType;
+import com.mealchemy.shared.enums.NotificationType;
+
+import com.mealchemy.vault.event.NotificationEvent;
+import com.mealchemy.vault.event.VaultLiveEvent;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -46,6 +52,7 @@ public class RecipeEditLockServiceTest {
     @Mock private VaultRepository vaultRepository;
     @Mock private UserRepository userRepository; 
     @Mock private EntityManager entityManager;
+    @Mock private NotificationService notificationService;
 
     @InjectMocks
     private RecipeEditLockService recipeEditLockService;
@@ -221,6 +228,7 @@ public class RecipeEditLockServiceTest {
         // Assert
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
         verifyNoInteractions(entityManager);
+        verifyNoInteractions(notificationService);
     }
 
 
@@ -245,6 +253,8 @@ public class RecipeEditLockServiceTest {
         verify(recipeEditLockRepository).save(existing);
         verifyNoInteractions(entityManager);
         verify(recipeEditLockRepository, never()).delete(any());
+        assertEquals(originalAcquiredAt, existing.getAcquiredAt());
+        verifyNoInteractions(notificationService); // refresh doesn't trigger a notification
     }
 
     @Test
@@ -450,5 +460,78 @@ public class RecipeEditLockServiceTest {
 
         // Assert
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+
+    
+
+    // ========== Notifications ==========
+
+    @Test
+    void acquireLock_takeoverExpiredLockWithEdits_notifiesPreviousHolderEditAndPublishesAcquired()
+    {
+        // Arrange - editor's lock expired after they saved changes; owner takes over
+        RecipeEditLock expired = expiredLock(editor);
+        ReflectionTestUtils.setField(expired, "acquiredAt", OffsetDateTime.now().minusMinutes(10));
+        ReflectionTestUtils.setField(ownedRecipe, "updatedAt", OffsetDateTime.now().minusMinutes(5));
+        ownedRecipe.setTitle("Penne");
+        sharedVault.setName("Family Dinners");
+
+        when(recipeRepository.findAccessibleByIdAndUserId(1, 1)).thenReturn(Optional.of(ownedRecipe));
+        when(recipeEditLockRepository.findById(1)).thenReturn(Optional.of(expired));
+        when(userRepository.findById(1)).thenReturn(Optional.of(owner));
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(ownedRecipe));
+        when(vaultRepository.findVaultByRecipeId(1)).thenReturn(Optional.of(sharedVault));
+        when(notificationService.getDisplayName(2)).thenReturn("Editor");
+        when(notificationService.getVaultParticipantIds(10, 2)).thenReturn(List.of(1));
+        when(notificationService.getVaultParticipantIds(10, 1)).thenReturn(List.of(2));
+
+        ArgumentCaptor<NotificationEvent> editCaptor = ArgumentCaptor.forClass(NotificationEvent.class);
+        ArgumentCaptor<VaultLiveEvent> liveCaptor = ArgumentCaptor.forClass(VaultLiveEvent.class);
+
+        // Act
+        recipeEditLockService.acquireLock(1, 1);
+
+        // Assert - RECIPE_EDITED is from previous holder
+        verify(notificationService).publish(editCaptor.capture());
+        NotificationEvent edit = editCaptor.getValue();
+        assertEquals(NotificationType.RECIPE_EDITED, edit.type());
+        assertEquals(2, edit.actorUserId());
+        assertEquals(List.of(1), edit.recipientUserIds());
+        assertEquals("Editor edited Penne in Family Dinners", edit.message());
+        assertEquals(10, edit.refVaultId());
+        assertEquals(1, edit.refRecipeId());
+
+        // new lock - owner taken over
+        verify(notificationService).publishLiveEvent(liveCaptor.capture());
+        assertEquals(NotificationType.LOCK_ACQUIRED, liveCaptor.getValue().type());
+        assertEquals(1, liveCaptor.getValue().actorUserId());
+    }
+
+    
+    @Test
+    void releaseLock_noEdits_onlyPublishesLockReleased()
+    {
+        // Arrange 
+        // recipe wasn't saved
+        RecipeEditLock existing = liveLock(owner);
+        ReflectionTestUtils.setField(existing, "acquiredAt", OffsetDateTime.now().minusMinutes(1));
+        ReflectionTestUtils.setField(ownedRecipe, "updatedAt", OffsetDateTime.now().minusMinutes(10));
+
+        when(recipeRepository.findAccessibleByIdAndUserId(1, 1)).thenReturn(Optional.of(ownedRecipe));
+        when(recipeEditLockRepository.findById(1)).thenReturn(Optional.of(existing));
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(ownedRecipe));
+        when(vaultRepository.findVaultByRecipeId(1)).thenReturn(Optional.of(sharedVault));
+        when(notificationService.getVaultParticipantIds(10, 1)).thenReturn(List.of(2));
+
+        ArgumentCaptor<VaultLiveEvent> liveCaptor = ArgumentCaptor.forClass(VaultLiveEvent.class);
+
+        // Act
+        recipeEditLockService.releaseLock(1, 1);
+
+        // Assert
+        verify(notificationService, never()).publish(any());
+        verify(notificationService).publishLiveEvent(liveCaptor.capture());
+        assertEquals(NotificationType.LOCK_RELEASED, liveCaptor.getValue().type());
     }
 }
