@@ -200,4 +200,25 @@ public class MealPlanRecommendationService {
 
         return requiredTags.isEmpty() ? null : requiredTags;
     }
+
+    private void persistSignal(Integer entryId, EnrichedRecommendationItem item)
+    {
+        MealPlanRecommendationSignal signal = new MealPlanRecommendationSignal();
+        signal.setEntryId(entryId);
+        signal.setRecipeId(item.recipeId());
+        signal.setCuisine(item.cuisineType());
+        signal.setSignalScores(toScoreMap(item.scoreBreakdown()));
+        signalRepository.save(signal);
+    }
+
+    private Map<String, Double> toScoreMap(SignalScoresResponse scores)
+    {
+        Map<String, Double> map = new LinkedHashMap<>();
+        map.put("pantryMatch", scores.pantryMatch());
+        map.put("cuisine", scores.cuisine());
+        map.put("nutrition", scores.nutrition());
+        map.put("freshness", scores.freshness());
+        map.put("novelty", scores.novelty());
+        return map;
+    }
 }
