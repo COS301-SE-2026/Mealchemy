@@ -41,6 +41,7 @@ void main() {
         AppRoutes.admin,
         AppRoutes.adminUsers,
         AppRoutes.incomingVaultInvitations,
+        AppRoutes.notifications,
       ]) {
         await go(tester, path);
       }
