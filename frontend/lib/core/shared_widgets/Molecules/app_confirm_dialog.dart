@@ -3,7 +3,7 @@ import '../../theme/app_colours.dart';
 import '../../theme/app_typography.dart';
 import '../atoms/app_button.dart';
 
-//Centered confirm dialog. Returns true if confirmed, false/null otherwise.
+//Centered confirm dialog, returns true if confirmed, false/null otherwise
 Future<bool?> showAppConfirmDialog({
   required BuildContext context,
   required String title,
