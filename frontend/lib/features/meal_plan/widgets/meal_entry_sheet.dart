@@ -403,30 +403,33 @@ class _MealEntryFormState extends ConsumerState<_MealEntryForm> {
             ),
           )
         else
-          ...results.map((r) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                dense: true,
-                leading: _Thumb(photoUrl: r.photoUrl, size: 40),
-                title: Text(
-                  r.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.textLight,
-                    fontWeight: FontWeight.w600,
+          ...results.map((r) => Material(
+                type: MaterialType.transparency,
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  leading: _Thumb(photoUrl: r.photoUrl, size: 40),
+                  title: Text(
+                    r.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.textLight,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
+                  subtitle: Text(
+                    _formatCuisine(r.cuisineType),
+                    style: AppTextStyles.bodySmall
+                        .copyWith(color: AppColors.textMuted),
+                  ),
+                  trailing: const Icon(
+                    Icons.add_circle_outline,
+                    color: AppColors.primaryLight,
+                    size: 22,
+                  ),
+                  onTap: () => _pickRecipe(r),
                 ),
-                subtitle: Text(
-                  _formatCuisine(r.cuisineType),
-                  style: AppTextStyles.bodySmall
-                      .copyWith(color: AppColors.textMuted),
-                ),
-                trailing: const Icon(
-                  Icons.add_circle_outline,
-                  color: AppColors.primaryLight,
-                  size: 22,
-                ),
-                onTap: () => _pickRecipe(r),
               )),
         if (_isEdit)
           AppButton.text(

@@ -130,13 +130,12 @@ class _SheetState extends ConsumerState<MealPlanSheet> {
             bottom: -_drag,
             left: 0,
             right: 0,
-            child: Container(
-              decoration: const BoxDecoration(
-                color: AppColors.bgCream,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                ),
+            child: Material(
+              color: AppColors.bgCream,
+              clipBehavior: Clip.antiAlias,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
               ),
               child: Column(
                 children: [
