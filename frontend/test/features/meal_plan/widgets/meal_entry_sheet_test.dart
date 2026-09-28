@@ -39,6 +39,7 @@ class _FakeRepo implements MealPlanRepository {
   final List<MealPlanEntry> entries;
   final added = <MealPlanEntry>[];
   final accepted = <MealPlanEntry>[];
+  final acceptedSuggestions = <MealSuggestion>[];
   final updated = <MealPlanEntry>[];
   final deleted = <int>[];
   int _nextId = 100;
@@ -75,9 +76,10 @@ class _FakeRepo implements MealPlanRepository {
   }
 
   @override
-  Future<MealPlanEntry> acceptRecommendation(int planId, MealPlanEntry entry) async {
+  Future<MealPlanEntry> acceptRecommendation(int planId, MealPlanEntry entry, MealSuggestion suggestion) async {
     final saved = _save(entry, MealEntrySource.recommended);
     accepted.add(saved);
+    acceptedSuggestions.add(suggestion);
     return saved;
   }
 
@@ -94,8 +96,15 @@ class _FakeRepo implements MealPlanRepository {
   }
 
   @override
-  Future<List<Recipe>> previewRecommendations(int planId, DateTime date, MealSlot slot) async =>
-      [_salmon];
+  Future<List<MealSuggestion>> previewRecommendations(
+          int planId, DateTime date, MealSlot slot) async =>
+      [
+        const MealSuggestion(
+          recipe: _salmon,
+          cuisineType: 'MEDITERRANEAN',
+          scoreBreakdown: {'pantry_match': 0.6, 'cuisine': 0.8},
+        ),
+      ];
 }
 
 Future<void> _open(
@@ -198,7 +207,7 @@ void main() {
       expect(find.text('Add Meal'), findsNothing);
     });
 
-    testWidgets('picking a suggestion saves as recommended', (tester) async {
+    testWidgets('picking a suggestion saves as recommended with its scores', (tester) async {
       final repo = _FakeRepo();
       await _open(tester, repo);
 
@@ -209,6 +218,8 @@ void main() {
 
       expect(repo.accepted, hasLength(1));
       expect(repo.accepted.single.recipeId, _salmon.recipeId);
+      expect(repo.acceptedSuggestions.single.cuisineType, 'MEDITERRANEAN');
+      expect(repo.acceptedSuggestions.single.scoreBreakdown['pantry_match'], 0.6);
       expect(repo.added, isEmpty);
     });
   });

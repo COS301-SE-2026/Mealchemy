@@ -38,7 +38,7 @@ class _FakeRepo implements MealPlanRepository {
   }
 
   @override
-  Future<List<Recipe>> previewRecommendations(
+  Future<List<MealSuggestion>> previewRecommendations(
           int planId, DateTime date, MealSlot slot) async =>
       [];
 
