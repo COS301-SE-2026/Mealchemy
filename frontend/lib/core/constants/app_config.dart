@@ -11,5 +11,5 @@ class AppConfig {
   static const bool mockProfile = false;
   static const bool mockGuidedDiscovery = false; 
   static const bool mockDashboard = false;
-  static const bool mockMealPlan = true;
+  static const bool mockMealPlan = false;
 }

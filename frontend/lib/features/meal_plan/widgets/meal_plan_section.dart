@@ -10,6 +10,7 @@ import 'package:mealchemy/core/shared_widgets/atoms/app_dropdown.dart';
 import 'package:mealchemy/core/shared_widgets/atoms/app_toast.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
+import 'package:mealchemy/features/recipe/widgets/add_to_sl.dart';
 import 'package:mealchemy/features/vault/models/vault.dart';
 import 'package:mealchemy/features/vault/providers/vault_provider.dart';
 import '../models/meal_plan_entry.dart';
@@ -18,7 +19,6 @@ import '../providers/meal_plan_provider.dart';
 import 'meal_entry_sheet.dart';
 import 'meal_plan_day_nav.dart';
 import 'meal_plan_entry_card.dart';
-import 'package:mealchemy/features/recipe/widgets/add_to_sl.dart';
 
 class MealPlanSection extends ConsumerStatefulWidget {
   const MealPlanSection({
@@ -62,6 +62,11 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
     context.push(AppRoutes.recipeDetail.replaceFirst(':id', '${e.recipeId}'));
   }
 
+  void _openShoppingList(MealPlanState state) {
+    final plan = state.plan;
+    if (plan == null) return;
+    showAddPlanToSl(context: context, planId: plan.planId, start: state.selectedDay);
+  }
 
   Future<void> _clearDay() async {
     final ok = await showAppConfirmDialog(
@@ -86,20 +91,11 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
     return [
       if (widget.canEdit) ...[
         AppDropdownItem(label: 'Add meal', icon: Icons.add, onTap: () => _openSheet()),
-        AppDropdownItem(
-          label: 'Suggest a meal',
-          icon: Icons.auto_awesome,
-          onTap: () => (),
-        ),
       ],
-            AppDropdownItem(
+      AppDropdownItem(
         label: 'Generate shopping list',
         icon: Icons.shopping_cart_outlined,
-        onTap: () {
-          final plan = state.plan;
-          if (plan == null) return;
-          showAddPlanToSl(context: context, planId: plan.planId, start: state.selectedDay);
-        },
+        onTap: () => _openShoppingList(state),
       ),
       if (widget.canEdit && state.dayEntries.isNotEmpty)
         AppDropdownItem(
@@ -206,26 +202,34 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
       );
     }
 
-    return Column(
-      children: [
-        for (final slot in MealSlot.values) ...[
-          for (final e in entries.where((e) => e.mealSlot == slot))
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: MealPlanEntryCard(
-                entry: e,
-                onTap: () => _openRecipe(e),
-                onEdit: widget.canEdit ? () => _openSheet(entry: e) : null,
-              ),
-            ),
-          if (widget.canEdit &&
-              slot != MealSlot.snack &&
-              !entries.any((e) => e.mealSlot == slot))
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+    int minutes(TimeOfDay t) => t.hour * 60 + t.minute;
+
+    final rows = <({int at, Widget child})>[
+      for (final e in entries)
+        (
+          at: minutes(e.mealTime),
+          child: MealPlanEntryCard(
+            entry: e,
+            onTap: () => _openRecipe(e),
+            onEdit: widget.canEdit ? () => _openSheet(entry: e) : null,
+          ),
+        ),
+      if (widget.canEdit)
+        for (final slot in [MealSlot.breakfast, MealSlot.lunch, MealSlot.dinner])
+          if (!entries.any((e) => e.mealSlot == slot))
+            (
+              at: minutes(slot.earliest!),
               child: _AddSlotRow(slot: slot, onTap: () => _openSheet(slot: slot)),
             ),
-        ],
+    ]..sort((a, b) => a.at.compareTo(b.at));
+
+    return Column(
+      children: [
+        for (final r in rows)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: r.child,
+          ),
         if (widget.canEdit && entries.any((e) => e.mealSlot != MealSlot.snack))
           _AddSlotRow(onTap: () => _openSheet()),
       ],

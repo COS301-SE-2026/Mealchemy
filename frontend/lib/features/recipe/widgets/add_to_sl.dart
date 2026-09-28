@@ -172,12 +172,29 @@ class _AddToSlState extends ConsumerState<_AddToSl> {
       style: AppTextStyles.label.copyWith(color: AppColors.brown, letterSpacing: 1.5));
 
   Widget _dateButton(DateTime date, VoidCallback onTap) {
-    return AppButton.outlined(
-      label: _shortDate(date),
-      onPressed: onTap,
-      isFullWidth: true,
-      isRounded: true,
-      rightIcon: Icons.calendar_today_outlined,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceMuted,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.inputBorder),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.calendar_today_outlined,
+                size: 18, color: AppColors.textMuted),
+            const SizedBox(width: 10),
+            Text(
+              _shortDate(date),
+              style: AppTextStyles.body.copyWith(color: AppColors.textLight),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

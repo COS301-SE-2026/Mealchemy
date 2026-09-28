@@ -255,14 +255,10 @@ class _MealEntryFormState extends ConsumerState<_MealEntryForm> {
               .toList(),
         ),
         const SizedBox(height: 14),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: AppButton.outlined(
-            label: MealPlanEntry.formatTime(_time),
-            onPressed: _pickTime,
-            isRounded: true,
-            rightIcon: Icons.schedule,
-          ),
+        _TimeField(
+          time: _time,
+          invalid: _showValidation && !_slot.allows(_time),
+          onTap: _pickTime,
         ),
         if (_showValidation && !_slot.allows(_time))
           _ValidationText(
@@ -458,13 +454,11 @@ class _Suggestions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final suggestions = ref
-            .watch(mealSuggestionsProvider(
-                (vaultId: vaultId, date: date, slot: slot)))
-            .valueOrNull ??
-        const <MealSuggestion>[];
+    final async = ref.watch(
+        mealSuggestionsProvider((vaultId: vaultId, date: date, slot: slot)));
+    final suggestions = async.valueOrNull ?? const <MealSuggestion>[];
 
-    if (suggestions.isEmpty) return const SizedBox.shrink();
+    if (!async.isLoading && suggestions.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -475,58 +469,123 @@ class _Suggestions extends ConsumerWidget {
               .copyWith(color: AppColors.accentMuted, letterSpacing: 1),
         ),
         const SizedBox(height: 10),
-        SizedBox(
-          height: 140,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: suggestions.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (_, i) {
-              final s = suggestions[i];
-              final r = s.recipe;
-              return GestureDetector(
-                onTap: () => onPick(s),
-                child: SizedBox(
-                  width: 120,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Stack(
-                        children: [
-                          _Thumb(photoUrl: r.photoUrl, size: 120, height: 90),
-                          Positioned(
-                            top: 6,
-                            right: 6,
-                            child: Container(
-                              width: 26,
-                              height: 26,
-                              decoration: const BoxDecoration(
-                                color: AppColors.surfaceWhite,
-                                shape: BoxShape.circle,
+        if (async.isLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: LinearProgressIndicator(),
+          )
+        else
+          SizedBox(
+            height: 140,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: suggestions.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (_, i) {
+                final s = suggestions[i];
+                final r = s.recipe;
+                return GestureDetector(
+                  onTap: () => onPick(s),
+                  child: SizedBox(
+                    width: 120,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Stack(
+                          children: [
+                            _Thumb(photoUrl: r.photoUrl, size: 120, height: 90),
+                            Positioned(
+                              top: 6,
+                              right: 6,
+                              child: Container(
+                                width: 26,
+                                height: 26,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.surfaceWhite,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.add,
+                                    size: 18, color: AppColors.primary),
                               ),
-                              child: const Icon(Icons.add,
-                                  size: 18, color: AppColors.primary),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        r.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.bodySmall
-                            .copyWith(color: AppColors.textLight),
-                      ),
-                    ],
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          r.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.bodySmall
+                              .copyWith(color: AppColors.textLight),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
+          ),
+        const SizedBox(height: 18),
+        Row(
+          children: [
+            const Expanded(child: Divider(color: AppColors.divider)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Text(
+                'OR PICK FROM YOUR VAULT',
+                style: AppTextStyles.label
+                    .copyWith(color: AppColors.textMuted, letterSpacing: 1),
+              ),
+            ),
+            const Expanded(child: Divider(color: AppColors.divider)),
+          ],
+        ),
+        const SizedBox(height: 18),
+      ],
+    );
+  }
+}
+
+class _TimeField extends StatelessWidget {
+  const _TimeField({
+    required this.time,
+    required this.invalid,
+    required this.onTap,
+  });
+
+  final TimeOfDay time;
+  final bool invalid;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 140,
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceMuted,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+                color: invalid ? AppColors.error : AppColors.inputBorder),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.schedule, size: 18, color: AppColors.textMuted),
+              const SizedBox(width: 10),
+              Text(
+                MealPlanEntry.formatTime(time),
+                style: AppTextStyles.body.copyWith(color: AppColors.textLight),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 20),
-      ],
+      ),
     );
   }
 }

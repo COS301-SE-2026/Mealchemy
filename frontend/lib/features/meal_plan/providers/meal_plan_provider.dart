@@ -32,8 +32,10 @@ class MealPlanState {
   });
 
   List<MealPlanEntry> get dayEntries {
-    final day = entries.where((e) => _sameDay(e.entryDate, selectedDay)).toList();
-    day.sort((a, b) => a.mealSlot.index.compareTo(b.mealSlot.index));
+    final day =
+        entries.where((e) => _sameDay(e.entryDate, selectedDay)).toList();
+    int minutes(MealPlanEntry e) => e.mealTime.hour * 60 + e.mealTime.minute;
+    day.sort((a, b) => minutes(a).compareTo(minutes(b)));
     return day;
   }
 
