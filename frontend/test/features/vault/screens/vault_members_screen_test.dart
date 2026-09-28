@@ -15,6 +15,8 @@ import 'package:mealchemy/features/vault/providers/vault_repository_provider.dar
 import 'package:mealchemy/features/vault/repositories/vault_repository.dart';
 import 'package:mealchemy/features/vault/screens/vault_members_screen.dart';
 import 'package:mealchemy/features/vault/widgets/shared_vault_members_entry.dart';
+import 'package:mealchemy/core/theme/app_colours.dart';
+import 'package:mealchemy/core/theme/app_theme.dart';
 
 const _session = (
   userId: 7,
@@ -90,6 +92,7 @@ void main() {
   Widget host({
     VaultSession session = _session,
     NetworkStatus network = NetworkStatus.online,
+    ThemeMode themeMode = ThemeMode.light,
   }) {
     return ProviderScope(
       overrides: [
@@ -97,10 +100,22 @@ void main() {
         vaultConnectionProvider.overrideWithValue(network),
         vaultRepositoryProvider.overrideWithValue(repository),
       ],
-      child: const MaterialApp(
-        home: VaultMembersScreen(vaultId: 5),
+      child: MaterialApp(
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: themeMode,
+        home: const VaultMembersScreen(vaultId: 5),
       ),
     );
+  }
+
+  Color? renderedTextColor(WidgetTester tester, String text) {
+    final richText = find.descendant(
+      of: find.text(text),
+      matching: find.byType(RichText),
+    );
+
+    return tester.widget<RichText>(richText).text.style?.color;
   }
 
   testWidgets('shows owner and viewer with their roles', (tester) async {
@@ -260,5 +275,91 @@ void main() {
     expect(find.byType(VaultMembersScreen), findsOneWidget);
     expect(repository.memberCalls, 0);
     expect(find.text('owner@example.com'), findsNothing);
+  });
+  testWidgets('member details remain readable under the dark app theme',
+      (tester) async {
+    await tester.pumpWidget(host(themeMode: ThemeMode.dark));
+    await tester.pumpAndSettle();
+
+    expect(
+      renderedTextColor(tester, 'Your role: Viewer'),
+      AppColors.textLight,
+    );
+    expect(
+      renderedTextColor(tester, 'owner@example.com'),
+      AppColors.textLight,
+    );
+    expect(
+      renderedTextColor(tester, 'sofia@example.com'),
+      AppColors.textLight,
+    );
+    expect(
+      renderedTextColor(tester, 'Viewer · You'),
+      AppColors.textMuted,
+    );
+    expect(
+      renderedTextColor(
+        tester,
+        'You can view this vault. Only the owner can change your role.',
+      ),
+      AppColors.textMuted,
+    );
+
+    final appBar = tester.widget<AppBar>(find.byType(AppBar));
+    expect(appBar.backgroundColor, AppColors.bgLight);
+    expect(appBar.foregroundColor, AppColors.textLight);
+
+    for (final card in tester.widgetList<Card>(find.byType(Card))) {
+      expect(card.color, AppColors.surfaceWhite);
+      expect(card.surfaceTintColor, Colors.transparent);
+    }
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('role confirmation remains readable under the dark app theme',
+      (tester) async {
+    await tester.pumpWidget(
+      host(
+        themeMode: ThemeMode.dark,
+        session: (
+          userId: 9,
+          token: 'owner-token',
+          restoring: false,
+          hasValidCredential: true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Make Editor'));
+    await tester.tap(find.text('Make Editor'));
+    await tester.pumpAndSettle();
+
+    const message =
+        'Make sofia@example.com an Editor? They will be able to create, '
+        'rename, and delete folders in this shared vault.';
+
+    expect(find.text('Change member role?'), findsOneWidget);
+    expect(find.text(message), findsOneWidget);
+
+    expect(
+      renderedTextColor(tester, 'Change member role?'),
+      AppColors.primary,
+    );
+    expect(
+      renderedTextColor(tester, message),
+      AppColors.textLight,
+    );
+
+    final dialog = tester.widget<Dialog>(find.byType(Dialog));
+    expect(dialog.backgroundColor, AppColors.bgLight);
+    expect(dialog.surfaceTintColor, Colors.transparent);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Dialog), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 }
