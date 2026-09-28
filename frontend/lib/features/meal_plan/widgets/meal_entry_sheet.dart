@@ -14,12 +14,12 @@ import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
 import 'package:mealchemy/features/vault/models/vault.dart';
 import 'package:mealchemy/features/vault/providers/vault_provider.dart';
+import '../models/meal_plan.dart';
 import '../models/meal_plan_entry.dart';
 import '../models/meal_slot.dart';
 import '../providers/meal_plan_provider.dart';
 import 'meal_plan_day_nav.dart';
 import 'meal_plan_sheet.dart';
-
 
 const _allFolders = -1;
 
@@ -77,7 +77,7 @@ class _MealEntryFormState extends ConsumerState<_MealEntryForm> {
   late bool _searching = widget.entry == null;
   late int _vaultId = widget.vaultId;
   int _folderId = _allFolders;
-  bool _suggested = false;
+  MealSuggestion? _suggestion;
   bool _showValidation = false;
 
   AppButtonStatus _saveStatus = AppButtonStatus.idle;
@@ -94,10 +94,10 @@ class _MealEntryFormState extends ConsumerState<_MealEntryForm> {
     super.dispose();
   }
 
-  void _pickRecipe(Recipe recipe, {bool suggested = false}) {
+  void _pickRecipe(Recipe recipe, {MealSuggestion? suggestion}) {
     setState(() {
       _recipe = recipe;
-      _suggested = suggested;
+      _suggestion = suggestion;
       _searching = false;
       _searchCtrl.clear();
     });
@@ -145,8 +145,8 @@ class _MealEntryFormState extends ConsumerState<_MealEntryForm> {
     String? error;
     if (_isEdit) {
       error = await notifier.updateEntry(entry);
-    } else if (_suggested) {
-      error = await notifier.acceptRecommendation(entry);
+    } else if (_suggestion != null) {
+      error = await notifier.acceptRecommendation(entry, _suggestion!);
     } else {
       error = await notifier.addEntry(entry);
     }
@@ -190,8 +190,8 @@ class _MealEntryFormState extends ConsumerState<_MealEntryForm> {
     final planVault =
         vaults.where((v) => v.vaultId == widget.vaultId).firstOrNull;
     final isPrivate = planVault?.vaultType == VaultTypes.private;
-    final DateTime day = widget.entry?.entryDate ??
-        ref.watch(mealPlanProvider(widget.vaultId)).selectedDay;
+    final planState = ref.watch(mealPlanProvider(widget.vaultId));
+    final DateTime day = widget.entry?.entryDate ?? planState.selectedDay;
 
     return MealPlanSheet(
       title: _isEdit ? 'Edit Meal' : 'Add Meal',
@@ -224,13 +224,12 @@ class _MealEntryFormState extends ConsumerState<_MealEntryForm> {
           _selectedRecipe()
         else ...[
           //engine suggestions only work for your private plan
-
           if (!_isEdit && isPrivate)
             _Suggestions(
               vaultId: widget.vaultId,
               date: day,
               slot: _slot,
-              onPick: (r) => _pickRecipe(r, suggested: true),
+              onPick: (s) => _pickRecipe(s.recipe, suggestion: s),
             ),
           _search(vaults, planVault, isPrivate),
         ],
@@ -303,7 +302,9 @@ class _MealEntryFormState extends ConsumerState<_MealEntryForm> {
         style: AppTextStyles.cardTitle.copyWith(color: AppColors.textLight),
       ),
       subtitle: Text(
-        _suggested ? 'Suggested' : _formatCuisine(_recipe?.cuisineType),
+        _suggestion != null
+            ? 'Suggested'
+            : _formatCuisine(_recipe?.cuisineType),
         style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
       ),
       trailing: GestureDetector(
@@ -453,17 +454,17 @@ class _Suggestions extends ConsumerWidget {
   final int vaultId;
   final DateTime date;
   final MealSlot slot;
-  final ValueChanged<Recipe> onPick;
+  final ValueChanged<MealSuggestion> onPick;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final recipes = ref
+    final suggestions = ref
             .watch(mealSuggestionsProvider(
                 (vaultId: vaultId, date: date, slot: slot)))
             .valueOrNull ??
-        const <Recipe>[];
+        const <MealSuggestion>[];
 
-    if (recipes.isEmpty) return const SizedBox.shrink();
+    if (suggestions.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -478,12 +479,13 @@ class _Suggestions extends ConsumerWidget {
           height: 140,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: recipes.length,
+            itemCount: suggestions.length,
             separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (_, i) {
-              final r = recipes[i];
+              final s = suggestions[i];
+              final r = s.recipe;
               return GestureDetector(
-                onTap: () => onPick(r),
+                onTap: () => onPick(s),
                 child: SizedBox(
                   width: 120,
                   child: Column(

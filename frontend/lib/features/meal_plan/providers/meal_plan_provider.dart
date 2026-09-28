@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/constants/app_config.dart';
 import 'package:mealchemy/core/providers/api_service_provider.dart';
-import 'package:mealchemy/features/recipe/models/recipe.dart';
 import '../models/meal_plan.dart';
 import '../models/meal_plan_entry.dart';
 import '../models/meal_slot.dart';
@@ -22,7 +21,6 @@ class MealPlanState {
   final List<MealPlanEntry> entries;
   final DateTime selectedDay;
   final DateTime? windowStart;
-
 
   const MealPlanState({
     this.isLoading = false,
@@ -115,18 +113,20 @@ class MealPlanNotifier extends StateNotifier<MealPlanState> {
   void previousDay() => selectDay(state.selectedDay.subtract(const Duration(days: 1)));
   void goToToday() => selectDay(DateTime.now());
 
-  Future<String?> addEntry(MealPlanEntry entry) =>
-      _add(entry, fromSuggestion: false);
+  Future<List<MealPlanEntry>> entriesBetween(DateTime start, DateTime end) =>
+      _repository.getEntries(vaultId, start, end);
 
-  Future<String?> acceptRecommendation(MealPlanEntry entry) =>
-      _add(entry, fromSuggestion: true);
+  Future<String?> addEntry(MealPlanEntry entry) => _add(entry);
 
-  Future<String?> _add(MealPlanEntry entry, {required bool fromSuggestion}) async {
+  Future<String?> acceptRecommendation( MealPlanEntry entry, MealSuggestion suggestion) =>
+      _add(entry, suggestion: suggestion);
+
+  Future<String?> _add(MealPlanEntry entry, {MealSuggestion? suggestion}) async {
     final plan = state.plan;
     if (plan == null) return 'Meal plan not loaded yet';
     try {
-      final saved = fromSuggestion
-          ? await _repository.acceptRecommendation(plan.planId, entry)
+      final saved = suggestion != null
+          ? await _repository.acceptRecommendation(plan.planId, entry, suggestion)
           : await _repository.addEntry(plan.planId, entry);
       if (_inWindow(saved.entryDate)) {
         state = state.copyWith(entries: [...state.entries, saved]);
@@ -196,12 +196,12 @@ class MealPlanNotifier extends StateNotifier<MealPlanState> {
 }
 
 final mealPlanProvider =
-    StateNotifierProvider.family<MealPlanNotifier, MealPlanState, int>((ref, vaultId) {
+    StateNotifierProvider.family<MealPlanNotifier, MealPlanState, int>( (ref, vaultId) {
   return MealPlanNotifier(ref.watch(mealPlanRepositoryProvider), vaultId);
 });
 
 final mealSuggestionsProvider = FutureProvider.autoDispose
-    .family<List<Recipe>, ({int vaultId, DateTime date, MealSlot slot})>(
+    .family<List<MealSuggestion>, ({int vaultId, DateTime date, MealSlot slot})>(
         (ref, key) async {
   final plan = ref.watch(mealPlanProvider(key.vaultId).select((s) => s.plan));
   if (plan == null) return const [];

@@ -3,7 +3,6 @@ import 'meal_plan_repository.dart';
 import '../models/meal_plan.dart';
 import '../models/meal_plan_entry.dart';
 import '../models/meal_slot.dart';
-import '../../recipe/models/recipe.dart';
 
 class ApiMealPlanRepository implements MealPlanRepository {
   final Dio _dio;
@@ -23,7 +22,6 @@ class ApiMealPlanRepository implements MealPlanRepository {
       'startDate': MealPlanEntry.formatDate(start),
       'endDate': MealPlanEntry.formatDate(end),
     });
-    
     final data = res.data;
     final list = data is List ? data : (data['entries'] as List? ?? []);
     return list.map((j) => MealPlanEntry.fromJson(j)).toList();
@@ -50,23 +48,25 @@ class ApiMealPlanRepository implements MealPlanRepository {
   }
 
   @override
-  Future<List<Recipe>> previewRecommendations(int planId, DateTime date, MealSlot slot) async {
-    final res = await _dio.get(
+  Future<List<MealSuggestion>> previewRecommendations(int planId, DateTime date, MealSlot slot) async {
+    final res = await _dio.post(
       '/api/meal-plans/$planId/days/${MealPlanEntry.formatDate(date)}/recommendations',
-      queryParameters: {'mealSlot': slot.value},
+      data: {'mealSlot': slot.value, 'count': 5, 'excludeRecipeIds': []},
     );
-    final data = res.data;
-    final list = data is List ? data : (data['recommendations'] as List? ?? []);
-    return list
-        .map((j) => Recipe.fromJson((j['recipe'] ?? j) as Map<String, dynamic>))
-        .toList();
+    final list = res.data['recommendations'] as List? ?? [];
+    return list.map((j) => MealSuggestion.fromJson(j)).toList();
   }
 
   @override
-  Future<MealPlanEntry> acceptRecommendation(int planId, MealPlanEntry entry) async {
+  Future<MealPlanEntry> acceptRecommendation(
+      int planId, MealPlanEntry entry, MealSuggestion suggestion) async {
     final res = await _dio.post(
       '/api/meal-plans/$planId/entries/from-recommendation',
-      data: entry.toRequestJson(),
+      data: {
+        ...entry.toRequestJson(),
+        'cuisineType': suggestion.cuisineType,
+        'scoreBreakdown': suggestion.scoreBreakdown,
+      },
     );
     return MealPlanEntry.fromJson(res.data);
   }

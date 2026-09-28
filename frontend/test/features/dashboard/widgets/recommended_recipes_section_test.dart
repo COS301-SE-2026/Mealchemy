@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mealchemy/features/dashboard/models/trending_recipe_data.dart';
 import 'package:mealchemy/features/dashboard/providers/dashboard_provider.dart';
 import 'package:mealchemy/features/dashboard/repositories/dashboard_repository.dart';
 import 'package:mealchemy/features/dashboard/widgets/recommended_recipes_section.dart';
@@ -42,8 +41,6 @@ class _FakeDashboardRepo implements DashboardRepository {
   Future<int> getSmartSuggestionItemsAway() async => 3;
   @override
   Future<int> getSmartSuggestionRecipeCount() async => 10;
-  @override
-  Future<List<TrendingRecipeData>> getTrendingRecipes() async => [];
 }
 
 class _FakeGuidedDiscoveryRepo implements GuidedDiscoveryRepository {

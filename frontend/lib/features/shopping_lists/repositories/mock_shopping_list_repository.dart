@@ -422,4 +422,44 @@ class MockShoppingListRepository implements ShoppingListRepository {
           items: [],
         );
   }
+
+  @override
+  Future<({ShoppingList list, List<int> skippedRecipeIds})> smartAddFromMealPlan({
+    required String listId,
+    required int planId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required bool compareToPantry,
+  }) async {
+    final existing = await getShoppingListById(listId);
+    final list = existing ??
+        ShoppingList(
+          id: listId,
+          title: 'Meal plan',
+          subtitle: '0 items',
+          section: 'FROM YOUR RECIPES',
+          iconType: 'list',
+          items: const [],
+        );
+
+    //mock adds a couple of believable plan ingredients
+    return (
+      list: list.copyWith(items: [
+        ...list.items,
+        const ShoppingListItem(
+          id: 'plan-salmon',
+          name: 'Salmon fillets',
+          quantity: '600 g',
+          category: 'SEAFOOD',
+        ),
+        const ShoppingListItem(
+          id: 'plan-avocado',
+          name: 'Avocados',
+          quantity: '2 ct',
+          category: 'PRODUCE',
+        ),
+      ]),
+      skippedRecipeIds: const <int>[],
+    );
+  }
 }
