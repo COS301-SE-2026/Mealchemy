@@ -21,6 +21,9 @@ import com.mealchemy.auth.dto.RegisterRequest;
 import com.mealchemy.cuisinetype.service.FlavourProfileOptionsService;
 //shared enums
 import com.mealchemy.shared.enums.VaultType;
+//exception
+import com.mealchemy.auth.exception.AccountLockedException;
+
 //config and security
 import com.mealchemy.config.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,6 +35,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.time.Duration;
+import java.time.OffsetDateTime;
 
 @Service
 public class AuthService {
@@ -45,6 +50,9 @@ public class AuthService {
     private final VaultRepository vaultRepository;
     private final PasswordEncoder passwordEncoder; //hash passwords
     private final JwtUtil jwtUtil; //token authentication
+
+    private static final int MAX_FAILED_ATTEMPTS = 3;
+    private static final Duration LOCKOUT_DURATION = Duration.ofMinutes(15);
 
     // Constructor injection - Spring automatically wires
     public AuthService(UserRepository userRepository,
@@ -145,12 +153,45 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
 
-        // 3. check password matches stored hash
+        OffsetDateTime now = OffsetDateTime.now();
+
+        // 3. check if account is locked
+        if (user.getLockedUntil() != null) {
+            if (user.getLockedUntil().isAfter(now)) { // user currently lock out
+                long seconds = Duration.between(now, user.getLockedUntil()).toSeconds() + 1;
+                throw new AccountLockedException(seconds);
+            }
+
+            // lock is expired therefor reset
+            user.setLockedUntil(null);
+            user.setFailedLoginCount(0);
+        }
+
+        // 4. check password matches stored hash
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            // failed login attempt
+            int failureCount = user.getFailedLoginCount() + 1;
+            if (failureCount >= MAX_FAILED_ATTEMPTS) {
+                // set account lock
+                user.setLockedUntil(now.plus(LOCKOUT_DURATION));
+                user.setFailedLoginCount(0); //reset
+                userRepository.save(user);
+                throw new AccountLockedException(LOCKOUT_DURATION.toSeconds());
+            }
+
+            user.setFailedLoginCount(failureCount);
+            userRepository.save(user);
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
 
-        // 4. generate token and return response to flutter
+        // 5. success resets failed counter and lock
+        if (user.getFailedLoginCount() > 0 || user.getLockedUntil() != null) {
+            user.setFailedLoginCount(0);
+            user.setLockedUntil(null);
+            userRepository.save(user);
+        }
+
+        // 6. generate token and return response to flutter
         String token = jwtUtil.generateToken(user);
 
         return new AuthResponse(user.getUserId(), token, false);

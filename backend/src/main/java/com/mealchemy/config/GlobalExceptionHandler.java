@@ -1,9 +1,11 @@
 package com.mealchemy.config;
 
 import com.mealchemy.shared.dto.ErrorResponse;
+import com.mealchemy.auth.exception.AccountLockedException;
 import com.mealchemy.mealprep.exception.InvalidMealSlotTimeException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -107,6 +109,20 @@ public class GlobalExceptionHandler {
         ));
     }
 
+    // Auth login exception
+    @ExceptionHandler(AccountLockedException.class)
+    public ResponseEntity<ErrorResponse> handleAccountLock(AccountLockedException ex) {
+        HttpStatus status = HttpStatus.TOO_MANY_REQUESTS;
+        return ResponseEntity.status(status)
+                             .header(HttpHeaders.RETRY_AFTER, String.valueOf(ex.getRetryAfterSeconds()))
+                             .body(new ErrorResponse(
+                                    status.value(),
+                                    "ACCOUNT_LOCKED",
+                                    "Too many failed login attempts. Try again in " + ex.getRetryAfterSeconds() + " seconds.",
+                                    Instant.now()
+                             ));
+    }
+
     //catches anything unexpected - returns generic message
     //prevents stack traces and sensitive information leaking to Flutter
     @ExceptionHandler(Exception.class)
@@ -119,5 +135,4 @@ public class GlobalExceptionHandler {
                                                                         Instant.now()
         ));
     }
-
 }
