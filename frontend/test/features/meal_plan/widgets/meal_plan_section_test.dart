@@ -11,6 +11,7 @@ import 'package:mealchemy/features/meal_plan/widgets/meal_plan_section.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/vault/models/vault.dart';
 import 'package:mealchemy/features/vault/models/vault_folder.dart';
+import 'package:mealchemy/features/vault/providers/vault_folder_management_provider.dart';
 import 'package:mealchemy/features/vault/providers/vault_provider.dart';
 
 class _FakeRepo implements MealPlanRepository {
@@ -62,7 +63,7 @@ final _breakfast = MealPlanEntry(
 );
 
 Future<void> _pump(WidgetTester tester, MealPlanRepository repo,
-    {bool canEdit = true}) async {
+    {bool canEdit = true, bool canManage = true}) async {
   tester.view.physicalSize = const Size(1080, 2400);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
@@ -90,6 +91,7 @@ Future<void> _pump(WidgetTester tester, MealPlanRepository repo,
       folderRecipeDisplayProvider.overrideWith((ref, folderId) async =>
           [const Recipe(recipeId: 3, title: 'Burrito Bowl')]),
       offlineReadOnlyProvider.overrideWith((ref) => false),
+      canManageVaultFoldersProvider.overrideWith((ref, vault) => canManage),
     ],
     child: MaterialApp(
       home: Scaffold(
@@ -132,7 +134,7 @@ void main() {
 
   testWidgets('read only empty day shows nothing  planed', (tester) async {
     await _pump(tester, _FakeRepo([]), canEdit: false);
-    expect(find.text('Nothing planned for this day'), findsOneWidget);
+    expect(find.text('Nothing planned yet'), findsOneWidget);
   });
 
   testWidgets('load failure  shows the error with retry', (tester) async {
@@ -168,7 +170,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Add meal'), findsOneWidget);
-    expect(find.text('Suggest a meal'), findsOneWidget);
+    expect(find.text('Suggest a meal'), findsNothing);
     expect(find.text('Generate shopping list'), findsOneWidget);
     expect(find.text('Clear day'), findsOneWidget);
   });
@@ -198,5 +200,29 @@ void main() {
 
     expect(repo.deleted, [1]);
     expect(find.text('Burrito Bowl'), findsNothing);
+  });
+
+  testWidgets('viewer role shows the view only tag and no editing',
+      (tester) async {
+    await _pump(tester, _FakeRepo([_breakfast]), canManage: false);
+
+    expect(find.text('VIEW ONLY'), findsOneWidget);
+    expect(find.text('Burrito Bowl'), findsOneWidget);
+    expect(find.byIcon(Icons.edit_outlined), findsNothing);
+    expect(find.text('LUNCH'), findsNothing);
+  });
+
+  testWidgets('viewer on an empty day sees the owner message', (tester) async {
+    await _pump(tester, _FakeRepo([]), canManage: false);
+
+    expect(find.text('Nothing planned yet'), findsOneWidget);
+    expect(find.text("The vault owner hasn't added meals for this day."),
+        findsOneWidget);
+  });
+
+  testWidgets('editors do not see the view only tag', (tester) async {
+    await _pump(tester, _FakeRepo([_breakfast]));
+
+    expect(find.text('VIEW ONLY'), findsNothing);
   });
 }

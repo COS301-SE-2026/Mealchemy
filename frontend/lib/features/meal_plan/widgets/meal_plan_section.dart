@@ -12,6 +12,8 @@ import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/features/recipe/widgets/add_to_sl.dart';
 import 'package:mealchemy/features/vault/models/vault.dart';
+import 'package:mealchemy/features/vault/providers/shared_vault_access_provider.dart';
+import 'package:mealchemy/features/vault/providers/vault_folder_management_provider.dart';
 import 'package:mealchemy/features/vault/providers/vault_provider.dart';
 import '../models/meal_plan_entry.dart';
 import '../models/meal_slot.dart';
@@ -26,11 +28,13 @@ class MealPlanSection extends ConsumerStatefulWidget {
     required this.vaultId,
     this.canEdit = true,
     this.allowVaultSwitch = false,
+    this.showPlanName = true,
   });
 
   final int vaultId;
   final bool canEdit;
   final bool allowVaultSwitch;
+  final bool showPlanName;
 
   @override
   ConsumerState<MealPlanSection> createState() => _MealPlanSectionState();
@@ -87,17 +91,16 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
     }
   }
 
-  List<AppDropdownItem> _menuItems(MealPlanState state) {
+  List<AppDropdownItem> _menuItems(MealPlanState state, bool canEdit) {
     return [
-      if (widget.canEdit) ...[
+      if (canEdit)
         AppDropdownItem(label: 'Add meal', icon: Icons.add, onTap: () => _openSheet()),
-      ],
       AppDropdownItem(
         label: 'Generate shopping list',
         icon: Icons.shopping_cart_outlined,
         onTap: () => _openShoppingList(state),
       ),
-      if (widget.canEdit && state.dayEntries.isNotEmpty)
+      if (canEdit && state.dayEntries.isNotEmpty)
         AppDropdownItem(
           label: 'Clear day',
           icon: Icons.delete_outline,
@@ -114,6 +117,14 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
     final vaults = ref.watch(vaultsProvider).valueOrNull ?? const <Vault>[];
     final current = vaults.where((v) => v.vaultId == _vaultId).firstOrNull;
     final canSwitch = widget.allowVaultSwitch && vaults.length > 1;
+
+    final canManage =
+        current != null && ref.watch(canManageVaultFoldersProvider(current));
+    final checkingAccess = current == null ||
+        (current.vaultType == VaultTypes.shared &&
+            ref.watch(sharedVaultAccessProvider(current.vaultId)).isLoading);
+    final canEdit = widget.canEdit && canManage;
+    final viewOnly = !canEdit && !checkingAccess;
 
     final label = Row(
       mainAxisSize: MainAxisSize.min,
@@ -133,39 +144,57 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
       ],
     );
 
+    final menu = AppDropdown(
+      trigger: const Padding(
+        padding: EdgeInsets.all(4),
+        child: Icon(Icons.more_vert, color: AppColors.textMuted, size: 20),
+      ),
+      items: _menuItems(state, canEdit),
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AppSectionHeader(title: 'Meal Plan'),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              canSwitch
-                  ? AppDropdown(
-                      trigger: label,
-                      items: vaults
-                          .map((v) => AppDropdownItem(
-                                label: _planName(v),
-                                icon: v.vaultType == VaultTypes.private
-                                    ? Icons.person_outline
-                                    : Icons.group_outlined,
-                                onTap: () => setState(() => _vaultId = v.vaultId),
-                              ))
-                          .toList(),
-                    )
-                  : label,
-              const Spacer(),
-              AppDropdown(
-                trigger: const Padding(
-                  padding: EdgeInsets.all(4),
-                  child: Icon(Icons.more_vert, color: AppColors.textMuted, size: 20),
-                ),
-                items: _menuItems(state),
-              ),
-            ],
-          ),
+          if (widget.showPlanName) ...[
+            const AppSectionHeader(title: 'Meal Plan'),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                canSwitch
+                    ? AppDropdown(
+                        trigger: label,
+                        items: vaults
+                            .map((v) => AppDropdownItem(
+                                  label: _planName(v),
+                                  icon: v.vaultType == VaultTypes.private
+                                      ? Icons.person_outline
+                                      : Icons.group_outlined,
+                                  onTap: () => setState(() => _vaultId = v.vaultId),
+                                ))
+                            .toList(),
+                      )
+                    : label,
+                const Spacer(),
+                if (viewOnly) ...[
+                  const _ViewOnlyTag(),
+                  const SizedBox(width: 4),
+                ],
+                menu,
+              ],
+            ),
+          ] else
+            Row(
+              children: [
+                const Expanded(child: AppSectionHeader(title: 'Meal Plan')),
+                if (viewOnly) ...[
+                  const _ViewOnlyTag(),
+                  const SizedBox(width: 4),
+                ],
+                menu,
+              ],
+            ),
           const SizedBox(height: 8),
           MealPlanDayNav(
             day: state.selectedDay,
@@ -175,13 +204,13 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
             onDateSelected: notifier.selectDay,
           ),
           const SizedBox(height: 16),
-          _buildBody(state, notifier),
+          _buildBody(state, notifier, canEdit),
         ],
       ),
     );
   }
 
-  Widget _buildBody(MealPlanState state, MealPlanNotifier notifier) {
+  Widget _buildBody(MealPlanState state, MealPlanNotifier notifier, bool canEdit) {
     if (state.isLoading) {
       return const Column(children: [_SkeletonCard(), _SkeletonCard()]);
     }
@@ -192,12 +221,26 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
 
     final entries = state.dayEntries;
 
-    if (entries.isEmpty && !widget.canEdit) {
+    if (entries.isEmpty && !canEdit) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 24),
-        child: Text(
-          'Nothing planned for this day',
-          style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+        child: Center(
+          child: Column(
+            children: [
+              const Icon(Icons.event_note_outlined, size: 28, color: AppColors.textMuted),
+              const SizedBox(height: 8),
+              Text(
+                'Nothing planned yet',
+                style: AppTextStyles.bodyBold.copyWith(color: AppColors.textLight),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                "The vault owner hasn't added meals for this day.",
+                textAlign: TextAlign.center,
+                style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -211,10 +254,10 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
           child: MealPlanEntryCard(
             entry: e,
             onTap: () => _openRecipe(e),
-            onEdit: widget.canEdit ? () => _openSheet(entry: e) : null,
+            onEdit: canEdit ? () => _openSheet(entry: e) : null,
           ),
         ),
-      if (widget.canEdit)
+      if (canEdit)
         for (final slot in [MealSlot.breakfast, MealSlot.lunch, MealSlot.dinner])
           if (!entries.any((e) => e.mealSlot == slot))
             (
@@ -230,9 +273,36 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
             padding: const EdgeInsets.only(bottom: 12),
             child: r.child,
           ),
-        if (widget.canEdit && entries.any((e) => e.mealSlot != MealSlot.snack))
+        if (canEdit && entries.any((e) => e.mealSlot != MealSlot.snack))
           _AddSlotRow(onTap: () => _openSheet()),
       ],
+    );
+  }
+}
+
+class _ViewOnlyTag extends StatelessWidget {
+  const _ViewOnlyTag();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.inputBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.visibility_outlined, size: 12, color: AppColors.textMuted),
+          const SizedBox(width: 4),
+          Text(
+            'VIEW ONLY',
+            style: AppTextStyles.label.copyWith(color: AppColors.textMuted, letterSpacing: 1),
+          ),
+        ],
+      ),
     );
   }
 }
