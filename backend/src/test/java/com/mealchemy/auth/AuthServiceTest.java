@@ -10,6 +10,7 @@ import com.mealchemy.profile.model.UserProfile;
 import com.mealchemy.profile.repository.UserProfileRepository;
 import com.mealchemy.auth.repository.UserRepository;
 import com.mealchemy.auth.service.AuthService;
+import com.mealchemy.auth.exception.AccountLockedException;
 import com.mealchemy.config.JwtUtil;
 import com.mealchemy.preference.model.UserPreferences;
 import com.mealchemy.preference.repository.UserPreferencesRepository;
@@ -32,6 +33,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 import java.util.List;
+import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -194,5 +196,78 @@ public class AuthServiceTest {
         assertNotNull(response);
         assertEquals("mock.jwt.token", response.accessToken());
         assertFalse(response.onboardingRequired()); // always false for existing users
+    }
+
+    // ========== Login Lockout Testing ==========
+
+    @Test
+    void login_firstFailedAttempt_incrementFailedCounter_throwsUnauthorized() {
+        // Arrange
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(savedUser));
+        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false); // wrong password
+
+        // Act and Assert
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> authService.login(validLoginRequest)
+        );
+
+        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+        assertEquals(1, savedUser.getFailedLoginCount());
+        assertNull(savedUser.getLockedUntil());
+        verify(userRepository).save(savedUser);
+    }
+
+    @Test
+    void login_thirdFailedAttempt_incrementFailedCounter_throwsUnauthorized() {
+        // Arrange
+        savedUser.setFailedLoginCount(2); // two existing failed attempts
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(savedUser));
+        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false); // wrong password
+
+        // Act and Assert
+        AccountLockedException  ex = assertThrows(
+            AccountLockedException.class,
+            () -> authService.login(validLoginRequest)
+        );
+
+        assertEquals(900, ex.getRetryAfterSeconds()); // 15 minutes
+        assertNotNull(savedUser.getLockedUntil());
+        assertTrue(savedUser.getLockedUntil().isAfter(OffsetDateTime.now()));
+        assertEquals(0, savedUser.getFailedLoginCount()); // reset counter
+        verify(userRepository).save(savedUser);
+    }
+
+    @Test
+    void login_whenLocked_evenWhenCorrectCredentials_thowsAccountLocked() {
+        // Arrange
+        savedUser.setLockedUntil(OffsetDateTime.now().plusMinutes(10));
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(savedUser));
+
+        // Act and Assert
+        AccountLockedException ex = assertThrows(
+            AccountLockedException.class,
+            () -> authService.login(validLoginRequest)
+        );
+
+        assertTrue(ex.getRetryAfterSeconds() > 0 && ex.getRetryAfterSeconds() <= 601);
+        verifyNoInteractions(passwordEncoder);
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void login_successAfterFailures_resetsFailedCount() {
+        // Arrange
+        savedUser.setFailedLoginCount(2);
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(savedUser));
+        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
+        when(jwtUtil.generateToken(any(User.class))).thenReturn("mock.jwt.token");
+
+        // Act
+        authService.login(validLoginRequest);
+
+        // Assert
+        assertEquals(0, savedUser.getFailedLoginCount());
+        verify(userRepository).save(savedUser);
     }
 }
