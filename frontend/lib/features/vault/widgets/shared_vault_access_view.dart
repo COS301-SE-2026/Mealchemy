@@ -34,7 +34,9 @@ class SharedVaultAccessView extends ConsumerWidget {
             Expanded(
               child: Text(
                 'Checking vault access…',
-                style: AppTextStyles.body,
+                style: AppTextStyles.body.copyWith(
+                  color: AppColors.textMuted,
+                ),
               ),
             ),
           ],

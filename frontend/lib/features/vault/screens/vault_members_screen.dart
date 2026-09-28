@@ -12,6 +12,7 @@ import '../providers/owner_vault_invitations_provider.dart';
 import '../providers/shared_vault_access_provider.dart';
 import '../providers/vault_member_management_provider.dart';
 import '../widgets/shared_vault_access_view.dart';
+import 'package:flutter/services.dart';
 
 class VaultMembersScreen extends ConsumerStatefulWidget {
   const VaultMembersScreen({
@@ -128,6 +129,19 @@ class _VaultMembersScreenState extends ConsumerState<VaultMembersScreen> {
     return Scaffold(
       backgroundColor: AppColors.bgLight,
       appBar: AppBar(
+        backgroundColor: AppColors.bgLight,
+        foregroundColor: AppColors.textLight,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        titleTextStyle: AppTextStyles.title.copyWith(
+          color: AppColors.textLight,
+        ),
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
         title: const Text('Vault members'),
         leading: IconButton(
           tooltip: 'Back',
@@ -185,12 +199,16 @@ class _VaultMembersScreenState extends ConsumerState<VaultMembersScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'Your role: ${vaultRoleLabel(access.role)}',
-                    style: AppTextStyles.bodyBold,
+                    style: AppTextStyles.bodyBold.copyWith(
+                      color: AppColors.textLight,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     _roleDescription(access.role),
-                    style: AppTextStyles.body,
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.textMuted,
+                    ),
                   ),
                   if (access.canManageMembers) ...[
                     const SizedBox(height: 20),
@@ -221,6 +239,8 @@ class _VaultMembersScreenState extends ConsumerState<VaultMembersScreen> {
                   for (final member in access.members)
                     Card(
                       color: AppColors.surfaceWhite,
+                      surfaceTintColor: Colors.transparent,
+                      elevation: 0,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -233,7 +253,10 @@ class _VaultMembersScreenState extends ConsumerState<VaultMembersScreen> {
                             ),
                             title: Text(
                               member.email,
-                              style: AppTextStyles.bodyBold,
+                              softWrap: true,
+                              style: AppTextStyles.bodyBold.copyWith(
+                                color: AppColors.textLight,
+                              ),
                             ),
                             subtitle: Text(
                               [
@@ -242,7 +265,9 @@ class _VaultMembersScreenState extends ConsumerState<VaultMembersScreen> {
                                     access.currentMember.userId)
                                   'You',
                               ].join(' · '),
-                              style: AppTextStyles.bodySmall,
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.textMuted,
+                              ),
                             ),
                           ),
                           if (access.canManageMembers &&
