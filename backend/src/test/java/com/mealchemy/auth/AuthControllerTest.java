@@ -5,6 +5,7 @@ import com.mealchemy.auth.controller.AuthController;
 import com.mealchemy.auth.dto.AuthResponse;
 import com.mealchemy.auth.dto.LoginRequest;
 import com.mealchemy.auth.dto.RegisterRequest;
+import com.mealchemy.auth.exception.AccountLockedException;
 import com.mealchemy.auth.service.AuthService;
 import com.mealchemy.config.JwtAuthFilter;
 import com.mealchemy.config.JwtUtil;
@@ -190,4 +191,24 @@ public class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest());  // 400
     }
+
+    @Test
+    void login_whenAccountLocked_returns429WithRetryAfterHeader() throws Exception {
+        // Arrange
+        LoginRequest request = new LoginRequest(
+            "test@test.com",
+            "wrongpassword"
+        );
+
+        when(authService.login(any(LoginRequest.class))).thenThrow(new AccountLockedException(300));
+
+        // Act and Assert
+        mockMvc.perform(post("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isTooManyRequests())                    // 429
+            .andExpect(header().string("Retry-After", "300"))
+            .andExpect(jsonPath("$.message").value("Too many failed login attempts. Try again in 300 seconds."));
+    }
+    
 }
