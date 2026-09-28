@@ -10,7 +10,7 @@ void main() {
         displayName: 'Jane Doe',
         role: 'admin',
       );
-      
+
       expect(user.userId, 1);
       expect(user.email, 'jane.doe@example.com');
       expect(user.displayName, 'Jane Doe');
@@ -19,7 +19,6 @@ void main() {
   });
 
   group('User.fromJson', () {
-
     test('creates a valid instance from JSON', () {
       final json = {
         'userId': 7,

@@ -194,38 +194,52 @@ final appRouter = GoRouter(
       routes: [
         GoRoute(
           path: AppRoutes.dashboard,
-          pageBuilder: (context, state) =>
-              NoTransitionPage(child: const DashboardScreen()),
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            child: const DashboardScreen(),
+          ),
         ),
         GoRoute(
           path: AppRoutes.vault,
-          pageBuilder: (context, state) =>
-              NoTransitionPage(child: const VaultScreen()),
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            child: const VaultScreen(),
+          ),
         ),
         GoRoute(
           path: AppRoutes.discovery,
-          pageBuilder: (context, state) =>
-              NoTransitionPage(child: const DiscoveryScreen()),
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            child: const DiscoveryScreen(),
+          ),
         ),
         GoRoute(
           path: AppRoutes.pantry,
-          pageBuilder: (context, state) =>
-              NoTransitionPage(child: const PantryScreen()),
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            child: const PantryScreen(),
+          ),
         ),
         GoRoute(
           path: AppRoutes.profile,
-          pageBuilder: (context, state) =>
-              NoTransitionPage(child: const ProfileScreen()),
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            child: const ProfileScreen(),
+          ),
         ),
         GoRoute(
           path: AppRoutes.shoppingLists,
-          pageBuilder: (context, state) =>
-              NoTransitionPage(child: const ShoppingListsScreen()),
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            child: const ShoppingListsScreen(),
+          ),
         ),
         GoRoute(
           path: AppRoutes.guidedDiscovery,
-          pageBuilder: (context, state) =>
-              NoTransitionPage(child: const GuidedDiscoveryScreen()),
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            child: const GuidedDiscoveryScreen(),
+          ),
         ),
       ],
     ),

@@ -68,12 +68,20 @@ class ShoppingList {
   }
 
   factory ShoppingList.fromDetailJson(Map<String, dynamic> json) {
-    final itemsJson = json['items'] as List<dynamic>? ?? [];
+    final overview = ShoppingList.fromOverviewJson(json);
+    final itemsJson = json['items'] as List<dynamic>?;
+
+    // Creation responses contain num_items without an items array.
+    // Preserve that count until the actual items are loaded.
+    if (itemsJson == null) {
+      return overview;
+    }
+
     final items = itemsJson
         .map((item) => ShoppingListItem.fromJson(item as Map<String, dynamic>))
         .toList();
 
-    return ShoppingList.fromOverviewJson(json).copyWith(
+    return overview.copyWith(
       subtitle: '${items.length} items',
       items: items,
     );

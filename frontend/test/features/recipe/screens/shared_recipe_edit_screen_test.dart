@@ -182,6 +182,7 @@ class _Vaults implements VaultRepository {
 }
 
 class _Fixture {
+  bool delayAccess = false;
   final events = <String>[];
   DateTime now = DateTime.utc(2026, 9, 25, 10);
   bool allowed = true;
@@ -204,6 +205,19 @@ class _Fixture {
       unitOptionsProvider.overrideWithValue([]),
       sharedRecipeEditAccessProvider.overrideWith((ref, target) async {
         events.add('access');
+
+        var disposed = false;
+        ref.onDispose(() => disposed = true);
+
+        if (delayAccess) {
+          //exercise delayed backend responses only in the regression test
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+        }
+
+        if (disposed) {
+          throw StateError('The editing session changed.');
+        }
+
         return allowed;
       }),
       equipmentProvider.overrideWith((ref) async => []),
@@ -265,6 +279,24 @@ class _Fixture {
 void main() {
   setUp(() {
     GoogleFonts.config.allowRuntimeFetching = false;
+  });
+
+  testWidgets('keeps delayed access checks alive until editing can start',
+      (tester) async {
+    final fixture = _Fixture()..delayAccess = true;
+
+    try {
+      await fixture.open(tester);
+
+      expect(find.byType(AddRecipeScreen), findsOneWidget);
+      expect(fixture.locks.acquisitions, 1);
+      expect(
+        find.textContaining('Could not load the latest recipe'),
+        findsNothing,
+      );
+    } finally {
+      await fixture.close(tester);
+    }
   });
 
   testWidgets('acquires before loading the editable copy', (tester) async {

@@ -235,6 +235,14 @@ final addRecipeProvider =
 });
 
 final unitsProvider = FutureProvider<List<UnitOfMeasurement>>((ref) {
+  // The endpoint filters units using the profile saved on the backend.
+  // Refetch when that saved preference changes.
+  ref.watch(
+    profileProvider.select(
+      (profile) => profile.valueOrNull?.original.preferredUnit,
+    ),
+  );
+
   final repository = ref.watch(recipeRepositoryProvider);
   return repository.getUnits();
 });

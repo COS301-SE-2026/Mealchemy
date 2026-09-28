@@ -154,7 +154,7 @@ void main() {
     expect(container.read(adminUsersProvider).user?.isAdmin, isTrue);
     expect(
       container.read(adminUsersProvider).message,
-      'Jane Doe is now an administrator.',
+      'Jane Doe is now a moderator.',
     );
   });
 
@@ -221,7 +221,7 @@ void main() {
     expect(container.read(adminUsersProvider).isPromoting, isFalse);
     expect(
       container.read(adminUsersProvider).message,
-      contains('already an administrator'),
+      contains('already a moderator'),
     );
   });
 

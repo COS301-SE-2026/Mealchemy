@@ -23,15 +23,15 @@ class AdminAccessMessage extends ConsumerWidget {
     }
 
     final message = switch (access) {
-      AdminAccess.checking => 'Checking admin access…',
+      AdminAccess.checking => 'Checking moderator access…',
       AdminAccess.forbidden =>
-        'Your account does not have administrator access.',
+        'Your account does not have moderator access.',
       AdminAccess.signInRequired =>
-        'Sign in again to verify administrator access.',
+        'Sign in again to verify moderator access.',
       AdminAccess.offline =>
-        'Connect to the internet to verify administrator access.',
+        'Connect to the internet to verify moderator access.',
       AdminAccess.unavailable =>
-        'We could not verify administrator access. Please try again.',
+        'We could not verify moderator access. Please try again.',
       AdminAccess.allowed => '',
     };
 

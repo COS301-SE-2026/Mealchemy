@@ -6,11 +6,10 @@ import 'package:mealchemy/features/auth/widgets/section_header.dart';
 import 'package:mealchemy/features/auth/widgets/login_form.dart';
 import 'package:mealchemy/features/auth/widgets/section_footer.dart';
 
-
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
-@override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgLight,
@@ -28,7 +27,6 @@ class LoginScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              
             ],
           ),
         ),

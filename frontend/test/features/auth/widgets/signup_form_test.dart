@@ -76,10 +76,13 @@ void main() {
       expect(find.text('Confirm Password'), findsOneWidget);
     });
 
-    //checking if Google  sign up button appears
-    testWidgets('renders Google sign up button', (tester) async {
+    testWidgets('does not show Google signup or its separator', (tester) async {
       await tester.pumpWidget(buildWidget());
-      expect(find.text('Sign up with Google'), findsOneWidget);
+
+      expect(find.text('Sign up with Google'), findsNothing);
+      expect(find.text('OR CONTINUE WITH'), findsNothing);
+      expect(find.text('Create Account'), findsWidgets);
+      expect(find.text('Sign In'), findsOneWidget);
     });
 
     //checking if sign in link appears
@@ -105,6 +108,5 @@ void main() {
       await tester.pump();
       expect(find.text('Text is required'), findsOneWidget);
     });
-
   });
 }

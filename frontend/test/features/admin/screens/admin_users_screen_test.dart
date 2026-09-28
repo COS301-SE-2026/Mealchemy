@@ -86,11 +86,11 @@ void main() {
     await tester.pumpAndSettle();
     await findUser(tester);
 
-    await tester.ensureVisible(find.text('Promote to admin'));
-    await tester.tap(find.text('Promote to admin'));
+    await tester.ensureVisible(find.text('Promote to moderator'));
+    await tester.tap(find.text('Promote to moderator'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Promote to administrator?'), findsOneWidget);
+    expect(find.text('Promote to moderator?'), findsOneWidget);
     expect(repository.promotions, 0);
 
     await tester.tap(find.text('Cancel'));
@@ -106,15 +106,15 @@ void main() {
     await tester.pumpAndSettle();
     await findUser(tester);
 
-    await tester.ensureVisible(find.text('Promote to admin'));
-    await tester.tap(find.text('Promote to admin'));
+    await tester.ensureVisible(find.text('Promote to moderator'));
+    await tester.tap(find.text('Promote to moderator'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Promote'));
     await tester.pumpAndSettle();
 
     expect(repository.promotions, 1);
     expect(find.text('Roles: USER, ADMIN'), findsOneWidget);
-    expect(find.text('Promote to admin'), findsNothing);
+    expect(find.text('Promote to moderator'), findsNothing);
   });
 
   testWidgets('existing admin has no promotion button', (tester) async {
@@ -123,9 +123,9 @@ void main() {
     await tester.pumpAndSettle();
     await findUser(tester);
 
-    expect(find.text('Promote to admin'), findsNothing);
+    expect(find.text('Promote to moderator'), findsNothing);
     expect(
-      find.text('This user is already an administrator.'),
+      find.text('This user is already a moderator.'),
       findsOneWidget,
     );
   });
@@ -140,7 +140,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Jane Doe'), findsNothing);
-    expect(find.text('Promote to admin'), findsNothing);
+    expect(find.text('Promote to moderator'), findsNothing);
   });
 
   testWidgets('forbidden direct route does not show the lookup form',
@@ -167,12 +167,12 @@ void main() {
     expect(find.byType(AdminUsersScreen), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
     expect(
-      find.text('Your account does not have administrator access.'),
+      find.text('Your account does not have moderator access.'),
       findsOneWidget,
     );
   });
 
-  testWidgets('Manage admins opens the real management route', (tester) async {
+  testWidgets('Manage moderators opens the real management route', (tester) async {
     final router = GoRouter(
       initialLocation: AppRoutes.admin,
       routes: appRouter.configuration.routes,
@@ -194,7 +194,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Manage admins'));
+    await tester.tap(find.text('Manage moderators'));
     await tester.pumpAndSettle();
 
     expect(find.byType(AdminUsersScreen), findsOneWidget);

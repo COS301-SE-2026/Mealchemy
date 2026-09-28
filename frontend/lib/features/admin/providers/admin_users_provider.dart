@@ -72,7 +72,7 @@ class AdminUsersNotifier extends StateNotifier<AdminUsersState> {
     if (!_ref.read(adminUsersEnabledProvider)) {
       state = AdminUsersState(
         email: state.email,
-        message: 'An online connection and valid admin session are required.',
+        message: 'An online connection and valid moderator session are required.',
         isError: true,
       );
       return;
@@ -93,7 +93,7 @@ class AdminUsersNotifier extends StateNotifier<AdminUsersState> {
       state = AdminUsersState(
         email: email,
         user: user,
-        message: user.isAdmin ? 'This user is already an administrator.' : null,
+        message: user.isAdmin ? 'This user is already a moderator.' : null,
       );
     } catch (error) {
       if (!mounted || revision != _revision) return;
@@ -163,7 +163,7 @@ class AdminUsersNotifier extends StateNotifier<AdminUsersState> {
       state = AdminUsersState(
         email: email,
         user: updated,
-        message: '${updated.displayName} is now an administrator.',
+        message: '${updated.displayName} is now a moderator.',
       );
     } catch (error) {
       if (!mounted || revision != _revision) return;
@@ -191,7 +191,7 @@ class AdminUsersNotifier extends StateNotifier<AdminUsersState> {
   String _errorMessage(Object error, {required bool promoting}) {
     if (error is DioException) {
       if (promoting && error.response?.statusCode == 409) {
-        return 'This user is already an administrator. '
+        return 'This user is already a moderator. '
             'Search again to refresh their details.';
       }
 

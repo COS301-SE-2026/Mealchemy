@@ -179,7 +179,7 @@ void main() {
     expect(calls, 0);
     expect(find.text('Spam / misleading'), findsNothing);
     expect(
-      find.text('Your account does not have administrator access.'),
+      find.text('Your account does not have moderator access.'),
       findsOneWidget,
     );
   });

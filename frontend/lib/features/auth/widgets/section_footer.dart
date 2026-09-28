@@ -13,7 +13,6 @@ class SectionFooter extends StatelessWidget {
       padding: const EdgeInsets.only(top: 16, bottom: 32, left: 24, right: 24),
       child: Column(
         children: [
-
           //Kitchen Intelligence card
           Container(
             padding: const EdgeInsets.all(16),
@@ -30,15 +29,13 @@ class SectionFooter extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 //Sparkle icon
-                //Icon need to be imported 
+                //Icon need to be imported
                 //Text content
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
                       //Kitchen Intelligence label
                       Text(
                         'KITCHEN INTELLIGENCE',
@@ -58,7 +55,8 @@ class SectionFooter extends StatelessWidget {
                           ),
                           children: [
                             const TextSpan(
-                              text: 'Our algorithm learns from your taste profiles. Log in to see your ',
+                              text:
+                                  'Our algorithm learns from your taste profiles. Log in to see your ',
                             ),
                             TextSpan(
                               text: 'Smart Substitution',
@@ -83,7 +81,7 @@ class SectionFooter extends StatelessWidget {
           const SizedBox(height: 24),
 
           //Copyright text
-          //neeed to import c icon 
+          //neeed to import c icon
           Text(
             ' 2026 MEALCHEMY',
             style: AppTextStyles.label.copyWith(
