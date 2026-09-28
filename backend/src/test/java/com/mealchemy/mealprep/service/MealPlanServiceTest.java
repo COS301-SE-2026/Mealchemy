@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.inOrder;
 import org.mockito.InOrder;
+import static org.mockito.Mockito.lenient;
 
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
@@ -40,6 +41,8 @@ import com.mealchemy.mealprep.model.MealPlan;
 import com.mealchemy.mealprep.model.MealPlanEntry;
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.model.VaultMember;
+import com.mealchemy.vault.model.VaultFolder;
+import com.mealchemy.vault.model.VaultFolderRecipe;
 import com.mealchemy.recipe.model.Recipe;
 
 // repositories
@@ -47,6 +50,7 @@ import com.mealchemy.mealprep.repository.MealPlanRepository;
 import com.mealchemy.mealprep.repository.MealPlanEntryRepository;
 import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.vault.repository.VaultMemberRepository;
+import com.mealchemy.vault.repository.VaultFolderRecipeRepository;
 import com.mealchemy.recipe.repository.RecipeRepository;
 
 // services
@@ -72,6 +76,7 @@ public class MealPlanServiceTest {
     @Mock private MealPlanEntryRepository mealPlanEntryRepository;
     @Mock private VaultRepository vaultRepository;
     @Mock private VaultMemberRepository vaultMemberRepository;
+    @Mock private VaultFolderRecipeRepository vaultFolderRecipeRepository;
     @Mock private MealPlanLearningSignalService mealPlanLearningSignalService;
     @Mock private RecipeRepository recipeRepository;
     
@@ -124,6 +129,23 @@ public class MealPlanServiceTest {
         manualEntry.setSource(MealPlanEntrySource.MANUAL);
         manualEntry.setAddedBy(1);
         ReflectionTestUtils.setField(manualEntry, "entryId", 21);
+
+        lenient().when(recipeRepository.findById(50)).thenReturn(Optional.of(recipe(50, 1, true)));
+    }
+
+    private Recipe recipe(int id, int ownerId, boolean published) {
+        Recipe r = new Recipe();
+        ReflectionTestUtils.setField(r, "recipeId", id);
+        r.setOwnerId(ownerId);
+        r.setTitle("Recipe " + id);
+        r.setDescription("desc");
+        r.setCuisineType("ITALIAN");
+        r.setPrepTimeMins(10);
+        r.setCookingTimeMins(10);
+        r.setServingSize(2);
+        r.setIsCommunityPublished(published);
+        r.setIngredients(List.of());
+        return r;
     }
 
     @Test
@@ -356,6 +378,63 @@ public class MealPlanServiceTest {
         verify(mealPlanLearningSignalService, never()).recordSkippedIfRecommended(any());
     }
 
+    @Test
+    void addEntry_recipeNotFound_throwsNotFound() {
+        // Arrange
+        when(mealPlanRepository.findById(100)).thenReturn(Optional.of(plan));
+        when(vaultRepository.findById(10)).thenReturn(Optional.of(vault));
+        when(recipeRepository.findById(999)).thenReturn(Optional.empty());
+
+        // Act
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+            () -> mealPlanService.addEntry(100, 1, LocalDate.of(2026, 10, 1), LocalTime.of(18, 0), MealSlot.DINNER, "t", "n", 999, MealPlanEntrySource.MANUAL, false));
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        verify(mealPlanEntryRepository, never()).save(any(MealPlanEntry.class));
+    }
+
+    @Test
+    void addEntry_recipeNotAccessible_throwsNotFound() {
+        // Arrange
+        when(mealPlanRepository.findById(100)).thenReturn(Optional.of(plan));
+        when(vaultRepository.findById(10)).thenReturn(Optional.of(vault));
+        when(recipeRepository.findById(77)).thenReturn(Optional.of(recipe(77, 99, false)));
+        when(vaultFolderRecipeRepository.findByRecipe_RecipeId(77)).thenReturn(List.of());
+
+        // Act
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+            () -> mealPlanService.addEntry(100, 1, LocalDate.of(2026, 10, 1), LocalTime.of(18, 0), MealSlot.DINNER, "t", "n", 77, MealPlanEntrySource.MANUAL, false));
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        verify(mealPlanEntryRepository, never()).save(any(MealPlanEntry.class));
+    }
+
+    @Test
+    void addEntry_recipeInVaultUserBelongsTo_succeeds() {
+        // Arrange
+        Vault otherVault = new Vault();
+        otherVault.setOwnerId(99);
+        ReflectionTestUtils.setField(otherVault, "vaultId", 11);
+        VaultFolder folder = new VaultFolder();
+        folder.setVault(otherVault);
+        VaultFolderRecipe placement = new VaultFolderRecipe();
+        placement.setFolder(folder);
+
+        when(mealPlanRepository.findById(100)).thenReturn(Optional.of(plan));
+        when(vaultRepository.findById(10)).thenReturn(Optional.of(vault));
+        when(recipeRepository.findById(78)).thenReturn(Optional.of(recipe(78, 99, false)));
+        when(vaultFolderRecipeRepository.findByRecipe_RecipeId(78)).thenReturn(List.of(placement));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(11, 1)).thenReturn(true);
+        when(mealPlanEntryRepository.save(any(MealPlanEntry.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Act
+        mealPlanService.addEntry(100, 1, LocalDate.of(2026, 10, 1), LocalTime.of(18, 0), MealSlot.DINNER, "t", "n", 78, MealPlanEntrySource.MANUAL, false);
+
+        // Assert
+        verify(mealPlanEntryRepository).save(any(MealPlanEntry.class));
+    }
 
     // create manual
     @Test
@@ -520,6 +599,25 @@ public class MealPlanServiceTest {
         verify(mealPlanEntryRepository, never()).save(any(MealPlanEntry.class));
     }
 
+    @Test
+    void updateEntry_changedToInaccessibleRecipe_throwsNotFound() {
+        // Arrange
+        when(mealPlanRepository.findById(100)).thenReturn(Optional.of(plan));
+        when(vaultRepository.findById(10)).thenReturn(Optional.of(vault));
+        when(mealPlanEntryRepository.findByEntryIdAndPlan_PlanId(20, 100)).thenReturn(Optional.of(recommendedEntry));
+        when(recipeRepository.findById(77)).thenReturn(Optional.of(recipe(77, 99, false)));
+
+        MealPlanEntryRequest request = new MealPlanEntryRequest(77, LocalDate.of(2026, 10, 1), MealSlot.DINNER, LocalTime.of(18, 0), "t", "n");
+
+        // Act
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+            () -> mealPlanService.updateEntry(100, 20, 1, request));
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        verify(mealPlanEntryRepository, never()).save(any(MealPlanEntry.class));
+        verify(mealPlanLearningSignalService, never()).recordSkippedIfRecommended(any());
+    }
 
     // remove entry
     @Test
