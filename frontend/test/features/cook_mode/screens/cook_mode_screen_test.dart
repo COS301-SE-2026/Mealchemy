@@ -172,6 +172,7 @@ Widget _host(
   _FakeTimerNotifications? timerNotifications,
   int? userId,
   int? initialStepIndex,
+  ThemeData? theme,
 }) {
   return ProviderScope(
     overrides: [
@@ -191,6 +192,7 @@ Widget _host(
       ),
     ],
     child: MaterialApp(
+      theme: theme,
       home: CookModeScreen(
         recipeId: recipe.recipeId,
         initialStepIndex: initialStepIndex,
@@ -200,6 +202,19 @@ Widget _host(
 }
 
 void main() {
+  testWidgets('stays light when the parent app theme is dark', (tester) async {
+    final service = _FakeScreenAwakeService();
+    await tester.pumpWidget(
+      _host(_recipe, service, theme: ThemeData.dark()),
+    );
+    await tester.pumpAndSettle();
+
+    final stepContext = tester.element(
+      find.byKey(const Key('cook-step-text')),
+    );
+    expect(Theme.of(stepContext).brightness, Brightness.light);
+  });
+
   testWidgets('renders sorted steps and advances to completion',
       (tester) async {
     final service = _FakeScreenAwakeService();

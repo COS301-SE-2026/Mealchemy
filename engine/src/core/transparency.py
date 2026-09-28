@@ -14,8 +14,10 @@ _SIGNALS = ("pantry_match", "cuisine", "nutrition", "novelty", "freshness")
 def _tier(score: float) -> str:
     return "strong" if score >= TRANSPARENCY_STRONG_THRESHOLD else "moderate"
 
+
 def _choose(rng: random.Random, options: list[str]) -> str:
     return rng.choice(options)
+
 
 def _render_pantry_match(
     recipe: CandidatePoolEntry, user_state: UserState, score: float, rng: random.Random

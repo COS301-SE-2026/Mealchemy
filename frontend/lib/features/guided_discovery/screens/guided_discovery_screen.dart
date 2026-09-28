@@ -41,7 +41,10 @@ class _GuidedDiscoveryScreenState extends ConsumerState<GuidedDiscoveryScreen> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 460),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(34),
+          key: const Key('guided-discovery-shell'),
+          borderRadius: _selectedTab == DiscoveryTab.sizzles
+              ? BorderRadius.zero
+              : BorderRadius.circular(34),
           child: Container(
             color: AppColors.bgLight,
             child: SafeArea(

@@ -1,8 +1,11 @@
 package com.mealchemy.config;
 
 import com.mealchemy.shared.dto.ErrorResponse;
+import com.mealchemy.auth.exception.AccountLockedException;
+import com.mealchemy.mealprep.exception.InvalidMealSlotTimeException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -86,8 +89,16 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("message", ex.getMessage()));
     }
+
+    @ExceptionHandler(InvalidMealSlotTimeException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidMealSlotTimeException(InvalidMealSlotTimeException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", ex.getMessage()));
+    }
+
     
-    //handles a required RequestParam that was ommitted
+    //handles a required RequestParam that was ommitted - websockets
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ErrorResponse> handleMissingParam(MissingServletRequestParameterException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(
@@ -96,6 +107,20 @@ public class GlobalExceptionHandler {
                                                                         "Missing required parameter",
                                                                         Instant.now()
         ));
+    }
+
+    // Auth login exception
+    @ExceptionHandler(AccountLockedException.class)
+    public ResponseEntity<ErrorResponse> handleAccountLock(AccountLockedException ex) {
+        HttpStatus status = HttpStatus.TOO_MANY_REQUESTS;
+        return ResponseEntity.status(status)
+                             .header(HttpHeaders.RETRY_AFTER, String.valueOf(ex.getRetryAfterSeconds()))
+                             .body(new ErrorResponse(
+                                    status.value(),
+                                    "ACCOUNT_LOCKED",
+                                    "Too many failed login attempts. Try again in " + ex.getRetryAfterSeconds() + " seconds.",
+                                    Instant.now()
+                             ));
     }
 
     //catches anything unexpected - returns generic message
@@ -110,5 +135,4 @@ public class GlobalExceptionHandler {
                                                                         Instant.now()
         ));
     }
-
 }

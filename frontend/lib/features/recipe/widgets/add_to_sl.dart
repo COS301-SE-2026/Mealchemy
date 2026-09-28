@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,6 +12,10 @@ import '../../../core/theme/app_typography.dart';
 import '../../shopping_lists/models/shopping_list.dart';
 import '../../shopping_lists/providers/shopping_list_provider.dart';
 
+const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+String _shortDate(DateTime d) => '${d.day} ${_months[d.month - 1]}';
+
 //Pick new list or an existing list, choose all items vs missing only, then send.
 Future<void> showAddToSl({
   required BuildContext context,
@@ -18,22 +23,36 @@ Future<void> showAddToSl({
   required int recipeId,
   required String recipeName,
 }) {
+  return _open(context, _AddToSl(recipeId: recipeId, recipeName: recipeName));
+}
+
+Future<void> showAddPlanToSl({
+  required BuildContext context,
+  required int planId,
+  required DateTime start,
+}) {
+  return _open(context, _AddToSl(planId: planId, start: start));
+}
+
+Future<void> _open(BuildContext context, Widget child) {
   return showDialog(
     context: context,
     builder: (_) => Dialog(
       backgroundColor: AppColors.surfaceWhite,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: _AddToSl(recipeId: recipeId, recipeName: recipeName),
+      child: child,
     ),
   );
 }
 
 class _AddToSl extends ConsumerStatefulWidget {
-  const _AddToSl({required this.recipeId, required this.recipeName});
+  const _AddToSl({this.recipeId, this.recipeName, this.planId, this.start});
 
-  final int recipeId;
-  final String recipeName;
+  final int? recipeId;
+  final String? recipeName;
+  final int? planId;
+  final DateTime? start;
 
   @override
   ConsumerState<_AddToSl> createState() => _AddToSlState();
@@ -42,14 +61,22 @@ class _AddToSl extends ConsumerStatefulWidget {
 class _AddToSlState extends ConsumerState<_AddToSl> {
   static const _newListValue = '__new__';
 
+  late DateTime _start = widget.start ?? DateTime.now();
+  late DateTime _end = _start.add(const Duration(days: 6));
+
   late final TextEditingController _nameCtrl =
-      TextEditingController(text: widget.recipeName);
+      TextEditingController(text: widget.recipeName ?? _planName());
 
   String _target = _newListValue;
   bool _missingOnly = true;
   bool _saving = false;
 
   bool get _isNewList => _target == _newListValue;
+  bool get _fromPlan => widget.planId != null;
+
+  bool get _smartAddLocked => _fromPlan && !_isNewList;
+
+  String _planName() => 'Meal plan ${_shortDate(_start)} - ${_shortDate(_end)}';
 
   @override
   void dispose() {
@@ -57,11 +84,36 @@ class _AddToSlState extends ConsumerState<_AddToSl> {
     super.dispose();
   }
 
+  Future<void> _pickDate({required bool isStart}) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: isStart ? _start : _end,
+      firstDate: isStart ? DateTime(now.year - 1) : _start,
+      lastDate: DateTime(now.year + 1, 12, 31),
+    );
+    if (picked == null) return;
+
+    //only replace the name if the user hasn't typed their own
+    final keepDefault = _nameCtrl.text == _planName();
+
+    setState(() {
+      if (isStart) {
+        _start = picked;
+        if (_end.isBefore(_start)) _end = _start;
+      } else {
+        _end = picked;
+      }
+    });
+
+    if (keepDefault) _nameCtrl.text = _planName();
+  }
+
   @override
   Widget build(BuildContext context) {
     final listsAsync = ref.watch(shoppingListsProvider);
 
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -69,9 +121,22 @@ class _AddToSlState extends ConsumerState<_AddToSl> {
         children: [
           _header(),
           const SizedBox(height: 24),
-          Text('DESTINATION',
-              style: AppTextStyles.label
-                  .copyWith(color: AppColors.brown, letterSpacing: 1.5)),
+          if (_fromPlan) ...[
+            _label('DATES'),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(child: _dateButton(_start, () => _pickDate(isStart: true))),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text('to', style: AppTextStyles.body.copyWith(color: AppColors.textMuted)),
+                ),
+                Expanded(child: _dateButton(_end, () => _pickDate(isStart: false))),
+              ],
+            ),
+            const SizedBox(height: 18),
+          ],
+          _label('DESTINATION'),
           const SizedBox(height: 8),
           listsAsync.when(
             loading: () => const LinearProgressIndicator(),
@@ -82,12 +147,10 @@ class _AddToSlState extends ConsumerState<_AddToSl> {
           ),
           if (_isNewList) ...[
             const SizedBox(height: 18),
-            Text('LIST NAME',
-                style: AppTextStyles.label
-                    .copyWith(color: AppColors.brown, letterSpacing: 1.5)),
+            _label('LIST NAME'),
             const SizedBox(height: 8),
             AppTextField.standard(
-              hint: 'e.g. ${widget.recipeName}',
+              hint: 'e.g. ${widget.recipeName ?? 'Weekly shop'}',
               controller: _nameCtrl,
               prefixIcon: Icons.edit_outlined,
             ),
@@ -108,6 +171,36 @@ class _AddToSlState extends ConsumerState<_AddToSl> {
     );
   }
 
+  Widget _label(String text) => Text(text,
+      style: AppTextStyles.label.copyWith(color: AppColors.brown, letterSpacing: 1.5));
+
+  Widget _dateButton(DateTime date, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceMuted,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.inputBorder),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.calendar_today_outlined,
+                size: 18, color: AppColors.textMuted),
+            const SizedBox(width: 10),
+            Text(
+              _shortDate(date),
+              style: AppTextStyles.body.copyWith(color: AppColors.textLight),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _header() {
     return Row(
       children: [
@@ -124,7 +217,7 @@ class _AddToSlState extends ConsumerState<_AddToSl> {
               gradient: AppColors.brand,
               borderRadius: BorderRadius.circular(13.5),
             ),
-            child: const Icon(Icons.add_shopping_cart,
+            child: Icon(_fromPlan ? Icons.calendar_month : Icons.add_shopping_cart,
                 color: AppColors.textDark, size: 20),
           ),
         ),
@@ -133,7 +226,7 @@ class _AddToSlState extends ConsumerState<_AddToSl> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('SHOPPING LIST',
+              Text(_fromPlan ? 'FROM YOUR MEAL PLAN' : 'SHOPPING LIST',
                   style: AppTextStyles.label.copyWith(
                       color: AppColors.accentMuted, letterSpacing: 2)),
               const SizedBox(height: 2),
@@ -169,9 +262,13 @@ class _AddToSlState extends ConsumerState<_AddToSl> {
   }
 
   Widget _missingOnlyToggle() {
-    final active = _missingOnly;
-    return GestureDetector(
-      onTap: () => setState(() => _missingOnly = !_missingOnly),
+    final locked = _smartAddLocked;
+    final active = _missingOnly && !locked;
+    final source = _fromPlan ? 'these meals' : 'the recipe';
+    return Opacity(
+      opacity: locked ? 0.55 : 1,
+      child: GestureDetector(
+      onTap: locked ? null : () => setState(() => _missingOnly = !_missingOnly),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
@@ -196,9 +293,11 @@ class _AddToSlState extends ConsumerState<_AddToSl> {
                           .copyWith(color: AppColors.textLight)),
                   const SizedBox(height: 2),
                   Text(
-                    active
-                        ? 'Skips items already in your pantry'
-                        : 'Adds every ingredient in the recipe',
+                    locked
+                        ? 'Only available when creating a new list'
+                        : active
+                            ? 'Skips items already in your pantry'
+                            : 'Adds every ingredient in $source',
                     style: AppTextStyles.caption
                         .copyWith(color: AppColors.textMuted),
                   ),
@@ -209,6 +308,7 @@ class _AddToSlState extends ConsumerState<_AddToSl> {
             _gradientSwitch(active),
           ],
         ),
+      ),
       ),
     );
   }
@@ -257,31 +357,53 @@ class _AddToSlState extends ConsumerState<_AddToSl> {
     final notifier = ref.read(shoppingListsProvider.notifier);
 
     try {
-      if (_isNewList) {
+      String message;
+
+      if (_fromPlan) {
+        final skipped = await notifier.addFromMealPlan(
+          listId: _isNewList ? null : _target,
+          newListName: name,
+          planId: widget.planId!,
+          startDate: _start,
+          endDate: _end,
+          compareToPantry: _missingOnly && !_smartAddLocked,
+        );
+        message = skipped == 0
+            ? 'Shopping list ready'
+            : 'Shopping list ready, $skipped recipes skipped';
+      } else if (_isNewList) {
         await notifier.generateFromRecipe(
-          recipeId: widget.recipeId,
+          recipeId: widget.recipeId!,
           recipeName: name,
           includeMissingOnly: _missingOnly,
         );
+        message = 'List created for ${widget.recipeName}';
       } else {
         await notifier.addToExistingList(
           listId: _target,
-          recipeId: widget.recipeId,
+          recipeId: widget.recipeId!,
           includeMissingOnly: _missingOnly,
         );
+        message = 'Added to your list';
       }
+
       if (mounted) Navigator.pop(context);
       feedback.showShort(
-        _isNewList
-            ? 'List created for ${widget.recipeName}'
-            : 'Added to your list',
+        message,
         kind: ToastKind.success,
         icon: Icons.shopping_cart_checkout,
       );
-    } catch (_) {
+    } catch (e) {
       setState(() => _saving = false);
+      var message = 'Could not update your shopping list. Try again.';
+      if (e is DioException) {
+        final data = e.response?.data;
+        if (data is Map && data['message'] is String) {
+          message = data['message'];
+        }
+      }
       feedback.showShort(
-        'Could not update your shopping list. Try again.',
+        message,
         kind: ToastKind.error,
         icon: Icons.error_outline,
       );

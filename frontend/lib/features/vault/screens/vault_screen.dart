@@ -20,6 +20,8 @@ import '../widgets/shared_vault_recipe_row.dart';
 import '../widgets/vault_hero.dart';
 import '../../offline/data/offline_cache_store.dart';
 import '../../offline/widgets/cache_freshness_label.dart';
+import '../../meal_plan/providers/meal_plan_provider.dart';
+import '../../meal_plan/widgets/meal_plan_section.dart';
 
 // Vault screen with the main widgets and layout.
 class VaultScreen extends ConsumerWidget {
@@ -47,7 +49,7 @@ class VaultScreen extends ConsumerWidget {
           ref.invalidate(vaultSearchResultsProvider);
           ref.invalidate(favsProvider);
           ref.invalidate(linksProvider);
-
+          ref.invalidate(mealPlanProvider);
           ref.invalidate(vaultsProvider);
 
           try {
@@ -127,7 +129,7 @@ class _VaultBody extends ConsumerWidget {
                   ),
                 ),
               )
-            else if (selected != null)
+          else if (selected != null) ...[
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
                 child: _VaultFoldersLoader(
@@ -135,6 +137,19 @@ class _VaultBody extends ConsumerWidget {
                   searchQuery: searchQuery,
                 ),
               ),
+              //plans live on private and shared vaults only
+
+              if (searchQuery.trim().isEmpty &&
+                  selected.vaultType != VaultTypes.global)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 96),
+                  child: MealPlanSection(
+                    key: ValueKey(selected.vaultId),
+                    vaultId: selected.vaultId,
+                    showPlanName: false,
+                  ),
+                ),
+            ],
           ],
         ),
       ),

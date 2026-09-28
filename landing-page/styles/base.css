@@ -448,7 +448,7 @@ h3 {
 .showcase,
 .download,
 .requirements,
-.wow,
+.bonus-features,
 .final-cta {
   padding: clamp(70px, 9vw, 120px) 0;
 }
@@ -467,16 +467,14 @@ h3 {
 }
 
 .problem-grid,
-.feature-grid,
-.wow-grid {
+.feature-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
 }
 
 .problem-card,
-.feature-card,
-.wow-grid article {
+.feature-card {
   position: relative;
   overflow: hidden;
   min-height: 230px;
@@ -488,8 +486,7 @@ h3 {
 }
 
 .problem-card::after,
-.feature-card::after,
-.wow-grid article::after {
+.feature-card::after {
   content: "";
   position: absolute;
   inset: auto -30% -45% auto;
@@ -516,8 +513,7 @@ h3 {
 }
 
 .problem-card p,
-.feature-card p,
-.wow-grid p {
+.feature-card p {
   position: relative;
   z-index: 1;
   margin: 12px 0 0;
@@ -526,7 +522,6 @@ h3 {
 }
 
 .solution-panel,
-.wow-card,
 .final-panel {
   overflow: hidden;
   border: 1px solid rgba(212, 175, 55, 0.25);

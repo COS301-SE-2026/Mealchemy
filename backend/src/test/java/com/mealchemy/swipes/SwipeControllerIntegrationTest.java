@@ -8,6 +8,8 @@ import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.shared.enums.SwipeAction;
 import com.mealchemy.engine.dto.SignalScoresResponse;
 import com.mealchemy.auth.repository.UserRepository;
+import com.mealchemy.mealprep.repository.MealPlanEntryRepository;
+import com.mealchemy.mealprep.repository.MealPlanRepository;
 import com.mealchemy.auth.model.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -52,6 +54,12 @@ public class SwipeControllerIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private MealPlanEntryRepository mealPlanEntryRepository;
+
+    @Autowired
+    private MealPlanRepository mealPlanRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     private Integer USER_ID = 1;
@@ -61,6 +69,8 @@ public class SwipeControllerIntegrationTest {
     @BeforeEach
     void setUp() {
         swipeRepository.deleteAll();
+        mealPlanEntryRepository.deleteAll();
+        mealPlanRepository.deleteAll();
         recipeRepository.deleteAll();
         userRepository.deleteAll();
 

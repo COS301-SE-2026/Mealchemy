@@ -58,20 +58,23 @@ public class SwipeService {
 
     public List<LikedRecipeItem> getLikedRecipes(Integer userId)
     {
-        List<Swipe> likedSwipes = swipeRepository.findByUserIdAndAction(userId, SwipeAction.LIKED);
+        List<Swipe> allSwipes = swipeRepository.findByUserId(userId);
  
-        Map<Integer, Swipe> mostRecentByRecipeId = likedSwipes.stream()
+        Map<Integer, Swipe> mostRecentByRecipeId = allSwipes.stream()
             .collect(Collectors.toMap(
                 Swipe::getRecipeId,
                 s -> s,
                 (existing, replacement) -> replacement.getSwipedAt().isAfter(existing.getSwipedAt()) ? replacement : existing
             ));
  
-        List<Integer> recipeIds = mostRecentByRecipeId.keySet().stream().toList();
+        List<Swipe> currentlyLiked = mostRecentByRecipeId.values().stream()
+            .filter(swipe -> swipe.getAction() == SwipeAction.LIKED).toList();
+
+        List<Integer> recipeIds = currentlyLiked.stream().map(Swipe::getRecipeId).toList();
         Map<Integer, Recipe> recipeById = recipeRepository.findAllById(recipeIds).stream()
             .collect(Collectors.toMap(Recipe::getRecipeId, r -> r));
  
-        return mostRecentByRecipeId.values().stream()
+        return currentlyLiked.stream()
             .map(swipe -> {
                 Recipe recipe = recipeById.get(swipe.getRecipeId());
                 if (recipe == null) {

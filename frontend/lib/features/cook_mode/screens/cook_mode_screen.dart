@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/shared_widgets/atoms/app_button.dart';
 import '../../../core/shared_widgets/atoms/app_icon_button.dart';
 import '../../../core/theme/app_colours.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../recipe/models/recipe.dart';
@@ -44,34 +45,42 @@ class CookModeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final recipeState = ref.watch(recipeDetailProvider(recipeId));
+    final lightTheme = AppTheme.light;
 
-    return recipeState.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, stackTrace) => _CookModeMessage(
-        title: 'Unable to start Cook Mode',
-        message: 'This recipe could not be loaded.',
-        icon: Icons.error_outline,
-        onClose: () => context.pop(),
-      ),
-      data: (recipe) {
-        final steps = [...?recipe.steps]
-          ..sort((a, b) => a.stepNr.compareTo(b.stepNr));
-        if (steps.isEmpty) {
-          return _CookModeMessage(
-            title: 'No cooking steps yet',
-            message: 'Add preparation steps before starting Cook Mode.',
-            icon: Icons.menu_book_outlined,
+    return Theme(
+      data: lightTheme,
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: lightTheme.appBarTheme.systemOverlayStyle ??
+            SystemUiOverlayStyle.dark,
+        child: recipeState.when(
+          loading: () => const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, stackTrace) => _CookModeMessage(
+            title: 'Unable to start Cook Mode',
+            message: 'This recipe could not be loaded.',
+            icon: Icons.error_outline,
             onClose: () => context.pop(),
-          );
-        }
-        return _CookModeContent(
-          recipe: recipe,
-          steps: steps,
-          initialStepIndex: initialStepIndex,
-        );
-      },
+          ),
+          data: (recipe) {
+            final steps = [...?recipe.steps]
+              ..sort((a, b) => a.stepNr.compareTo(b.stepNr));
+            if (steps.isEmpty) {
+              return _CookModeMessage(
+                title: 'No cooking steps yet',
+                message: 'Add preparation steps before starting Cook Mode.',
+                icon: Icons.menu_book_outlined,
+                onClose: () => context.pop(),
+              );
+            }
+            return _CookModeContent(
+              recipe: recipe,
+              steps: steps,
+              initialStepIndex: initialStepIndex,
+            );
+          },
+        ),
+      ),
     );
   }
 }

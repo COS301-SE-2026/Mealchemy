@@ -15,6 +15,8 @@ import com.mealchemy.shoppinglist.dto.UpdateShoppingListRequest;
 import com.mealchemy.shoppinglist.dto.DeleteBatchItemsRequest;
 import com.mealchemy.shoppinglist.dto.CompleteShopResponse;
 import com.mealchemy.shoppinglist.dto.AddRecipeToShoppingListRequest;
+import com.mealchemy.mealprep.dto.MealPlanEntryResponse;
+import com.mealchemy.shoppinglist.dto.SmartAddMealPlanResponse;
 
 //models
 import com.mealchemy.shoppinglist.model.ShoppingList;
@@ -43,8 +45,12 @@ import com.mealchemy.profile.repository.UserProfileRepository;
 
 // import service
 import com.mealchemy.shoppinglist.service.ShoppingListService;
+import com.mealchemy.mealprep.service.MealPlanService;
 
+// enums
 import com.mealchemy.shared.enums.PreferredUnit;
+import com.mealchemy.shared.enums.MealSlot;
+import com.mealchemy.shared.enums.MealPlanEntrySource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,6 +66,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.ArrayList;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -79,6 +88,7 @@ public class ShoppingListServiceTest {
     @Mock private VaultFolderRecipeRepository vaultFolderRecipeRepository;
     @Mock private VaultMemberRepository vaultMemberRepository;
     @Mock private UserProfileRepository userProfileRepository; 
+    @Mock private MealPlanService mealPlanService;
     
     // @InjectMocks creates the real PantryService and injects the mocks above into it - actually testing ShoppingListService
     @InjectMocks
@@ -1697,5 +1707,154 @@ public class ShoppingListServiceTest {
         assertEquals(0, BigDecimal.valueOf(150).compareTo(existingMatch.getQuantity()));
         verify(shoppingListItemRepository, times(1)).save(existingMatch);
         verify(shoppingListItemRepository, times(1)).save(any(ShoppingListItem.class));
+    }
+
+
+    // ========== Smart Add from Meal Plan ==========
+
+    @Test 
+    void smartAddMealPlanToShoppingList_listNotFound_throwsNotFound() {
+        // Arrange
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.empty());
+        
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.smartAddMealPlanToShoppingList(1, 1, 5, LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 7), true)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+    
+    @Test
+    void smartAddMealPlanToShoppingList_whenNotOwned_throwsNotFound() {
+        // Arrange
+        existingShoppingList.setUserId(2);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.smartAddMealPlanToShoppingList(1, 1, 5, LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 7), true)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Shopping list not found", ex.getReason());
+        verifyNoInteractions(mealPlanService);
+        verify(shoppingListItemRepository, never()).findByShoppingListId(any());
+    }
+
+    @Test
+    void smartAddMealPlanToShoppingList_compareToPantryTrue_compareAgainstPantryOnce() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        when(mealPlanService.getEntries(5, 1, LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 7))).thenReturn(List.of(buildEntry(1)));
+
+        existingRecipe.setOwnerId(1);
+        ReflectionTestUtils.setField(existingRecipe, "recipeId", 1);
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
+
+        RecipeIngredient ingredient = new RecipeIngredient();
+        ingredient.setIngId(2);
+        ingredient.setQuantity(new BigDecimal("100"));
+        ingredient.setUnit("g");
+        when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(ingredient));
+
+        ShoppingListItem addedItem = new ShoppingListItem();
+        addedItem.setShoppingListId(1);
+        addedItem.setIngId(2);
+        addedItem.setUnit("g");
+        addedItem.setQuantity(new BigDecimal("100"));
+        ReflectionTestUtils.setField(addedItem, "itemId", 55);
+
+        when(shoppingListItemRepository.findByShoppingListId(1)).thenReturn(List.of()).thenReturn(List.of()).thenReturn(List.of(addedItem));
+
+        when(shoppingListItemRepository.save(any(ShoppingListItem.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        PantryIngredient pantryStock = new PantryIngredient();
+        pantryStock.setUserId(1);
+        pantryStock.setIngredientId(2);
+        pantryStock.setQuantity(new BigDecimal("40"));
+        pantryStock.setUnit("g");
+        when(pantryIngredientRepository.findByUserIdAndIngId(1, 2)).thenReturn(List.of(pantryStock));
+
+        when(shoppingListItemRepository.getSpecificShoppingListItems(1)).thenReturn(List.of());
+
+        // Act
+        shoppingListService.smartAddMealPlanToShoppingList(1, 1, 5, LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 7), true);
+
+        // Assert - 100 needed minus 40 owned = 60 remaining, item reduced not deleted
+        assertEquals(0, BigDecimal.valueOf(60).compareTo(addedItem.getQuantity()));
+        verify(shoppingListItemRepository, never()).delete(addedItem);
+    }
+
+    @Test
+    void smartAddMealPlanToShoppingList_compareToPantryFalse_doesNotComparePantry() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+
+        when(mealPlanService.getEntries(5, 1, LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 7))).thenReturn(List.of(buildEntry(1)));
+
+        existingRecipe.setOwnerId(1);
+        ReflectionTestUtils.setField(existingRecipe, "recipeId", 1);
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
+
+        RecipeIngredient ingredient = new RecipeIngredient();
+        ingredient.setIngId(2);
+        ingredient.setQuantity(new BigDecimal("100"));
+        ingredient.setUnit("g");
+        when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(ingredient));
+
+        when(shoppingListItemRepository.findByShoppingListId(1)).thenReturn(List.of());
+        when(shoppingListItemRepository.save(any(ShoppingListItem.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(shoppingListItemRepository.getSpecificShoppingListItems(1)).thenReturn(List.of());
+
+        // Act
+        shoppingListService.smartAddMealPlanToShoppingList(1, 1, 5, LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 7), false);
+
+        // Assert
+        verify(pantryIngredientRepository, never()).findByUserIdAndIngId(any(), any());
+    }
+
+    @Test
+    void smartAddMealPlanToShoppingList_nonEmptyList_throwsConflict() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(shoppingListItemRepository.findByShoppingListId(1)).thenReturn(List.of(existingShoppingListItem));
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.smartAddMealPlanToShoppingList(1, 1, 5, LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 7), true)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        assertEquals("Smart add needs an empty shopping list.", ex.getReason());
+        verifyNoInteractions(mealPlanService);
+        verify(shoppingListItemRepository, never()).save(any(ShoppingListItem.class));
+    }
+
+    // ========== Helper ==========
+
+    private MealPlanEntryResponse buildEntry(Integer recipeId) {
+        return new MealPlanEntryResponse(
+            1, 
+            5,
+            recipeId, 
+            LocalDate.of(2026, 10, 1), 
+            MealSlot.DINNER, 
+            LocalTime.of(18, 0),
+            "title", 
+            "note", 
+            MealPlanEntrySource.MANUAL, 
+            1,
+            null
+        );
     }
 }

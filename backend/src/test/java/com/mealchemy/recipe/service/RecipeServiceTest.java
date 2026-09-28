@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -42,6 +43,7 @@ import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.cuisinetype.repository.FlavourProfileOptionsRepository;
 import com.mealchemy.vault.repository.VaultFolderRepository;
 import com.mealchemy.equipment.repository.EquipmentRepository;
+import com.mealchemy.mealprep.repository.MealPlanEntryRepository;
 import com.mealchemy.vault.service.VaultFolderRecipeService;
 import com.mealchemy.vault.service.RecipeEditLockService;
 import com.mealchemy.equipment.model.Equipment;
@@ -73,6 +75,9 @@ public class RecipeServiceTest {
 
     @Mock
     private RecipeEditLockService recipeEditLockService;
+
+    @Mock
+    private MealPlanEntryRepository mealPlanEntryRepository;
 
     @InjectMocks
     private RecipeService recipeService;
@@ -742,6 +747,20 @@ public class RecipeServiceTest {
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Recipe not found.", ex.getReason());
+    }
+
+    @Test
+    void deleteRecipe_throwsException_whenRecipeUsedInMealPlan()
+    {
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(mealPlanEntryRepository.existsByRecipeId(1)).thenReturn(true);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.deleteRecipe(1, 1));
+
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        assertEquals("This recipe is used in one or more meal plans and cannot be deleted. Remove recipe from meal plan first.", ex.getReason());
+        verify(recipeRepository, never()).deleteById(anyInt());
+        verifyNoInteractions(eventPublisher);
     }
 
     // equipment
