@@ -511,6 +511,7 @@ public class MealPlanServiceTest {
         when(mealPlanEntryRepository.findByEntryIdAndPlan_PlanId(20, 100)).thenReturn(Optional.of(recommendedEntry));
         when(mealPlanEntryRepository.findByPlan_PlanIdAndEntryDateAndMealSlot(100, LocalDate.of(2026, 10, 3), MealSlot.DINNER)).thenReturn(Optional.empty());
         when(mealPlanEntryRepository.save(any(MealPlanEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(recipeRepository.findById(60)).thenReturn(Optional.of(recipe(60, 1, true)));
 
         MealPlanEntryRequest request = new MealPlanEntryRequest(
             60,
