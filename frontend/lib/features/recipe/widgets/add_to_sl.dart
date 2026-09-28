@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -72,6 +73,8 @@ class _AddToSlState extends ConsumerState<_AddToSl> {
 
   bool get _isNewList => _target == _newListValue;
   bool get _fromPlan => widget.planId != null;
+
+  bool get _smartAddLocked => _fromPlan && !_isNewList;
 
   String _planName() => 'Meal plan ${_shortDate(_start)} - ${_shortDate(_end)}';
 
@@ -259,10 +262,13 @@ class _AddToSlState extends ConsumerState<_AddToSl> {
   }
 
   Widget _missingOnlyToggle() {
-    final active = _missingOnly;
+    final locked = _smartAddLocked;
+    final active = _missingOnly && !locked;
     final source = _fromPlan ? 'these meals' : 'the recipe';
-    return GestureDetector(
-      onTap: () => setState(() => _missingOnly = !_missingOnly),
+    return Opacity(
+      opacity: locked ? 0.55 : 1,
+      child: GestureDetector(
+      onTap: locked ? null : () => setState(() => _missingOnly = !_missingOnly),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
@@ -287,18 +293,14 @@ class _AddToSlState extends ConsumerState<_AddToSl> {
                           .copyWith(color: AppColors.textLight)),
                   const SizedBox(height: 2),
                   Text(
-                    active
-                        ? 'Skips items already in your pantry'
-                        : 'Adds every ingredient in $source',
+                    locked
+                        ? 'Only available when creating a new list'
+                        : active
+                            ? 'Skips items already in your pantry'
+                            : 'Adds every ingredient in $source',
                     style: AppTextStyles.caption
                         .copyWith(color: AppColors.textMuted),
                   ),
-                  if (active && _fromPlan && !_isNewList)
-                    Text(
-                      'Items already on this list are checked too',
-                      style: AppTextStyles.caption
-                          .copyWith(color: AppColors.textMuted),
-                    ),
                 ],
               ),
             ),
@@ -306,6 +308,7 @@ class _AddToSlState extends ConsumerState<_AddToSl> {
             _gradientSwitch(active),
           ],
         ),
+      ),
       ),
     );
   }
@@ -363,7 +366,7 @@ class _AddToSlState extends ConsumerState<_AddToSl> {
           planId: widget.planId!,
           startDate: _start,
           endDate: _end,
-          compareToPantry: _missingOnly,
+          compareToPantry: _missingOnly && !_smartAddLocked,
         );
         message = skipped == 0
             ? 'Shopping list ready'
@@ -390,10 +393,17 @@ class _AddToSlState extends ConsumerState<_AddToSl> {
         kind: ToastKind.success,
         icon: Icons.shopping_cart_checkout,
       );
-    } catch (_) {
+    } catch (e) {
       setState(() => _saving = false);
+      var message = 'Could not update your shopping list. Try again.';
+      if (e is DioException) {
+        final data = e.response?.data;
+        if (data is Map && data['message'] is String) {
+          message = data['message'];
+        }
+      }
       feedback.showShort(
-        'Could not update your shopping list. Try again.',
+        message,
         kind: ToastKind.error,
         icon: Icons.error_outline,
       );
