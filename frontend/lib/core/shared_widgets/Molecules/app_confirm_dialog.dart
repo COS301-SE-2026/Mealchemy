@@ -16,6 +16,7 @@ Future<bool?> showAppConfirmDialog({
     context: context,
     builder: (context) => Dialog(
       backgroundColor: AppColors.bgLight,
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -33,7 +34,9 @@ Future<bool?> showAppConfirmDialog({
             const SizedBox(height: 10),
             Text(
               message,
-              style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.textLight,
+              ),
             ),
             const SizedBox(height: 24),
             Row(
