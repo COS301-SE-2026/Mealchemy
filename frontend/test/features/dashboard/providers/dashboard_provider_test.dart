@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mealchemy/features/dashboard/models/trending_recipe_data.dart';
 import 'package:mealchemy/features/dashboard/providers/dashboard_provider.dart';
 import 'package:mealchemy/features/dashboard/repositories/dashboard_repository.dart';
 import 'package:mealchemy/features/dashboard/repositories/mock_dashboard_repository.dart';
@@ -75,9 +74,6 @@ class _ThrowingDashboardRepo implements DashboardRepository {
   @override
   Future<int> getSmartSuggestionRecipeCount() async =>
       throw Exception('network error');
-  @override
-  Future<List<TrendingRecipeData>> getTrendingRecipes() async =>
-      throw Exception('network error');
 }
 
 ProviderContainer _container({
@@ -110,10 +106,6 @@ void main() {
     test('starts with empty recommendedRecipes', () {
       const state = DashboardState();
       expect(state.recommendedRecipes, isEmpty);
-    });
-    test('starts with empty trendingRecipes', () {
-      const state = DashboardState();
-      expect(state.trendingRecipes, isEmpty);
     });
     test('starts with null errorMessage', () {
       const state = DashboardState();
@@ -152,7 +144,6 @@ void main() {
       expect(state.displayName, isNotEmpty);
       expect(state.pantryItemCount, greaterThan(0));
       expect(state.recommendedRecipes, isNotEmpty);
-      expect(state.trendingRecipes, isNotEmpty);
       expect(state.errorMessage, isNull);
     });
 
@@ -181,7 +172,6 @@ void main() {
       // Stats failed, but recommendations from guided discovery still loaded.
       expect(state.isLoading, false);
       expect(state.recommendedRecipes, isNotEmpty);
-      expect(state.trendingRecipes, isEmpty);
     });
 
     test('keeps recommendations empty when guided discovery is empty',

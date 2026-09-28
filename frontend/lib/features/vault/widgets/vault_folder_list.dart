@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/shared_widgets/atoms/app_button.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../external_links/widgets/my_links_folder_row.dart';
@@ -9,7 +8,6 @@ import '../../favourites/widgets/my_favs_folder_row.dart';
 import '../models/vault.dart';
 import '../models/vault_folder.dart';
 import '../providers/vault_folder_management_provider.dart';
-import 'vault_folder_actions.dart';
 import 'vault_folder_row.dart';
 import 'vault_menu.dart';
 
@@ -26,12 +24,6 @@ class VaultFolderList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isPrivate = vault.vaultType == VaultTypes.private;
-    final canManageFolders = ref.watch(
-      canManageVaultFoldersProvider(vault),
-    );
-    final enabled = ref.watch(
-      vaultFolderManagementEnabledProvider(vault),
-    );
     final busy = ref.watch(
       vaultFolderManagementProvider(vault.vaultId),
     );
@@ -79,22 +71,6 @@ class VaultFolderList extends ConsumerWidget {
             ),
         if (isPrivate) const MyFavsFolderRow(),
         if (isPrivate) const MyLinksFolderRow(),
-        if (canManageFolders && folders.length < 3) ...[
-          const SizedBox(height: 16),
-          AppButton.dashed(
-            label: 'ADD MORE FOLDERS',
-            onPressed: enabled
-                ? () => showVaultFolderAction(
-                      context: context,
-                      ref: ref,
-                      vault: vault,
-                      action: VaultFolderAction.create,
-                    )
-                : null,
-            leftIcon: Icons.add,
-            isFullWidth: true,
-          ),
-        ],
       ],
     );
   }

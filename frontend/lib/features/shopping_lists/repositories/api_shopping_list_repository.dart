@@ -291,4 +291,35 @@ class ApiShoppingListRepository implements ShoppingListRepository {
     );
     return ShoppingList.fromJson(response.data ?? {});
   }
+
+  @override
+  Future<({ShoppingList list, List<int> skippedRecipeIds})> smartAddFromMealPlan({
+    required String listId,
+    required int planId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required bool compareToPantry,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/api/shopping-lists/$listId/smart-add-from-meal-plan/$planId',
+      queryParameters: {
+        'startDate': _date(startDate),
+        'endDate': _date(endDate),
+        'compareToPantry': compareToPantry,
+      },
+    );
+
+    final data = response.data ?? {};
+    final skipped = (data['skipped_recipe_ids'] as List<dynamic>? ?? [])
+        .map((id) => int.parse(id.toString()))
+        .toList();
+
+    return (
+      list: ShoppingList.fromJson(data['shopping_list'] as Map<String, dynamic>? ?? {}),
+      skippedRecipeIds: skipped,
+    );
+  }
+
+  String _date(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 }

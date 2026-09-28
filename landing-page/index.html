@@ -30,6 +30,7 @@
         <a href="#vaults">Vaults</a>
         <a href="#features">Features</a>
         <a href="#showcase">Mockups</a>
+        <a href="#bonus-features">Bonus</a>
         <a href="#download">Android</a>
         <a href="#requirements">Requirements</a>
       </nav>
@@ -75,7 +76,7 @@
           <div class="alchemy-orbit orbit-two"></div>
 
           <article class="phone hero-phone uses-live-frame">
-            <img src="assets/screens/app-dashboard.jpg" alt="Real Mealchemy dashboard showing pantry count, smart suggestion, and recommended recipes">
+            <img src="assets/screens/app-dashboard-updated.jpg" alt="Real Mealchemy dashboard showing pantry count, smart suggestion, and recommended recipes">
           </article>
 
           <article class="float-card match-card">
@@ -649,10 +650,10 @@
               <small>Recipe gaps to groceries</small>
             </button>
           </div>
-
+          
           <div class="showcase-phone reveal">
             <article class="phone uses-live-frame">
-              <img id="active-screen" src="assets/screens/app-dashboard.jpg" alt="Real Mealchemy dashboard screen">
+              <img id="active-screen" src="assets/screens/app-dashboard-updated.jpg" alt="Real Mealchemy dashboard screen">
             </article>
             <div class="screen-caption" aria-live="polite">
               <span id="screen-kicker">Dashboard · Live app</span>
@@ -672,13 +673,13 @@
           </article>
 
           <article class="mockup-card">
-            <img src="assets/screens/Recipe-Intstructions-page-real-app.jpg" alt=" Mealchemy recipe instructions screen showing ingredients and cooking steps">
+            <img src="assets/screens/Recipe-Instructions-page-real-app.jpg" alt=" Mealchemy recipe instructions screen showing ingredients and cooking steps">
             <div>
               <span>Recipe · Live app</span>
               <strong>Step-by-step cooking with full ingredient detail.</strong>
             </div>
           </article>
-
+        
           <article class="mockup-card">
             <img src="assets/screens/Shopping-List-Real-app.jpg" alt="Mealchemy shopping list screen showing organised grocery items">
             <div>
@@ -754,30 +755,120 @@
       </section>
       <!-- requirements -->
 
-      <!-- closing section -->
-      <section class="wow section-shell">
-        <div class="wow-card reveal">
-          <p class="eyebrow"><span></span> Future wow factors</p>
-          <h2>Stretch capabilities that extend the ecosystem.</h2>
-          <div class="wow-grid">
-            <article>
-              <span>Camera</span>
-              <h3>Pantry scanning</h3>
-              <p>Use a phone camera to populate inventory from ingredients.</p>
+      <!-- bonus features -->
+      <section class="bonus-features section-shell" id="bonus-features">
+        <div class="bonus-panel reveal">
+          <div class="bonus-heading">
+            <div>
+              <p class="eyebrow"><span></span> Bonus features</p>
+              <h2>More intelligence at every step of the meal.</h2>
+              <p>Scroll through the features that make planning, choosing, and cooking together feel more personal and effortless.</p>
+            </div>
+            <div class="bonus-controls" aria-label="Bonus feature carousel controls">
+              <button type="button" data-bonus-scroll="previous" aria-label="Show previous bonus feature">&#8592;</button>
+              <button type="button" data-bonus-scroll="next" aria-label="Show next bonus feature">&#8594;</button>
+            </div>
+          </div>
+
+          <div class="bonus-track" data-bonus-track tabindex="0" aria-label="Scrollable bonus feature showcase">
+            <article class="bonus-card bonus-card--wide">
+              <div class="bonus-card-copy">
+                <span class="bonus-number">01</span>
+                <p class="bonus-kicker">Voice-guided cooking</p>
+                <h3>Hands-free cooking</h3>
+                <p>Mealchemy reads each step aloud, keeps multiple timers visible, and responds to simple commands like “next”, “back”, or “repeat”.</p>
+              </div>
+              <div class="bonus-card-media bonus-card-media--pair">
+                <figure class="bonus-phone-shot">
+                  <img src="assets/screens/bonus-features/hands-free-guidance.png" alt="Mealchemy cooking mode showing a highlighted instruction and two active timers" loading="lazy">
+                </figure>
+                <figure class="bonus-phone-shot">
+                  <img src="assets/screens/bonus-features/hands-free-listening.png" alt="Mealchemy listening for hands-free cooking commands" loading="lazy">
+                </figure>
+              </div>
             </article>
-            <article>
-              <span>Voice</span>
-              <h3>Hands-free cooking</h3>
-              <p>Read steps aloud and respond to “next” or “repeat”.</p>
+
+            <article class="bonus-card bonus-card--wide">
+              <div class="bonus-card-copy">
+                <span class="bonus-number">02</span>
+                <p class="bonus-kicker">From discovery to dinner</p>
+                <h3>Meal planning</h3>
+                <p>Move from inspiration to an organised cooking plan with saved ideas, active recipe progress, pantry context, and timely shopping prompts.</p>
+              </div>
+              <div class="bonus-card-media bonus-card-media--pair">
+                <figure class="bonus-phone-shot">
+                  <img src="assets/screens/bonus-features/meal-planning-discover.png" alt="Mealchemy Sizzles feed showing a recipe ready to save" loading="lazy">
+                </figure>
+                <figure class="bonus-phone-shot">
+                  <img src="assets/screens/bonus-features/meal-planning-home.png" alt="Mealchemy home screen showing cooking progress, timers, pantry status, and a shopping suggestion" loading="lazy">
+                </figure>
+              </div>
             </article>
-            <article>
-              <span>Cost</span>
-              <h3>Per-serving estimates</h3>
-              <p>Estimate meal cost using ingredient pricing data.</p>
+
+            <article class="bonus-card bonus-card--wide">
+              <div class="bonus-card-copy">
+                <span class="bonus-number">03</span>
+                <p class="bonus-kicker">A feed tuned by you</p>
+                <h3>Adaptive weighted preferences</h3>
+                <p>Balance pantry match, cuisine, nutrition, freshness, and novelty. The recommendation model keeps adapting as your choices reveal what matters most.</p>
+              </div>
+              <div class="bonus-card-media bonus-card-media--pair">
+                <figure class="bonus-phone-shot">
+                  <img src="assets/screens/bonus-features/preference-weights.png" alt="Mealchemy recommendation settings with weighted preference sliders" loading="lazy">
+                </figure>
+                <figure class="bonus-phone-shot">
+                  <img src="assets/screens/bonus-features/preference-guide.png" alt="Explanation of the five signals used to personalise Mealchemy recommendations" loading="lazy">
+                </figure>
+              </div>
+            </article>
+
+            <article class="bonus-card">
+              <div class="bonus-card-copy">
+                <span class="bonus-number">04</span>
+                <p class="bonus-kicker">Explainable recommendations</p>
+                <h3>Transparency cards</h3>
+                <p>Every recommendation can show why it fits, from nutrition goals and novelty to pantry gaps, so users stay in control of the decision.</p>
+              </div>
+              <div class="bonus-card-media bonus-card-media--single">
+                <figure class="bonus-phone-shot">
+                  <img src="assets/screens/bonus-features/transparency-card.png" alt="Recipe detail showing why the recommendation matches and which ingredients are missing" loading="lazy">
+                </figure>
+              </div>
+            </article>
+
+            <article class="bonus-card">
+              <div class="bonus-card-copy">
+                <span class="bonus-number">05</span>
+                <p class="bonus-kicker">Recipes shared with purpose</p>
+                <h3>Collaborative vaults</h3>
+                <p>Create a shared space for a household or cooking group, invite members, organise recipes into folders, and keep personal versions protected.</p>
+              </div>
+              <div class="bonus-card-media bonus-vault-media" aria-hidden="true">
+                <div class="shared-vault-preview">
+                  <div class="shared-vault-title">
+                    <div>
+                      <span>Shared vault</span>
+                      <strong>Family favourites</strong>
+                    </div>
+                    <div class="vault-members"><b>MA</b><b>JL</b><b>+2</b></div>
+                  </div>
+                  <div class="shared-folder">
+                    <span>Weeknight meals</span>
+                    <div class="shared-recipes">
+                      <figure><img src="assets/meals/garlic-chicken-stir-fry.jpg" alt=""><figcaption>Garlic Chicken</figcaption></figure>
+                      <figure><img src="assets/meals/pasta-carbonara.jpg" alt=""><figcaption>Carbonara</figcaption></figure>
+                    </div>
+                  </div>
+                  <div class="vault-permissions"><span>Owner</span><span>Editor</span><span>Viewer</span></div>
+                </div>
+              </div>
             </article>
           </div>
+
+          <p class="bonus-scroll-hint"><span aria-hidden="true">&#8596;</span> Swipe or scroll to explore all five features</p>
         </div>
       </section>
+      <!-- bonus features end -->
 
       <section class="final-cta section-shell">
         <div class="final-panel reveal">

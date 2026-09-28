@@ -1742,6 +1742,7 @@ public class ShoppingListServiceTest {
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Shopping list not found", ex.getReason());
         verifyNoInteractions(mealPlanService);
+        verify(shoppingListItemRepository, never()).findByShoppingListId(any());
     }
 
     @Test
@@ -1769,7 +1770,7 @@ public class ShoppingListServiceTest {
         addedItem.setQuantity(new BigDecimal("100"));
         ReflectionTestUtils.setField(addedItem, "itemId", 55);
 
-        when(shoppingListItemRepository.findByShoppingListId(1)).thenReturn(List.of()).thenReturn(List.of(addedItem));
+        when(shoppingListItemRepository.findByShoppingListId(1)).thenReturn(List.of()).thenReturn(List.of()).thenReturn(List.of(addedItem));
 
         when(shoppingListItemRepository.save(any(ShoppingListItem.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -1819,6 +1820,25 @@ public class ShoppingListServiceTest {
         verify(pantryIngredientRepository, never()).findByUserIdAndIngId(any(), any());
     }
 
+    @Test
+    void smartAddMealPlanToShoppingList_nonEmptyList_throwsConflict() {
+        // Arrange
+        ReflectionTestUtils.setField(existingShoppingList, "shoppingListId", 1);
+        when(shoppingListRepository.findById(1)).thenReturn(Optional.of(existingShoppingList));
+        when(shoppingListItemRepository.findByShoppingListId(1)).thenReturn(List.of(existingShoppingListItem));
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> shoppingListService.smartAddMealPlanToShoppingList(1, 1, 5, LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 7), true)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        assertEquals("Smart add needs an empty shopping list.", ex.getReason());
+        verifyNoInteractions(mealPlanService);
+        verify(shoppingListItemRepository, never()).save(any(ShoppingListItem.class));
+    }
 
     // ========== Helper ==========
 
@@ -1833,7 +1853,8 @@ public class ShoppingListServiceTest {
             "title", 
             "note", 
             MealPlanEntrySource.MANUAL, 
-            1
+            1,
+            null
         );
     }
 }

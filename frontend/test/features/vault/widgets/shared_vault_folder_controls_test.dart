@@ -124,7 +124,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('ADD MORE FOLDERS'), findsOneWidget);
+    expect(find.text('ADD MORE FOLDERS'), findsNothing);
   });
 
   testWidgets('Viewer does not see the add-folders button', (tester) async {

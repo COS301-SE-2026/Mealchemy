@@ -178,4 +178,20 @@ class CachedShoppingListRepository implements ShoppingListRepository {
         recipeId: recipeId,
         includeAvailablePantryItems: includeAvailablePantryItems,
       );
+
+  @override
+  Future<({ShoppingList list, List<int> skippedRecipeIds})> smartAddFromMealPlan({
+    required String listId,
+    required int planId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required bool compareToPantry,
+  }) =>
+      _remote.smartAddFromMealPlan(
+        listId: listId,
+        planId: planId,
+        startDate: startDate,
+        endDate: endDate,
+        compareToPantry: compareToPantry,
+      );
 }

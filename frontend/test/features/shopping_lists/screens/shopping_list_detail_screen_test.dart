@@ -178,6 +178,18 @@ class _DeleteMenuShoppingListRepository implements ShoppingListRepository {
   }) async {
     throw UnimplementedError();
   }
+
+  @override
+  Future<({ShoppingList list, List<int> skippedRecipeIds})>
+      smartAddFromMealPlan({
+    required String listId,
+    required int planId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required bool compareToPantry,
+  }) {
+    throw UnimplementedError();
+  }
 }
 
 class _FailingUpdateShoppingListRepository extends MockShoppingListRepository {
