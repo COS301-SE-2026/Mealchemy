@@ -7,8 +7,9 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Optional;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /* Import classes */
 import com.mealchemy.mealprep.dto.MealPlanResponse;
@@ -18,6 +19,7 @@ import com.mealchemy.mealprep.model.MealPlan;
 import com.mealchemy.mealprep.model.MealPlanEntry;
 import com.mealchemy.mealprep.repository.MealPlanRepository;
 import com.mealchemy.mealprep.repository.MealPlanEntryRepository;
+import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.mealprep.exception.InvalidMealSlotTimeException;
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.model.VaultMember;
@@ -26,7 +28,8 @@ import com.mealchemy.vault.repository.VaultMemberRepository;
 import com.mealchemy.shared.enums.MealSlot;
 import com.mealchemy.shared.enums.MealPlanEntrySource;
 import com.mealchemy.shared.enums.VaultMemberRole;
-
+import com.mealchemy.recipe.model.Recipe;
+import com.mealchemy.recipe.dto.RecipeResponse;
 
 @Service
 public class MealPlanService
@@ -36,15 +39,17 @@ public class MealPlanService
     private final VaultRepository vaultRepository; 
     private final VaultMemberRepository vaultMemberRepository; 
     private final MealPlanLearningSignalService mealPlanLearningSignalService;
+    private final RecipeRepository recipeRepository;
 
     public MealPlanService(MealPlanRepository mealPlanRepository, MealPlanEntryRepository mealPlanEntryRepository, VaultRepository vaultRepository, 
-                        VaultMemberRepository vaultMemberRepository, MealPlanLearningSignalService mealPlanLearningSignalService)
+                        VaultMemberRepository vaultMemberRepository, MealPlanLearningSignalService mealPlanLearningSignalService, RecipeRepository recipeRepository)
     {
         this.mealPlanRepository = mealPlanRepository;
         this.mealPlanEntryRepository = mealPlanEntryRepository;
         this.vaultRepository = vaultRepository;
         this.vaultMemberRepository = vaultMemberRepository;
         this.mealPlanLearningSignalService = mealPlanLearningSignalService;
+        this.recipeRepository = recipeRepository;
     }
 
     // Get or create plan
@@ -87,14 +92,7 @@ public class MealPlanService
         // get list of entres
         List<MealPlanEntry> entries = mealPlanEntryRepository.findByPlan_PlanIdAndEntryDateBetweenOrderByEntryDateAscMealTimeAsc(planId, startDate, endDate);
 
-        List<MealPlanEntryResponse> responses = new ArrayList<>();
-
-        for (MealPlanEntry entry : entries)
-        {
-            responses.add(MealPlanEntryResponse.from(entry));
-        }
-
-        return responses;
+        return toResponses(entries);
     }
 
     // add entry 
@@ -139,7 +137,7 @@ public class MealPlanService
 
         MealPlanEntry saved = mealPlanEntryRepository.save(entry);
 
-        return MealPlanEntryResponse.from(saved);
+        return toResponse(saved);
     }
 
     // create manual entry
@@ -193,7 +191,7 @@ public class MealPlanService
 
         MealPlanEntry saved = mealPlanEntryRepository.save(entry);
 
-        return MealPlanEntryResponse.from(saved);
+        return toResponse(saved);
     }
 
     // remove entry
@@ -270,5 +268,24 @@ public class MealPlanService
         }
     }
 
+    private MealPlanEntryResponse toResponse(MealPlanEntry entry)
+    {
+        Recipe recipe = recipeRepository.findById(entry.getRecipeId()).orElse(null);
+        return MealPlanEntryResponse.from(entry, recipe != null ? RecipeResponse.from(recipe) : null);
+    }
     
+
+    private List<MealPlanEntryResponse> toResponses(List<MealPlanEntry> entries)
+    {
+        List<Integer> recipeIds = entries.stream().map(MealPlanEntry::getRecipeId).distinct().toList();
+        Map<Integer, Recipe> recipeById = recipeRepository.findAllById(recipeIds).stream()
+            .collect(Collectors.toMap(Recipe::getRecipeId, r -> r));
+
+        return entries.stream()
+            .map(e -> {
+                Recipe r = recipeById.get(e.getRecipeId());
+                return MealPlanEntryResponse.from(e, r != null ? RecipeResponse.from(r) : null);
+            })
+            .toList();
+    }
  }
