@@ -787,7 +787,6 @@ void main() {
         find.byType(ShoppingBottomActionBar),
       );
       expect(actionBar.onAddTap, isNull);
-      expect(actionBar.onMicTap, isNull);
 
       final menu = tester.widget<PopupMenuButton<String>>(
         find.byType(PopupMenuButton<String>),

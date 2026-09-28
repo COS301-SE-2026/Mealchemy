@@ -92,26 +92,6 @@ class _SignupFormState extends ConsumerState<SignupForm> with ScrollHelper {
     }
   }
 
-  //OR CONTINUE WITH divider row
-  Widget _buildDivider() {
-    return Row(
-      children: [
-        Expanded(child: Divider(color: AppColors.divider)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'OR CONTINUE WITH',
-            style: AppTextStyles.label.copyWith(
-              color: AppColors.textMuted,
-              letterSpacing: 1,
-            ),
-          ),
-        ),
-        Expanded(child: Divider(color: AppColors.divider)),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -210,21 +190,6 @@ class _SignupFormState extends ConsumerState<SignupForm> with ScrollHelper {
               isFullWidth: true,
               isRounded: true,
               rightIcon: Icons.arrow_forward,
-            ),
-            const SizedBox(height: 24),
-
-            //OR CONTINUE WITH divider
-            _buildDivider(),
-            const SizedBox(height: 24),
-
-            //Google sign up button
-            AppButton.outlined(
-              label: 'Sign up with Google',
-              onPressed: () {},
-              isFullWidth: true,
-              isRounded: true,
-              customColor: AppColors.accentMuted,
-              customBorderColor: AppColors.accent,
             ),
             const SizedBox(height: 24),
 

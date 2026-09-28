@@ -265,13 +265,11 @@ class _ShoppingListDetailContent extends StatelessWidget {
             right: 26,
             bottom: 118,
             child: ShoppingBottomActionBar(
-              onMicTap: isReadOnly ? null : () {},
               onAddTap: isReadOnly
                   ? null
                   : () {
                       context.push('/shopping-lists/${list.id}/add-item');
                     },
-              onFilterTap: () {},
             ),
           ),
           Positioned(
