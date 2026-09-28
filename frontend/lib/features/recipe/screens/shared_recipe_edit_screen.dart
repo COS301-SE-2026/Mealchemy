@@ -346,6 +346,10 @@ class _SharedRecipeEditScreenState extends ConsumerState<SharedRecipeEditScreen>
     final lockState = ref.watch(
       recipeEditLockProvider(widget.target.recipeId),
     );
+
+    //keep access provider alive while backend checks pending
+    ref.watch(sharedRecipeEditAccessProvider(widget.target));
+
     ref.watch(vaultSessionProvider);
     ref.watch(vaultConnectionProvider);
 

@@ -145,7 +145,11 @@ class _InboxBodyState extends ConsumerState<_InboxBody> {
 
       if (!mounted || ref.read(vaultSessionProvider) != session) return;
 
-      await context.push<void>(destination.location);
+      if (destination.location == AppRoutes.vault) {
+        context.go(destination.location);
+      } else {
+        await context.push<void>(destination.location);
+      }
     } on NotificationDestinationException catch (error) {
       if (mounted && ref.read(vaultSessionProvider) == session) {
         _showMessage(error.message);
