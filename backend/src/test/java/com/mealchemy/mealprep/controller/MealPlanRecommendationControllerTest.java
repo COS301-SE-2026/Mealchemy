@@ -104,7 +104,7 @@ public class MealPlanRecommendationControllerTest {
     @Test
     void generate_returns200_withGeneratedEntries() throws Exception {
         MealPlanEntryResponse entry = new MealPlanEntryResponse(55, PLAN_ID, RECIPE_ID, LocalDate.of(2026, 10, 1),
-            MealSlot.DINNER, LocalTime.of(18, 0), null, null, MealPlanEntrySource.RECOMMENDED, 1);
+            MealSlot.DINNER, LocalTime.of(18, 0), null, null, MealPlanEntrySource.RECOMMENDED, 1, pick().recipe());
         GenerateRecommendationsResponse response = new GenerateRecommendationsResponse(List.of(entry), List.of());
         when(mealPlanRecommendationService.generate(eq(1), eq(PLAN_ID), any(GenerateRecommendationsRequest.class)))
             .thenReturn(response);
@@ -118,7 +118,8 @@ public class MealPlanRecommendationControllerTest {
                 .content(body))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.generatedEntries", hasSize(1)))
-            .andExpect(jsonPath("$.skippedDates").isEmpty());
+            .andExpect(jsonPath("$.skippedDates").isEmpty())
+            .andExpect(jsonPath("$.generatedEntries[0].recipe.title").value("Test Recipe"));
     }
 
     @Test
@@ -153,7 +154,7 @@ public class MealPlanRecommendationControllerTest {
     @Test
     void addEntryFromRecommendation_returns200_withCreatedEntry() throws Exception {
         MealPlanEntryResponse entry = new MealPlanEntryResponse(1, PLAN_ID, RECIPE_ID, LocalDate.of(2026, 10, 1),
-            MealSlot.DINNER, LocalTime.of(18, 0), null, null, MealPlanEntrySource.RECOMMENDED, 1);
+            MealSlot.DINNER, LocalTime.of(18, 0), null, null, MealPlanEntrySource.RECOMMENDED, 1, pick().recipe());
         when(mealPlanRecommendationService.addEntryFromRecommendation(eq(PLAN_ID), eq(1), any(MealPlanEntryFromRecommendationRequest.class)))
             .thenReturn(entry);
 
@@ -166,7 +167,8 @@ public class MealPlanRecommendationControllerTest {
                 .content(body))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.entryId").value(1))
-            .andExpect(jsonPath("$.source").value("RECOMMENDED"));
+            .andExpect(jsonPath("$.source").value("RECOMMENDED"))
+            .andExpect(jsonPath("$.recipe.title").value("Test Recipe"));
     }
 
     @Test

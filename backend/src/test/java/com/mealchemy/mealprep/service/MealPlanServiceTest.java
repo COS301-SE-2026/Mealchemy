@@ -18,6 +18,7 @@ import static org.mockito.Mockito.never;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.inOrder;
 import org.mockito.InOrder;
@@ -39,12 +40,14 @@ import com.mealchemy.mealprep.model.MealPlan;
 import com.mealchemy.mealprep.model.MealPlanEntry;
 import com.mealchemy.vault.model.Vault;
 import com.mealchemy.vault.model.VaultMember;
+import com.mealchemy.recipe.model.Recipe;
 
 // repositories
 import com.mealchemy.mealprep.repository.MealPlanRepository;
 import com.mealchemy.mealprep.repository.MealPlanEntryRepository;
 import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.vault.repository.VaultMemberRepository;
+import com.mealchemy.recipe.repository.RecipeRepository;
 
 // services
 import com.mealchemy.mealprep.service.MealPlanService;
@@ -70,6 +73,7 @@ public class MealPlanServiceTest {
     @Mock private VaultRepository vaultRepository;
     @Mock private VaultMemberRepository vaultMemberRepository;
     @Mock private MealPlanLearningSignalService mealPlanLearningSignalService;
+    @Mock private RecipeRepository recipeRepository;
     
     @InjectMocks 
     private MealPlanService mealPlanService;
@@ -190,6 +194,36 @@ public class MealPlanServiceTest {
 
         // Assert
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void getEntries_includesRecipeDetails_andNullWhenRecipeMissing() {
+        // Arrange
+        when(mealPlanRepository.findById(100)).thenReturn(Optional.of(plan));
+        when(vaultRepository.findById(10)).thenReturn(Optional.of(vault));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(10, 1)).thenReturn(true);
+        when(mealPlanEntryRepository.findByPlan_PlanIdAndEntryDateBetweenOrderByEntryDateAscMealTimeAsc(100, LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 7)))
+            .thenReturn(List.of(recommendedEntry, manualEntry));
+
+        Recipe recipe = new Recipe();
+        ReflectionTestUtils.setField(recipe, "recipeId", 50);
+        recipe.setOwnerId(1);
+        recipe.setTitle("Hummus Bowl");
+        recipe.setDescription("A tasty bowl.");
+        recipe.setCuisineType("MEDITERRANEAN");
+        recipe.setPrepTimeMins(10);
+        recipe.setCookingTimeMins(0);
+        recipe.setServingSize(2);
+        recipe.setIsCommunityPublished(true);
+        recipe.setIngredients(List.of());
+        when(recipeRepository.findAllById(any())).thenReturn(List.of(recipe));
+
+        // Act
+        List<MealPlanEntryResponse> response = mealPlanService.getEntries(100, 1, LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 7));
+
+        // Assert
+        assertEquals("Hummus Bowl", response.get(0).recipe().title());
+        assertNull(response.get(1).recipe());
     }
 
     @Test

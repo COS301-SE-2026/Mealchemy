@@ -1833,7 +1833,8 @@ public class ShoppingListServiceTest {
             "title", 
             "note", 
             MealPlanEntrySource.MANUAL, 
-            1
+            1,
+            null
         );
     }
 }
