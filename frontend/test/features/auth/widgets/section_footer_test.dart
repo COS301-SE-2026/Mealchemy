@@ -19,28 +19,28 @@ void main() {
       expect(find.text('KITCHEN INTELLIGENCE'), findsOneWidget);
     });
 
-testWidgets('renders description text', (tester) async {
-  await tester.pumpWidget(buildWidget());
-  expect(find.byType(RichText), findsWidgets);
-});
+    testWidgets('renders description text', (tester) async {
+      await tester.pumpWidget(buildWidget());
+      expect(find.byType(RichText), findsWidgets);
+    });
 
-testWidgets('renders Smart Substitution text', (tester) async {
-  await tester.pumpWidget(buildWidget());
-  final richTexts = tester.widgetList<RichText>(find.byType(RichText));
-  final hasSmartSubstitution = richTexts.any(
-    (widget) => widget.text.toPlainText().contains('Smart Substitution'),
-  );
-  expect(hasSmartSubstitution, true);
-});
+    testWidgets('renders Smart Substitution text', (tester) async {
+      await tester.pumpWidget(buildWidget());
+      final richTexts = tester.widgetList<RichText>(find.byType(RichText));
+      final hasSmartSubstitution = richTexts.any(
+        (widget) => widget.text.toPlainText().contains('Smart Substitution'),
+      );
+      expect(hasSmartSubstitution, true);
+    });
 
-testWidgets('renders copyright text', (tester) async {
-  await tester.pumpWidget(buildWidget());
-  final richTexts = tester.widgetList<RichText>(find.byType(RichText));
-  final hasCopyright = richTexts.any(
-    (widget) => widget.text.toPlainText().contains('2026 MEALCHEMY'),
-  );
-  expect(hasCopyright, true);
-});
+    testWidgets('renders copyright text', (tester) async {
+      await tester.pumpWidget(buildWidget());
+      final richTexts = tester.widgetList<RichText>(find.byType(RichText));
+      final hasCopyright = richTexts.any(
+        (widget) => widget.text.toPlainText().contains('2026 MEALCHEMY'),
+      );
+      expect(hasCopyright, true);
+    });
 
     testWidgets('renders privacy link', (tester) async {
       await tester.pumpWidget(buildWidget());

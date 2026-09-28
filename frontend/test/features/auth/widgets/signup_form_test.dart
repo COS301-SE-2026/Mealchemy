@@ -105,6 +105,5 @@ void main() {
       await tester.pump();
       expect(find.text('Text is required'), findsOneWidget);
     });
-
   });
 }

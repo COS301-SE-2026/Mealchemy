@@ -9,6 +9,7 @@ import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/core/utils/validators.dart';
 import 'package:mealchemy/core/utils/scroll_helper.dart';
 import '../providers/auth_provider.dart';
+import '../providers/login_lockout_provider.dart';
 
 class LoginForm extends ConsumerStatefulWidget {
   const LoginForm({super.key});
@@ -16,11 +17,11 @@ class LoginForm extends ConsumerStatefulWidget {
   ConsumerState<LoginForm> createState() => _LoginFormState();
 }
 
-class _LoginFormState extends ConsumerState<LoginForm> with ScrollHelper {
+class _LoginFormState extends ConsumerState<LoginForm>
+    with ScrollHelper, WidgetsBindingObserver {
   // Input controllers for the email and password fields
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
 
   final _emailKey = GlobalKey();
   final _passwordKey = GlobalKey();
@@ -32,7 +33,21 @@ class _LoginFormState extends ConsumerState<LoginForm> with ScrollHelper {
   String? _authError;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      ref.read(loginLockoutProvider.notifier).refresh();
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     // Frees memory once the widget is removed
     _emailController.dispose();
     _passwordController.dispose();
@@ -55,6 +70,16 @@ class _LoginFormState extends ConsumerState<LoginForm> with ScrollHelper {
 
   // On click login button logic
   Future<void> _handleLogin() async {
+    final submittedEmail = _emailController.text.trim();
+
+    if (_isLoading ||
+        ref
+                .read(loginLockoutProvider.notifier)
+                .remainingSeconds(submittedEmail) >
+            0) {
+      return;
+    }
+
     if (!_validate()) {
       scrollToFirstError(_errorFields);
       return;
@@ -63,7 +88,7 @@ class _LoginFormState extends ConsumerState<LoginForm> with ScrollHelper {
     setState(() => _isLoading = true);
 
     final success = await ref.read(authProvider.notifier).login(
-          _emailController.text.trim(),
+          submittedEmail,
           _passwordController.text,
         );
 
@@ -72,15 +97,42 @@ class _LoginFormState extends ConsumerState<LoginForm> with ScrollHelper {
 
     if (success) {
       context.go('/dashboard');
-    } else {
-      final error = ref.read(authProvider).errorMessage;
-      setState(() => _authError = error ?? 'Invalid email or password');
+      return;
+    }
+
+    //don't attach response for one email to a newly entered address
+    if (_emailController.text.trim() != submittedEmail) return;
+
+    final remaining = ref
+        .read(loginLockoutProvider.notifier)
+        .remainingSeconds(submittedEmail);
+
+    setState(() {
+      _authError = remaining > 0
+          ? null
+          : ref.read(authProvider).errorMessage ?? 'Invalid email or password';
+    });
+
+    if (_authError != null) {
       scrollToFirstError(_errorFields);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(loginLockoutProvider);
+
+    final remaining = ref
+        .read(loginLockoutProvider.notifier)
+        .remainingSeconds(_emailController.text);
+
+    final locked = remaining > 0;
+    final minutes = remaining ~/ 60;
+    final seconds = (remaining % 60).toString().padLeft(2, '0');
+
+    final message = locked
+        ? 'Too many failed attempts. Try again in $minutes:$seconds.'
+        : _authError ?? 'Sign in to access your digital pantry';
     return Padding(
       padding: const EdgeInsets.all(24),
       child: AppCard.light(
@@ -99,11 +151,11 @@ class _LoginFormState extends ConsumerState<LoginForm> with ScrollHelper {
             ),
             const SizedBox(height: 8),
 
-            // Subtitle, doubles as the credential error slot on failed login
+            // Shows the countdown, login error, or default subtitle.
             Text(
-              _authError ?? 'Sign in to access your digital pantry',
+              message,
               textAlign: TextAlign.center,
-              style: _authError != null
+              style: locked || _authError != null
                   ? AppTextStyles.bodyBold.copyWith(color: AppColors.error)
                   : AppTextStyles.body.copyWith(color: AppColors.textMuted),
             ),
@@ -120,12 +172,10 @@ class _LoginFormState extends ConsumerState<LoginForm> with ScrollHelper {
               errorText: _emailError,
               hasError: _authError != null,
               onChanged: (_) {
-                if (_emailError != null || _authError != null) {
-                  setState(() {
-                    _emailError = null;
-                    _authError = null;
-                  });
-                }
+                setState(() {
+                  _emailError = null;
+                  _authError = null;
+                });
               },
             ),
             const SizedBox(height: 16),
@@ -152,7 +202,7 @@ class _LoginFormState extends ConsumerState<LoginForm> with ScrollHelper {
             // Login button with loading state
             AppButton.primary(
               label: 'Log In',
-              onPressed: _isLoading ? null : _handleLogin,
+              onPressed: _isLoading || locked ? null : _handleLogin,
               isLoading: _isLoading,
               isFullWidth: true,
               isRounded: true,
