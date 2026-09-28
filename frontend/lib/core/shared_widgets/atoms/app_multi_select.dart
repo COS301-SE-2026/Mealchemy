@@ -141,19 +141,28 @@ class _AppMultiSelectState extends State<AppMultiSelect> {
                 },
               ),
             ),
-            CompositedTransformFollower(
-              link: _link,
-              showWhenUnlinked: false,
-              targetAnchor: targetAnchor,
-              followerAnchor: followerAnchor,
-              offset: Offset(dx, 6),
-              child: _MultiSelectMenu(
-                options: _available,
-                width: menuWidth,
-                fill: widget.surface == MultiSelectSurface.white
-                    ? AppColors.surfaceWhite
-                    : AppColors.surfaceLight,
-                onPick: _pick,
+            Positioned(
+              left: 0,
+              top: 0,
+              width: menuWidth,
+              child: CompositedTransformFollower(
+                link: _link,
+                showWhenUnlinked: false,
+                targetAnchor: targetAnchor,
+                followerAnchor: followerAnchor,
+                offset: Offset(dx, 6),
+                child: SizedBox(
+                  key: const ValueKey('multi-select-menu'),
+                  width: menuWidth,
+                  child: _MultiSelectMenu(
+                    options: _available,
+                    width: menuWidth,
+                    fill: widget.surface == MultiSelectSurface.white
+                        ? AppColors.surfaceWhite
+                        : AppColors.surfaceLight,
+                    onPick: _pick,
+                  ),
+                ),
               ),
             ),
           ],
@@ -183,11 +192,15 @@ class _AppMultiSelectState extends State<AppMultiSelect> {
                   color: AppColors.primary,
                 ),
                 const SizedBox(width: 6),
-                Text(
-                  widget.addLabel,
-                  style: AppTextStyles.label.copyWith(
-                    color: AppColors.primary,
-                    letterSpacing: 0.6,
+                Flexible(
+                  child: Text(
+                    widget.addLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.label.copyWith(
+                      color: AppColors.primary,
+                      letterSpacing: 0.6,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 4),

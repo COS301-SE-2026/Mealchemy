@@ -14,7 +14,8 @@ class ShoppingBottomActionBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: 76,
-      child: Center(
+      child: Align(
+        alignment: Alignment.centerRight,
         child: Semantics(
           button: true,
           enabled: onAddTap != null,
