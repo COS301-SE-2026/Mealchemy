@@ -8,8 +8,10 @@ import 'package:mealchemy/core/shared_widgets/atoms/app_badge.dart';
 import 'package:mealchemy/core/shared_widgets/atoms/app_icon_button.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_section_header.dart';
 import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
+import '../providers/incoming_vault_invitations_provider.dart';
 import 'vault_switcher.dart';
 import 'shared_vault_strip.dart';
+import '../../notifications/widgets/notification_bell.dart';
 
 class VaultHero extends ConsumerWidget {
   const VaultHero({super.key});
@@ -36,10 +38,22 @@ class VaultHero extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 const VaultSwitcher(),
+                TextButton.icon(
+                  onPressed: () {
+                    ref.invalidate(incomingVaultInvitationsProvider);
+                    context.push(AppRoutes.incomingVaultInvitations);
+                  },
+                  icon: const Icon(Icons.mail_outline),
+                  label: const Text('Incoming invitations'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                  ),
+                ),
                 const SharedVaultStrip(),
               ],
             ),
           ),
+          const NotificationBell(color: AppColors.textLight),
           Stack(
             clipBehavior: Clip.none,
             children: [

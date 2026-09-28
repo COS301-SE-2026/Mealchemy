@@ -18,14 +18,17 @@ import com.mealchemy.vault.repository.VaultRepository;
 import com.mealchemy.vault.repository.VaultMemberRepository;
 import com.mealchemy.vault.repository.VaultInvitationRepository;
 import com.mealchemy.auth.repository.UserRepository;
- 
+
 //enums
 import com.mealchemy.shared.enums.VaultType;
 import com.mealchemy.shared.enums.InvitationStatus;
 import com.mealchemy.shared.enums.VaultMemberRole;
- 
+import com.mealchemy.shared.enums.NotificationType;
+
 //service
 import com.mealchemy.vault.service.VaultInvitationService;
+import com.mealchemy.vault.service.NotificationService;
+import com.mealchemy.vault.event.NotificationEvent;
  
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,7 +47,7 @@ import java.time.OffsetDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-
+import org.mockito.ArgumentCaptor;
 
 @ExtendWith(MockitoExtension.class)
 public class VaultInvitationServiceTest {
@@ -53,6 +56,7 @@ public class VaultInvitationServiceTest {
     @Mock private VaultMemberRepository vaultMemberRepository;
     @Mock private VaultInvitationRepository vaultInvitationRepository;
     @Mock private UserRepository userRepository;
+    @Mock private NotificationService notificationService;
 
     @InjectMocks
     private VaultInvitationService vaultInvitationService;
@@ -136,6 +140,7 @@ public class VaultInvitationServiceTest {
         // Assert
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         verifyNoInteractions(userRepository, vaultMemberRepository, vaultInvitationRepository);
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -152,6 +157,7 @@ public class VaultInvitationServiceTest {
         // Assert
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         verifyNoInteractions(userRepository, vaultMemberRepository, vaultInvitationRepository);
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -170,6 +176,7 @@ public class VaultInvitationServiceTest {
         // Assert
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         verifyNoInteractions(vaultInvitationRepository);
+        verifyNoInteractions(notificationService);
     }
 
     @Test 
@@ -188,6 +195,7 @@ public class VaultInvitationServiceTest {
         // Assert
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
         verifyNoInteractions(vaultInvitationRepository);
+        verifyNoInteractions(notificationService);
     }
 
 
@@ -340,6 +348,7 @@ public class VaultInvitationServiceTest {
         // Assert
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         verifyNoInteractions(vaultMemberRepository);
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -356,6 +365,7 @@ public class VaultInvitationServiceTest {
         // Assert
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         verifyNoInteractions(vaultMemberRepository);
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -373,6 +383,7 @@ public class VaultInvitationServiceTest {
         // Assert
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
         verifyNoInteractions(vaultMemberRepository);
+        verifyNoInteractions(notificationService);
     }
 
 
@@ -409,6 +420,7 @@ public class VaultInvitationServiceTest {
         // Assert
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         verifyNoInteractions(vaultMemberRepository);
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -425,6 +437,7 @@ public class VaultInvitationServiceTest {
         // Assert
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         verifyNoInteractions(vaultMemberRepository);
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -442,6 +455,7 @@ public class VaultInvitationServiceTest {
         // Assert
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
         verifyNoInteractions(vaultMemberRepository);
+        verifyNoInteractions(notificationService);
     }
 
 
@@ -480,6 +494,7 @@ public class VaultInvitationServiceTest {
         // Assert
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         verifyNoInteractions(vaultMemberRepository);
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -496,6 +511,7 @@ public class VaultInvitationServiceTest {
         // Assert
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         verifyNoInteractions(vaultMemberRepository);
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -511,5 +527,109 @@ public class VaultInvitationServiceTest {
 
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
         verifyNoInteractions(vaultMemberRepository);
+        verifyNoInteractions(notificationService);
+    }
+
+
+    // ========== Notifications ========== 
+
+    @Test
+    void createInvitation_valid_publishesVaultInviteToInvitee() {
+        // Arrange
+        when(vaultRepository.findById(5)).thenReturn(Optional.of(sharedVault));
+        when(userRepository.findByEmail("invitedUser@email.com")).thenReturn(Optional.of(invitedUser));
+        when(vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(5, 2)).thenReturn(false);
+        when(vaultInvitationRepository.existsByVault_VaultIdAndInvitedUser_UserIdAndStatus(5, 2, InvitationStatus.PENDING)).thenReturn(false);
+        when(userRepository.findById(1)).thenReturn(Optional.of(owner));
+        
+        when(vaultInvitationRepository.save(any(VaultInvitation.class))).thenAnswer(invocation -> {
+            VaultInvitation saved = invocation.getArgument(0);
+            saved.setInvitationId(99);
+            return saved;
+        });
+        when(notificationService.getDisplayName(1)).thenReturn("Owner");
+
+        ArgumentCaptor<NotificationEvent> captor = ArgumentCaptor.forClass(NotificationEvent.class);
+
+        // Act
+        vaultInvitationService.createInvitation(5, invitationRequest, 1);
+
+        // Assert
+        verify(notificationService).publish(captor.capture());
+        NotificationEvent event = captor.getValue();
+        assertEquals(NotificationType.VAULT_INVITE, event.type());
+        assertEquals(List.of(2), event.recipientUserIds());
+        assertEquals(1, event.actorUserId());
+        assertEquals("Owner invited you to join Dinner Club", event.message());
+        assertEquals(5, event.refVaultId());
+        assertNull(event.refRecipeId());
+        assertEquals(99, event.refInvitationId());
+    }
+
+    @Test
+    void acceptInvitation_valid_publishesAcceptedToVaultMembers() {
+        // Arrange
+        when(vaultInvitationRepository.findById(10)).thenReturn(Optional.of(existingInvitation));
+        when(vaultMemberRepository.save(any(VaultMember.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(notificationService.getVaultParticipantIds(5, 2)).thenReturn(List.of(1, 3));
+        when(notificationService.getDisplayName(2)).thenReturn("Invitee");
+        
+        ArgumentCaptor<NotificationEvent> captor = ArgumentCaptor.forClass(NotificationEvent.class);
+
+        // Act
+        vaultInvitationService.acceptInvitation(10, 2);
+
+        // Assert
+        verify(notificationService).publish(captor.capture());
+        NotificationEvent event = captor.getValue();
+        assertEquals(NotificationType.INVITATION_ACCEPTED, event.type());
+        assertEquals(List.of(1, 3), event.recipientUserIds());
+        assertEquals(2, event.actorUserId());
+        assertEquals("Invitee joined Dinner Club", event.message());
+        assertEquals(10, event.refInvitationId());
+    }
+
+    @Test
+    void declineInvitation_valid_publishesDeclinedToOwner() {
+        // Arrange
+        when(vaultInvitationRepository.findById(10)).thenReturn(Optional.of(existingInvitation));       
+        when(vaultInvitationRepository.save(any(VaultInvitation.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(notificationService.getDisplayName(2)).thenReturn("Invitee");
+        
+        ArgumentCaptor<NotificationEvent> captor = ArgumentCaptor.forClass(NotificationEvent.class);
+
+        // Act
+        vaultInvitationService.declineInvitation(10, 2);
+
+        // Assert
+        verify(notificationService).publish(captor.capture());
+        NotificationEvent event = captor.getValue();
+        assertEquals(NotificationType.INVITATION_DECLINED, event.type());
+        assertEquals(List.of(1), event.recipientUserIds());
+        assertEquals(2, event.actorUserId());
+        assertEquals("Invitee declined your invitation to Dinner Club", event.message());
+        assertEquals(10, event.refInvitationId());
+    }
+
+    @Test
+    void cancelInvitation_valid_publishesDeclinedToInvitee() {
+        // Arrange
+        when(vaultInvitationRepository.findById(10)).thenReturn(Optional.of(existingInvitation));       
+        when(vaultInvitationRepository.save(any(VaultInvitation.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(notificationService.getDisplayName(1)).thenReturn("Owner");
+        
+        ArgumentCaptor<NotificationEvent> captor = ArgumentCaptor.forClass(NotificationEvent.class);
+
+        // Act
+        vaultInvitationService.cancelInvitation(10, 1);
+
+        // Assert
+        verify(notificationService).publish(captor.capture());
+        NotificationEvent event = captor.getValue();
+        assertEquals(NotificationType.INVITATION_CANCELLED, event.type());
+        assertEquals(List.of(2), event.recipientUserIds());
+        assertEquals(1, event.actorUserId());
+        assertEquals("Owner cancelled your invitation to Dinner Club", event.message());
+        assertEquals(10, event.refInvitationId());
     }
 }

@@ -16,22 +16,24 @@ name: Frontend Delivery
   # key.properties is gitignored
 
   #then uploads the APK to firebase app distribution using the pinned firebase tools.
-  #It taregts the testers group in the firebase project (to add emails still)
-  #release notes include the comit SHA so testers can trace which code is in the build.
-#-------------
+  # Runs manually or when frontend files are pushed to main or deployment.
+  # Backend-only changes do not rebuild or redistribute the frontend APK.
+  
+  # Environment and distribution routing:
+  # - main uses the production Cloud Run backend and Firebase production group.
+  # - deployment uses the staging Cloud Run backend and Firebase staging group.
+  # - manual runs from any other branch also use staging.
+  # This prevents a feature branch from distributing an APK connected to production.
+  
+  # The workflow authenticates to GCP with Workload Identity and resolves the selected backend's stable Cloud Run service URL at build time. Cloud Run routes that URL to the latest backend revision that completed CD cutover.
+  
+  # Java 17 is used by the Android Gradle build. Flutter currently tracks the stable 3.x release and may need to be pinned to an exact version later
+  
+  # The job decodes the signing keystore, builds a signed release APK, and uses the GitHub run number as Android's versionCode. key.properties and the decoded keystore remain gitignored.
+  
+  # Firebase CLI is pinned for repeatable distribution. The APK is sent to the branch-selected tester group, and release notes contain the commit SHA so testers can identify the source revision.
 
-  # main - had production url injected
-  # deployment has staging url injected
-  # maual dispatch from main -> production env linked
-  # maual dispatch from deployment -> staging env linked
-  # maual dispatch from any other branch -> staging env linked
-  # merged to main -> production env linked
-
-   #picks backend URL and env label based on branch
-   #only main can ever produce a prod APK so a feature branch dispatch cant accidentally ship to testers against prod backend
-
-
-
+ #updated 28/09/26
 #------------------------------------------------------------------------
 
 on:
@@ -48,6 +50,18 @@ jobs:
   build-and-distribute-android:
     name: Build and distribute Android APK
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    env:
+      GCP_PROJECT_ID: mealchemy
+      GCP_PROJECT_NUMBER: "309582551982"
+      GCP_REGION: europe-west3
+      WIF_POOL_ID: github-pool
+      WIF_PROVIDER_ID: github-provider
+      CD_SA_EMAIL: cd-deployer@mealchemy.iam.gserviceaccount.com
 
     defaults:
       run:
@@ -86,19 +100,49 @@ jobs:
         working-directory: .
         env:
           REF_NAME: ${{ github.ref_name }}
-          PROD_BACKEND_URL: ${{ secrets.PROD_BACKEND_URL }}
-          STAGING_BACKEND_URL: ${{ secrets.STAGING_BACKEND_URL }}
         run: |
           case "$REF_NAME" in
             main)
               echo "name=production" >> "$GITHUB_OUTPUT"
-              echo "backend_url=$PROD_BACKEND_URL" >> "$GITHUB_OUTPUT"
+              echo "cloud_run_suffix=prod" >> "$GITHUB_OUTPUT"
+              echo "firebase_group=production" >> "$GITHUB_OUTPUT"
               ;;
             *)
               echo "name=staging" >> "$GITHUB_OUTPUT"
-              echo "backend_url=$STAGING_BACKEND_URL" >> "$GITHUB_OUTPUT"
+              echo "cloud_run_suffix=staging" >> "$GITHUB_OUTPUT"
+              echo "firebase_group=staging" >> "$GITHUB_OUTPUT"
               ;;
           esac
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: >-
+            projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.WIF_POOL_ID }}/providers/${{ env.WIF_PROVIDER_ID }}
+          service_account: ${{ env.CD_SA_EMAIL }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+
+      - name: Resolve backend Cloud Run URL
+        id: backend
+        working-directory: .
+        env:
+          CLOUD_RUN_SUFFIX: ${{ steps.env.outputs.cloud_run_suffix }}
+        run: |
+          SERVICE="mealchemy-backend-${CLOUD_RUN_SUFFIX}"
+          BACKEND_URL=$(gcloud run services describe "$SERVICE" \
+            --region "${GCP_REGION}" \
+            --project "${GCP_PROJECT_ID}" \
+            --format="value(status.url)")
+
+          if [[ -z "$BACKEND_URL" || "$BACKEND_URL" != https://* ]]; then
+            echo "::error::Could not resolve a valid HTTPS URL for ${SERVICE}."
+            exit 1
+          fi
+
+          echo "url=${BACKEND_URL}" >> "$GITHUB_OUTPUT"
+          echo "Resolved ${SERVICE} for the ${{ steps.env.outputs.name }} APK."
 
       - name: Build signed release APK
         env:
@@ -107,7 +151,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         
-          BACKEND_URL: ${{ steps.env.outputs.backend_url }}
+          BACKEND_URL: ${{ steps.backend.outputs.url }}
         run: |
           flutter build apk --release \
             --build-number ${{ github.run_number }} \
@@ -121,12 +165,13 @@ jobs:
       - name: Distribute via Firebase App Distribution
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_APP_DISTRIBUTION_TOKEN }}
+          FIREBASE_GROUP: ${{ steps.env.outputs.firebase_group }}
           COMMIT_SHA: ${{ github.sha }}
         run: |
           firebase appdistribution:distribute \
             build/app/outputs/flutter-apk/app-release.apk \
             --app 1:480345342713:android:490cec1011395be746d828 \
-            --groups testers \
+            --groups "$FIREBASE_GROUP" \
             --release-notes "Build $COMMIT_SHA" \
             --token "$FIREBASE_TOKEN" \
             --project mealchemy-app-distribution

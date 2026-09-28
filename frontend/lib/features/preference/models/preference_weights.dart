@@ -21,7 +21,6 @@ class PreferenceWeights {
   );
 
   double get total => pantryMatch + cuisine + nutrition + freshness + novelty;
-  double shareOf(double value) => total == 0 ? 0 : value / total;
 
   // The engine stores these as five weights that sum to 1.0 so scale before saving.
   PreferenceWeights normalized() {
@@ -33,6 +32,29 @@ class PreferenceWeights {
       nutrition: nutrition / sum,
       freshness: freshness / sum,
       novelty: novelty / sum,
+    );
+  }
+
+  // Moving one slider pushes the others the  other way keeping their relative
+  // propotions and holding the total at 1.0.
+  PreferenceWeights rebalance(int idx, double v) {
+    final vals = [pantryMatch, cuisine, nutrition, freshness, novelty];
+    final others = total - vals[idx];
+    final rest = 1 - v;
+    for (var i = 0; i < vals.length; i++) {
+      if (i == idx) {
+        vals[i] = v;
+      } else {
+        vals[i] =
+            others > 0 ? vals[i] / others * rest : rest / (vals.length - 1);
+      }
+    }
+    return PreferenceWeights(
+      pantryMatch: vals[0],
+      cuisine: vals[1],
+      nutrition: vals[2],
+      freshness: vals[3],
+      novelty: vals[4],
     );
   }
 

@@ -20,7 +20,9 @@ import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.profile.repository.UserProfileRepository;
 import com.mealchemy.profile.model.UserProfile;
 import com.mealchemy.shared.enums.PreferredUnit;
+import com.mealchemy.vault.service.RecipeEditLockService;
 import com.mealchemy.shared.unitconverter.UnitConverter;
+
 
 @Service
 public class RecipeIngredientService 
@@ -32,13 +34,16 @@ public class RecipeIngredientService
     private final IngredientCatalogueRepository ingredientCatalogueRepository;
 
     private final UserProfileRepository userProfileRepository;
+    
+    private final RecipeEditLockService recipeEditLockService;
 
-    public RecipeIngredientService(RecipeIngredientRepository recipeIngredientRepository, RecipeRepository recipeRepository, IngredientCatalogueRepository ingredientCatalogueRepository, UserProfileRepository userProfileRepository)
+    public RecipeIngredientService(RecipeIngredientRepository recipeIngredientRepository, RecipeRepository recipeRepository, IngredientCatalogueRepository ingredientCatalogueRepository, UserProfileRepository userProfileRepository, RecipeEditLockService recipeEditLockService)
     {
         this.recipeIngredientRepository = recipeIngredientRepository;
         this.recipeRepository = recipeRepository;
         this.ingredientCatalogueRepository = ingredientCatalogueRepository;
         this.userProfileRepository = userProfileRepository;
+        this.recipeEditLockService = recipeEditLockService;
     }
 
     // Retrieve all ingredients relating to a specific recipe
@@ -67,14 +72,11 @@ public class RecipeIngredientService
     }
 
     // Create a new ingredient for a specific recipe
-    public RecipeIngredientResponse createRecipeIngredient(RecipeIngredientRequest request, Integer recipeId, Integer ownerId)
+    public RecipeIngredientResponse createRecipeIngredient(RecipeIngredientRequest request, Integer recipeId, Integer userId)
     {
         Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
-        if (!recipeToCheck.getOwnerId().equals(ownerId))
-        {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
-        }
+        recipeEditLockService.canEditRecipe(recipeId, userId);
 
         IngredientCatalogue ingredientCatalogue = ingredientCatalogueRepository.findById(request.ingId())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "The ingredient you want to add does not exist."));
@@ -83,7 +85,7 @@ public class RecipeIngredientService
 
         RecipeIngredient saved = recipeIngredientRepository.save(recipeIngredientForReturn);
 
-        PreferredUnit preferredUnit = userProfileRepository.findByUserId(ownerId).map(UserProfile::getPreferredUnit)
+        PreferredUnit preferredUnit = userProfileRepository.findByUserId(userId).map(UserProfile::getPreferredUnit)
                                                                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User profile not found."));
 
         UnitConverter.NormalisedQuantity display = UnitConverter.convertToUsersPreferredUnit(saved.getQuantity(), saved.getUnit(), preferredUnit);
@@ -92,14 +94,11 @@ public class RecipeIngredientService
     }
 
     // Update a specific ingredient in an existing recipe
-    public RecipeIngredientResponse updateRecipeIngredient(int id, RecipeIngredientRequest request, Integer recipeId, Integer ownerId)
+    public RecipeIngredientResponse updateRecipeIngredient(int id, RecipeIngredientRequest request, Integer recipeId, Integer userId)
     {
         Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
-        if (!recipeToCheck.getOwnerId().equals(ownerId))
-        {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
-        }
+        recipeEditLockService.canEditRecipe(recipeId, userId);
 
         RecipeIngredient recipeIngredientForReturn = recipeIngredientRepository.findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found."));
@@ -122,7 +121,7 @@ public class RecipeIngredientService
 
         RecipeIngredient saved = recipeIngredientRepository.save(recipeIngredientForReturn);
 
-        PreferredUnit preferredUnit = userProfileRepository.findByUserId(ownerId).map(UserProfile::getPreferredUnit)
+        PreferredUnit preferredUnit = userProfileRepository.findByUserId(userId).map(UserProfile::getPreferredUnit)
                                                                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User profile not found."));
 
         UnitConverter.NormalisedQuantity display = UnitConverter.convertToUsersPreferredUnit(saved.getQuantity(), saved.getUnit(), preferredUnit);
@@ -131,14 +130,11 @@ public class RecipeIngredientService
     }
 
     // Delete a specific ingredient in an existing recipe
-    public void deleteRecipeIngredient(int id, Integer recipeId, Integer ownerId)
+    public void deleteRecipeIngredient(int id, Integer recipeId, Integer userId)
     {
         Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
-        if (!recipeToCheck.getOwnerId().equals(ownerId))
-        {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
-        }
+        recipeEditLockService.canEditRecipe(recipeId, userId);
 
         RecipeIngredient recipeIngredientForReturn = recipeIngredientRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ingredient not found."));
         

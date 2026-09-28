@@ -3,6 +3,7 @@
 //list endpoint and populated on the detail endpoint.
 import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
+import 'package:mealchemy/features/recipe/models/equipment.dart';
 
 class Recipe {
   final int recipeId;
@@ -23,6 +24,7 @@ class Recipe {
   //populated by GET /recipes/{id}, null on list responses
   final List<RecipeIngredient>? ingredients;
   final List<RecipeStep>? steps;
+  final List<Equipment>? equipment;
 
   const Recipe({
     required this.recipeId,
@@ -41,6 +43,7 @@ class Recipe {
     this.updatedAt,
     this.ingredients,
     this.steps,
+    this.equipment,
   });
 
   factory Recipe.fromJson(Map<String, dynamic> json) {
@@ -71,7 +74,11 @@ class Recipe {
           .toList(),
     );
   }
-  Map<String, dynamic> toFullRequestJson({bool removePhoto = false}) => {
+  Map<String, dynamic> toFullRequestJson({
+    bool removePhoto = false,
+    bool removeVideo = false,
+  }) =>
+      {
         'title': title,
         'description': description ?? '',
         'cuisineType': cuisineType,
@@ -81,10 +88,14 @@ class Recipe {
         'photoUrl': photoUrl,
         'removePhoto': removePhoto,
         'videoUrl': videoUrl,
+        'removeVideo': removeVideo,
         'externalUrl': externalUrl,
         'isCommunityPublished': isCommunityPublished,
         'ingredients': ingredients?.map((i) => i.toJson()).toList() ?? [],
         'steps': steps?.map((s) => s.toJson()).toList() ?? [],
+        // null means "leave unchanged" on edit
+        if (equipment != null)
+          'equipmentIds': equipment!.map((e) => e.id).toList(),
       };
 
 //metadata-only body for POST /recipes/create and PUT /recipes/edit/{id}
@@ -99,8 +110,10 @@ class Recipe {
         'videoUrl': videoUrl,
         'externalUrl': externalUrl,
         'isCommunityPublished': isCommunityPublished,
+        if (equipment != null)
+          'equipmentIds': equipment!.map((e) => e.id).toList(),
       };
-      
+
   Recipe copyWith({
     int? recipeId,
     int? ownerId,
@@ -118,6 +131,7 @@ class Recipe {
     DateTime? updatedAt,
     List<RecipeIngredient>? ingredients,
     List<RecipeStep>? steps,
+    List<Equipment>? equipment,
   }) {
     return Recipe(
       recipeId: recipeId ?? this.recipeId,
@@ -136,6 +150,7 @@ class Recipe {
       updatedAt: updatedAt ?? this.updatedAt,
       ingredients: ingredients ?? this.ingredients,
       steps: steps ?? this.steps,
+      equipment: equipment ?? this.equipment,
     );
   }
 }

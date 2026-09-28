@@ -260,11 +260,11 @@ public class VaultFolderRecipeControllerIntegrationTest {
     /* createVaultFolderRecipe */
 
     @Test
-    void createVaultFolderRecipe_createsRecord_whenAuthenticatedUserIsOwner() throws Exception {
-        Recipe secondRecipe = saveRecipe(owner, "Second Recipe");        
+    void createVaultFolderRecipe_createsClone_whenAuthenticatedUserIsOwnerAndVaultIsShared() throws Exception {
+        Recipe secondRecipe = saveRecipe(owner, "Second Recipe");
         VaultFolderRecipeRequest request = new VaultFolderRecipeRequest(folderInOwnerVault.getFolderId(), secondRecipe.getRecipeId());
 
-        mockMvc.perform(post("/recipefolders/folder/{folderId}", folderInOwnerVault.getFolderId())
+        String responseJson = mockMvc.perform(post("/recipefolders/folder/{folderId}", folderInOwnerVault.getFolderId())
                         .with(authentication(authAs(owner)))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -272,9 +272,18 @@ public class VaultFolderRecipeControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", notNullValue()))
                 .andExpect(jsonPath("$.folderId", is(folderInOwnerVault.getFolderId())))
-                .andExpect(jsonPath("$.recipeId", is(secondRecipe.getRecipeId())))
+                .andExpect(jsonPath("$.recipeId", is(org.hamcrest.Matchers.not(secondRecipe.getRecipeId()))))
                 .andExpect(jsonPath("$.addedByUserId", is(owner.getUserId())))
-                .andExpect(jsonPath("$.addedAt", notNullValue()));
+                .andReturn().getResponse().getContentAsString();
+
+        Integer cloneId = objectMapper.readTree(responseJson).get("recipeId").asInt();
+        Recipe clone = recipeRepository.findById(cloneId)
+                .orElseThrow(() -> new IllegalStateException("Clone was not persisted"));
+
+        org.junit.jupiter.api.Assertions.assertEquals(owner.getUserId(), clone.getOwnerId());
+        org.junit.jupiter.api.Assertions.assertEquals(secondRecipe.getRecipeId(), clone.getParentRecipe().getRecipeId());
+        org.junit.jupiter.api.Assertions.assertEquals("Second Recipe", clone.getTitle());
+        org.junit.jupiter.api.Assertions.assertFalse(clone.getIsCommunityPublished());
 
         List<VaultFolderRecipe> saved = vaultFolderRecipeRepository.findByFolder_FolderId(folderInOwnerVault.getFolderId());
         org.junit.jupiter.api.Assertions.assertEquals(2, saved.size());

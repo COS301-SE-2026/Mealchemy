@@ -26,14 +26,20 @@ void main() {
       routes: [
         GoRoute(
           path: '/',
-          builder: (context, state) =>
-              const Scaffold(body: VaultHero()),
+          builder: (context, state) => const Scaffold(body: VaultHero()),
         ),
         GoRoute(
           path: AppRoutes.shoppingLists,
           builder: (context, state) {
             pushedRoute = AppRoutes.shoppingLists;
             return const Scaffold(body: SizedBox());
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.incomingVaultInvitations,
+          builder: (context, state) {
+            pushedRoute = AppRoutes.incomingVaultInvitations;
+            return const Scaffold(body: Text('Invitation destination'));
           },
         ),
       ],
@@ -85,5 +91,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(pushedRoute, AppRoutes.shoppingLists);
+  });
+
+  testWidgets('incoming invitations can be opened from the Vault hero',
+      (tester) async {
+    await tester.pumpWidget(host());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Incoming invitations'));
+    await tester.pumpAndSettle();
+
+    expect(pushedRoute, AppRoutes.incomingVaultInvitations);
+    expect(find.text('Invitation destination'), findsOneWidget);
   });
 }

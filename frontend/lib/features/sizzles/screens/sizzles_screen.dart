@@ -10,6 +10,7 @@ import '../widgets/sizzle_video_player.dart';
 
 typedef SizzleVideoBuilder = Widget Function(
   String videoUrl,
+  String? posterUrl,
   bool active,
   bool muted,
 );
@@ -109,14 +110,16 @@ class _SizzlePage extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        buildVideo(videoUrl, active, muted),
-        const DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.transparent, Color(0xD9000000)],
-              stops: [0.42, 1],
+        buildVideo(videoUrl, recipe.photoUrl, active, muted),
+        const IgnorePointer(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, Color(0xD9000000)],
+                stops: [0.42, 1],
+              ),
             ),
           ),
         ),
@@ -149,28 +152,30 @@ class _SizzlePage extends StatelessWidget {
           left: 20,
           right: 88,
           bottom: 26,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                recipe.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.heading2.copyWith(color: Colors.white),
-              ),
-              if (recipe.cuisineType != null &&
-                  recipe.cuisineType!.isNotEmpty) ...[
-                const SizedBox(height: 6),
+          child: IgnorePointer(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 Text(
-                  _titleCase(recipe.cuisineType!),
-                  maxLines: 1,
+                  recipe.title,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style:
-                      AppTextStyles.bodySmall.copyWith(color: Colors.white70),
+                  style: AppTextStyles.heading2.copyWith(color: Colors.white),
                 ),
+                if (recipe.cuisineType != null &&
+                    recipe.cuisineType!.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    _titleCase(recipe.cuisineType!),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style:
+                        AppTextStyles.bodySmall.copyWith(color: Colors.white70),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ],
@@ -178,9 +183,15 @@ class _SizzlePage extends StatelessWidget {
   }
 }
 
-Widget _buildVideo(String videoUrl, bool active, bool muted) {
+Widget _buildVideo(
+  String videoUrl,
+  String? posterUrl,
+  bool active,
+  bool muted,
+) {
   return SizzleVideoPlayer(
     videoUrl: videoUrl,
+    posterUrl: posterUrl,
     active: active,
     muted: muted,
   );

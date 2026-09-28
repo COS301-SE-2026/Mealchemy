@@ -219,7 +219,7 @@ public class RecipeControllerIntegrationTest {
         return new RecipeRequest(
                 title, "A description.", cuisine,
                 10, 20, 2,
-                null, null, null, false, folderId
+                null, null, null, false, folderId, null
         );
     }
 
@@ -230,23 +230,19 @@ public class RecipeControllerIntegrationTest {
                 null, null, null, false,
                 List.of(new RecipeIngredientRequest(ingId, new BigDecimal("1.5"), "cups", 1)),
                 List.of(new RecipeStepRequest(1, "Mix everything.")),
-                folderId
+                folderId,
+                null
         );
     }
 
-    private RecipeUpdateRequest updateRequest(
-            String title,
-            String photoUrl,
-            boolean removePhoto,
-            List<RecipeIngredientRequest> ingredients,
-            List<RecipeStepRequest> steps) {
+private RecipeUpdateRequest updateRequest(String title, String photoUrl, boolean removePhoto, List<RecipeIngredientRequest> ingredients, List<RecipeStepRequest> steps) {
         return new RecipeUpdateRequest(
                 title, "A description.", validCuisine,
                 10, 20, 2,
                 photoUrl, removePhoto, null, false, null, false,
-                ingredients, steps
+                ingredients, steps, null
         );
-    }
+}
 
     private UsernamePasswordAuthenticationToken authAs(Integer userId) {
         return new UsernamePasswordAuthenticationToken(String.valueOf(userId), null, List.of());
@@ -379,6 +375,24 @@ public class RecipeControllerIntegrationTest {
 
         mockMvc.perform(get("/recipes/single/{id}", recipe.getRecipeId())
                 .with(authentication(authAs(owner.getUserId()))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Recipe not found."));
+    }
+
+    @Test 
+    void getRecipeById_returns404_whenMemberRemovedFromSharedVault_losesAccessToOwnCopy() throws Exception
+    {
+        Vault sharedVault = saveVault(owner, VaultType.SHARED, "Shared Vault");
+        VaultFolder sharedFolder = saveFolder(sharedVault, "Shared Folder");
+        addVaultMember(sharedVault, otherUser);
+        Recipe copy = saveRecipe(otherUser, "Other's Copy");
+        addRecipeToFolder(copy, sharedFolder);
+
+        // remove other user from shared vault
+        vaultMemberRepository.deleteAll();
+
+        mockMvc.perform(get("/recipes/single/{id}", copy.getRecipeId())
+                .with(authentication(authAs(otherUser.getUserId()))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Recipe not found."));
     }
@@ -626,7 +640,7 @@ public class RecipeControllerIntegrationTest {
         RecipeRequest request = new RecipeRequest(
                 "New Title", "A description.", validCuisine,
                 10, 20, 2,
-                newPhotoUrl, null, null, false, null
+                newPhotoUrl, null, null, false, null, null
         );
 
         mockMvc.perform(put("/recipes/edit/{id}", recipe.getRecipeId())

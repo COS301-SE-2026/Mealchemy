@@ -88,6 +88,20 @@ CookVoiceCommand? parseCookVoiceIntent(String words) {
     final duration = parseCookDuration(match.group(1)!);
     if (duration != null) return CookVoiceCommand.startTimer(duration);
   }
+
+  final pauseMatch = RegExp(
+    r'^pause (?:the )?(.+) timer$',
+  ).firstMatch(normalized);
+  if (pauseMatch != null) {
+    return CookVoiceCommand.pauseNamedTimer(pauseMatch.group(1)!.trim());
+  }
+
+  final resumeMatch = RegExp(
+    r'^(?:resume|continue) (?:the )?(.+) timer$',
+  ).firstMatch(normalized);
+  if (resumeMatch != null) {
+    return CookVoiceCommand.resumeNamedTimer(resumeMatch.group(1)!.trim());
+  }
   return null;
 }
 

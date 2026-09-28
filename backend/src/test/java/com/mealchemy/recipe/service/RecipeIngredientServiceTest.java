@@ -33,6 +33,7 @@ import com.mealchemy.recipe.repository.RecipeIngredientRepository;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.profile.repository.UserProfileRepository;
+import com.mealchemy.vault.service.RecipeEditLockService;
 
 import com.mealchemy.shared.enums.PreferredUnit;
 
@@ -49,6 +50,9 @@ public class RecipeIngredientServiceTest {
 
     @Mock
     private IngredientCatalogueRepository ingredientCatalogueRepository;
+
+    @Mock
+    private RecipeEditLockService recipeEditLockService;    
 
     @InjectMocks
     private RecipeIngredientService recipeIngredientService;
@@ -164,6 +168,7 @@ public class RecipeIngredientServiceTest {
     void createRecipeIngredient_throwsException_whenNotOwner()
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeEditLockService.canEditRecipe(1, 99)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.createRecipeIngredient(request, 1, 99));
 
@@ -214,6 +219,7 @@ public class RecipeIngredientServiceTest {
     void updateRecipeIngredient_throwsException_whenNotOwner()
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeEditLockService.canEditRecipe(1, 99)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.updateRecipeIngredient(1, request, 1, 99));
 
@@ -286,6 +292,7 @@ public class RecipeIngredientServiceTest {
     void deleteRecipeIngredient_throwsException_whenNotOwner()
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeEditLockService.canEditRecipe(1, 99)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.deleteRecipeIngredient(1, 1, 99));
         

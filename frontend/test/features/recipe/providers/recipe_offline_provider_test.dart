@@ -12,6 +12,7 @@ import 'package:mealchemy/features/recipe/models/recipe_step.dart';
 import 'package:mealchemy/features/recipe/models/unit_of_measurement.dart';
 import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
 import 'package:mealchemy/features/recipe/repositories/recipe_repository.dart';
+import 'package:mealchemy/features/recipe/models/equipment.dart';
 
 void main() {
   late OfflineCacheDatabase database;
@@ -127,6 +128,9 @@ class _RecipeRepositoryStub implements RecipeRepository {
     int id,
     Recipe recipe, {
     bool removePhoto = false,
+    bool removeVideo = false,
   }) =>
       throw UnimplementedError();
+  @override
+  Future<List<Equipment>> getRecipeEquipment(int recipeId) async => const [];
 }

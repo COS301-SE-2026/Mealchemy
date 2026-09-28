@@ -11,6 +11,7 @@ import '../providers/vault_repository_provider.dart';
 import '../models/vault_member.dart';
 import '../../external_links/models/link.dart';
 import '../../external_links/providers/link_provider.dart';
+import 'shared_vault_access_provider.dart';
 
 // Vaults provider
 final vaultsProvider = FutureProvider<List<Vault>>((ref) async {
@@ -24,12 +25,14 @@ final vaultsProvider = FutureProvider<List<Vault>>((ref) async {
 // Vault folders provider
 final vaultFoldersProvider =
     FutureProvider.family<List<VaultFolder>, int>((ref, vaultId) {
+  ref.watch(vaultSessionProvider);
   return ref.watch(vaultRepositoryProvider).getFolders(vaultId);
 });
 
 // Raw folder recipes provider
 final folderRecipesProvider =
     FutureProvider.family<List<VaultFolderRecipe>, int>((ref, folderId) {
+  ref.watch(vaultSessionProvider);
   return ref.watch(vaultRepositoryProvider).getFolderRecipes(folderId);
 });
 
@@ -54,8 +57,15 @@ final folderRecipeDisplayProvider =
 
 //Selecting a vault
 
-final selectedVaultIdProvider = StateProvider<int?>((ref) => null);
-final isSharedModeProvider = StateProvider<bool>((ref) => false);
+final selectedVaultIdProvider = StateProvider<int?>((ref) {
+  ref.watch(vaultSessionProvider.select((session) => session.userId));
+  return null;
+});
+
+final isSharedModeProvider = StateProvider<bool>((ref) {
+  ref.watch(vaultSessionProvider.select((session) => session.userId));
+  return false;
+});
 
 final selectedVaultProvider = Provider<Vault?>((ref) {
   final vaults = ref.watch(vaultsProvider).valueOrNull;
@@ -97,6 +107,7 @@ final privateVaultProvider = Provider<Vault?>((ref) {
 
 final vaultMembersProvider =
     FutureProvider.family<List<VaultMember>, int>((ref, vaultId) {
+  ref.watch(vaultSessionProvider);
   return ref.watch(vaultRepositoryProvider).getMembers(vaultId);
 });
 
@@ -117,7 +128,10 @@ final deleteFolderRecipeProvider =
   };
 });
 
-final vaultSearchQueryProvider = StateProvider<String>((ref) => '');
+final vaultSearchQueryProvider = StateProvider<String>((ref) {
+  ref.watch(vaultSessionProvider.select((session) => session.userId));
+  return '';
+});
 
 typedef VaultSearchRequest = ({
   int vaultId,

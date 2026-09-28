@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mealchemy/features/sizzles/widgets/sizzle_video_player.dart';
+import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 void main() {
@@ -45,6 +46,47 @@ void main() {
     await _pumpPlayer(tester, active: false, muted: false);
 
     expect(platform.calls, contains('pause'));
+  });
+
+  testWidgets('toggles playback when the video is tapped', (tester) async {
+    await _pumpPlayer(tester, active: true, muted: true);
+    platform.calls.clear();
+
+    await tester.tap(find.byType(SizzleVideoPlayer));
+    await tester.pump();
+
+    expect(platform.calls, contains('pause'));
+    expect(find.byIcon(Icons.play_circle_fill), findsOneWidget);
+
+    platform.calls.clear();
+    await tester.tap(find.byType(SizzleVideoPlayer));
+    await tester.pump();
+
+    expect(platform.calls, contains('play'));
+    expect(find.byIcon(Icons.play_circle_fill), findsNothing);
+  });
+
+  testWidgets('shows the recipe photo while video initialization is pending',
+      (tester) async {
+    platform.deferInitialization = true;
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: SizzleVideoPlayer(
+          videoUrl: 'https://cdn.test/video.mp4',
+          posterUrl: 'https://cdn.test/poster.jpg',
+          active: true,
+          muted: true,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final poster = tester.widget<RecipeNetworkImage>(
+      find.byKey(const ValueKey('sizzle-video-poster')),
+    );
+    expect(poster.photoUrl, 'https://cdn.test/poster.jpg');
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 
   testWidgets('pauses for app backgrounding and resumes when active',
@@ -101,6 +143,7 @@ class _FakeVideoPlayerPlatform extends VideoPlayerPlatform {
   final List<double> volumeValues = [];
   final Map<int, StreamController<VideoEvent>> _streams = {};
   bool forceInitializationError = false;
+  bool deferInitialization = false;
   int _nextPlayerId = 0;
 
   @override
@@ -129,7 +172,7 @@ class _FakeVideoPlayerPlatform extends VideoPlayerPlatform {
           message: 'Video initialization failed',
         ),
       );
-    } else {
+    } else if (!deferInitialization) {
       stream.add(
         VideoEvent(
           eventType: VideoEventType.initialized,

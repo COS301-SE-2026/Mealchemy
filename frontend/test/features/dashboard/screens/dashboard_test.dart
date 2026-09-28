@@ -221,12 +221,6 @@ void main() {
       expect(find.text('Recommended for You'), findsOneWidget);
     });
 
-    testWidgets('renders View all trailing label', (tester) async {
-      await pump(tester, const RecommendedRecipesSection());
-      await tester.pumpAndSettle();
-
-      expect(find.text('View all'), findsOneWidget);
-    });
   });
 
   group('TrendingRecipesSection', () {

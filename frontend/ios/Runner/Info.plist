@@ -27,11 +27,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Mealchemy uses the camera to add photos to your recipes.</string>
+	<string>Mealchemy uses the camera to add photos and videos to your recipes.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Mealchemy uses your photo library to add photos to your recipes.</string>
+	<string>Mealchemy uses your photo library to add photos and videos to your recipes.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Mealchemy uses the microphone to hear cooking commands while you cook.</string>
+	<string>Mealchemy uses the microphone to record recipe videos and hear cooking commands.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Mealchemy recognizes short cooking commands on your device.</string>
 	<key>UIApplicationSceneManifest</key>

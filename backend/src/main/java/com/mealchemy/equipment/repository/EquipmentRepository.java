@@ -14,7 +14,7 @@ public interface EquipmentRepository extends JpaRepository<Equipment, Integer> {
 
     @Query("""
             SELECT new com.mealchemy.equipment.dto.EquipmentResponse(
-                e.id,
+                e.equipmentId,
                 e.value,
                 e.label
             )

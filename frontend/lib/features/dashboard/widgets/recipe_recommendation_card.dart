@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_match_badge.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/features/guided_discovery/models/recommendation.dart';
 import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
-import 'package:mealchemy/features/recipe/widgets/report_recipe_button.dart';
 
 class RecipeRecommendationCard extends StatelessWidget {
   const RecipeRecommendationCard({
@@ -26,9 +23,6 @@ class RecipeRecommendationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push(
-        AppRoutes.recipeDetail.replaceFirst(':id', '${data.recipeId}'),
-      ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: SizedBox(
@@ -59,19 +53,12 @@ class RecipeRecommendationCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        if (data.recipe.isCommunityPublished)
-                          ReportRecipeButton(
-                            recipe: data.recipe,
-                            onImage: true,
-                          ),
-                        const Spacer(),
-                        AppMatchBadge(
-                          percent: data.matchPercent,
-                          size: BadgeSize.small,
-                        ),
-                      ],
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: AppMatchBadge(
+                        percent: data.matchPercent,
+                        size: BadgeSize.small,
+                      ),
                     ),
                     const Spacer(),
                     // Cuisine tag
@@ -111,10 +98,14 @@ class RecipeRecommendationCard extends StatelessWidget {
                           color: AppColors.textDark.withValues(alpha: 0.8),
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          _timeLabel,
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.textDark.withValues(alpha: 0.8),
+                        Flexible(
+                          child: Text(
+                            _timeLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.textDark.withValues(alpha: 0.8),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -126,12 +117,16 @@ class RecipeRecommendationCard extends StatelessWidget {
                           color: AppColors.accent,
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          data.pantryGapCount <= 0
-                              ? 'Ready to cook'
-                              : '${data.pantryGapCount} to buy',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.textDark.withValues(alpha: 0.8),
+                        Flexible(
+                          child: Text(
+                            data.pantryGapCount <= 0
+                                ? 'Ready to cook'
+                                : '${data.pantryGapCount} to buy',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.textDark.withValues(alpha: 0.8),
+                            ),
                           ),
                         ),
                       ],

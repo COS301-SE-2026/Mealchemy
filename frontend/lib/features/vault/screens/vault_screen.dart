@@ -12,7 +12,11 @@ import '../../../core/connectivity/network_status_provider.dart';
 import '../../../core/shared_widgets/Molecules/app_search_bar.dart';
 import '../../external_links/widgets/link_row.dart';
 import '../widgets/folder_recipe_row.dart';
-
+import '../../external_links/providers/link_provider.dart';
+import '../../favourites/providers/fav_provider.dart';
+import '../providers/shared_vault_access_provider.dart';
+import '../widgets/shared_vault_members_entry.dart';
+import '../widgets/shared_vault_recipe_row.dart';
 import '../widgets/vault_hero.dart';
 import '../../offline/data/offline_cache_store.dart';
 import '../../offline/widgets/cache_freshness_label.dart';
@@ -35,7 +39,23 @@ class VaultScreen extends ConsumerWidget {
         child: const Icon(Icons.add),
       ),
       body: AppRefresh(
-        onRefresh: () => ref.refresh(vaultsProvider.future),
+        onRefresh: () async {
+          ref.invalidate(sharedVaultAccessProvider);
+          ref.invalidate(vaultMembersProvider);
+          ref.invalidate(vaultFoldersProvider);
+          ref.invalidate(folderRecipesProvider);
+          ref.invalidate(vaultSearchResultsProvider);
+          ref.invalidate(favsProvider);
+          ref.invalidate(linksProvider);
+
+          ref.invalidate(vaultsProvider);
+
+          try {
+            await ref.read(vaultsProvider.future);
+          } catch (_) {
+            // The screen displays the current loading/error state.
+          }
+        },
         child: vaultsAsync.when(
           loading: () => const _ScrollableCentre(
             child: CircularProgressIndicator(),
@@ -89,6 +109,14 @@ class _VaultBody extends ConsumerWidget {
                 },
               ),
             ),
+            if (selected != null && selected.vaultType == VaultTypes.shared)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: SharedVaultMembersEntry(
+                  key: ValueKey(selected.vaultId),
+                  vaultId: selected.vaultId,
+                ),
+              ),
             if (selected == null && isShared)
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
@@ -182,6 +210,7 @@ class _VaultSearchResultsView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isReadOnly = ref.watch(offlineReadOnlyProvider);
+    final selectedVault = ref.watch(selectedVaultProvider);
 
     if (results.isEmpty) {
       return Padding(
@@ -227,10 +256,18 @@ class _VaultSearchResultsView extends ConsumerWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            FolderRecipeRow(
-              recipe: result.recipe,
-              mutationsEnabled: false,
-            ),
+            if (selectedVault?.vaultType == VaultTypes.shared)
+              SharedVaultRecipeRow(
+                vaultId: selectedVault!.vaultId,
+                folderId: result.folder.folderId,
+                recipe: result.recipe,
+              )
+            else
+              FolderRecipeRow(
+                recipe: result.recipe,
+                mutationsEnabled: false,
+                allowReporting: selectedVault?.vaultType == VaultTypes.global,
+              ),
             const SizedBox(height: 8),
           ],
         ],

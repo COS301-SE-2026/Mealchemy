@@ -19,6 +19,7 @@ import '../repositories/api_recipe_repository.dart';
 import '../repositories/mock_recipe_repository.dart';
 import '../repositories/recipe_repository.dart';
 import '../../profile/providers/profile_provider.dart';
+import '../models/equipment.dart';
 
 final remoteRecipeRepositoryProvider = Provider<RecipeRepository>((ref) {
   return ApiRecipeRepository(ref.read(dioProvider));
@@ -64,10 +65,12 @@ final recipeDetailProvider =
       repository.getRecipeById(id),
       repository.getRecipeIngredients(id),
       repository.getRecipeSteps(id),
+      repository.getRecipeEquipment(id),
     ]);
     return (results[0] as Recipe).copyWith(
       ingredients: results[1] as List<RecipeIngredient>,
       steps: results[2] as List<RecipeStep>,
+      equipment: results[3] as List<Equipment>,
     );
   }
 
@@ -79,10 +82,12 @@ final recipeDetailProvider =
       repository.getRecipeById(id),
       repository.getRecipeIngredients(id),
       repository.getRecipeSteps(id),
+      repository.getRecipeEquipment(id),
     ]);
     final completeRecipe = (results[0] as Recipe).copyWith(
       ingredients: results[1] as List<RecipeIngredient>,
       steps: results[2] as List<RecipeStep>,
+      equipment: results[3] as List<Equipment>,
     );
     if (viewerUserId != null) {
       await cache.storeCompleteRecipe(
@@ -162,8 +167,13 @@ class AddRecipeNotifier extends StateNotifier<AddRecipeState> {
     return created.folderId;
   }
 
-  Future<Recipe?> submit(Recipe recipe,
-      {int? folderId, int? recipeId, bool removePhoto = false}) async {
+  Future<Recipe?> submit(
+    Recipe recipe, {
+    int? folderId,
+    int? recipeId,
+    bool removePhoto = false,
+    bool removeVideo = false,
+  }) async {
     final missing = recipe.title.trim().isEmpty ||
         (recipe.cuisineType ?? '').isEmpty ||
         recipe.prepTimeMins == null ||
@@ -181,8 +191,12 @@ class AddRecipeNotifier extends StateNotifier<AddRecipeState> {
     try {
       final Recipe result;
       if (recipeId != null) {
-        result = await _repository.updateRecipeFull(recipeId, recipe,
-            removePhoto: removePhoto);
+        result = await _repository.updateRecipeFull(
+          recipeId,
+          recipe,
+          removePhoto: removePhoto,
+          removeVideo: removeVideo,
+        );
       } else {
         final targetFolderId = folderId ?? await _resolveDefaultFolderId();
         result = await _repository.addRecipe(recipe, targetFolderId);
@@ -231,7 +245,7 @@ final unitOptionsProvider = Provider<List<UnitOfMeasurement>>((ref) {
 
   return all.where((u) {
     if (u.system == null) return true;
-    return u.system == system.value; 
+    return u.system == system.value;
   }).toList();
 });
 

@@ -15,10 +15,16 @@ import 'report_recipe_button.dart';
 
 //image with overlay, back/share buttons, recipe title
 class RecipeHero extends ConsumerWidget {
-  const RecipeHero({super.key, required this.recipe, this.height = 290});
+  const RecipeHero({
+    super.key,
+    required this.recipe,
+    this.height = 290,
+    this.allowReporting = false,
+  });
 
   final Recipe recipe;
   final double height;
+  final bool allowReporting;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -51,12 +57,31 @@ class RecipeHero extends ConsumerWidget {
                       frosted: false,
                     ),
                     const Spacer(),
-                    if (recipe.isCommunityPublished) ...[
-                      ReportRecipeButton(
-                        recipe: recipe,
-                        onImage: true,
+                    if (allowReporting &&
+                        recipe.isCommunityPublished &&
+                        recipe.recipeId > 0) ...[
+                      Tooltip(
+                        message: 'Report recipe',
+                        child: _HeroCircleButton(
+                          icon: Icons.flag_outlined,
+                          onTap: isReadOnly
+                              ? null
+                              : () {
+                                  showDialog<void>(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder: (_) => ReportRecipeDialog(
+                                      recipe: recipe,
+                                    ),
+                                  );
+                                },
+                          background:
+                              AppColors.textLight.withValues(alpha: 0.45),
+                          iconColor: AppColors.textDark,
+                          frosted: true,
+                        ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 10),
                     ],
                     _HeroCircleButton(
                       icon: Icons.add_shopping_cart,

@@ -4,6 +4,7 @@ import 'app_shell.dart';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/admin/screens/admin_screen.dart';
@@ -13,6 +14,7 @@ import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/pantry/screens/pantry_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/vault/screens/vault_screen.dart';
+import '../../features/vault/screens/vault_members_screen.dart';
 import '../../features/pantry/screens/add_ingredient_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
 import '../../features/recipe/screens/recipe_detail_screen.dart';
@@ -20,14 +22,20 @@ import '../../features/cook_mode/screens/cook_mode_screen.dart';
 import '../../features/recipe/screens/add_recipe_screen.dart';
 import '../../features/discovery/screens/discovery_screen.dart';
 import '../../features/preference/screens/weights_screen.dart';
+import '../../features/vault/screens/vault_invitations_screen.dart';
+import '../../features/vault/screens/incoming_vault_invitations_screen.dart';
 
 import '../../features/shopping_lists/screens/shopping_lists_screen.dart';
 import '../../features/shopping_lists/screens/shopping_list_detail_screen.dart';
 import '../../features/shopping_lists/screens/add_shopping_list_item_screen.dart';
 import '../../features/guided_discovery/screens/guided_discovery_screen.dart';
 import '../../features/help/screens/help_screen.dart';
-
+import '../../features/recipe/screens/shared_recipe_edit_screen.dart';
 import '../../features/recipe/models/recipe.dart';
+
+import '../../features/recipe/providers/shared_recipe_edit_provider.dart';
+import '../../features/vault/providers/shared_vault_access_provider.dart';
+import '../../features/notifications/screens/notification_inbox_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: AppRoutes.login,
@@ -54,18 +62,14 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: AppRoutes.recipeEdit,
-      builder: (context, state) {
-        final id = int.parse(state.pathParameters['id']!);
-        return AddRecipeScreen(editRecipeId: id);
-      },
+      builder: (context, state) => _buildRecipeEditor(state),
     ),
     GoRoute(
       path: AppRoutes.editRecipe,
-      builder: (context, state) {
-        final id = int.parse(state.pathParameters['id']!);
-        final recipe = state.extra as Recipe?;
-        return AddRecipeScreen(editRecipeId: id, initialRecipe: recipe);
-      },
+      builder: (context, state) => _buildRecipeEditor(
+        state,
+        allowInitialRecipe: true,
+      ),
     ),
     GoRoute(
       path: AppRoutes.cookMode,
@@ -83,7 +87,13 @@ final appRouter = GoRouter(
       path: AppRoutes.recipeDetail,
       builder: (context, state) {
         final id = int.parse(state.pathParameters['id']!);
-        return RecipeDetailScreen(recipeId: id);
+        return RecipeDetailScreen(
+          recipeId: id,
+          allowReporting: state.uri.queryParameters['report'] == 'true',
+          sharedVaultId: int.tryParse(
+            state.uri.queryParameters['vaultId'] ?? '',
+          ),
+        );
       },
     ),
     GoRoute(
@@ -133,37 +143,89 @@ final appRouter = GoRouter(
       },
     ),
 
+    GoRoute(
+      path: AppRoutes.incomingVaultInvitations,
+      builder: (context, state) => const IncomingVaultInvitationsScreen(),
+    ),
+
+    GoRoute(
+      path: AppRoutes.vaultInvitations,
+      builder: (context, state) {
+        final vaultId = int.tryParse(
+          state.pathParameters['vaultId'] ?? '',
+        );
+
+        if (vaultId == null || vaultId <= 0) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Vault invitations')),
+            body: const Center(child: Text('Invalid vault ID.')),
+          );
+        }
+
+        return VaultInvitationsScreen(vaultId: vaultId);
+      },
+    ),
+
+    GoRoute(
+      path: AppRoutes.vaultMembers,
+      builder: (context, state) {
+        final vaultId = int.tryParse(
+          state.pathParameters['vaultId'] ?? '',
+        );
+
+        if (vaultId == null || vaultId <= 0) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Vault members')),
+            body: const Center(child: Text('Invalid vault ID.')),
+          );
+        }
+
+        return VaultMembersScreen(vaultId: vaultId);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.notifications,
+      builder: (context, state) => const NotificationInboxScreen(),
+    ),
+
     // main destinations header + bottom nav supplied once by AppShell.
     ShellRoute(
       builder: (context, state, child) => AppShell(child: child),
       routes: [
         GoRoute(
           path: AppRoutes.dashboard,
-          pageBuilder: (context, state) => NoTransitionPage(child: const DashboardScreen()),
+          pageBuilder: (context, state) =>
+              NoTransitionPage(child: const DashboardScreen()),
         ),
         GoRoute(
           path: AppRoutes.vault,
-          pageBuilder: (context, state) => NoTransitionPage(child: const VaultScreen()),
+          pageBuilder: (context, state) =>
+              NoTransitionPage(child: const VaultScreen()),
         ),
         GoRoute(
           path: AppRoutes.discovery,
-          pageBuilder: (context, state) => NoTransitionPage(child: const DiscoveryScreen()),
+          pageBuilder: (context, state) =>
+              NoTransitionPage(child: const DiscoveryScreen()),
         ),
         GoRoute(
           path: AppRoutes.pantry,
-          pageBuilder: (context, state) => NoTransitionPage(child: const PantryScreen()),
+          pageBuilder: (context, state) =>
+              NoTransitionPage(child: const PantryScreen()),
         ),
         GoRoute(
           path: AppRoutes.profile,
-          pageBuilder: (context, state) => NoTransitionPage(child: const ProfileScreen()),
+          pageBuilder: (context, state) =>
+              NoTransitionPage(child: const ProfileScreen()),
         ),
         GoRoute(
           path: AppRoutes.shoppingLists,
-          pageBuilder: (context, state) => NoTransitionPage(child: const ShoppingListsScreen()),
+          pageBuilder: (context, state) =>
+              NoTransitionPage(child: const ShoppingListsScreen()),
         ),
         GoRoute(
           path: AppRoutes.guidedDiscovery,
-          pageBuilder: (context, state) => NoTransitionPage(child: const GuidedDiscoveryScreen()),
+          pageBuilder: (context, state) =>
+              NoTransitionPage(child: const GuidedDiscoveryScreen()),
         ),
       ],
     ),
@@ -190,4 +252,51 @@ CustomTransitionPage<void> _sheetPage(LocalKey key, Widget child) {
       );
     },
   );
+}
+
+Widget _buildRecipeEditor(
+  GoRouterState state, {
+  bool allowInitialRecipe = false,
+}) {
+  final id = int.tryParse(state.pathParameters['id'] ?? '');
+
+  try {
+    if (id == null || id <= 0) {
+      throw const FormatException('Invalid recipe ID.');
+    }
+
+    final sharedContext = sharedRecipeContextFromUri(
+      state.uri,
+      recipeId: id,
+    );
+
+    if (sharedContext == null) {
+      final initialRecipe = allowInitialRecipe && state.extra is Recipe
+          ? state.extra as Recipe
+          : null;
+
+      return AddRecipeScreen(
+        editRecipeId: id,
+        initialRecipe: initialRecipe?.recipeId == id ? initialRecipe : null,
+      );
+    }
+
+    return Consumer(
+      builder: (context, ref, _) {
+        final session = ref.watch(vaultSessionProvider);
+
+        return SharedRecipeEditScreen(
+          key: ValueKey((sharedContext, session)),
+          target: sharedContext,
+        );
+      },
+    );
+  } on FormatException {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Edit recipe')),
+      body: const Center(
+        child: Text('Invalid recipe or shared-vault link.'),
+      ),
+    );
+  }
 }

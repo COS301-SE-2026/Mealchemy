@@ -38,7 +38,8 @@ import com.mealchemy.config.WithMockJwtUser;
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(VaultInvitationController.class)
 @WithMockJwtUser(userId = "1")
-public class VaultInvitationControllerTest {
+public class VaultInvitationControllerTest 
+{
 
     @Autowired
     private MockMvc mockMvc;

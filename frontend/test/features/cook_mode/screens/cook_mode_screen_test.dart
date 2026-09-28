@@ -491,7 +491,8 @@ void main() {
     expect(find.byKey(const Key('cook-voice-sound-bars')), findsNothing);
   });
 
-  testWidgets('rejects unknown and low-confidence phrases', (tester) async {
+  testWidgets('rejects unknown phrases without rejecting recognized commands',
+      (tester) async {
     final narration = _FakeNarrationService();
     final voice = _FakeVoiceService();
     await tester.pumpWidget(_host(
@@ -512,15 +513,15 @@ void main() {
     expect(find.text('Step 1 of 2'), findsOneWidget);
     expect(
       find.text(
-        "Didn't catch that. Try next, back, repeat, or set a timer.",
+        'Heard "not next". Try next, back, repeat, set, pause, or resume a timer.',
       ),
       findsOneWidget,
     );
 
     await tester.pump(const Duration(milliseconds: 350));
     voice.complete('next', confidence: 0.2);
-    await tester.pump();
-    expect(find.text('Step 1 of 2'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.text('Step 2 of 2'), findsOneWidget);
   });
 
   testWidgets('repeat and back commands act on the current step',
@@ -573,8 +574,51 @@ void main() {
 
     voice.callbacks?.onListeningChanged(false);
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump(const Duration(milliseconds: 800));
     expect(voice.listenCalls, 2);
+  });
+
+  testWidgets('no-match retries back off and stop after three retries',
+      (tester) async {
+    final narration = _FakeNarrationService();
+    final voice = _FakeVoiceService();
+    await tester.pumpWidget(_host(
+      _recipe,
+      _FakeScreenAwakeService(),
+      narration: narration,
+      voice: voice,
+    ));
+    await tester.pumpAndSettle();
+    narration.callbacks?.onComplete();
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('cook-voice-mode-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(voice.listenCalls, 1);
+
+    voice.callbacks?.onError('error_no_match');
+    await tester.pump(const Duration(seconds: 1));
+    expect(voice.listenCalls, 2);
+
+    voice.callbacks?.onError('error_no_match');
+    await tester.pump(const Duration(seconds: 2));
+    expect(voice.listenCalls, 3);
+
+    voice.callbacks?.onError('error_no_match');
+    await tester.pump(const Duration(seconds: 4));
+    expect(voice.listenCalls, 4);
+
+    voice.callbacks?.onError('error_no_match');
+    await tester.pump(const Duration(seconds: 5));
+    expect(voice.listenCalls, 4);
+    expect(
+      find.text('No command heard. Tap Speak to try again.'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const Key('cook-voice-mode-button')));
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(voice.listenCalls, 5);
   });
 
   testWidgets('denied microphone leaves narration and manual cooking usable',
@@ -620,7 +664,8 @@ void main() {
     voice.callbacks?.onError('error_language_unavailable');
     await tester.pumpAndSettle();
     expect(
-      find.text('On-device voice unavailable. Tap Speak to try again.'),
+      find.text(
+          'Voice recognition unavailable. Tap Speak to try again or check Device Settings'),
       findsOneWidget,
     );
     await tester.tap(find.byKey(const Key('cook-next-button')));
@@ -689,5 +734,39 @@ void main() {
     );
     expect(find.byKey(const Key('cook-active-timer-group')), findsOneWidget);
     expect(find.text('10:00'), findsOneWidget);
+  });
+
+  testWidgets('voice pauses and resumes the only active timer', (tester) async {
+    final narration = _FakeNarrationService();
+    final voice = _FakeVoiceService();
+    final notifications = _FakeTimerNotifications();
+    await tester.pumpWidget(_host(
+      _recipe,
+      _FakeScreenAwakeService(),
+      narration: narration,
+      voice: voice,
+      timerNotifications: notifications,
+    ));
+    await tester.pumpAndSettle();
+
+    narration.callbacks?.onComplete();
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('cook-voice-mode-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    voice.complete('set a timer for ten minutes');
+    await tester.pumpAndSettle();
+
+    await tester.pump(const Duration(milliseconds: 350));
+    voice.complete('pause timer');
+    await tester.pumpAndSettle();
+    expect(find.text('Timer paused.'), findsOneWidget);
+    expect(find.text('Paused'), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 350));
+    voice.complete('resume timer');
+    await tester.pumpAndSettle();
+    expect(find.text('Timer resumed.'), findsOneWidget);
+    expect(find.text('Paused'), findsNothing);
   });
 }

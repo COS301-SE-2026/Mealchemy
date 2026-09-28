@@ -9,7 +9,6 @@ void main() {
 
   Widget host({
     double value = 0.4,
-    double share = 0.4,
     ValueChanged<double>? onChanged,
   }) {
     return MaterialApp(
@@ -18,8 +17,8 @@ void main() {
         body: WeightSlider(
           title: 'Pantry Match',
           icon: Icons.kitchen_outlined,
+          subtitle: 'Favour recipes you can make with what you already have',
           value: value,
-          share: share,
           onChanged: onChanged ?? (_) {},
         ),
       ),
@@ -27,21 +26,24 @@ void main() {
   }
 
   group('WeightSlider', () {
-    testWidgets('rendrs the title and share percentage', (tester) async {
-      await tester.pumpWidget(host(share: 0.4));
+    testWidgets('rendrs the title and subtitle', (tester) async {
+      await tester.pumpWidget(host());
       await tester.pumpAndSettle();
-
       expect(find.text('Pantry Match'), findsOneWidget);
-      expect(find.text('40%'), findsOneWidget);
+      expect(
+        find.text('Favour recipes you can make with what you already have'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('round the share to a whole percentage', (tester) async {
-      await tester.pumpWidget(host(share: 0.123));
+    testWidgets('shows no percentage', (tester) async {
+      await tester.pumpWidget(host());
       await tester.pumpAndSettle();
-      expect(find.text('12%'), findsOneWidget);
+
+      expect(find.textContaining('%'), findsNothing);
     });
 
-    testWidgets('dragging the slider report a new value', (tester) async {
+    testWidgets('dragging the slider reports a new value', (tester) async {
       double? changed;
 
       await tester.pumpWidget(host(value: 0.5, onChanged: (v) => changed = v));

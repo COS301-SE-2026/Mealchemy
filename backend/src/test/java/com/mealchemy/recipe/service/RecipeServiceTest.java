@@ -41,7 +41,11 @@ import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.cuisinetype.repository.FlavourProfileOptionsRepository;
 import com.mealchemy.vault.repository.VaultFolderRepository;
+import com.mealchemy.equipment.repository.EquipmentRepository;
 import com.mealchemy.vault.service.VaultFolderRecipeService;
+import com.mealchemy.vault.service.RecipeEditLockService;
+import com.mealchemy.equipment.model.Equipment;
+
 import com.mealchemy.shared.enums.VaultType;
 
 @ExtendWith(MockitoExtension.class)
@@ -58,14 +62,21 @@ public class RecipeServiceTest {
     @Mock 
     private VaultFolderRepository vaultFolderRepository;
 
+    @Mock
+    private EquipmentRepository equipmentRepository;
+
     @Mock 
     private VaultFolderRecipeService vaultFolderRecipeService;
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private RecipeEditLockService recipeEditLockService;
+
     @InjectMocks
     private RecipeService recipeService;
+
 
     private Recipe recipe;
     private Recipe sourceRecipe;
@@ -100,7 +111,7 @@ public class RecipeServiceTest {
         privateFolder.setFolderName("My Folder");
         ReflectionTestUtils.setField(privateFolder, "folderId", 1);
 
-        request = new RecipeRequest("Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, 1);
+        request = new RecipeRequest("Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, 1, null);
 
         List<RecipeIngredientRequest> ingredients = List.of(
             new RecipeIngredientRequest(1, BigDecimal.valueOf(2.0), "cup", 1)
@@ -110,9 +121,9 @@ public class RecipeServiceTest {
             new RecipeStepRequest(1, "Mix everything together.")
         );
 
-        fullRequest = new RecipeFullRequest("FullReq Title", "Full Description", "Chinese", 10, 15, 2, null, null, null, false, ingredients, steps, 1);
+        fullRequest = new RecipeFullRequest("FullReq Title", "Full Description", "Chinese", 10, 15, 2, null, null, null, false, ingredients, steps, 1, null);
 
-        updateRequest = new RecipeUpdateRequest("Req Title", "Description", "Chinese", 10, 15, 2, null, false, null, false, null, false, null, null);
+        updateRequest = new RecipeUpdateRequest("Req Title", "Description", "Chinese", 10, 15, 2, null, false, null, false, null, false, null, null, null);
     }
 
     @Test
@@ -242,7 +253,7 @@ public class RecipeServiceTest {
     @Test
     void createRecipe_throwsException_whenFolderIdIsNull()
     {   
-        RecipeRequest noFolderRequest = new RecipeRequest("Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, null);
+        RecipeRequest noFolderRequest = new RecipeRequest("Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, null, null);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.createRecipe(noFolderRequest, 1));
 
@@ -383,7 +394,8 @@ public class RecipeServiceTest {
         recipe.setPhotoUrl(oldPhotoUrl);
         RecipeUpdateRequest photoRequest = new RecipeUpdateRequest(
             "Req Title", "Description", "Chinese", 10, 15, 2,
-            newPhotoUrl, false, null, false, null, false, null, null
+
+            newPhotoUrl, false, null, false, null, false, null, null, null
         );
 
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
@@ -407,7 +419,7 @@ public class RecipeServiceTest {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
         RecipeUpdateRequest removalRequest = new RecipeUpdateRequest(
             "Req Title", "Description", "Chinese", 10, 15, 2,
-            null, true, null, false, null, false, null, null
+            null, true, null, false, null, false, null, null, null
         );
 
         when(flavourProfileOptionsRepository.existsByValue(removalRequest.cuisineType()))
@@ -428,7 +440,7 @@ public class RecipeServiceTest {
         recipe.setPhotoUrl(photoUrl);
         RecipeUpdateRequest photoRequest = new RecipeUpdateRequest(
             "Req Title", "Description", "Chinese", 10, 15, 2,
-            photoUrl, false, null, false, null, false, null, null
+            photoUrl, false, null, false, null, false, null, null, null
         );
 
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
@@ -447,9 +459,9 @@ public class RecipeServiceTest {
         String oldVideoUrl = "https://storage.googleapis.com/bucket/recipes/1/videos/old.mp4";
         String newVideoUrl = "https://storage.googleapis.com/bucket/recipes/1/videos/new.mp4";
         recipe.setVideoUrl(oldVideoUrl);
-        RecipeUpdateRequest videoRequest = new RecipeUpdateRequest(
+       RecipeUpdateRequest videoRequest = new RecipeUpdateRequest(
             "Req Title", "Description", "Chinese", 10, 15, 2,
-            null, false, newVideoUrl, false, null, false, null, null
+            null, false, newVideoUrl, false, null, false, null, null, null
         );
 
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
@@ -519,7 +531,8 @@ public class RecipeServiceTest {
             "Req Title", "Description", "Chinese", 10, 15, 2,
             null, false, null, false, null, false,
             List.of(new RecipeIngredientRequest(1, BigDecimal.valueOf(3), "tbsp", 0)),
-            List.of(new RecipeStepRequest(1, "Replacement step"))
+            List.of(new RecipeStepRequest(1, "Replacement step")),
+            null
         );
 
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
@@ -545,7 +558,7 @@ public class RecipeServiceTest {
         recipe.getSteps().add(new RecipeStep());
         RecipeUpdateRequest clearRequest = new RecipeUpdateRequest(
             "Req Title", "Description", "Chinese", 10, 15, 2,
-            null, false, null, false, null, false, List.of(), List.of()
+            null, false, null, false, null, false, List.of(), List.of(), null
         );
 
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
@@ -566,7 +579,7 @@ public class RecipeServiceTest {
         RecipeUpdateRequest invalidRequest = new RecipeUpdateRequest(
             "Req Title", "Description", "Chinese", 10, 15, 2,
             "https://storage.googleapis.com/bucket/recipes/1/new.jpg",
-            true, null, false, null, false, null, null
+            true, null, false, null, false, null, null, null
         );
 
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
@@ -587,6 +600,57 @@ public class RecipeServiceTest {
     }
 
     @Test
+    void updateRecipe_publishesCleanup_whenVideoIsRemoved()
+    {
+        String oldVideoUrl = "https://storage.googleapis.com/bucket/recipes/1/videos/old.mp4";
+        recipe.setVideoUrl(oldVideoUrl);
+
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        RecipeUpdateRequest removalRequest = new RecipeUpdateRequest(
+            "Req Title", "Description", "Chinese", 10, 15, 2,
+            null, false, null, true, null, false, null, null, null
+        );
+
+        when(flavourProfileOptionsRepository.existsByValue(removalRequest.cuisineType()))
+            .thenReturn(true);
+        when(recipeRepository.save(any(Recipe.class))).thenReturn(recipe);
+
+        recipeService.updateRecipe(1, removalRequest, 1);
+
+        verify(eventPublisher).publishEvent(
+            new RecipeVideoCleanupEvent(1, oldVideoUrl)
+        );
+        assertNull(recipe.getVideoUrl());
+    }
+
+    @Test
+    void updateRecipe_throwsException_whenRemovingAndReplacingVideo()
+    {
+        RecipeUpdateRequest invalidRequest = new RecipeUpdateRequest(
+            "Req Title", "Description", "Chinese", 10, 15, 2,
+            null, false,
+            "https://storage.googleapis.com/bucket/recipes/1/videos/new.mp4",
+            true, null, false, null, null, null
+        );
+
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(flavourProfileOptionsRepository.existsByValue(invalidRequest.cuisineType()))
+            .thenReturn(true);
+
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> recipeService.updateRecipe(1, invalidRequest, 1)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals(
+            "A replacement video URL cannot be supplied when removing the video.",
+            ex.getReason()
+        );
+        verify(recipeRepository, never()).save(any(Recipe.class));
+    }
+
+    @Test
     void updateRecipe_throwsException_whenRecipeNotFound()
     {
         when(recipeRepository.findById(99)).thenReturn(Optional.empty());
@@ -601,6 +665,7 @@ public class RecipeServiceTest {
     void updateRecipe_throwsException_whenNotOwner()
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeEditLockService.canEditRecipe(1, 99)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.updateRecipe(1, updateRequest, 99));
 
@@ -671,10 +736,72 @@ public class RecipeServiceTest {
     void deleteRecipe_throwsException_whenNotOwner()
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeEditLockService.canEditRecipe(1, 3)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
         
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.deleteRecipe(1, 3));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Recipe not found.", ex.getReason());
+    }
+
+    // equipment
+    @Test
+    void createRecipe_attachesEquipment_whenEquipmentIdsProvided()
+    {
+        RecipeRequest requestWithEquipment = new RecipeRequest(
+            "Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, 1, List.of(3)
+        );
+        Equipment standMixer = new Equipment();
+        ReflectionTestUtils.setField(standMixer, "equipmentId", 3);
+
+        when(flavourProfileOptionsRepository.existsByValue(requestWithEquipment.cuisineType())).thenReturn(true);
+        when(vaultFolderRepository.findById(requestWithEquipment.folderId())).thenReturn(Optional.of(privateFolder));
+        when(equipmentRepository.findById(3)).thenReturn(Optional.of(standMixer));
+        when(recipeRepository.save(any(Recipe.class))).thenReturn(recipe);
+        when(vaultFolderRecipeService.createVaultFolderRecipe(any(), eq(1), eq(requestWithEquipment.folderId()))).thenReturn(null);
+
+        recipeService.createRecipe(requestWithEquipment, 1);
+
+        verify(equipmentRepository).findById(3);
+    }
+
+    @Test
+    void createRecipe_throwsException_whenEquipmentDoesNotExist()
+    {
+        RecipeRequest requestWithBadEquipment = new RecipeRequest(
+            "Req Title", "Description", "Chinese", 10, 15, 2, null, null, null, false, 1, List.of(999)
+        );
+
+        when(flavourProfileOptionsRepository.existsByValue(requestWithBadEquipment.cuisineType())).thenReturn(true);
+        when(vaultFolderRepository.findById(requestWithBadEquipment.folderId())).thenReturn(Optional.of(privateFolder));
+        when(equipmentRepository.findById(999)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeService.createRecipe(requestWithBadEquipment, 1));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("One of the equipment items you want to add does not exist.", ex.getReason());
+    }
+
+    @Test
+    void updateRecipe_replacesEquipment_whenEquipmentIdsProvided()
+    {
+        Equipment blender = new Equipment();
+        ReflectionTestUtils.setField(blender, "equipmentId", 7);
+
+        RecipeUpdateRequest equipmentUpdateRequest = new RecipeUpdateRequest(
+            "Req Title", "Description", "Chinese", 10, 15, 2,
+            null, false, null, false, null, false, null, null, List.of(7)
+        );
+
+        when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(flavourProfileOptionsRepository.existsByValue(equipmentUpdateRequest.cuisineType())).thenReturn(true);
+        when(equipmentRepository.findById(7)).thenReturn(Optional.of(blender));
+        when(recipeRepository.saveAndFlush(any(Recipe.class))).thenReturn(recipe);
+        when(recipeRepository.save(any(Recipe.class))).thenReturn(recipe);
+
+        recipeService.updateRecipe(1, equipmentUpdateRequest, 1);
+
+        assertEquals(1, recipe.getEquipment().size());
+        verify(recipeRepository).saveAndFlush(recipe);
     }
 }

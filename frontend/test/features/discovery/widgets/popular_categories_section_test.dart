@@ -25,8 +25,9 @@ void main() {
 
   Future<ProviderContainer> pumpSection(
     WidgetTester tester,
-    DiscoveryState state,
-  ) async {
+    DiscoveryState state, {
+    Size size = const Size(1080, 2400),
+  }) async {
     final container = ProviderContainer(
       overrides: [
         discoveryProvider.overrideWith((ref) => _FakeDiscoveryNotifier(state)),
@@ -34,7 +35,7 @@ void main() {
     );
     addTearDown(container.dispose);
  
-    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
       tester.view.resetPhysicalSize();
@@ -45,9 +46,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: const MaterialApp(
-          home: Scaffold(
-            body: SingleChildScrollView(child: PopularCategoriesSection()),
-          ),
+          home: Scaffold(body: PopularCategoriesSection()),
         ),
       ),
     );
@@ -56,11 +55,6 @@ void main() {
   }
  
   group('PopularCategoriesSection', () {
-    testWidgets('renders the section header', (tester) async {
-      await pumpSection(tester, const DiscoveryState(cuisines: cuisines));
-      expect(find.text('Popular Categories'), findsOneWidget);
-    });
- 
     testWidgets('renders an "All" entry plus each formatted cuisine',
         (tester) async {
       await pumpSection(tester, const DiscoveryState(cuisines: cuisines));
@@ -91,6 +85,16 @@ void main() {
       await tester.pump();
  
       expect(container.read(discoveryProvider).selectedCuisine, isNull);
+    });
+
+    testWidgets('long cuisine names do not overflow on a small screen',
+        (tester) async {
+      await pumpSection(
+        tester,
+        const DiscoveryState(cuisines: ['middle_eastern', 'south_african']),
+        size: const Size(360, 640),
+      );
+      expect(tester.takeException(), isNull);
     });
   });
 }

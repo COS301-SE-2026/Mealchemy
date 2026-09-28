@@ -18,15 +18,17 @@ class _FakeVaultRepo implements VaultRepository {
   final List<(int vaultId, String name)> createdFolders = [];
   bool throwOnSave = false;
   bool throwOnCreate = false;
+  int? returnedRecipeId;
 
   @override
-  Future<VaultFolderRecipe> addRecipeToFolder(int folderId, int recipeId) async {
+  Future<VaultFolderRecipe> addRecipeToFolder(
+      int folderId, int recipeId) async {
     if (throwOnSave) throw Exception('save failed');
     filed.add((folderId, recipeId));
     return VaultFolderRecipe(
       id: 1,
       folderId: folderId,
-      recipeId: recipeId,
+      recipeId: returnedRecipeId ?? recipeId,
       addedAt: DateTime(2026, 1, 1),
     );
   }
@@ -74,6 +76,7 @@ void main() {
   Widget hostWithRef({
     required List<Override> overrides,
     VaultRepository? vaultRepo,
+    ValueChanged<VaultFolderRecipe?>? onSaved,
   }) {
     return ProviderScope(
       overrides: [
@@ -87,11 +90,14 @@ void main() {
             builder: (context, ref, _) {
               return Center(
                 child: ElevatedButton(
-                  onPressed: () => showSaveToVaultSheet(
-                    context: context,
-                    ref: ref,
-                    recipeId: 42,
-                  ),
+                  onPressed: () async {
+                    final result = await showSaveToVaultSheet(
+                      context: context,
+                      ref: ref,
+                      recipeId: 42,
+                    );
+                    onSaved?.call(result);
+                  },
                   child: const Text('open'),
                 ),
               );
@@ -107,7 +113,6 @@ void main() {
     await tester.pump(); // build the dialog
   }
 
- 
   Future<void> tapPickerOption(
     WidgetTester tester, {
     required String hint,
@@ -216,7 +221,8 @@ void main() {
     await tester.pumpAndSettle();
 
     await pickMyVault(tester);
-    await tapPickerOption(tester, hint: 'Select a folder', option: 'My Recipes');
+    await tapPickerOption(tester,
+        hint: 'Select a folder', option: 'My Recipes');
 
     await tester.tap(find.text('Save Recipe'));
     await tester.pumpAndSettle();
@@ -238,7 +244,8 @@ void main() {
     await tester.pumpAndSettle();
 
     await pickMyVault(tester);
-    await tapPickerOption(tester, hint: 'Select a folder', option: 'My Recipes');
+    await tapPickerOption(tester,
+        hint: 'Select a folder', option: 'My Recipes');
 
     await tester.tap(find.text('Save Recipe'));
     await tester.pumpAndSettle();
@@ -294,5 +301,52 @@ void main() {
 
     expect(find.text('This field is required.'), findsOneWidget);
     expect(repo.createdFolders, isEmpty);
+  });
+
+  testWidgets('returns the backend shared-copy ID rather than the source ID',
+      (tester) async {
+    final repo = _FakeVaultRepo()..returnedRecipeId = 99;
+    VaultFolderRecipe? saved;
+
+    final sharedFolder = VaultFolder(
+      folderId: 22,
+      vaultId: 2,
+      folderName: 'Shared dinners',
+      createdAt: DateTime(2026, 1, 1),
+    );
+
+    await tester.pumpWidget(
+      hostWithRef(
+        vaultRepo: repo,
+        onSaved: (result) => saved = result,
+        overrides: [
+          vaultsProvider.overrideWith((ref) async => [sharedVault]),
+          vaultFoldersProvider(2).overrideWith(
+            (ref) async => [sharedFolder],
+          ),
+        ],
+      ),
+    );
+
+    await openSheet(tester);
+    await tester.pumpAndSettle();
+
+    await tapPickerOption(
+      tester,
+      hint: 'Select a vault',
+      option: 'Team Vault',
+    );
+    await tapPickerOption(
+      tester,
+      hint: 'Select a folder',
+      option: 'Shared dinners',
+    );
+
+    await tester.tap(find.text('Save Recipe'));
+    await tester.pumpAndSettle();
+
+    expect(repo.filed, [(22, 42)]);
+    expect(saved?.recipeId, 99);
+    expect(saved?.folderId, 22);
   });
 }

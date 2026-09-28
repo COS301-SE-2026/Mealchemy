@@ -9,15 +9,15 @@ class WeightSlider extends StatelessWidget {
     super.key,
     required this.title,
     required this.icon,
+    required this.subtitle,
     required this.value,
-    required this.share,
     required this.onChanged,
   });
 
   final String title;
   final IconData icon;
+  final String subtitle;
   final double value;
-  final double share;
   final ValueChanged<double> onChanged;
 
   @override
@@ -27,14 +27,14 @@ class WeightSlider extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: AppSectionHeader(title: title, leadingIcon: icon),
-              ),
-              const SizedBox(width: 12),
-              _SharePill(share: share),
-            ],
+          AppSectionHeader(title: title, leadingIcon: icon),
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.only(left: 2),
+            child: Text(
+              subtitle,
+              style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+            ),
           ),
           const SizedBox(height: 8),
           SliderTheme(
@@ -49,40 +49,14 @@ class WeightSlider extends StatelessWidget {
               tickMarkShape: SliderTickMarkShape.noTickMark,
             ),
             child: Slider(
-              value: value,
+              value: value.clamp(0, 1),
               min: 0,
               max: 1,
-              divisions: 20,
               padding: EdgeInsets.zero,
               onChanged: onChanged,
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SharePill extends StatelessWidget {
-  const _SharePill({required this.share});
-
-  final double share;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-      decoration: BoxDecoration(
-        gradient: AppColors.brand,
-        borderRadius: BorderRadius.circular(99),
-      ),
-      child: Text(
-        '${(share * 100).round()}%',
-        style: AppTextStyles.label.copyWith(
-          color: AppColors.textDark,
-          fontSize: 12,
-          letterSpacing: 0.3,
-        ),
       ),
     );
   }
