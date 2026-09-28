@@ -14,7 +14,7 @@ class AppTextStyles {
   static TextStyle bodyBold  = GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, height: 1.5);
   static TextStyle bodySmall = GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w400);
   static TextStyle caption   = GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w400, height: 1.4);
-
+  static TextStyle cardTitle = GoogleFonts.newsreader(fontSize: 16, fontWeight: FontWeight.w400, height: 1.5, letterSpacing: 0);
   // UI buttons labels
   static TextStyle button    = GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.3);
   static TextStyle label     = GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5);

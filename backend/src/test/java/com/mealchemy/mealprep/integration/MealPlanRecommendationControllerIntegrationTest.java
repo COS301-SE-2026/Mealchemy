@@ -258,7 +258,8 @@ public class MealPlanRecommendationControllerIntegrationTest {
             .andExpect(jsonPath("$.generatedEntries", hasSize(1)))
             .andExpect(jsonPath("$.generatedEntries[0].recipeId", is(testRecipeId)))
             .andExpect(jsonPath("$.generatedEntries[0].source", is("RECOMMENDED")))
-            .andExpect(jsonPath("$.skippedDates").isEmpty());
+            .andExpect(jsonPath("$.skippedDates").isEmpty())
+            .andExpect(jsonPath("$.generatedEntries[0].recipe.title", is("Hummus Bowl")));
 
         List<MealPlanEntry> entries = mealPlanEntryRepository.findByPlan_PlanIdAndEntryDateBetweenOrderByEntryDateAscMealTimeAsc(
             privatePlanId, LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 1));
@@ -302,7 +303,8 @@ public class MealPlanRecommendationControllerIntegrationTest {
                 .content(body))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.recipeId", is(testRecipeId)))
-            .andExpect(jsonPath("$.source", is("RECOMMENDED")));
+            .andExpect(jsonPath("$.source", is("RECOMMENDED")))
+            .andExpect(jsonPath("$.recipe.title", is("Hummus Bowl")));
 
         List<MealPlanEntry> entries = mealPlanEntryRepository.findByPlan_PlanIdAndEntryDateBetweenOrderByEntryDateAscMealTimeAsc(
             privatePlanId, LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 1));

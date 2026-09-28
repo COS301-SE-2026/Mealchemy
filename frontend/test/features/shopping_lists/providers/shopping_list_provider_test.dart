@@ -8,9 +8,14 @@ import 'package:mealchemy/features/shopping_lists/repositories/shopping_list_rep
 import 'package:mealchemy/features/shopping_lists/repositories/mock_shopping_list_repository.dart';
 
 class _ApiShapedShoppingListRepository implements ShoppingListRepository {
+  final List<ShoppingList> _created = [];
+  bool? lastCompareToPantry;
+  String? lastSmartAddListId;
+
   @override
   Future<List<ShoppingList>> getShoppingLists() async {
     return [
+      ..._created,
       ShoppingList(
         id: '1',
         shoppingListId: 1,
@@ -56,7 +61,18 @@ class _ApiShapedShoppingListRepository implements ShoppingListRepository {
     required String name,
     String status = 'ACTIVE',
   }) async {
-    throw UnimplementedError();
+    final list = ShoppingList(
+      id: '600',
+      shoppingListId: 600,
+      title: name,
+      subtitle: '0 items',
+      section: 'OTHER LISTS',
+      iconType: 'list',
+      status: status,
+      items: const [],
+    );
+    _created.add(list);
+    return list;
   }
 
   @override
@@ -194,6 +210,39 @@ class _ApiShapedShoppingListRepository implements ShoppingListRepository {
           category: 'RECIPE',
         ),
       ],
+    );
+  }
+
+  @override
+  Future<({ShoppingList list, List<int> skippedRecipeIds})>
+      smartAddFromMealPlan({
+    required String listId,
+    required int planId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required bool compareToPantry,
+  }) async {
+    lastCompareToPantry = compareToPantry;
+    lastSmartAddListId = listId;
+
+    final list = await getShoppingListById(listId);
+    return (
+      list: list!.copyWith(
+        items: [
+          ...list.items,
+          ShoppingListItem(
+            id: '77',
+            itemId: 77,
+            shoppingListId: int.parse(listId),
+            name: 'Meal Plan Ingredient',
+            quantity: '300 g',
+            unit: 'g',
+            category: 'RECIPE',
+          ),
+        ],
+      ),
+      //one recipe scheduled twice and skipped both times
+      skippedRecipeIds: const [7, 7],
     );
   }
 }
@@ -586,5 +635,59 @@ void main() {
 
     expect(list.items, hasLength(beforeCount + 1));
     expect(list.items.any((item) => item.name == 'Recipe Ingredient'), isTrue);
+  });
+
+  test('shoppingListsProvider adds a meal plan into an existing list',
+      () async {
+    final repo = _ApiShapedShoppingListRepository();
+    final container = ProviderContainer(
+      overrides: [shoppingListRepositoryProvider.overrideWithValue(repo)],
+    );
+    addTearDown(container.dispose);
+    await container.read(shoppingListsProvider.future);
+    final notifier = container.read(shoppingListsProvider.notifier);
+
+    final skipped = await notifier.addFromMealPlan(
+      listId: '1',
+      newListName: '',
+      planId: 5,
+      startDate: DateTime(2026, 9, 28),
+      endDate: DateTime(2026, 10, 4),
+      compareToPantry: false,
+    );
+
+    final list = container.read(shoppingListsProvider).value!.getListById('1')!;
+    expect(repo.lastSmartAddListId, '1');
+    expect(repo.lastCompareToPantry, isFalse);
+    expect(
+        list.items.any((item) => item.name == 'Meal Plan Ingredient'), isTrue);
+    expect(skipped, 1);
+  });
+
+  test('shoppingListsProvider creates a new list then smart adds the meal plan',
+      () async {
+    final repo = _ApiShapedShoppingListRepository();
+    final container = ProviderContainer(
+      overrides: [shoppingListRepositoryProvider.overrideWithValue(repo)],
+    );
+    addTearDown(container.dispose);
+    await container.read(shoppingListsProvider.future);
+    final notifier = container.read(shoppingListsProvider.notifier);
+
+    await notifier.addFromMealPlan(
+      newListName: 'Meal plan 28 Sep - 4 Oct',
+      planId: 5,
+      startDate: DateTime(2026, 9, 28),
+      endDate: DateTime(2026, 10, 4),
+      compareToPantry: true,
+    );
+
+    final state = container.read(shoppingListsProvider).value!;
+    final created = state.getListById('600')!;
+    expect(created.title, 'Meal plan 28 Sep - 4 Oct');
+    expect(repo.lastSmartAddListId, '600');
+    expect(repo.lastCompareToPantry, isTrue);
+    expect(created.items.any((item) => item.name == 'Meal Plan Ingredient'),
+        isTrue);
   });
 }

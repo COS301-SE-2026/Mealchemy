@@ -241,7 +241,7 @@ public class MealPlanRecommendationServiceTest {
             .thenReturn(new EnrichedRecommendationResponse(List.of(pickFor(RECIPE_ID)), Map.of(), 1, 1));
 
         MealPlanEntryResponse entryResponse = new MealPlanEntryResponse(55, PLAN_ID, RECIPE_ID, date, slot, slotTime,
-            null, null, MealPlanEntrySource.RECOMMENDED, USER_ID);
+            null, null, MealPlanEntrySource.RECOMMENDED, USER_ID, null);
         when(mealPlanService.addEntry(PLAN_ID, USER_ID, date, slotTime, slot, null, null, RECIPE_ID, MealPlanEntrySource.RECOMMENDED, true))
             .thenReturn(entryResponse);
 
@@ -276,7 +276,7 @@ public class MealPlanRecommendationServiceTest {
         when(recommendationService.getRecommendations(eq(USER_ID), eq(1), eq(List.of()), isNull(), eq(List.of()), isNull()))
             .thenReturn(new EnrichedRecommendationResponse(List.of(pickFor(RECIPE_ID)), Map.of(), 1, 1));
         when(mealPlanService.addEntry(PLAN_ID, USER_ID, date, slotTime, slot, null, null, RECIPE_ID, MealPlanEntrySource.RECOMMENDED, true))
-            .thenReturn(new MealPlanEntryResponse(1, PLAN_ID, RECIPE_ID, date, slot, slotTime, null, null, MealPlanEntrySource.RECOMMENDED, USER_ID));
+            .thenReturn(new MealPlanEntryResponse(1, PLAN_ID, RECIPE_ID, date, slot, slotTime, null, null, MealPlanEntrySource.RECOMMENDED, USER_ID, null));
 
         GenerateRecommendationsRequest request = new GenerateRecommendationsRequest(
             date, date, List.of(slot), Map.of(slot, slotTime), true, null);
@@ -342,7 +342,7 @@ public class MealPlanRecommendationServiceTest {
             new SignalScoresResponse(0.5, 0.5, 0.5, 0.5, 0.5));
 
         when(mealPlanService.addEntry(PLAN_ID, USER_ID, date, LocalTime.of(18, 0), MealSlot.DINNER, null, null, RECIPE_ID, MealPlanEntrySource.RECOMMENDED, false))
-            .thenReturn(new MealPlanEntryResponse(1, PLAN_ID, RECIPE_ID, date, MealSlot.DINNER, LocalTime.of(18, 0), null, null, MealPlanEntrySource.RECOMMENDED, USER_ID));
+            .thenReturn(new MealPlanEntryResponse(1, PLAN_ID, RECIPE_ID, date, MealSlot.DINNER, LocalTime.of(18, 0), null, null, MealPlanEntrySource.RECOMMENDED, USER_ID, null));
 
         // Act
         mealPlanRecommendationService.addEntryFromRecommendation(PLAN_ID, USER_ID, request);

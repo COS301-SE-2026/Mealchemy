@@ -31,6 +31,7 @@ import com.mealchemy.mealprep.service.MealPlanService;
 import com.mealchemy.mealprep.exception.InvalidMealSlotTimeException;
 import com.mealchemy.shared.enums.MealSlot;
 import com.mealchemy.shared.enums.MealPlanEntrySource;
+import com.mealchemy.recipe.dto.RecipeResponse;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -107,7 +108,9 @@ public class MealPlanControllerTest {
             "Burrito Bowls", 
             "extra spicy", 
             MealPlanEntrySource.MANUAL, 
-            1
+            1,
+            new RecipeResponse(50, 1, "Burrito Bowl Recipe", "desc", "MEXICAN",
+                10, 10, 2, null, null, null, true, null, null, null)
         );
     }
 
@@ -176,7 +179,8 @@ public class MealPlanControllerTest {
                 .andExpect(jsonPath("$[0].entryId").value(20))
                 .andExpect(jsonPath("$[0].recipeId").value(50))
                 .andExpect(jsonPath("$[0].mealSlot").value("DINNER"))
-                .andExpect(jsonPath("$[0].source").value("MANUAL"));
+                .andExpect(jsonPath("$[0].source").value("MANUAL"))
+                .andExpect(jsonPath("$[0].recipe.title").value("Burrito Bowl Recipe"));
     }
 
     @Test

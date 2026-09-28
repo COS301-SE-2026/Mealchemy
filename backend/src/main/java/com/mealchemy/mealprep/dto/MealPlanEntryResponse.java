@@ -7,6 +7,7 @@ import java.time.*;
 import com.mealchemy.shared.enums.MealPlanEntrySource;
 import com.mealchemy.shared.enums.MealSlot;
 import com.mealchemy.mealprep.model.MealPlanEntry;
+import com.mealchemy.recipe.dto.RecipeResponse;
 
 public record MealPlanEntryResponse(
     Integer entryId,
@@ -18,10 +19,11 @@ public record MealPlanEntryResponse(
     String title,
     String note,
     MealPlanEntrySource source,
-    Integer addedBy
+    Integer addedBy,
+    RecipeResponse recipe
 )
 {
-    public static MealPlanEntryResponse from(MealPlanEntry entry)
+    public static MealPlanEntryResponse from(MealPlanEntry entry, RecipeResponse recipe)
     {
         return new MealPlanEntryResponse(
             entry.getEntryId(),
@@ -33,7 +35,8 @@ public record MealPlanEntryResponse(
             entry.getTitle(),
             entry.getNote(),
             entry.getSource(),
-            entry.getAddedBy()
+            entry.getAddedBy(),
+            recipe
         );
     }
 }
