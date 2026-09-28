@@ -153,7 +153,7 @@ class _ReportRecipeFormState extends ConsumerState<_ReportRecipeForm> {
                           const SizedBox(height: 8),
                           Text(
                             'Choose the reason that best describes the '
-                            'problem. An administrator will review your report.',
+                            'problem. A moderator will review your report.',
                             style: AppTextStyles.body,
                           ),
                           const SizedBox(height: 16),

@@ -84,7 +84,7 @@ class _AdminModerationActionsState
         const SizedBox(height: 12),
         if (!enabled) ...[
           Text(
-            'An online connection and a valid admin session are required.',
+            'An online connection and a valid moderator session are required.',
             style: AppTextStyles.body,
           ),
           const SizedBox(height: 12),

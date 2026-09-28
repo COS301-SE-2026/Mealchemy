@@ -21,7 +21,7 @@ class AdminScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Administration'),
+        title: const Text('Moderation'),
         leading: IconButton(
           tooltip: 'Back',
           icon: const Icon(Icons.arrow_back),
@@ -35,7 +35,7 @@ class AdminScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            tooltip: 'Refresh admin access',
+            tooltip: 'Refresh moderator access',
             icon: const Icon(Icons.refresh),
             onPressed:
                 access == AdminAccess.checking || access == AdminAccess.offline
@@ -93,21 +93,21 @@ class _AdminContent extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'Administration',
+          'Moderation',
           style: AppTextStyles.heading1.copyWith(
             color: AppColors.primary,
           ),
         ),
         const SizedBox(height: 12),
         Text(
-          'Review community reports and manage administrator access.',
+          'Review community reports and manage moderator access.',
           style: AppTextStyles.body.copyWith(
             color: AppColors.textMuted,
           ),
         ),
         const SizedBox(height: 20),
         AppButton.outlined(
-          label: 'Manage admins',
+          label: 'Manage moderators',
           leftIcon: Icons.manage_accounts_outlined,
           rightIcon: Icons.chevron_right,
           isFullWidth: true,

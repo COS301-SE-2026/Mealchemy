@@ -33,7 +33,7 @@ void main() {
       await tester.pump();
 
       expect(
-        find.text('Administration'),
+        find.text('Moderation'),
         access == AdminAccess.allowed ? findsOneWidget : findsNothing,
       );
 
@@ -108,7 +108,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Administration'));
+    await tester.tap(find.text('Moderation'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
@@ -127,7 +127,7 @@ void main() {
     expect(
       find.descendant(
         of: adminScreen,
-        matching: find.text('Checking admin access…'),
+        matching: find.text('Checking moderator access…'),
       ),
       findsOneWidget,
     );
@@ -137,7 +137,7 @@ void main() {
 
     expect(find.text('COMMUNITY MANAGEMENT'), findsNothing);
     expect(
-      find.text('Your account does not have administrator access.'),
+      find.text('Your account does not have moderator access.'),
       findsOneWidget,
     );
   });

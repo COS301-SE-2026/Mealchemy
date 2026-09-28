@@ -22,7 +22,7 @@ class AdminUsersScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage admins'),
+        title: const Text('Manage moderators'),
         leading: IconButton(
           tooltip: 'Back',
           icon: const Icon(Icons.arrow_back),
@@ -84,10 +84,10 @@ class _AdminUsersFormState extends ConsumerState<_AdminUsersForm> {
 
     final confirmed = await showAppConfirmDialog(
       context: context,
-      title: 'Promote to administrator?',
+      title: 'Promote to moderator?',
       message: '${user.displayName}\n${user.email}\n\n'
           'This user will be able to review community reports, remove '
-          'recipes from the community, and promote other administrators.',
+          'recipes from the community, and promote other moderators.',
       confirmLabel: 'Promote',
     );
 
@@ -114,7 +114,7 @@ class _AdminUsersFormState extends ConsumerState<_AdminUsersForm> {
       padding: const EdgeInsets.all(20),
       children: [
         Text(
-          'Administrator access',
+          'Moderator access',
           style: AppTextStyles.heading1.copyWith(
             color: AppColors.primary,
           ),
@@ -155,7 +155,7 @@ class _AdminUsersFormState extends ConsumerState<_AdminUsersForm> {
         if (!enabled) ...[
           const SizedBox(height: 12),
           Text(
-            'Connect to the internet with a valid admin session to continue.',
+            'Connect to the internet with a valid moderator session to continue.',
             style: AppTextStyles.body,
           ),
         ],
@@ -196,7 +196,7 @@ class _AdminUsersFormState extends ConsumerState<_AdminUsersForm> {
                 if (!user.isAdmin) ...[
                   const SizedBox(height: 20),
                   AppButton.outlined(
-                    label: 'Promote to admin',
+                    label: 'Promote to moderator',
                     isFullWidth: true,
                     isLoading: state.isPromoting,
                     onPressed: enabled && !busy ? _confirmPromotion : null,

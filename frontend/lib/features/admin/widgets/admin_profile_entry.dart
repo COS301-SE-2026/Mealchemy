@@ -20,7 +20,7 @@ class AdminProfileEntry extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 24),
       child: AppButton.outlined(
-        label: 'Administration',
+        label: 'Moderation',
         leftIcon: Icons.admin_panel_settings_outlined,
         rightIcon: Icons.chevron_right,
         isFullWidth: true,
