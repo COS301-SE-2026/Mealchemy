@@ -1,7 +1,7 @@
 (() => {
     const screens = {
       dashboard: {
-        image: "assets/screens/app-dashboard.jpg",
+        image: "assets/screens/app-dashboard-updated.jpg",
         alt: "Real Mealchemy dashboard screen",
         kicker: "Dashboard · Live app",
         title: "A calm command centre for cooking decisions.",
@@ -28,7 +28,7 @@
         aspectRatio: "392 / 850"
       },
       recipe: {
-        image: "assets/screens/Recipe-Intstructions-page-real-app.jpg",
+        image: "assets/screens/Recipe-Instructions-page-real-app.jpg",
         alt: "Real Mealchemy recipe instructions screen",
         kicker: "Recipe · Live app",
         title: "Step-by-step cooking with full ingredient detail.",
