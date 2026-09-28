@@ -85,4 +85,13 @@ abstract class ShoppingListRepository {
     required int recipeId,
     required bool includeAvailablePantryItems,
   });
+
+  //adds every recipe planned between two dates into an existing list
+  Future<({ShoppingList list, List<int> skippedRecipeIds})> smartAddFromMealPlan({
+    required String listId,
+    required int planId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required bool compareToPantry,
+  });
 }

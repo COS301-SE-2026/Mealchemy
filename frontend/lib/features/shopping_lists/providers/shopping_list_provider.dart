@@ -529,6 +529,43 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
 
     return current.getListById(listId)?.copyWith(items: updatedList.items);
   }
+
+  Future<int> addFromMealPlan({
+    String? listId,
+    required String newListName,
+    required int planId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required bool compareToPantry,
+  }) async {
+    
+    final current = state.valueOrNull;
+    if (current == null) return 0;
+
+    var lists = current.lists;
+    var targetId = listId;
+
+    if (targetId == null) {
+      final created = await _repository.createShoppingList(name: newListName);
+      lists = [...lists, created];
+      targetId = created.id;
+    }
+
+    final result = await _repository.smartAddFromMealPlan(
+      listId: targetId,
+      planId: planId,
+      startDate: startDate,
+      endDate: endDate,
+      compareToPantry: compareToPantry,
+    );
+    final updatedLists = lists.map((list) {
+      if (list.id != targetId) return list;
+      return list.copyWith(items: result.list.items);
+    }).toList();
+
+    state = AsyncData(current.copyWith(lists: updatedLists));
+    return result.skippedRecipeIds.toSet().length;
+  }
 }
 
 //helper
