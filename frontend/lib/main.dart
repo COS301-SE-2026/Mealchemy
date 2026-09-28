@@ -12,13 +12,19 @@ import 'features/auth/providers/auth_provider.dart';
 import 'features/cook_mode/models/cook_timer.dart';
 import 'features/cook_mode/providers/cook_timer_provider.dart';
 import 'features/cook_mode/services/cook_timer_notification_service.dart';
+import 'features/notifications/widgets/notification_realtime_bootstrap.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
   runApp(
     const ProviderScope(
       child: _CookTimerNotificationBootstrap(
-        child: _NetworkStatusBootstrap(child: MealchemyApp()),
+        child: _NetworkStatusBootstrap(
+          child: NotificationRealtimeBootstrap(
+            child: MealchemyApp(),
+          ),
+        ),
       ),
     ),
   );

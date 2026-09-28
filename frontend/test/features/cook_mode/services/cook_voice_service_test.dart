@@ -60,7 +60,7 @@ SpeechRecognitionResult _result(String words, ResultType type) =>
     );
 
 void main() {
-  test('requires on-device recognition and ignores partial results', () async {
+  test('uses platform recognition and finalizes a partial result', () async {
     final speech = _FakeSpeechToText();
     final service = SpeechToTextCookVoiceService(speech: speech);
     final results = <CookVoiceResult>[];
@@ -75,19 +75,27 @@ void main() {
     expect(available, isTrue);
 
     await service.listen();
-    expect(speech.options?.onDevice, isTrue);
-    expect(speech.options?.partialResults, isFalse);
+    expect(speech.options?.onDevice, isFalse);
+    expect(speech.options?.partialResults, isTrue);
+    expect(speech.options?.listenMode, ListenMode.dictation);
     expect(listening.last, isTrue);
     speech.soundLevelListener?.call(4.2);
     expect(soundLevels, [4.2]);
     speech.resultListener?.call(_result('next', ResultType.partial));
     expect(results, isEmpty);
-    speech.resultListener?.call(_result('next', ResultType.finalResult));
+    speech.statusListener?.call(SpeechToText.notListeningStatus);
+    expect(listening.last, isFalse);
+    await Future<void>.delayed(const Duration(milliseconds: 650));
     expect(results.single.words, 'next');
     expect(results.single.confidence, 0.9);
+
+    // A delayed native final callback must not execute the command twice.
+    speech.resultListener?.call(_result('next', ResultType.finalResult));
+    expect(results, hasLength(1));
   });
 
-  test('cancellation ignores a late final callback', () async {
+  test('cancellation ignores pending partial and late final callbacks',
+      () async {
     final speech = _FakeSpeechToText();
     final service = SpeechToTextCookVoiceService(speech: speech);
     final results = <CookVoiceResult>[];
@@ -99,7 +107,9 @@ void main() {
     ));
     await service.listen();
     final oldListener = speech.resultListener;
+    oldListener?.call(_result('next', ResultType.partial));
     await service.stop();
+    await Future<void>.delayed(const Duration(milliseconds: 650));
     oldListener?.call(_result('next', ResultType.finalResult));
 
     expect(speech.cancelCalls, 1);

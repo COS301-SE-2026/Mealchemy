@@ -55,11 +55,13 @@ class StepEditorRow extends StatelessWidget {
                         horizontal: 14, vertical: 12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.inputBorder),
+                      borderSide:
+                          const BorderSide(color: AppColors.inputBorder),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.inputBorder),
+                      borderSide:
+                          const BorderSide(color: AppColors.inputBorder),
                     ),
                   ),
                   style:
@@ -78,7 +80,8 @@ class StepEditorRow extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(left: 44, top: 2),
               child: Text('Step text is required.',
-                  style: AppTextStyles.caption.copyWith(color: AppColors.error)),
+                  style:
+                      AppTextStyles.caption.copyWith(color: AppColors.error)),
             ),
         ],
       ),

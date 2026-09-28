@@ -21,7 +21,10 @@ class CookTimerState {
 
   List<CookTimer> get activeTimers {
     final active = timers.where((timer) => !timer.isFinishedAt(now)).toList();
-    active.sort((first, second) => first.endsAt.compareTo(second.endsAt));
+    active.sort(
+      (first, second) =>
+          first.remainingAt(now).compareTo(second.remainingAt(now)),
+    );
     return active;
   }
 
@@ -103,9 +106,16 @@ class CookTimerController extends StateNotifier<CookTimerState> {
     required int stepIndex,
     required int stepNumber,
     required Duration duration,
+    String? name,
   }) async {
     await initialize();
     final startedAt = _now().toUtc();
+    final trimmedName = name?.trim();
+    final normalizedName = trimmedName == null || trimmedName.isEmpty
+        ? null
+        : trimmedName.length > 40
+            ? trimmedName.substring(0, 40)
+            : trimmedName;
     final timer = CookTimer(
       notificationId: _nextNotificationId(startedAt),
       recipeId: recipeId,
@@ -114,6 +124,7 @@ class CookTimerController extends StateNotifier<CookTimerState> {
       stepNumber: stepNumber,
       startedAt: startedAt,
       endsAt: startedAt.add(duration),
+      name: normalizedName,
     );
     state = state.copyWith(
       timers: [...state.timers, timer],
@@ -149,6 +160,49 @@ class CookTimerController extends StateNotifier<CookTimerState> {
     }
   }
 
+  Future<CookTimer?> pause(CookTimer timer) async {
+    await initialize();
+    final current = _findTimer(timer.notificationId);
+    if (current == null || current.isPaused || current.isFinishedAt(_now())) {
+      return current;
+    }
+
+    final now = _now().toUtc();
+    final paused = current.pauseAt(now);
+    _replaceTimer(paused, now);
+    await _persist();
+    try {
+      await _notifications.cancel(paused.notificationId);
+    } catch (_) {
+      if (mounted) {
+        state = state.copyWith(
+          warningMessage:
+              'Timer paused, but its background alert could not be cancelled.',
+        );
+      }
+    }
+    return paused;
+  }
+
+  Future<CookTimer?> resume(CookTimer timer) async {
+    await initialize();
+    final current = _findTimer(timer.notificationId);
+    if (current == null || !current.isPaused) return current;
+
+    final now = _now().toUtc();
+    final resumed = current.resumeAt(now);
+    _replaceTimer(resumed, now);
+    await _persist();
+
+    final alertStatus = await _notifications.schedule(resumed);
+    if (mounted) {
+      state = state.copyWith(
+        warningMessage: _warningFor(alertStatus, action: 'resumed'),
+      );
+    }
+    return resumed;
+  }
+
   void refresh() {
     if (!mounted) return;
     state = state.copyWith(now: _now().toUtc());
@@ -156,6 +210,28 @@ class CookTimerController extends StateNotifier<CookTimerState> {
 
   void clearWarning() {
     state = state.copyWith(clearWarning: true);
+  }
+
+  CookTimer? _findTimer(int notificationId) {
+    for (final timer in state.timers) {
+      if (timer.notificationId == notificationId) return timer;
+    }
+    return null;
+  }
+
+  void _replaceTimer(CookTimer replacement, DateTime now) {
+    if (!mounted) return;
+    state = state.copyWith(
+      timers: state.timers
+          .map(
+            (timer) => timer.notificationId == replacement.notificationId
+                ? replacement
+                : timer,
+          )
+          .toList(growable: false),
+      now: now,
+      clearWarning: true,
+    );
   }
 
   int _nextNotificationId(DateTime now) {
@@ -181,17 +257,20 @@ class CookTimerController extends StateNotifier<CookTimerState> {
     }
   }
 
-  String? _warningFor(CookTimerAlertStatus status) {
+  String? _warningFor(
+    CookTimerAlertStatus status, {
+    String action = 'started',
+  }) {
     return switch (status) {
       CookTimerAlertStatus.scheduled => null,
       CookTimerAlertStatus.notificationsDenied =>
-        'Timer started, but notification access is off.',
+        'Timer $action, but notification access is off.',
       CookTimerAlertStatus.exactAlarmDenied =>
-        'Timer started, but exact background alerts are off.',
+        'Timer $action, but exact background alerts are off.',
       CookTimerAlertStatus.unsupported =>
-        'Timer started. Background alerts are unavailable here.',
+        'Timer $action. Background alerts are unavailable here.',
       CookTimerAlertStatus.failed =>
-        'Timer started, but its background alert could not be scheduled.',
+        'Timer $action, but its background alert could not be scheduled.',
     };
   }
 

@@ -44,6 +44,9 @@ import com.mealchemy.recipe.repository.RecipeIngredientRepository;
 import com.mealchemy.recipe.repository.RecipeStepRepository;
 import com.mealchemy.recipe.repository.RecipeEquipmentRepository;
 import com.mealchemy.shared.enums.VaultType;
+import com.mealchemy.shared.enums.NotificationType;
+import com.mealchemy.vault.event.NotificationEvent;
+
 
 @ExtendWith(MockitoExtension.class)
 public class VaultFolderRecipeServiceTest
@@ -75,6 +78,8 @@ public class VaultFolderRecipeServiceTest
     @InjectMocks
     private VaultFolderRecipeService vaultFolderRecipeService;
 
+    @Mock
+    private NotificationService notificationService;
 
 
     private VaultFolderRecipe folderRecipe;
@@ -437,6 +442,7 @@ public class VaultFolderRecipeServiceTest
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("No record found.", ex.getReason());
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -451,6 +457,7 @@ public class VaultFolderRecipeServiceTest
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("No record found.", ex.getReason());
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -462,6 +469,7 @@ public class VaultFolderRecipeServiceTest
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("No record found.", ex.getReason());
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -476,6 +484,7 @@ public class VaultFolderRecipeServiceTest
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("No record found.", ex.getReason());
+        verifyNoInteractions(notificationService);
     }
 
     // recipe cloning
@@ -535,5 +544,63 @@ public class VaultFolderRecipeServiceTest
         ArgumentCaptor<VaultFolderRecipe> linkCaptor = ArgumentCaptor.forClass(VaultFolderRecipe.class);
         verify(vaultFolderRecipeRepository).save(linkCaptor.capture());
         assertEquals(existingClone, linkCaptor.getValue().getRecipe());
+    }
+
+    
+    // ========== Notifications =========
+
+    @Test
+    void createVaultFolderRecipe_sharedVault_publishesRecipeAddedWithCloneId()
+    {
+        sharedVault.setName("Family Dinners");
+
+        Recipe clone = new Recipe();
+        clone.setTitle("Penne");
+        ReflectionTestUtils.setField(clone, "recipeId", 99);
+
+        when(vaultFolderRepository.findById(2)).thenReturn(Optional.of(sharedFolder));
+        when(recipeRepository.findAccessibleByIdAndUserId(request.recipeId(), 1)).thenReturn(Optional.of(recipe));
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+        when(recipeRepository.findExistingClone(recipe, 1, sharedVault)).thenReturn(Optional.empty());
+        when(recipeRepository.save(any(Recipe.class))).thenReturn(clone);
+
+        when(vaultFolderRecipeRepository.save(any(VaultFolderRecipe.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(notificationService.getDisplayName(1)).thenReturn("Owner");
+        when(notificationService.getVaultParticipantIds(2, 1)).thenReturn(List.of(3));
+
+        ArgumentCaptor<NotificationEvent> captor = ArgumentCaptor.forClass(NotificationEvent.class);
+
+        vaultFolderRecipeService.createVaultFolderRecipe(request, 1, 2);
+
+        verify(notificationService).publish(captor.capture());
+        NotificationEvent event = captor.getValue();
+        assertEquals(NotificationType.RECIPE_ADDED, event.type());
+        assertEquals(99, event.refRecipeId()); // clone
+        assertEquals(2, event.refVaultId());
+        assertEquals(List.of(3), event.recipientUserIds());
+        assertEquals(1, event.actorUserId());
+        assertEquals("Owner added Penne to Family Dinners", event.message());
+    }
+
+    @Test
+    void deleteVaultFolderRecipe_sharedVault_publishesRemovedRecipe()
+    {
+        recipe.setTitle("Penne");
+        vault.setName("My Vault");
+
+        when(vaultFolderRecipeRepository.findById(1)).thenReturn(Optional.of(folderRecipe));
+        doNothing().when(vaultFolderRecipeRepository).deleteById(1);
+        when(notificationService.getDisplayName(1)).thenReturn("Owner");
+        when(notificationService.getVaultParticipantIds(1, 1)).thenReturn(List.of(3));
+
+        ArgumentCaptor<NotificationEvent> captor = ArgumentCaptor.forClass(NotificationEvent.class);
+
+        vaultFolderRecipeService.deleteVaultFolderRecipe(1, 1);
+
+        verify(notificationService).publish(captor.capture());
+        NotificationEvent event = captor.getValue();
+        assertEquals(NotificationType.RECIPE_REMOVED, event.type());
+        assertEquals(1, event.refRecipeId()); // clone
+        assertEquals("Owner removed Penne from My Vault", event.message());
     }
 }

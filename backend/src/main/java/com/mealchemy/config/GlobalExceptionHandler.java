@@ -1,6 +1,7 @@
 package com.mealchemy.config;
 
 import com.mealchemy.shared.dto.ErrorResponse;
+import com.mealchemy.mealprep.exception.InvalidMealSlotTimeException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -86,8 +87,16 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("message", ex.getMessage()));
     }
+
+    @ExceptionHandler(InvalidMealSlotTimeException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidMealSlotTimeException(InvalidMealSlotTimeException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", ex.getMessage()));
+    }
+
     
-    //handles a required RequestParam that was ommitted
+    //handles a required RequestParam that was ommitted - websockets
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ErrorResponse> handleMissingParam(MissingServletRequestParameterException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(

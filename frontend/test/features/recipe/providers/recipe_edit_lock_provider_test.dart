@@ -488,4 +488,52 @@ void main() {
       replacement.dispose();
     }
   });
+
+  lockTest('another holder immediately stops saves and renewal',
+      (tester, f) async {
+    expect(await f.controller.acquire(), isTrue);
+
+    f.controller.handleLiveLockAcquired(actorUserId: 2);
+
+    expect(f.controller.canSave, isFalse);
+    expect(f.controller.state.phase, RecipeEditLockPhase.paused);
+
+    await f.advance(tester, const Duration(seconds: 30));
+
+    expect(f.repository.acquisitions, 1);
+  });
+
+  lockTest('own acquisition event does not interrupt editing',
+      (tester, f) async {
+    expect(await f.controller.acquire(), isTrue);
+
+    f.controller.handleLiveLockAcquired(actorUserId: 1);
+
+    expect(f.controller.canSave, isTrue);
+    expect(f.controller.state.phase, RecipeEditLockPhase.held);
+  });
+
+  lockTest('background hold blocks saves without prematurely releasing',
+      (tester, f) async {
+    expect(await f.controller.acquire(), isTrue);
+
+    f.controller.holdWhileBackgrounded();
+
+    expect(f.controller.canSave, isFalse);
+    expect(f.repository.releases, 0);
+
+    await f.advance(tester, const Duration(seconds: 30));
+
+    expect(f.repository.acquisitions, 1);
+    expect(f.repository.releases, 0);
+
+    await f.controller.suspend();
+
+    expect(f.repository.releases, 1);
+
+    await f.controller.resume();
+
+    expect(f.controller.state.phase, RecipeEditLockPhase.reloadRequired);
+    expect(f.controller.canSave, isFalse);
+  });
 }

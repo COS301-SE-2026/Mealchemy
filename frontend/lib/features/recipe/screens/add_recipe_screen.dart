@@ -31,6 +31,7 @@ import '../widgets/recipe_video_selector.dart';
 import '../widgets/step_editor_row.dart';
 import '../providers/shared_recipe_edit_provider.dart';
 import '../../vault/providers/shared_vault_access_provider.dart';
+import '../models/recipe_draft_controller.dart';
 
 class AddRecipeScreen extends ConsumerStatefulWidget {
   const AddRecipeScreen({
@@ -43,6 +44,7 @@ class AddRecipeScreen extends ConsumerStatefulWidget {
     this.onSavingChanged,
     this.onSaveComplete,
     this.onSaveFailure,
+    this.draftController,
   });
 
   final int? editRecipeId;
@@ -57,6 +59,7 @@ class AddRecipeScreen extends ConsumerStatefulWidget {
   final ValueChanged<bool>? onSavingChanged;
   final Future<void> Function()? onSaveComplete;
   final VoidCallback? onSaveFailure;
+  final RecipeDraftController? draftController;
 
   @override
   ConsumerState<AddRecipeScreen> createState() => _AddRecipeScreenState();
@@ -105,10 +108,12 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
     if (!widget.isEditing) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _recoverLostPhoto());
     }
+    widget.draftController?.attach(_readDraft);
   }
 
   @override
   void dispose() {
+    widget.draftController?.detach(_readDraft);
     _titleController.dispose();
     _descriptionController.dispose();
     _prepTimeController.dispose();
@@ -122,6 +127,56 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       s.dispose();
     }
     super.dispose();
+  }
+
+  String _readDraft() {
+    final text = StringBuffer()
+      ..writeln('Title: ${_titleController.text}')
+      ..writeln()
+      ..writeln('Description:')
+      ..writeln(_descriptionController.text)
+      ..writeln()
+      ..writeln('Cuisine: ${_selectedCuisine ?? ''}')
+      ..writeln('Prep time: ${_prepTimeController.text}')
+      ..writeln('Cooking time: ${_cookTimeController.text}')
+      ..writeln('Servings: ${_servingsController.text}')
+      ..writeln()
+      ..writeln('Ingredients:');
+
+    for (final row in _ingredientRows) {
+      if (!row.isStarted) continue;
+      text.writeln(
+        '${row.item?.name ?? 'Unselected ingredient'} — '
+        '${row.quantity.text} ${row.unit ?? ''}',
+      );
+    }
+
+    text
+      ..writeln()
+      ..writeln('Steps:');
+
+    for (var i = 0; i < _stepRows.length; i++) {
+      final content = _stepRows[i].content.text;
+      if (content.isNotEmpty) {
+        text.writeln('${i + 1}. $content');
+      }
+    }
+
+    text
+      ..writeln()
+      ..writeln('Equipment:')
+      ..writeln(_equipment.map((item) => item.label).join(', '));
+
+    if (_selectedPhoto != null || _selectedVideo != null) {
+      text
+        ..writeln()
+        ..writeln(
+          'Selected media remains in this editor but is not included '
+          'in this text copy.',
+        );
+    }
+
+    return text.toString();
   }
 
   void _prefill(Recipe recipe) {
@@ -474,7 +529,12 @@ class _AddRecipeScreenState extends ConsumerState<AddRecipeScreen> {
       widget.onSaveFailure?.call();
       return;
     }
-
+// A response may arrive after a takeover or background transition.
+// Keep the draft open rather than navigating away with uncertain access.
+    if (widget.beforeSave != null && !_canContinueSaving()) {
+      widget.onSaveFailure?.call();
+      return;
+    }
     var saveFailed = false;
     var photoFailed = false;
     var videoFailed = false;

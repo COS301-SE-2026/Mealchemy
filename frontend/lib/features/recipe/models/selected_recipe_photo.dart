@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 
-
 //represents a photo after selection but before it gets uploaded
 //uses client-side validation
 //stores raw image bytes, orignal filename, validated content type, calculated file size
