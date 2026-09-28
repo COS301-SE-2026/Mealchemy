@@ -1,16 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mealchemy/core/constants/app_config.dart';
 import 'package:mealchemy/core/providers/api_service_provider.dart';
 import '../models/meal_plan.dart';
 import '../models/meal_plan_entry.dart';
 import '../models/meal_slot.dart';
 import '../repositories/meal_plan_repository.dart';
-import '../repositories/mock_meal_plan_repository.dart';
 import '../repositories/api_meal_plan_repository.dart';
 
 final mealPlanRepositoryProvider = Provider<MealPlanRepository>((ref) {
-  if (AppConfig.mockMealPlan) return MockMealPlanRepository();
   return ApiMealPlanRepository(ref.read(dioProvider));
 });
 

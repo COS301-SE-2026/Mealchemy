@@ -70,4 +70,39 @@ void main() {
     await tester.tap(find.text('Penne Alla Vodka'));
     expect(tapped, isTrue);
   });
+
+    testWidgets('shows the slot icon and Other for snacks', (tester) async {
+    await _pump(tester, _entry());
+    expect(find.byIcon(Icons.lunch_dining_outlined), findsOneWidget);
+
+    await _pump(
+      tester,
+      MealPlanEntry(
+        entryId: 2,
+        recipeId: 1,
+        entryDate: DateTime(2026, 9, 28),
+        mealSlot: MealSlot.snack,
+        mealTime: const TimeOfDay(hour: 15, minute: 0),
+        recipe: const Recipe(recipeId: 1, title: 'Penne Alla Vodka'),
+      ),
+    );
+    expect(find.text('OTHER'), findsOneWidget);
+    expect(find.byIcon(Icons.cookie_outlined), findsOneWidget);
+  });
+
+  testWidgets('without a note only the time shows', (tester) async {
+    await _pump(
+      tester,
+      MealPlanEntry(
+        entryId: 3,
+        recipeId: 1,
+        entryDate: DateTime(2026, 9, 28),
+        mealSlot: MealSlot.dinner,
+        mealTime: const TimeOfDay(hour: 18, minute: 30),
+        recipe: const Recipe(recipeId: 1, title: 'Penne Alla Vodka'),
+      ),
+    );
+    expect(find.text('18:30'), findsOneWidget);
+    expect(find.textContaining('·'), findsNothing);
+  });
 }
