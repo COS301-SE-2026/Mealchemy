@@ -795,6 +795,10 @@ public class ShoppingListService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found");  
         }
 
+        if (!shoppingListItemRepository.findByShoppingListId(shoppingListId).isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Smart add needs an empty shopping list.");
+        }
+
         // list of all MealPlan entries within specified date range
         List<MealPlanEntryResponse> entries = mealPlanService.getEntries(planId, userId, startDate, endDate);
 

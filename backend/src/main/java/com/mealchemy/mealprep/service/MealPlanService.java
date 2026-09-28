@@ -30,6 +30,8 @@ import com.mealchemy.shared.enums.MealPlanEntrySource;
 import com.mealchemy.shared.enums.VaultMemberRole;
 import com.mealchemy.recipe.model.Recipe;
 import com.mealchemy.recipe.dto.RecipeResponse;
+import com.mealchemy.vault.model.VaultFolderRecipe;
+import com.mealchemy.vault.repository.VaultFolderRecipeRepository;
 
 @Service
 public class MealPlanService
@@ -40,9 +42,11 @@ public class MealPlanService
     private final VaultMemberRepository vaultMemberRepository; 
     private final MealPlanLearningSignalService mealPlanLearningSignalService;
     private final RecipeRepository recipeRepository;
+    private final VaultFolderRecipeRepository vaultFolderRecipeRepository;
 
     public MealPlanService(MealPlanRepository mealPlanRepository, MealPlanEntryRepository mealPlanEntryRepository, VaultRepository vaultRepository, 
-                        VaultMemberRepository vaultMemberRepository, MealPlanLearningSignalService mealPlanLearningSignalService, RecipeRepository recipeRepository)
+                        VaultMemberRepository vaultMemberRepository, MealPlanLearningSignalService mealPlanLearningSignalService, RecipeRepository recipeRepository,
+                        VaultFolderRecipeRepository vaultFolderRecipeRepository)
     {
         this.mealPlanRepository = mealPlanRepository;
         this.mealPlanEntryRepository = mealPlanEntryRepository;
@@ -50,6 +54,7 @@ public class MealPlanService
         this.vaultMemberRepository = vaultMemberRepository;
         this.mealPlanLearningSignalService = mealPlanLearningSignalService;
         this.recipeRepository = recipeRepository;
+        this.vaultFolderRecipeRepository = vaultFolderRecipeRepository;
     }
 
     // Get or create plan
@@ -110,6 +115,8 @@ public class MealPlanService
             throw new InvalidMealSlotTimeException("mealTime " + mealTime + " is outside the valid range for " + mealSlot + ".");
         }
 
+        assertRecipeAccessible(userId, recipeId);
+
         Optional<MealPlanEntry> existing = mealPlanEntryRepository.findByPlan_PlanIdAndEntryDateAndMealSlot(planId, date, mealSlot);
 
         if (existing.isPresent())
@@ -165,6 +172,11 @@ public class MealPlanService
         if (!request.mealSlot().allows(request.mealTime()))
         {
             throw new InvalidMealSlotTimeException("mealTime " + request.mealTime() + " is outside the valid range for " + request.mealSlot() + ".");
+        }
+
+        if (!request.recipeId().equals(entry.getRecipeId()))
+        {
+            assertRecipeAccessible(userId, request.recipeId());
         }
 
         // if there is an aleady existing meal at this time
@@ -288,4 +300,27 @@ public class MealPlanService
             })
             .toList();
     }
- }
+
+    private void assertRecipeAccessible(Integer userId, Integer recipeId)
+    {
+        Recipe recipe = recipeRepository.findById(recipeId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
+
+        if (recipe.getOwnerId().equals(userId) || Boolean.TRUE.equals(recipe.getIsCommunityPublished()))
+        {
+            return;
+        }
+
+        for (VaultFolderRecipe placement : vaultFolderRecipeRepository.findByRecipe_RecipeId(recipeId))
+        {
+            Vault placedIn = placement.getFolder().getVault();
+            if (placedIn.getOwnerId().equals(userId)
+                || vaultMemberRepository.existsByVault_VaultIdAndUser_UserId(placedIn.getVaultId(), userId))
+            {
+                return;
+            }
+        }
+
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
+    }
+}
