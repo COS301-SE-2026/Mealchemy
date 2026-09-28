@@ -52,7 +52,7 @@ public class AuthService {
     private final JwtUtil jwtUtil; //token authentication
 
     private static final int MAX_FAILED_ATTEMPTS = 3;
-    private static final Duration LOCKOUT_DURATION = Duration.ofMinutes(15);
+    private static final Duration LOCKOUT_DURATION = Duration.ofMinutes(5);
 
     // Constructor injection - Spring automatically wires
     public AuthService(UserRepository userRepository,

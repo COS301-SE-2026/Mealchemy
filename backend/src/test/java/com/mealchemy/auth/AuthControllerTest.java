@@ -200,15 +200,15 @@ public class AuthControllerTest {
             "wrongpassword"
         );
 
-        when(authService.login(any(LoginRequest.class))).thenThrow(new AccountLockedException(900));
+        when(authService.login(any(LoginRequest.class))).thenThrow(new AccountLockedException(300));
 
         // Act and Assert
         mockMvc.perform(post("/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isTooManyRequests())                    // 429
-            .andExpect(header().string("Retry-After", "900"))
-            .andExpect(jsonPath("$.message").value("Too many failed login attempts. Try again in 900 seconds."));
+            .andExpect(header().string("Retry-After", "300"))
+            .andExpect(jsonPath("$.message").value("Too many failed login attempts. Try again in 300 seconds."));
     }
     
 }

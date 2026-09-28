@@ -231,7 +231,7 @@ public class AuthServiceTest {
             () -> authService.login(validLoginRequest)
         );
 
-        assertEquals(900, ex.getRetryAfterSeconds()); // 15 minutes
+        assertEquals(300, ex.getRetryAfterSeconds()); // 5 minutes
         assertNotNull(savedUser.getLockedUntil());
         assertTrue(savedUser.getLockedUntil().isAfter(OffsetDateTime.now()));
         assertEquals(0, savedUser.getFailedLoginCount()); // reset counter
