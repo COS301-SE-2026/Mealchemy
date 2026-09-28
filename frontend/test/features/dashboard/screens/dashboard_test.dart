@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,8 +15,17 @@ import 'package:mealchemy/features/guided_discovery/models/signal_scores.dart';
 import 'package:mealchemy/features/guided_discovery/models/swipe.dart';
 import 'package:mealchemy/features/guided_discovery/providers/guided_discovery_provider.dart';
 import 'package:mealchemy/features/guided_discovery/repositories/guided_discovery_repository.dart';
+import 'package:mealchemy/features/meal_plan/models/meal_plan.dart';
+import 'package:mealchemy/features/meal_plan/models/meal_plan_entry.dart';
+import 'package:mealchemy/features/meal_plan/models/meal_slot.dart';
+import 'package:mealchemy/features/meal_plan/providers/meal_plan_provider.dart';
+import 'package:mealchemy/features/meal_plan/repositories/meal_plan_repository.dart';
+import 'package:mealchemy/features/meal_plan/widgets/meal_plan_section.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/shopping_lists/models/shopping_list.dart';
+import 'package:mealchemy/features/vault/models/vault.dart';
+import 'package:mealchemy/features/vault/providers/vault_folder_management_provider.dart';
+import 'package:mealchemy/features/vault/providers/vault_provider.dart';
 
 const _signals = SignalScores(
   pantryMatch: 0.9,
@@ -74,6 +85,55 @@ ShoppingList _list({required String title, required int count}) => ShoppingList(
       numItems: count,
       items: const [],
     );
+
+final _vault = Vault(
+  vaultId: 5,
+  ownerId: 7,
+  vaultType: VaultTypes.private,
+  name: 'Private',
+  createdAt: DateTime(2026, 1, 1),
+);
+
+const _plan = MealPlan(planId: 1, vaultId: 5);
+
+MealPlanEntry _entry({required int id, required String title}) => MealPlanEntry(
+      entryId: id,
+      planId: 1,
+      recipeId: id,
+      entryDate: DateTime.now(),
+      mealSlot: MealSlot.dinner,
+      mealTime: const TimeOfDay(hour: 19, minute: 0),
+      title: title,
+    );
+
+class _FakeMealPlanRepo extends Fake implements MealPlanRepository {
+  _FakeMealPlanRepo({this.entries = const [], this.planFuture, this.error});
+
+  final List<MealPlanEntry> entries;
+  final Future<MealPlan>? planFuture;
+  final Object? error;
+
+  @override
+Future<MealPlan> getOrCreatePlan(int vaultId) async {
+  if (error != null) throw error!;
+  return planFuture != null ? await planFuture! : _plan;
+}
+
+  @override
+  Future<List<MealPlanEntry>> getEntries(
+          int vaultId, DateTime start, DateTime end) async =>
+      entries;
+}
+
+List<Override> _mealPlanOverrides({
+  required MealPlanRepository repo,
+  bool canManage = true,
+}) =>
+    [
+      mealPlanRepositoryProvider.overrideWithValue(repo),
+      vaultsProvider.overrideWith((ref) async => [_vault]),
+      canManageVaultFoldersProvider.overrideWith((ref, v) => canManage),
+    ];
 
 void main() {
   setUpAll(() {
@@ -206,4 +266,110 @@ void main() {
 
   });
 
+  group('MealPlanSection', () {
+    Future<void> pumpSection(
+      WidgetTester tester, {
+      MealPlanRepository? repo,
+      bool canManage = true,
+      bool canEdit = true,
+      bool settle = true,
+    }) async {
+      await pump(
+        tester,
+        MealPlanSection(vaultId: _vault.vaultId, canEdit: canEdit),
+        extra: _mealPlanOverrides(
+          repo: repo ?? _FakeMealPlanRepo(),
+          canManage: canManage,
+        ),
+      );
+      settle ? await tester.pumpAndSettle() : await tester.pump();
+    }
+
+    testWidgets('renders the header and private plan name', (tester) async {
+      await pumpSection(tester);
+      expect(find.text('Meal Plan'), findsOneWidget);
+      expect(find.text('My Plan'), findsOneWidget);
+    });
+
+    testWidgets('editor sees an add row for each main slot on an empty day',
+        (tester) async {
+      await pumpSection(tester);
+      expect(find.text('Add'), findsNWidgets(3));
+      expect(find.text('VIEW ONLY'), findsNothing);
+    });
+
+    testWidgets('viewer sees the read-only empty state', (tester) async {
+      await pumpSection(tester, canManage: false);
+      expect(find.text('Nothing planned yet'), findsOneWidget);
+      expect(find.text('VIEW ONLY'), findsOneWidget);
+      expect(find.text('Add'), findsNothing);
+    });
+
+    testWidgets('canEdit: false forces view-only even for a manager',
+        (tester) async {
+      await pumpSection(tester, canEdit: false);
+      expect(find.text('VIEW ONLY'), findsOneWidget);
+      expect(find.text('Add'), findsNothing);
+    });
+
+    testWidgets('shows planned meals and hides the empty state',
+        (tester) async {
+      await pumpSection(
+        tester,
+        repo: _FakeMealPlanRepo(
+          entries: [_entry(id: 1, title: 'Saffron Risotto')],
+        ),
+      );
+
+      expect(find.text('Saffron Risotto'), findsOneWidget);
+      expect(find.text('Nothing planned yet'), findsNothing);
+    });
+
+    testWidgets('an editor with a dinner planned can still add another meal ',
+        (tester) async {
+      await pumpSection(
+        tester,
+        repo: _FakeMealPlanRepo(
+          entries: [_entry(id: 1, title: 'Saffron Risotto')],
+        ),
+      );
+      expect(find.text('ANOTHER MEAL'), findsOneWidget);
+    });
+
+    testWidgets('shows loading placeholders, then the day once loaded',
+        (tester) async {
+      final pending = Completer<MealPlan>();
+      await pumpSection(
+        tester,
+        repo: _FakeMealPlanRepo(planFuture: pending.future),
+        settle: false,
+      );
+
+      expect(find.text('Add'), findsNothing);
+      expect(find.text('Nothing planned yet'), findsNothing);
+      pending.complete(_plan);
+      await tester.pumpAndSettle();
+      expect(find.text('Add'), findsNWidgets(3));
+    });
+
+    testWidgets('shows the error message with a retry button', (tester) async {
+      await pumpSection(
+        tester,
+        repo: _FakeMealPlanRepo(error: StateError('Plan unavailable')),
+      );
+      expect(find.text('Plan unavailable'), findsOneWidget);
+      expect(find.text('Try again'), findsOneWidget);
+    });
+
+    testWidgets('menu offers Add meal but not Clear day on an empty day',
+        (tester) async {
+      await pumpSection(tester);
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+      expect(find.text('Add meal'), findsOneWidget);
+      expect(find.text('Generate shopping list'), findsOneWidget);
+      expect(find.text('Clear day'), findsNothing);
+    });
+  }
+  );
 }
