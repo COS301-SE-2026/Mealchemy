@@ -26,34 +26,32 @@ void main() {
     return MaterialApp.router(routerConfig: router);
   }
 
-  testWidgets('renders the header title', (tester) async {
-    tester.view.physicalSize = const Size(1080, 2400);
+  Future<void> pumpHelp(
+    WidgetTester tester, {
+    Size size = const Size(1080, 2400),
+  }) async {
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.reset);
+
     await tester.pumpWidget(host());
     await tester.pumpAndSettle();
+  }
+
+  testWidgets('renders the header title', (tester) async {
+    await pumpHelp(tester);
     expect(find.text('Help & Support'), findsOneWidget);
   });
 
   testWidgets('renders the three section headers', (tester) async {
-    tester.view.physicalSize = const Size(1080, 2400);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
-    await tester.pumpWidget(host());
-    await tester.pumpAndSettle();
-
+    await pumpHelp(tester);
     expect(find.text('Help Center'), findsOneWidget);
     expect(find.text('Navigation Guide'), findsOneWidget);
     expect(find.text('Frequently Asked'), findsOneWidget);
   });
 
   testWidgets('renders help rows', (tester) async {
-    tester.view.physicalSize = const Size(1080, 2400);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
-
-    await tester.pumpWidget(host());
-    await tester.pumpAndSettle();
+    await pumpHelp(tester);
 
     expect(find.byType(HelpRow), findsWidgets);
     expect(find.text('Contact Support'), findsOneWidget);
@@ -62,30 +60,33 @@ void main() {
   testWidgets('renders help topics for recently added features', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(1080, 4000);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
-
-    await tester.pumpWidget(host());
-    await tester.pumpAndSettle();
+    await pumpHelp(tester, size: const Size(1080, 4000));
 
     expect(find.text('Guided Discovery'), findsOneWidget);
     expect(find.text('Understanding Nutrition'), findsOneWidget);
     expect(find.text('Saving External Recipe Links'), findsOneWidget);
     expect(find.text('Using Mealchemy Offline'), findsOneWidget);
+    expect(find.text('Cooking step by step'), findsOneWidget);
+    expect(find.text('Using cooking timers'), findsOneWidget);
   });
 
-  testWidgets('a row expands to reveal its body when tapped', (tester) async {
-    tester.view.physicalSize = const Size(1080, 2400);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
+  testWidgets('the cook mode rows expand to show their content', (
+    tester,
+  ) async {
+    await pumpHelp(tester);
 
-    await tester.pumpWidget(host());
+    final cookRow = find.text('Cooking step by step');
+    await tester.ensureVisible(cookRow);
     await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Contact Support'));
+    await tester.tap(cookRow);
     await tester.pumpAndSettle();
+    expect(find.text('Here is your quick tour of Cook Mode:'), findsOneWidget);
 
-    expect(find.text('pulsefve@gmail.com'), findsWidgets);
+    final timerRow = find.text('Using cooking timers');
+    await tester.ensureVisible(timerRow);
+    await tester.pumpAndSettle();
+    await tester.tap(timerRow);
+    await tester.pumpAndSettle();
+    expect(find.text('Here is how timers work:'), findsOneWidget);
   });
 }

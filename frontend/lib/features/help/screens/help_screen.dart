@@ -77,6 +77,146 @@ class HelpScreen extends StatelessWidget {
 
               const _Section(title: 'Navigation Guide'),
               const SizedBox(height: 12),
+                            const HelpRow(
+                icon: Icons.home_outlined,
+                title: 'Getting to know your Home',
+                body: [
+                  HelpBodyText(
+                    'Home is your kitchen at a glance, with your pantry, fresh recipe ideas, and the meals you have planned all in one place.',
+                  ),
+                  SizedBox(height: 8),
+                  HelpBodyText(
+                    'Here is your quick tour of the Home screen:',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.notifications_none_rounded,
+                    text:
+                        'The bell beside your greeting keeps you in the loop on vault invites and anything else that needs you.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.add,
+                    text:
+                        'The In Your Pantry card shows how many ingredients you have on hand. Tap the plus to add a new one without leaving Home.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.lightbulb_outline,
+                    text:
+                        'The Smart Suggestion card reminds you how many items are still waiting on your shopping list.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.refresh_rounded,
+                    text:
+                        'Pull down on the screen whenever you want everything freshly updated.',
+                  ),
+                ],
+              ),
+              const HelpRow(
+                icon: Icons.auto_awesome_outlined,
+                title: 'Recommended for You',
+                body: [
+                  HelpBodyText(
+                    'Swipe sideways through recipes picked just for you, shaped by what is in your pantry, your food preferences, and the recipes you have liked.',
+                  ),
+                  SizedBox(height: 8),
+                  HelpBodyText(
+                    'Here is what each card tells you:',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.check_circle,
+                    text:
+                        'The match badge shows how well the recipe suits you. The higher the number, the better the fit.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.schedule_rounded,
+                    text: 'The clock gives you the total time to get it on the table.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.shopping_basket_outlined,
+                    text:
+                        'The basket shows how many ingredients you still need to buy, or Ready to cook when you already have everything.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.touch_app_outlined,
+                    text: 'Tap any card to open the full recipe.',
+                  ),
+                ],
+              ),
+              const HelpRow(
+                icon: Icons.calendar_month_outlined,
+                title: 'Getting around your Meal Plan',
+                body: [
+                  HelpBodyText(
+                    'Your Meal Plan lays out breakfast, lunch, and dinner for each day, sorted by the time you plan to eat.',
+                  ),
+                  SizedBox(height: 8),
+                  HelpBodyText(
+                    'Here is your quick tour of the Meal Plan:',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.keyboard_arrow_down_rounded,
+                    text:
+                        'Tap the arrow next to My Plan to hop between your own plan and the plans of your shared vaults.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.chevron_right_rounded,
+                    text:
+                        'Use the arrows either side of the date to step through the days.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.calendar_today_outlined,
+                    text:
+                        'Tap the date to jump to any day on the calendar. Back to Today brings you straight home again.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.auto_awesome,
+                    text:
+                        'A little sparkle next to a meal means Mealchemy suggested it for you.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.visibility_outlined,
+                    text:
+                        'See View Only on a shared plan? You can look through it, but only the owner and editors can make changes.',
+                  ),
+                ],
+              ),
+              const HelpRow(
+                icon: Icons.restaurant_menu_rounded,
+                title: 'Planning your day',
+                body: [
+                  HelpBodyText(
+                    'Filling in your day only takes a few taps, and every meal can be changed whenever plans do.',
+                  ),
+                  SizedBox(height: 8),
+                  HelpBodyText(
+                    'Here is how to plan your meals:',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.add,
+                    text:
+                        'Tap Add on an empty breakfast, lunch, or dinner to plan that meal.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.restaurant_outlined,
+                    text:
+                        'Want something extra, like a snack? Another Meal lets you add it to the day.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.edit_outlined,
+                    text:
+                        'Tap the pencil on a meal to swap the recipe, change the time, add a note, or remove it altogether.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.more_vert,
+                    text:
+                        'Tap the three dots for more: add a meal, generate a shopping list from your plan, or clear the whole day.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.shopping_cart_outlined,
+                    text:
+                        'Generate shopping list lets you pick a start and end date, then gathers the ingredients for every meal in between.',
+                  ),
+                ],
+              ),
               const HelpRow(
                 icon: Icons.kitchen_outlined,
                 title: 'Getting to know your Pantry',
@@ -161,33 +301,171 @@ class HelpScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const HelpRow(
+                            const HelpRow(
                 icon: Icons.explore_outlined,
                 title: 'Guided Discovery',
                 body: [
                   HelpBodyText(
-                    'Guided Discovery helps you find recipes that match your '
-                    'tastes and the ingredients you have available.',
+                    'Guided Discovery is where you find your next favourite meal. Every recipe is picked for you, and every swipe teaches Mealchemy a little more about what you love.',
                   ),
                   SizedBox(height: 8),
                   HelpBodyText(
-                    'Browse the recommended recipes and respond to each one '
-                    'to help Mealchemy learn what you enjoy.',
+                    'Here is your quick tour of the Discover screen:',
                   ),
                   HelpIconBullet(
-                    icon: Icons.favorite_border,
+                    icon: Icons.tune,
                     text:
-                        'Like recipes that interest you to improve future recommendations.',
+                        'Tap the sliders at the top left to fine-tune how your recommendations are chosen.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.shopping_cart_outlined,
+                    text:
+                        'The cart at the top right takes you to your shopping lists, and the badge shows how many you have.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.filter_alt_outlined,
+                    text:
+                        'Scroll through the chips to narrow things down. Quick keeps it to meals ready in 30 minutes or less, or pick a diet like Vegetarian, Vegan, or Pescatarian.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.favorite,
+                    text:
+                        'Love the look of it? Tap the heart or swipe right to like it and save it to your Favourites.',
                   ),
                   HelpIconBullet(
                     icon: Icons.close_rounded,
-                    text:
-                        'Skip recipes that are not for you and continue discovering new options.',
+                    text: 'Not for you? Tap the cross or swipe left to pass.',
                   ),
                   HelpIconBullet(
-                    icon: Icons.tune_rounded,
+                    icon: Icons.skip_next_rounded,
                     text:
-                        'Your pantry and saved food preferences help shape the recipes you see.',
+                        'Not sure yet? The middle button skips it for now without counting against it.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.refresh_rounded,
+                    text:
+                        'Seen everything? You will get a summary of your likes, passes, and skips, and Start Again or a pull down brings in a fresh batch.',
+                  ),
+                ],
+              ),
+              const HelpRow(
+                icon: Icons.tune,
+                title: 'Tuning your recommendations',
+                body: [
+                  HelpBodyText(
+                    'You decide what matters most when Mealchemy picks your recipes. Tap the sliders on the Discover screen to open your Recommendations settings.',
+                  ),
+                  SizedBox(height: 8),
+                  HelpBodyText(
+                    'Slide each one up to give it more weight:',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.kitchen_outlined,
+                    text:
+                        'Pantry Match favours recipes you can make with what you already have.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.public,
+                    text:
+                        'Cuisine leans towards the cuisines you cook and swipe on most.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.monitor_heart_outlined,
+                    text:
+                        'Nutrition pushes recipes that match your nutritional goals.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.eco_outlined,
+                    text:
+                        'Freshness prioritises ingredients that are close to their expiry date.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.auto_awesome,
+                    text:
+                        'Novelty brings in more variety instead of the familiar favourites.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.restart_alt_rounded,
+                    text:
+                        'Tap Save Changes when you are happy, or use the reset button at the top to go back to the defaults.',
+                  ),
+                ],
+              ),
+              const HelpRow(
+                icon: Icons.menu_book_outlined,
+                title: 'Taking a closer look at a recipe',
+                body: [
+                  HelpBodyText(
+                    'Each card gives you the essentials at a glance, and a full preview is only a tap away.',
+                  ),
+                  SizedBox(height: 8),
+                  HelpBodyText(
+                    'Here is what each card tells you:',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.check_circle,
+                    text:
+                        'The match badge shows how well the recipe suits you. The higher the number, the better the fit.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.shopping_basket_outlined,
+                    text:
+                        'The basket line lists the ingredients you are still missing.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.schedule_rounded,
+                    text: 'The clock shows the total time from start to plate.',
+                  ),
+                  SizedBox(height: 8),
+                  HelpBodyText(
+                    'Tap View Full Recipe on a card to open its preview:',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.timer_outlined,
+                    text:
+                        'See the prep, cook, and total time, plus how many people it serves.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.auto_awesome,
+                    text:
+                        'Why this matches you explains the pick, from how well it fits your goals to a New tag for recipes you have not tried yet.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.shopping_basket_outlined,
+                    text:
+                        'You are missing lists every ingredient you would still need to buy.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.keyboard_arrow_down_rounded,
+                    text:
+                        'Swipe the preview down, or tap Close Preview or Looks Good, to get back to swiping.',
+                  ),
+                ],
+              ),
+              const HelpRow(
+                icon: Icons.play_circle_outline_rounded,
+                title: 'Sizzles',
+                body: [
+                  HelpBodyText(
+                    'Sizzles brings recipes to life with short cooking videos. Tap Sizzles next to Discover and scroll through for a little inspiration.',
+                  ),
+                  SizedBox(height: 8),
+                  HelpBodyText(
+                    'Here is your quick tour of Sizzles:',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.bookmark_border,
+                    text:
+                        'Tap Save to keep the recipe in your Vault so you can find it again.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.volume_off_outlined,
+                    text:
+                        'Videos start muted. Tap Unmute to hear the sizzle.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.menu_book_outlined,
+                    text: 'Tap Recipe to open the full recipe and start cooking.',
                   ),
                 ],
               ),
@@ -308,6 +586,92 @@ class HelpScreen extends StatelessWidget {
                   SizedBox(height: 8),
                   HelpBodyText(
                     'When you are ready, Start Cooking walks you through the recipe step by step, ticking ingredients off your pantry as you go.',
+                  ),
+                ],
+              ),
+                            const HelpRow(
+                icon: Icons.restaurant,
+                title: 'Cooking step by step',
+                body: [
+                  HelpBodyText(
+                    'Start Cooking turns your recipe into a calm, one step at a time guide, so you can keep your eyes on the pan instead of the phone.',
+                  ),
+                  SizedBox(height: 8),
+                  HelpBodyText(
+                    'Here is your quick tour of Cook Mode:',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.linear_scale_rounded,
+                    text:
+                        'The bar at the top shows how far along you are, like Step 1 of 3. Each step appears in big, easy-to-read text.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.volume_up_outlined,
+                    text:
+                        'Mealchemy reads each step aloud and highlights the words as it goes. Tap Pause to hold it, Resume to carry on, or Replay to hear it again.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.speed_rounded,
+                    text:
+                        'Tap the speed at the top right to change how fast the step is read to you.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.mic,
+                    text:
+                        'Hands covered in flour? Tap Speak, then say “next”, “back”, or “repeat” to move around without touching your screen. Tap it again to turn voice off.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.arrow_forward,
+                    text:
+                        'Use Back and Next to move between steps. On the last step, Next becomes Finish.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.close_rounded,
+                    text:
+                        'Need to step away? Tap the cross at the top left to leave. Continue cooking on your Home screen takes you straight back to the step you were on.',
+                  ),
+                ],
+              ),
+              const HelpRow(
+                icon: Icons.timer_outlined,
+                title: 'Using cooking timers',
+                body: [
+                  HelpBodyText(
+                    'Never overcook the pasta again. Set a timer right inside Cook Mode and Mealchemy keeps count for you.',
+                  ),
+                  SizedBox(height: 8),
+                  HelpBodyText(
+                    'Here is how timers work:',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.timer_outlined,
+                    text:
+                        'When a step mentions a time, a quick Start button for that timer appears near the bottom of the screen. Tap it and you are off.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.more_time,
+                    text:
+                        'Tap the timer icon at the bottom right to set your own. Give it a name if you like, pick the minutes with the plus and minus buttons, and tap Start timer.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.donut_large_rounded,
+                    text:
+                        'Your running timer shows as a ring on the step, counting down with its name and the step it belongs to.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.layers_outlined,
+                    text:
+                        'Cooking a few things at once? You can run several timers together, each with its own name.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.pause,
+                    text:
+                        'Open the timer menu to pause, resume, or cancel any timer under Active.',
+                  ),
+                  HelpIconBullet(
+                    icon: Icons.notifications_none_rounded,
+                    text:
+                        'Timers keep running when you leave Cook Mode, and you will see them on your Home screen. Allow notifications so Mealchemy can let you know when time is up, even with your phone locked.',
                   ),
                 ],
               ),
