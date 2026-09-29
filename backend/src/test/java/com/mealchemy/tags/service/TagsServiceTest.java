@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /* Import classes */
-import com.mealchemy.tags.dto.TagDto;
+import com.mealchemy.tags.dto.TagsResponse;
 import com.mealchemy.tags.model.Tags;
 import com.mealchemy.tags.repository.TagsRepository;
 
@@ -51,7 +51,7 @@ public class TagsServiceTest {
     {
         when(tagsRepository.findByIsActiveTrue()).thenReturn(List.of(dietaryTag, nonDietaryTag));
 
-        List<TagDto> result = tagsService.getActiveTags(null);
+        List<TagsResponse> result = tagsService.getActiveTags(null);
 
         assertEquals(2, result.size());
         assertEquals("Vegetarian", result.get(0).tagName());
@@ -65,7 +65,7 @@ public class TagsServiceTest {
     {
         when(tagsRepository.findByIsActiveTrueAndIsDietary(true)).thenReturn(List.of(dietaryTag));
 
-        List<TagDto> result = tagsService.getActiveTags(true);
+        List<TagsResponse> result = tagsService.getActiveTags(true);
 
         assertEquals(1, result.size());
         assertEquals(1, result.get(0).tagId());
@@ -79,7 +79,7 @@ public class TagsServiceTest {
     {
         when(tagsRepository.findByIsActiveTrueAndIsDietary(false)).thenReturn(List.of(nonDietaryTag));
 
-        List<TagDto> result = tagsService.getActiveTags(false);
+        List<TagsResponse> result = tagsService.getActiveTags(false);
 
         assertEquals(1, result.size());
         assertEquals(2, result.get(0).tagId());
@@ -93,7 +93,7 @@ public class TagsServiceTest {
     {
         when(tagsRepository.findByIsActiveTrueAndIsDietary(true)).thenReturn(List.of());
 
-        List<TagDto> result = tagsService.getActiveTags(true);
+        List<TagsResponse> result = tagsService.getActiveTags(true);
 
         assertTrue(result.isEmpty());
     }
