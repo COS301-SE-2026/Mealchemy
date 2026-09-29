@@ -1,15 +1,31 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/providers/api_service_provider.dart';
+import '../models/discovery_tag.dart';
 import '../models/recommendation.dart';
 import '../models/swipe.dart';
 import '../repositories/guided_discovery_repository.dart';
 import '../repositories/api_guided_discovery_repository.dart';
 
+const allFilterLabel = 'All';
+const quickFilterLabel = 'Quick';
+const _quickMaxTotalMins = 30;
+
 final guidedDiscoveryRepositoryProvider =
     Provider<GuidedDiscoveryRepository>((ref) {
   return ApiGuidedDiscoveryRepository(ref.read(dioProvider));
 });
+
+final discoveryTagsProvider = FutureProvider<List<DiscoveryTag>>((ref) {
+  return ref.watch(guidedDiscoveryRepositoryProvider).getDietaryTags();
+});
+
+final discoveryFilterLabelsProvider = Provider<List<String>>((ref) {
+  final tags = ref.watch(discoveryTagsProvider).valueOrNull ?? const [];
+  return [allFilterLabel, quickFilterLabel, ...tags.map((t) => t.label)];
+});
+
+final discoveryFilterProvider = StateProvider<String>((ref) => allFilterLabel);
 
 final guidedDiscoveryProvider =
     AsyncNotifierProvider<GuidedDiscoveryNotifier, GuidedDiscoveryState>(
@@ -66,7 +82,9 @@ class GuidedDiscoveryState {
 }
 
 class GuidedDiscoveryNotifier extends AsyncNotifier<GuidedDiscoveryState> {
-  late final GuidedDiscoveryRepository _repository;
+  late GuidedDiscoveryRepository _repository;
+  List<String>? _dietaryTags;
+  int? _maxTotalTimeMins;
 
   static const _batchSize = 10;
   // Fetch the next batch once only this many cards remain ahead of the user.
@@ -75,12 +93,22 @@ class GuidedDiscoveryNotifier extends AsyncNotifier<GuidedDiscoveryState> {
   @override
   Future<GuidedDiscoveryState> build() async {
     _repository = ref.watch(guidedDiscoveryRepositoryProvider);
+    final filter = ref.watch(discoveryFilterProvider);
+    final tags = ref.read(discoveryTagsProvider).valueOrNull ?? const [];
+    final tag = tags.where((t) => t.label == filter).firstOrNull;
+    _dietaryTags = tag == null ? null : [tag.tagName];
+    _maxTotalTimeMins = filter == quickFilterLabel ? _quickMaxTotalMins : null;
+
     return _loadInitial();
   }
 
   Future<GuidedDiscoveryState> _loadInitial() async {
     try {
-      final batch = await _repository.getRecommendations(batchSize: _batchSize);
+      final batch = await _repository.getRecommendations(
+        batchSize: _batchSize,
+        dietaryTags: _dietaryTags,
+        maxTotalTimeMins: _maxTotalTimeMins,
+      );
       return GuidedDiscoveryState(deck: batch);
     } on EmptyRecommendationPool {
       return const GuidedDiscoveryState(exhausted: true);
@@ -135,6 +163,8 @@ class GuidedDiscoveryNotifier extends AsyncNotifier<GuidedDiscoveryState> {
       final more = await _repository.getRecommendations(
         batchSize: _batchSize,
         excludeRecipeIds: seen,
+        dietaryTags: _dietaryTags,
+        maxTotalTimeMins: _maxTotalTimeMins,
       );
       final latest = state.valueOrNull ?? current;
       state = AsyncData(latest.copyWith(

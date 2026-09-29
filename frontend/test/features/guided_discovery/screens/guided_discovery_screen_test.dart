@@ -4,12 +4,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
+import 'package:mealchemy/features/guided_discovery/models/discovery_tag.dart';
 import 'package:mealchemy/features/guided_discovery/models/recommendation.dart';
 import 'package:mealchemy/features/guided_discovery/models/signal_scores.dart';
 import 'package:mealchemy/features/guided_discovery/models/swipe.dart';
 import 'package:mealchemy/features/guided_discovery/providers/guided_discovery_provider.dart';
 import 'package:mealchemy/features/guided_discovery/repositories/guided_discovery_repository.dart';
 import 'package:mealchemy/features/guided_discovery/screens/guided_discovery_screen.dart';
+import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
+import 'package:mealchemy/features/shopping_lists/repositories/mock_shopping_list_repository.dart';
 
 const _signals = SignalScores(
   pantryMatch: 0.9,
@@ -40,12 +43,18 @@ Recommendation _rec({required int id, required String title}) => Recommendation(
 // Serves a fixed two card deck once then reports the pool empty so prefetch stops.
 class _TestRepo implements GuidedDiscoveryRepository {
   bool _served = false;
+  List<String>? lastDietaryTags;
+  int? lastMaxTotalTimeMins;
 
   @override
   Future<List<Recommendation>> getRecommendations({
     int batchSize = 10,
     List<int> excludeRecipeIds = const [],
+    List<String>? dietaryTags,
+    int? maxTotalTimeMins,
   }) async {
+    lastDietaryTags = dietaryTags;
+    lastMaxTotalTimeMins = maxTotalTimeMins;
     if (_served) throw const EmptyRecommendationPool();
     _served = true;
     return [
@@ -64,6 +73,11 @@ class _TestRepo implements GuidedDiscoveryRepository {
       swipedAt: DateTime.now(),
     );
   }
+
+  @override
+  Future<List<DiscoveryTag>> getDietaryTags() async => const [
+        DiscoveryTag(tagId: 1, tagName: 'VEGETARIAN', isDietary: true),
+      ];
 }
 
 class _FailingRepo implements GuidedDiscoveryRepository {
@@ -71,6 +85,8 @@ class _FailingRepo implements GuidedDiscoveryRepository {
   Future<List<Recommendation>> getRecommendations({
     int batchSize = 10,
     List<int> excludeRecipeIds = const [],
+    List<String>? dietaryTags,
+    int? maxTotalTimeMins,
   }) {
     throw Exception('Discovery failure');
   }
@@ -79,6 +95,9 @@ class _FailingRepo implements GuidedDiscoveryRepository {
   Future<SwipeResponse> recordSwipe(SwipeRequest request) {
     throw Exception('Discovery failure');
   }
+
+  @override
+  Future<List<DiscoveryTag>> getDietaryTags() async => const [];
 }
 
 void main() {
@@ -93,6 +112,8 @@ void main() {
     return ProviderScope(
       overrides: [
         guidedDiscoveryRepositoryProvider.overrideWithValue(repository),
+        shoppingListRepositoryProvider
+            .overrideWithValue(MockShoppingListRepository()),
         offlineReadOnlyProvider.overrideWith((ref) => offline),
       ],
       child: const MaterialApp(
@@ -199,5 +220,35 @@ void main() {
 
     expect(find.text('Test Pasta'), findsNothing);
     expect(find.text('Test Salmon'), findsOneWidget);
+  });
+
+  testWidgets('filter pills come from the dietary tags', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(500, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(host(_TestRepo()));
+    await tester.pumpAndSettle();
+    expect(find.text('All'), findsOneWidget);
+    expect(find.text('Quick'), findsOneWidget);
+    expect(find.text('Vegetarian'), findsOneWidget);
+  });
+
+  testWidgets('picking a pill reloads the deck with that filter',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(500, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repo = _TestRepo();
+    await tester.pumpWidget(host(repo));
+    await tester.pumpAndSettle();
+
+    expect(repo.lastDietaryTags, isNull);
+    await tester.tap(find.text('Vegetarian'));
+    await tester.pumpAndSettle();
+    
+    expect(repo.lastDietaryTags, ['VEGETARIAN']);
+    expect(repo.lastMaxTotalTimeMins, isNull);
+    await tester.tap(find.text('Quick'));
+    await tester.pumpAndSettle();
+    expect(repo.lastDietaryTags, isNull);
+    expect(repo.lastMaxTotalTimeMins, 30);
   });
 }

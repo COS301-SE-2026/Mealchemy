@@ -17,12 +17,14 @@ class _FakeFavRepository implements FavRepository {
   Future<List<Favourite>> getFavs() async => [];
 
   @override
-  Future<void> removeFav(int recipeId) async => removed.add(recipeId);
+  Future<void> removeFav(int recipeId, {required String cuisineValue}) async =>
+      removed.add(recipeId);
 }
 
 Favourite _fav() => Favourite(
       favouriteId: 1,
       recipeId: 1,
+      cuisineValue: 'ITALIAN',
       createdAt: DateTime(2026, 2, 14),
       recipe: Recipe(
         recipeId: 1,

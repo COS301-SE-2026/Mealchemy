@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mealchemy/features/dashboard/providers/dashboard_provider.dart';
 import 'package:mealchemy/features/dashboard/repositories/dashboard_repository.dart';
 import 'package:mealchemy/features/dashboard/repositories/mock_dashboard_repository.dart';
+import 'package:mealchemy/features/guided_discovery/models/discovery_tag.dart';
 import 'package:mealchemy/features/guided_discovery/models/recommendation.dart';
 import 'package:mealchemy/features/guided_discovery/models/signal_scores.dart';
 import 'package:mealchemy/features/guided_discovery/models/swipe.dart';
@@ -34,6 +35,8 @@ class _FakeGuidedDiscoveryRepo implements GuidedDiscoveryRepository {
   Future<List<Recommendation>> getRecommendations({
     int batchSize = 10,
     List<int> excludeRecipeIds = const [],
+    List<String>? dietaryTags,
+    int? maxTotalTimeMins,
   }) async =>
       [_rec(1, 'Saffron Risotto'), _rec(2, 'Butter Chicken')];
 
@@ -46,7 +49,12 @@ class _FakeGuidedDiscoveryRepo implements GuidedDiscoveryRepository {
         action: request.action,
         swipedAt: DateTime.now(),
       );
+
+  @override
+  Future<List<DiscoveryTag>> getDietaryTags() async => const [];
 }
+
+
 
 // Guided discovery returns nothing (empty deck)
 class _EmptyGuidedDiscoveryRepo implements GuidedDiscoveryRepository {
@@ -54,12 +62,17 @@ class _EmptyGuidedDiscoveryRepo implements GuidedDiscoveryRepository {
   Future<List<Recommendation>> getRecommendations({
     int batchSize = 10,
     List<int> excludeRecipeIds = const [],
+    List<String>? dietaryTags,
+    int? maxTotalTimeMins,
   }) async =>
       const [];
 
   @override
   Future<SwipeResponse> recordSwipe(SwipeRequest request) async =>
       throw UnimplementedError();
+
+  @override
+  Future<List<DiscoveryTag>> getDietaryTags() async => const [];
 }
 
 // Fake dashboard repo that throws on every call to test stat load failure.

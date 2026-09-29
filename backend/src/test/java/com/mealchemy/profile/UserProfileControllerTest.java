@@ -75,7 +75,8 @@ public class UserProfileControllerTest {
             "url",
             PreferredUnit.METRIC,
             List.of("Blender"),
-            OffsetDateTime.parse("2026-08-19T23:00:00Z")
+            OffsetDateTime.parse("2026-08-19T23:00:00Z"),
+            "test@example.com"
         );
 
         when(userProfileService.getUserProfile(anyInt())).thenReturn(mockResponse);
@@ -88,7 +89,8 @@ public class UserProfileControllerTest {
                 .andExpect(jsonPath("$.display_name").value("test"))
                 .andExpect(jsonPath("$.avatar_url").value("url"))
                 .andExpect(jsonPath("$.preferred_unit").value("METRIC"))
-                .andExpect(jsonPath("$.equipment[0]").value("Blender"));
+                .andExpect(jsonPath("$.equipment[0]").value("Blender"))
+                .andExpect(jsonPath("$.email").value("test@example.com"));;
     }
 
     @Test
@@ -121,7 +123,8 @@ public class UserProfileControllerTest {
             "www",
             PreferredUnit.METRIC,
             List.of("Oven"),
-            OffsetDateTime.parse("2026-08-19T23:00:00Z")
+            OffsetDateTime.parse("2026-08-19T23:00:00Z"),
+            "test@example.com"
         );
 
         when(userProfileService.updateUserProfile(anyInt(), any(UserProfileUpdateRequest.class))).thenReturn(mockResponse);
@@ -135,7 +138,8 @@ public class UserProfileControllerTest {
             .andExpect(jsonPath("$.display_name").value("test-2"))
             .andExpect(jsonPath("$.avatar_url").value("www"))
             .andExpect(jsonPath("$.preferred_unit").value("METRIC"))
-            .andExpect(jsonPath("$.equipment[0]").value("Oven"));
+            .andExpect(jsonPath("$.equipment[0]").value("Oven"))
+            .andExpect(jsonPath("$.email").value("test@example.com"));
     }
 
     @Test
