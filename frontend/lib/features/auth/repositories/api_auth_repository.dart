@@ -26,13 +26,29 @@ class ApiAuthRepository implements AuthRepository {
         onboardingRequired: response.data['onboarding_required'] ?? false,
       );
     } on DioException catch (e) {
+      if (e.response?.statusCode == 429) {
+        final values = e.response?.headers['retry-after'];
+        final raw =
+            values != null && values.length == 1 ? values.single.trim() : null;
+
+        final parsed = raw != null && RegExp(r'^\d+$').hasMatch(raw)
+            ? int.tryParse(raw)
+            : null;
+
+        final seconds = parsed != null && parsed <= 86400 ? parsed : 300;
+
+        return AuthResult.locked(seconds);
+      }
+
       if (e.response?.statusCode == 401) {
         return AuthResult.failure('Invalid email or password');
       }
+
       return AuthResult.failure(_messageFrom(e));
     }
   }
-//register method calls for thge sign up page 
+
+//register method calls for thge sign up page
   @override
   Future<AuthResult> register(
     String email,

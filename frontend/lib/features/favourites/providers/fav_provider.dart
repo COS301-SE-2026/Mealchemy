@@ -23,7 +23,12 @@ class FavsNotifier extends AsyncNotifier<List<Favourite>> {
 
   Future<void> removeFav(int recipeId) async {
     final current = state.valueOrNull ?? [];
-    await _repository.removeFav(recipeId);
+    final fav = current.where((f) => f.recipeId == recipeId).firstOrNull;
+
+    await _repository.removeFav(
+      recipeId,
+      cuisineValue: fav?.cuisineValue ?? 'OTHER',
+    );
     state = AsyncData(
       current.where((fav) => fav.recipeId != recipeId).toList(),
     );

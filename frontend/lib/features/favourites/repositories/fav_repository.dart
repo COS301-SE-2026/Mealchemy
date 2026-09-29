@@ -3,5 +3,5 @@ import '../models/favourite.dart';
 abstract class FavRepository {
   
   Future<List<Favourite>> getFavs();
-  Future<void> removeFav(int recipeId);
+  Future<void> removeFav(int recipeId, {required String cuisineValue});
 }

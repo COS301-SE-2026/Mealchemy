@@ -96,8 +96,9 @@ class CachedRecipeRepository implements RecipeRepository {
   Future<void> addRecipeIngredient(
     int recipeId,
     RecipeIngredient ingredient,
-  ) {
-    return _remote.addRecipeIngredient(recipeId, ingredient);
+  ) async {
+    await _remote.addRecipeIngredient(recipeId, ingredient);
+    await _clearCachedNutrition(recipeId);
   }
 
   @override
@@ -106,8 +107,9 @@ class CachedRecipeRepository implements RecipeRepository {
   }
 
   @override
-  Future<void> deleteRecipe(int recipeId) {
-    return _remote.deleteRecipe(recipeId);
+  Future<void> deleteRecipe(int recipeId) async {
+    await _remote.deleteRecipe(recipeId);
+    await _clearCachedNutrition(recipeId);
   }
 
   @override
@@ -121,8 +123,10 @@ class CachedRecipeRepository implements RecipeRepository {
   }
 
   @override
-  Future<Recipe> updateRecipe(int id, Recipe recipe) {
-    return _remote.updateRecipe(id, recipe);
+  Future<Recipe> updateRecipe(int id, Recipe recipe) async {
+    final updated = await _remote.updateRecipe(id, recipe);
+    await _clearCachedNutrition(id);
+    return updated;
   }
 
   @override
@@ -131,22 +135,34 @@ class CachedRecipeRepository implements RecipeRepository {
     Recipe recipe, {
     bool removePhoto = false,
     bool removeVideo = false,
-  }) {
-    return _remote.updateRecipeFull(
+  }) async {
+    final updated = await _remote.updateRecipeFull(
       id,
       recipe,
       removePhoto: removePhoto,
       removeVideo: removeVideo,
     );
+    await _clearCachedNutrition(id);
+    return updated;
   }
-// equipment isn't in the offline cache yet so offline returns none
+
+  Future<void> _clearCachedNutrition(int recipeId) async {
+    final viewerUserId = _viewerUserId;
+    if (viewerUserId == null) return;
+    await _cache.deleteRecipeNutrition(
+      viewerUserId: viewerUserId,
+      recipeId: recipeId,
+    );
+  }
+
   @override
   Future<List<Equipment>> getRecipeEquipment(int recipeId) async {
     try {
       return await _remote.getRecipeEquipment(recipeId);
     } catch (error) {
-      if (!isOfflineTransportFailure(error)) rethrow;
-      return const [];
+      final cached = await _cachedRecipeForTransportFailure(error, recipeId);
+      if (cached?.equipment == null) rethrow;
+      return cached!.equipment!;
     }
   }
 }

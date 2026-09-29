@@ -21,7 +21,8 @@ void main() {
           ),
           GoRoute(
             path: '/preference',
-            builder: (context, state) => const Scaffold(body: Text('Preference')),
+            builder: (context, state) =>
+                const Scaffold(body: Text('Preference')),
           ),
         ],
       ),
@@ -31,8 +32,8 @@ void main() {
   group('SignupScreen', () {
     //screen and checking it renders without crashing
     testWidgets('renders without error', (tester) async {
-      await tester.pumpWidget( buildWidget());
-       await tester.pump( );
+      await tester.pumpWidget(buildWidget());
+      await tester.pump();
       expect(find.byType(SignupScreen), findsOneWidget);
     });
 

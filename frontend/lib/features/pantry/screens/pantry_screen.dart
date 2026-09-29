@@ -33,10 +33,8 @@ class PantryScreen extends ConsumerWidget {
       backgroundColor: AppColors.bgLight,
       floatingActionButton: FloatingActionButton(
         tooltip: 'Add Pantry Ingredient',
-        onPressed:
-            isReadOnly ? null : () => context.push(AppRoutes.addIngredient),
-        backgroundColor:
-            isReadOnly ? AppColors.surfaceMuted : AppColors.primary,
+        onPressed: () => context.push(AppRoutes.addIngredient),
+        backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textDark,
         child: const Icon(Icons.add),
       ),

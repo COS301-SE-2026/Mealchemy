@@ -147,7 +147,7 @@ void main() {
 
     expect(find.byType(AdminFlagCard), findsNothing);
     expect(
-      find.text('Your account does not have administrator access.'),
+      find.text('Your account does not have moderator access.'),
       findsOneWidget,
     );
   });

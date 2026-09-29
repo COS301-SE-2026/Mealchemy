@@ -6,8 +6,10 @@ import com.mealchemy.profile.dto.UserProfileResponse;
 import com.mealchemy.profile.dto.UserProfileUpdateRequest;
 // model
 import com.mealchemy.profile.model.UserProfile;
+import com.mealchemy.auth.model.User;
 // repositories
 import com.mealchemy.profile.repository.UserProfileRepository;
+import com.mealchemy.auth.repository.UserRepository;
 // services
 import com.mealchemy.profile.service.UserProfileService;
 import com.mealchemy.equipment.service.EquipmentService;
@@ -36,6 +38,7 @@ public class UserProfileServiceTest {
     // @Mock - create fake version of dependency
     @Mock private UserProfileRepository userProfileRepository;
     @Mock private EquipmentService equipmentService;
+    @Mock private UserRepository userRepository;
 
     // @InjectMocks creates the real UserProfileService and injects the mocks above into it - actually testing PreferenceSer
     @InjectMocks
@@ -43,6 +46,7 @@ public class UserProfileServiceTest {
 
     private UserProfile userProfile;
     private UserProfileUpdateRequest updateRequest;
+    private User user;
 
     @BeforeEach
     void setUp() {
@@ -53,6 +57,10 @@ public class UserProfileServiceTest {
         userProfile.setAvatarUrl("www");
         userProfile.setPreferredUnit(PreferredUnit.METRIC);
         userProfile.setEquipment(List.of("Microwave", "Oven"));
+
+        // simulates the users table row the email is read from
+        user = new User();
+        user.setEmail("test@example.com");
 
         // simulates what flutter puts in PUT req
         updateRequest = new UserProfileUpdateRequest(
@@ -81,9 +89,27 @@ public class UserProfileServiceTest {
     }
 
     @Test
+    void userProfile_whenUsersRowNotFound_throwsNotFound() {
+        // Arrange
+        when(userProfileRepository.findByUserId(1)).thenReturn(Optional.of(userProfile));
+        when(userRepository.findById(1)).thenReturn(Optional.empty());
+
+        // Act
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> userProfileService.getUserProfile(1)
+        );
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("User not found", ex.getReason());
+    }
+
+    @Test
     void userProfile_whenUserExists_returnsUserProfile() {
         // Arrange
         when(userProfileRepository.findByUserId(1)).thenReturn(Optional.of(userProfile));
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
 
         // Act
         UserProfileResponse response = userProfileService.getUserProfile(1);
@@ -94,6 +120,7 @@ public class UserProfileServiceTest {
         assertEquals("www", response.avatarUrl());
         assertEquals(PreferredUnit.METRIC, response.preferredUnit());
         assertEquals(List.of("Microwave", "Oven"), response.equipment());
+        assertEquals("test@example.com", response.email());
     }
 
     // ========== Update User Profile Testing ==========
@@ -104,6 +131,7 @@ public class UserProfileServiceTest {
         when(userProfileRepository.findByUserId(1)).thenReturn(Optional.of(userProfile));
         when(userProfileRepository.save(any(UserProfile.class))).thenReturn(userProfile);
         when(equipmentService.getValidEquipmentValues()).thenReturn(List.of("Blender"));
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
         // Act
         UserProfileResponse response = userProfileService.updateUserProfile(1, updateRequest);
 
@@ -113,6 +141,7 @@ public class UserProfileServiceTest {
         assertEquals("url", response.avatarUrl());
         assertEquals(PreferredUnit.IMPERIAL, response.preferredUnit());
         assertEquals(List.of("Blender"), response.equipment());
+        assertEquals("test@example.com", response.email());
 
         // Verify save was called once
         verify(userProfileRepository).save(any(UserProfile.class));
@@ -166,6 +195,7 @@ public class UserProfileServiceTest {
         // Arrange
         when(userProfileRepository.findByUserId(1)).thenReturn(Optional.of(userProfile));
         when(userProfileRepository.save(any(UserProfile.class))).thenReturn(userProfile);
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
 
         UserProfileUpdateRequest request = new UserProfileUpdateRequest(
             "test",
@@ -183,6 +213,7 @@ public class UserProfileServiceTest {
         assertEquals("url", response.avatarUrl());
         assertEquals(PreferredUnit.IMPERIAL, response.preferredUnit());
         assertEquals(List.of(), response.equipment());
+        assertEquals("test@example.com", response.email());
 
         // Verify save was called once
         verify(userProfileRepository).save(any(UserProfile.class));

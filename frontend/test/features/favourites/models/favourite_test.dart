@@ -25,8 +25,19 @@ void main() {
       expect(fav.recipe.title, 'Test Pasta');
       expect(fav.recipe.cuisineType, 'italian');
     });
+    test('parses cuisine_value for unlike swipes', () {
+      final fav = Favourite.fromJson(likedItem());
+      expect(fav.cuisineValue, 'italian');
+    });
 
-    test('favouriteId mirrors recipeId (liked response carries no favourite id)',
+    test('missing cuisine_value falls back to OTHER', () {
+      final json = likedItem()..remove('cuisine_value');
+      final fav = Favourite.fromJson(json);
+      expect(fav.cuisineValue, 'OTHER');
+    });
+
+    test(
+        'favouriteId mirrors recipeId (liked response carries no favourite id)',
         () {
       final fav = Favourite.fromJson(likedItem());
 

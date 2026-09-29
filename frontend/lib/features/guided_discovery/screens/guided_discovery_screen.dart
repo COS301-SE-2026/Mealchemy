@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/connectivity/network_status_provider.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../offline/widgets/offline_unavailable_state.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_refresh.dart';
 import '../models/recommendation.dart';
 import '../providers/guided_discovery_provider.dart';
@@ -23,19 +25,13 @@ class GuidedDiscoveryScreen extends ConsumerStatefulWidget {
 }
 
 class _GuidedDiscoveryScreenState extends ConsumerState<GuidedDiscoveryScreen> {
-  static const List<String> _filters = [
-    'All',
-    'Quick Meals',
-    'High Protein',
-    'Vegetarian',
-  ];
-  String _selectedFilter = 'All';
   DiscoveryTab _selectedTab = DiscoveryTab.discover;
 
   @override
   Widget build(BuildContext context) {
     final discoveryState = ref.watch(guidedDiscoveryProvider);
     final notifier = ref.read(guidedDiscoveryProvider.notifier);
+    final offline = ref.watch(offlineReadOnlyProvider);
 
     return Center(
       child: ConstrainedBox(
@@ -52,40 +48,47 @@ class _GuidedDiscoveryScreenState extends ConsumerState<GuidedDiscoveryScreen> {
               bottom: false,
               child: Column(
                 children: [
+                  //pills come from the tags endpoint, picking one reloads the deck
                   DiscoveryHeader(
-                    selectedFilter: _selectedFilter,
-                    filters: _filters,
+                    selectedFilter: ref.watch(discoveryFilterProvider),
+                    filters: ref.watch(discoveryFilterLabelsProvider),
                     selectedTab: _selectedTab,
+                    settingsEnabled: !offline,
                     onTabSelected: (tab) => setState(() => _selectedTab = tab),
                     onFilterSelected: (f) =>
-                        setState(() => _selectedFilter = f),
+                        ref.read(discoveryFilterProvider.notifier).state = f,
                   ),
                   Expanded(
-                    child: _selectedTab == DiscoveryTab.sizzles
-                        ? const SizzlesScreen()
-                        : discoveryState.when(
-                            loading: () => const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                            error: (error, stackTrace) => _ErrorState(
-                              message: error.toString(),
-                              onRetry: notifier.resetDiscovery,
-                            ),
-                            data: (state) => AppRefresh(
-                              onRefresh: notifier.resetDiscovery,
-                              child: state.isComplete
-                                  ? DiscoveryCompleteState(
-                                      likedCount: state.likedCount,
-                                      dislikedCount: state.dislikedCount,
-                                      skippedCount: state.skippedCount,
-                                      onReset: notifier.resetDiscovery,
-                                    )
-                                  : _Deck(
-                                      state: state,
-                                      notifier: notifier,
-                                    ),
-                            ),
-                          ),
+                    child: offline
+                        ? const OfflineUnavailableState(
+                            message:
+                                'Recipe discovery is available when you are back online.',
+                          )
+                        : _selectedTab == DiscoveryTab.sizzles
+                            ? const SizzlesScreen()
+                            : discoveryState.when(
+                                loading: () => const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                                error: (error, stackTrace) => _ErrorState(
+                                  message: error.toString(),
+                                  onRetry: notifier.resetDiscovery,
+                                ),
+                                data: (state) => AppRefresh(
+                                  onRefresh: notifier.resetDiscovery,
+                                  child: state.isComplete
+                                      ? DiscoveryCompleteState(
+                                          likedCount: state.likedCount,
+                                          dislikedCount: state.dislikedCount,
+                                          skippedCount: state.skippedCount,
+                                          onReset: notifier.resetDiscovery,
+                                        )
+                                      : _Deck(
+                                          state: state,
+                                          notifier: notifier,
+                                        ),
+                                ),
+                              ),
                   ),
                 ],
               ),
@@ -193,13 +196,20 @@ void _showRecipePreview(BuildContext context, Recommendation recommendation) {
       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
     ),
     builder: (context) {
-      return FractionallySizedBox(
-        heightFactor: 0.86,
-        child: RecipePreviewSheet(recommendation: recommendation),
+      return DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.86,
+        minChildSize: 0.4,
+        maxChildSize: 0.95,
+        builder: (context, controller) => RecipePreviewSheet(
+          recommendation: recommendation,
+          scrollController: controller,
+        ),
       );
     },
   );
 }
+
 
 class _ErrorState extends StatelessWidget {
   const _ErrorState({required this.message, required this.onRetry});

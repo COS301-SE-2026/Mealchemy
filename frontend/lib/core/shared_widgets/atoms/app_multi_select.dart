@@ -59,7 +59,19 @@ class _AppMultiSelectState extends State<AppMultiSelect> {
 
   void _pick(String value) {
     widget.onToggle(value);
+    _repositionAfterLayout();
+  }
+
+  void _remove(String value) {
+    widget.onToggle(value);
+    _repositionAfterLayout();
+  }
+
+  void _repositionAfterLayout() {
     setState(() {});
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -77,7 +89,7 @@ class _AppMultiSelectState extends State<AppMultiSelect> {
               AppChip(
                 label: option.label,
                 variant: AppChipVariant.white,
-                onRemove: () => widget.onToggle(option.value),
+                onRemove: () => _remove(option.value),
               ),
             if (_available.isNotEmpty) _addTrigger(),
           ],
@@ -94,42 +106,40 @@ class _AppMultiSelectState extends State<AppMultiSelect> {
   }
 
   Widget _addTrigger() {
+    final media = MediaQuery.of(context);
+    final screenWidth = media.size.width;
+    const margin = 12.0;
+
+    //measure the add button itself, not the whole chip row
+    final box = _triggerKey.currentContext?.findRenderObject() as RenderBox?;
+    final triggerWidth = box?.size.width ?? 0;
+    final triggerLeft =
+        box != null ? box.localToGlobal(Offset.zero).dx : margin;
+    final triggerRight = triggerLeft + triggerWidth;
+
+    final maxOnScreen = screenWidth - (margin * 2);
+    final menuWidth = 260.0.clamp(0.0, maxOnScreen).toDouble();
+
+    final alignRight = (triggerLeft + triggerWidth / 2) > screenWidth / 2;
+    final Alignment targetAnchor =
+        alignRight ? Alignment.bottomRight : Alignment.bottomLeft;
+    final Alignment followerAnchor =
+        alignRight ? Alignment.topRight : Alignment.topLeft;
+
+    double dx = 0;
+    if (alignRight) {
+      final menuLeft = triggerRight - menuWidth;
+      if (menuLeft < margin) dx = margin - menuLeft;
+    } else {
+      final menuRight = triggerLeft + menuWidth;
+      if (menuRight > screenWidth - margin) {
+        dx = (screenWidth - margin) - menuRight;
+      }
+    }
+
     return OverlayPortal(
       controller: _controller,
       overlayChildBuilder: (context) {
-        final screenWidth = MediaQuery.of(context).size.width;
-        const margin = 12.0;
-
-        // measure the button itself, not the whole multi-select
-        final box =
-            _triggerKey.currentContext?.findRenderObject() as RenderBox?;
-        final triggerWidth = box?.size.width ?? 0;
-        final triggerLeft =
-            box != null ? box.localToGlobal(Offset.zero).dx : margin;
-        final triggerRight = triggerLeft + triggerWidth;
-
-        final wide = triggerWidth >= screenWidth / 2;
-        final desired = wide ? triggerWidth : triggerWidth * 2;
-        final maxOnScreen = screenWidth - (margin * 2);
-        final menuWidth = desired.clamp(0.0, maxOnScreen).toDouble();
-
-        final alignRight = triggerRight > screenWidth / 2;
-        final Alignment targetAnchor =
-            alignRight ? Alignment.bottomRight : Alignment.bottomLeft;
-        final Alignment followerAnchor =
-            alignRight ? Alignment.topRight : Alignment.topLeft;
-
-        double dx = 0;
-        if (alignRight) {
-          final menuLeft = triggerRight - menuWidth;
-          if (menuLeft < margin) dx = margin - menuLeft;
-        } else {
-          final menuRight = triggerLeft + menuWidth;
-          if (menuRight > screenWidth - margin) {
-            dx = (screenWidth - margin) - menuRight;
-          }
-        }
-
         return Stack(
           children: [
             Positioned.fill(
@@ -162,10 +172,10 @@ class _AppMultiSelectState extends State<AppMultiSelect> {
       child: CompositedTransformTarget(
         link: _link,
         child: InkWell(
-          key: _triggerKey,
           onTap: _toggleMenu,
           borderRadius: BorderRadius.circular(8),
           child: Container(
+            key: _triggerKey,
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
             decoration: BoxDecoration(
               color: widget.surface == MultiSelectSurface.white
@@ -183,11 +193,15 @@ class _AppMultiSelectState extends State<AppMultiSelect> {
                   color: AppColors.primary,
                 ),
                 const SizedBox(width: 6),
-                Text(
-                  widget.addLabel,
-                  style: AppTextStyles.label.copyWith(
-                    color: AppColors.primary,
-                    letterSpacing: 0.6,
+                Flexible(
+                  child: Text(
+                    widget.addLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.label.copyWith(
+                      color: AppColors.primary,
+                      letterSpacing: 0.6,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -237,6 +251,7 @@ class _MultiSelectMenu extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxHeight: 280),
           child: Container(
+            key: const ValueKey('multi-select-menu'),
             decoration: BoxDecoration(
               color: fill,
               borderRadius: BorderRadius.circular(14),

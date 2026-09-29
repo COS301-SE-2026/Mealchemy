@@ -204,7 +204,7 @@ void main() {
     expect(find.text('Chicken Breast'), findsOneWidget);
   });
 
-  testWidgets('PantryScreen keeps cached reads and disables writes offline', (
+  testWidgets('PantryScreen keeps cached reads and opens add flow offline', (
     tester,
   ) async {
     await pumpPantryScreen(tester, isOffline: true);
@@ -223,7 +223,7 @@ void main() {
     final addButton = tester.widget<FloatingActionButton>(
       find.byType(FloatingActionButton),
     );
-    expect(addButton.onPressed, isNull);
+    expect(addButton.onPressed, isNotNull);
 
     await tester.enterText(find.byType(TextField), 'milk');
     await tester.pumpAndSettle();

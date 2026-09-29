@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routes/app_routes.dart';
+import '../../../core/shared_widgets/atoms/app_badge.dart';
 import '../../../core/shared_widgets/atoms/app_chip.dart';
+import '../../../core/shared_widgets/atoms/app_icon_button.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../shopping_lists/providers/shopping_list_provider.dart';
 
 enum DiscoveryTab { discover, sizzles }
 
-//header section for Discovery page (add button, tabs, filter button)
-class DiscoveryHeader extends StatelessWidget {
+//header section for Discovery page (filter button, tabs, shopping list button)
+class DiscoveryHeader extends ConsumerWidget {
   const DiscoveryHeader({
     super.key,
     required this.selectedFilter,
@@ -17,6 +21,7 @@ class DiscoveryHeader extends StatelessWidget {
     required this.onFilterSelected,
     this.selectedTab = DiscoveryTab.discover,
     this.onTabSelected,
+    this.settingsEnabled = true,
   });
 
   final String selectedFilter;
@@ -24,9 +29,12 @@ class DiscoveryHeader extends StatelessWidget {
   final ValueChanged<String> onFilterSelected;
   final DiscoveryTab selectedTab;
   final ValueChanged<DiscoveryTab>? onTabSelected;
+  final bool settingsEnabled;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cartCount = ref.watch(shoppingListCountProvider);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(22, 18, 22, 10),
       child: Column(
@@ -35,10 +43,14 @@ class DiscoveryHeader extends StatelessWidget {
           Row(
             children: [
               IconButton(
-                onPressed: () {},
-                icon: const Icon(
-                  Icons.add,
-                  color: AppColors.textLight,
+                onPressed: settingsEnabled
+                    ? () => context.push(AppRoutes.recommendationSettings)
+                    : null,
+                icon: Icon(
+                  Icons.tune,
+                  color: settingsEnabled
+                      ? AppColors.textLight
+                      : AppColors.textMuted,
                 ),
               ),
               Expanded(
@@ -63,12 +75,20 @@ class DiscoveryHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              IconButton(
-                onPressed: ()=> context.push(AppRoutes.recommendationSettings),
-                icon: const Icon(
-                  Icons.tune,
-                  color: AppColors.textLight,
-                ),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AppIconButton.ghost(
+                    icon: Icons.shopping_cart_outlined,
+                    onPressed: () => context.push(AppRoutes.shoppingLists),
+                    customColor: AppColors.textLight,
+                  ),
+                  Positioned(
+                    top: 2,
+                    right: 2,
+                    child: AppBadge(count: cartCount),
+                  ),
+                ],
               ),
             ],
           ),

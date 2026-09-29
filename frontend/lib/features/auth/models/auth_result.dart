@@ -1,4 +1,3 @@
-
 import 'package:mealchemy/features/auth/models/user.dart';
 
 class AuthResult {
@@ -6,7 +5,10 @@ class AuthResult {
   final String? token;
   final User? user;
   final String? errorMessage;
-   final bool onboardingRequired;
+  final bool onboardingRequired;
+
+  //present only when password login returns HTTP 429
+  final int? retryAfterSeconds;
 
   const AuthResult({
     required this.success,
@@ -14,15 +16,34 @@ class AuthResult {
     this.user,
     this.errorMessage,
     this.onboardingRequired = false,
+    this.retryAfterSeconds,
   });
 
-  //Success result
-  factory AuthResult.success({required String token, required User user, bool onboardingRequired = false}) {
-    return AuthResult(success: true, token: token, user: user, onboardingRequired: onboardingRequired);
+  factory AuthResult.success({
+    required String token,
+    required User user,
+    bool onboardingRequired = false,
+  }) {
+    return AuthResult(
+      success: true,
+      token: token,
+      user: user,
+      onboardingRequired: onboardingRequired,
+    );
   }
 
-  //Failure result
   factory AuthResult.failure(String message) {
-    return AuthResult(success: false, errorMessage: message);
+    return AuthResult(
+      success: false,
+      errorMessage: message,
+    );
+  }
+
+  factory AuthResult.locked(int retryAfterSeconds) {
+    return AuthResult(
+      success: false,
+      errorMessage: 'Too many failed login attempts. Please try again later.',
+      retryAfterSeconds: retryAfterSeconds,
+    );
   }
 }

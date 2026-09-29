@@ -3,43 +3,44 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mealchemy/features/shopping_lists/widgets/shopping_bottom_action_bar.dart';
 
 void main() {
-  testWidgets('ShoppingBottomActionBar renders action buttons', (tester) async {
+  testWidgets('shows only the add action', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
-        home: Scaffold(
-          body: ShoppingBottomActionBar(),
-        ),
+        home: Scaffold(body: ShoppingBottomActionBar()),
       ),
     );
 
-    expect(find.byIcon(Icons.mic_none), findsOneWidget);
     expect(find.byIcon(Icons.add), findsOneWidget);
-    expect(find.byIcon(Icons.sort), findsOneWidget);
+    expect(find.byIcon(Icons.mic_none), findsNothing);
+    expect(find.byIcon(Icons.sort), findsNothing);
   });
 
-  testWidgets('ShoppingBottomActionBar calls action callbacks', (tester) async {
-    var micTapped = false;
-    var addTapped = false;
-    var filterTapped = false;
+  testWidgets('add action invokes its callback', (tester) async {
+    var calls = 0;
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: ShoppingBottomActionBar(
-            onMicTap: () => micTapped = true,
-            onAddTap: () => addTapped = true,
-            onFilterTap: () => filterTapped = true,
+            onAddTap: () => calls++,
           ),
         ),
       ),
     );
 
-    await tester.tap(find.byIcon(Icons.mic_none));
     await tester.tap(find.byIcon(Icons.add));
-    await tester.tap(find.byIcon(Icons.sort));
 
-    expect(micTapped, isTrue);
-    expect(addTapped, isTrue);
-    expect(filterTapped, isTrue);
+    expect(calls, 1);
+  });
+
+  testWidgets('add action is disabled without a callback', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: ShoppingBottomActionBar()),
+      ),
+    );
+
+    final button = tester.widget<InkWell>(find.byType(InkWell));
+    expect(button.onTap, isNull);
   });
 }
