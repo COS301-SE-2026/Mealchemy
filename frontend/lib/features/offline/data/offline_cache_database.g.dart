@@ -2704,6 +2704,370 @@ class CachedRecipeStepRowsCompanion
   }
 }
 
+class $CachedRecipeEquipmentRowsTable extends CachedRecipeEquipmentRows
+    with TableInfo<$CachedRecipeEquipmentRowsTable, CachedRecipeEquipmentRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedRecipeEquipmentRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _viewerUserIdMeta =
+      const VerificationMeta('viewerUserId');
+  @override
+  late final GeneratedColumn<int> viewerUserId = GeneratedColumn<int>(
+      'viewer_user_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _recipeIdMeta =
+      const VerificationMeta('recipeId');
+  @override
+  late final GeneratedColumn<int> recipeId = GeneratedColumn<int>(
+      'recipe_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _lineIndexMeta =
+      const VerificationMeta('lineIndex');
+  @override
+  late final GeneratedColumn<int> lineIndex = GeneratedColumn<int>(
+      'line_index', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _equipmentIdMeta =
+      const VerificationMeta('equipmentId');
+  @override
+  late final GeneratedColumn<int> equipmentId = GeneratedColumn<int>(
+      'equipment_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _equipmentValueMeta =
+      const VerificationMeta('equipmentValue');
+  @override
+  late final GeneratedColumn<String> equipmentValue = GeneratedColumn<String>(
+      'equipment_value', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+      'label', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [viewerUserId, recipeId, lineIndex, equipmentId, equipmentValue, label];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_recipe_equipment_rows';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<CachedRecipeEquipmentRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('viewer_user_id')) {
+      context.handle(
+          _viewerUserIdMeta,
+          viewerUserId.isAcceptableOrUnknown(
+              data['viewer_user_id']!, _viewerUserIdMeta));
+    } else if (isInserting) {
+      context.missing(_viewerUserIdMeta);
+    }
+    if (data.containsKey('recipe_id')) {
+      context.handle(_recipeIdMeta,
+          recipeId.isAcceptableOrUnknown(data['recipe_id']!, _recipeIdMeta));
+    } else if (isInserting) {
+      context.missing(_recipeIdMeta);
+    }
+    if (data.containsKey('line_index')) {
+      context.handle(_lineIndexMeta,
+          lineIndex.isAcceptableOrUnknown(data['line_index']!, _lineIndexMeta));
+    } else if (isInserting) {
+      context.missing(_lineIndexMeta);
+    }
+    if (data.containsKey('equipment_id')) {
+      context.handle(
+          _equipmentIdMeta,
+          equipmentId.isAcceptableOrUnknown(
+              data['equipment_id']!, _equipmentIdMeta));
+    } else if (isInserting) {
+      context.missing(_equipmentIdMeta);
+    }
+    if (data.containsKey('equipment_value')) {
+      context.handle(
+          _equipmentValueMeta,
+          equipmentValue.isAcceptableOrUnknown(
+              data['equipment_value']!, _equipmentValueMeta));
+    } else if (isInserting) {
+      context.missing(_equipmentValueMeta);
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+          _labelMeta, label.isAcceptableOrUnknown(data['label']!, _labelMeta));
+    } else if (isInserting) {
+      context.missing(_labelMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {viewerUserId, recipeId, lineIndex};
+  @override
+  CachedRecipeEquipmentRow map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedRecipeEquipmentRow(
+      viewerUserId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}viewer_user_id'])!,
+      recipeId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}recipe_id'])!,
+      lineIndex: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}line_index'])!,
+      equipmentId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}equipment_id'])!,
+      equipmentValue: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}equipment_value'])!,
+      label: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}label'])!,
+    );
+  }
+
+  @override
+  $CachedRecipeEquipmentRowsTable createAlias(String alias) {
+    return $CachedRecipeEquipmentRowsTable(attachedDatabase, alias);
+  }
+}
+
+class CachedRecipeEquipmentRow extends DataClass
+    implements Insertable<CachedRecipeEquipmentRow> {
+  final int viewerUserId;
+  final int recipeId;
+  final int lineIndex;
+  final int equipmentId;
+  final String equipmentValue;
+  final String label;
+  const CachedRecipeEquipmentRow(
+      {required this.viewerUserId,
+      required this.recipeId,
+      required this.lineIndex,
+      required this.equipmentId,
+      required this.equipmentValue,
+      required this.label});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['viewer_user_id'] = Variable<int>(viewerUserId);
+    map['recipe_id'] = Variable<int>(recipeId);
+    map['line_index'] = Variable<int>(lineIndex);
+    map['equipment_id'] = Variable<int>(equipmentId);
+    map['equipment_value'] = Variable<String>(equipmentValue);
+    map['label'] = Variable<String>(label);
+    return map;
+  }
+
+  CachedRecipeEquipmentRowsCompanion toCompanion(bool nullToAbsent) {
+    return CachedRecipeEquipmentRowsCompanion(
+      viewerUserId: Value(viewerUserId),
+      recipeId: Value(recipeId),
+      lineIndex: Value(lineIndex),
+      equipmentId: Value(equipmentId),
+      equipmentValue: Value(equipmentValue),
+      label: Value(label),
+    );
+  }
+
+  factory CachedRecipeEquipmentRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedRecipeEquipmentRow(
+      viewerUserId: serializer.fromJson<int>(json['viewerUserId']),
+      recipeId: serializer.fromJson<int>(json['recipeId']),
+      lineIndex: serializer.fromJson<int>(json['lineIndex']),
+      equipmentId: serializer.fromJson<int>(json['equipmentId']),
+      equipmentValue: serializer.fromJson<String>(json['equipmentValue']),
+      label: serializer.fromJson<String>(json['label']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'viewerUserId': serializer.toJson<int>(viewerUserId),
+      'recipeId': serializer.toJson<int>(recipeId),
+      'lineIndex': serializer.toJson<int>(lineIndex),
+      'equipmentId': serializer.toJson<int>(equipmentId),
+      'equipmentValue': serializer.toJson<String>(equipmentValue),
+      'label': serializer.toJson<String>(label),
+    };
+  }
+
+  CachedRecipeEquipmentRow copyWith(
+          {int? viewerUserId,
+          int? recipeId,
+          int? lineIndex,
+          int? equipmentId,
+          String? equipmentValue,
+          String? label}) =>
+      CachedRecipeEquipmentRow(
+        viewerUserId: viewerUserId ?? this.viewerUserId,
+        recipeId: recipeId ?? this.recipeId,
+        lineIndex: lineIndex ?? this.lineIndex,
+        equipmentId: equipmentId ?? this.equipmentId,
+        equipmentValue: equipmentValue ?? this.equipmentValue,
+        label: label ?? this.label,
+      );
+  CachedRecipeEquipmentRow copyWithCompanion(
+      CachedRecipeEquipmentRowsCompanion data) {
+    return CachedRecipeEquipmentRow(
+      viewerUserId: data.viewerUserId.present
+          ? data.viewerUserId.value
+          : this.viewerUserId,
+      recipeId: data.recipeId.present ? data.recipeId.value : this.recipeId,
+      lineIndex: data.lineIndex.present ? data.lineIndex.value : this.lineIndex,
+      equipmentId:
+          data.equipmentId.present ? data.equipmentId.value : this.equipmentId,
+      equipmentValue: data.equipmentValue.present
+          ? data.equipmentValue.value
+          : this.equipmentValue,
+      label: data.label.present ? data.label.value : this.label,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedRecipeEquipmentRow(')
+          ..write('viewerUserId: $viewerUserId, ')
+          ..write('recipeId: $recipeId, ')
+          ..write('lineIndex: $lineIndex, ')
+          ..write('equipmentId: $equipmentId, ')
+          ..write('equipmentValue: $equipmentValue, ')
+          ..write('label: $label')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      viewerUserId, recipeId, lineIndex, equipmentId, equipmentValue, label);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedRecipeEquipmentRow &&
+          other.viewerUserId == this.viewerUserId &&
+          other.recipeId == this.recipeId &&
+          other.lineIndex == this.lineIndex &&
+          other.equipmentId == this.equipmentId &&
+          other.equipmentValue == this.equipmentValue &&
+          other.label == this.label);
+}
+
+class CachedRecipeEquipmentRowsCompanion
+    extends UpdateCompanion<CachedRecipeEquipmentRow> {
+  final Value<int> viewerUserId;
+  final Value<int> recipeId;
+  final Value<int> lineIndex;
+  final Value<int> equipmentId;
+  final Value<String> equipmentValue;
+  final Value<String> label;
+  final Value<int> rowid;
+  const CachedRecipeEquipmentRowsCompanion({
+    this.viewerUserId = const Value.absent(),
+    this.recipeId = const Value.absent(),
+    this.lineIndex = const Value.absent(),
+    this.equipmentId = const Value.absent(),
+    this.equipmentValue = const Value.absent(),
+    this.label = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CachedRecipeEquipmentRowsCompanion.insert({
+    required int viewerUserId,
+    required int recipeId,
+    required int lineIndex,
+    required int equipmentId,
+    required String equipmentValue,
+    required String label,
+    this.rowid = const Value.absent(),
+  })  : viewerUserId = Value(viewerUserId),
+        recipeId = Value(recipeId),
+        lineIndex = Value(lineIndex),
+        equipmentId = Value(equipmentId),
+        equipmentValue = Value(equipmentValue),
+        label = Value(label);
+  static Insertable<CachedRecipeEquipmentRow> custom({
+    Expression<int>? viewerUserId,
+    Expression<int>? recipeId,
+    Expression<int>? lineIndex,
+    Expression<int>? equipmentId,
+    Expression<String>? equipmentValue,
+    Expression<String>? label,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (viewerUserId != null) 'viewer_user_id': viewerUserId,
+      if (recipeId != null) 'recipe_id': recipeId,
+      if (lineIndex != null) 'line_index': lineIndex,
+      if (equipmentId != null) 'equipment_id': equipmentId,
+      if (equipmentValue != null) 'equipment_value': equipmentValue,
+      if (label != null) 'label': label,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CachedRecipeEquipmentRowsCompanion copyWith(
+      {Value<int>? viewerUserId,
+      Value<int>? recipeId,
+      Value<int>? lineIndex,
+      Value<int>? equipmentId,
+      Value<String>? equipmentValue,
+      Value<String>? label,
+      Value<int>? rowid}) {
+    return CachedRecipeEquipmentRowsCompanion(
+      viewerUserId: viewerUserId ?? this.viewerUserId,
+      recipeId: recipeId ?? this.recipeId,
+      lineIndex: lineIndex ?? this.lineIndex,
+      equipmentId: equipmentId ?? this.equipmentId,
+      equipmentValue: equipmentValue ?? this.equipmentValue,
+      label: label ?? this.label,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (viewerUserId.present) {
+      map['viewer_user_id'] = Variable<int>(viewerUserId.value);
+    }
+    if (recipeId.present) {
+      map['recipe_id'] = Variable<int>(recipeId.value);
+    }
+    if (lineIndex.present) {
+      map['line_index'] = Variable<int>(lineIndex.value);
+    }
+    if (equipmentId.present) {
+      map['equipment_id'] = Variable<int>(equipmentId.value);
+    }
+    if (equipmentValue.present) {
+      map['equipment_value'] = Variable<String>(equipmentValue.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedRecipeEquipmentRowsCompanion(')
+          ..write('viewerUserId: $viewerUserId, ')
+          ..write('recipeId: $recipeId, ')
+          ..write('lineIndex: $lineIndex, ')
+          ..write('equipmentId: $equipmentId, ')
+          ..write('equipmentValue: $equipmentValue, ')
+          ..write('label: $label, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $CacheSyncMetadataRowsTable extends CacheSyncMetadataRows
     with TableInfo<$CacheSyncMetadataRowsTable, CacheSyncMetadataRow> {
   @override
@@ -4889,6 +5253,8 @@ abstract class _$OfflineCacheDatabase extends GeneratedDatabase {
       $CachedRecipeIngredientRowsTable(this);
   late final $CachedRecipeStepRowsTable cachedRecipeStepRows =
       $CachedRecipeStepRowsTable(this);
+  late final $CachedRecipeEquipmentRowsTable cachedRecipeEquipmentRows =
+      $CachedRecipeEquipmentRowsTable(this);
   late final $CacheSyncMetadataRowsTable cacheSyncMetadataRows =
       $CacheSyncMetadataRowsTable(this);
   late final $CachedPantryIngredientRowsTable cachedPantryIngredientRows =
@@ -4908,6 +5274,7 @@ abstract class _$OfflineCacheDatabase extends GeneratedDatabase {
         cachedRecipeRows,
         cachedRecipeIngredientRows,
         cachedRecipeStepRows,
+        cachedRecipeEquipmentRows,
         cacheSyncMetadataRows,
         cachedPantryIngredientRows,
         cachedShoppingListRows,
@@ -6281,6 +6648,204 @@ typedef $$CachedRecipeStepRowsTableProcessedTableManager
         ),
         CachedRecipeStepRow,
         PrefetchHooks Function()>;
+typedef $$CachedRecipeEquipmentRowsTableCreateCompanionBuilder
+    = CachedRecipeEquipmentRowsCompanion Function({
+  required int viewerUserId,
+  required int recipeId,
+  required int lineIndex,
+  required int equipmentId,
+  required String equipmentValue,
+  required String label,
+  Value<int> rowid,
+});
+typedef $$CachedRecipeEquipmentRowsTableUpdateCompanionBuilder
+    = CachedRecipeEquipmentRowsCompanion Function({
+  Value<int> viewerUserId,
+  Value<int> recipeId,
+  Value<int> lineIndex,
+  Value<int> equipmentId,
+  Value<String> equipmentValue,
+  Value<String> label,
+  Value<int> rowid,
+});
+
+class $$CachedRecipeEquipmentRowsTableFilterComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedRecipeEquipmentRowsTable> {
+  $$CachedRecipeEquipmentRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get recipeId => $composableBuilder(
+      column: $table.recipeId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get lineIndex => $composableBuilder(
+      column: $table.lineIndex, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get equipmentId => $composableBuilder(
+      column: $table.equipmentId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get equipmentValue => $composableBuilder(
+      column: $table.equipmentValue,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get label => $composableBuilder(
+      column: $table.label, builder: (column) => ColumnFilters(column));
+}
+
+class $$CachedRecipeEquipmentRowsTableOrderingComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedRecipeEquipmentRowsTable> {
+  $$CachedRecipeEquipmentRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get recipeId => $composableBuilder(
+      column: $table.recipeId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get lineIndex => $composableBuilder(
+      column: $table.lineIndex, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get equipmentId => $composableBuilder(
+      column: $table.equipmentId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get equipmentValue => $composableBuilder(
+      column: $table.equipmentValue,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get label => $composableBuilder(
+      column: $table.label, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CachedRecipeEquipmentRowsTableAnnotationComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedRecipeEquipmentRowsTable> {
+  $$CachedRecipeEquipmentRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId, builder: (column) => column);
+
+  GeneratedColumn<int> get recipeId =>
+      $composableBuilder(column: $table.recipeId, builder: (column) => column);
+
+  GeneratedColumn<int> get lineIndex =>
+      $composableBuilder(column: $table.lineIndex, builder: (column) => column);
+
+  GeneratedColumn<int> get equipmentId => $composableBuilder(
+      column: $table.equipmentId, builder: (column) => column);
+
+  GeneratedColumn<String> get equipmentValue => $composableBuilder(
+      column: $table.equipmentValue, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+}
+
+class $$CachedRecipeEquipmentRowsTableTableManager extends RootTableManager<
+    _$OfflineCacheDatabase,
+    $CachedRecipeEquipmentRowsTable,
+    CachedRecipeEquipmentRow,
+    $$CachedRecipeEquipmentRowsTableFilterComposer,
+    $$CachedRecipeEquipmentRowsTableOrderingComposer,
+    $$CachedRecipeEquipmentRowsTableAnnotationComposer,
+    $$CachedRecipeEquipmentRowsTableCreateCompanionBuilder,
+    $$CachedRecipeEquipmentRowsTableUpdateCompanionBuilder,
+    (
+      CachedRecipeEquipmentRow,
+      BaseReferences<_$OfflineCacheDatabase, $CachedRecipeEquipmentRowsTable,
+          CachedRecipeEquipmentRow>
+    ),
+    CachedRecipeEquipmentRow,
+    PrefetchHooks Function()> {
+  $$CachedRecipeEquipmentRowsTableTableManager(
+      _$OfflineCacheDatabase db, $CachedRecipeEquipmentRowsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedRecipeEquipmentRowsTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedRecipeEquipmentRowsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedRecipeEquipmentRowsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> viewerUserId = const Value.absent(),
+            Value<int> recipeId = const Value.absent(),
+            Value<int> lineIndex = const Value.absent(),
+            Value<int> equipmentId = const Value.absent(),
+            Value<String> equipmentValue = const Value.absent(),
+            Value<String> label = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CachedRecipeEquipmentRowsCompanion(
+            viewerUserId: viewerUserId,
+            recipeId: recipeId,
+            lineIndex: lineIndex,
+            equipmentId: equipmentId,
+            equipmentValue: equipmentValue,
+            label: label,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required int viewerUserId,
+            required int recipeId,
+            required int lineIndex,
+            required int equipmentId,
+            required String equipmentValue,
+            required String label,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CachedRecipeEquipmentRowsCompanion.insert(
+            viewerUserId: viewerUserId,
+            recipeId: recipeId,
+            lineIndex: lineIndex,
+            equipmentId: equipmentId,
+            equipmentValue: equipmentValue,
+            label: label,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CachedRecipeEquipmentRowsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$OfflineCacheDatabase,
+        $CachedRecipeEquipmentRowsTable,
+        CachedRecipeEquipmentRow,
+        $$CachedRecipeEquipmentRowsTableFilterComposer,
+        $$CachedRecipeEquipmentRowsTableOrderingComposer,
+        $$CachedRecipeEquipmentRowsTableAnnotationComposer,
+        $$CachedRecipeEquipmentRowsTableCreateCompanionBuilder,
+        $$CachedRecipeEquipmentRowsTableUpdateCompanionBuilder,
+        (
+          CachedRecipeEquipmentRow,
+          BaseReferences<_$OfflineCacheDatabase,
+              $CachedRecipeEquipmentRowsTable, CachedRecipeEquipmentRow>
+        ),
+        CachedRecipeEquipmentRow,
+        PrefetchHooks Function()>;
 typedef $$CacheSyncMetadataRowsTableCreateCompanionBuilder
     = CacheSyncMetadataRowsCompanion Function({
   required int viewerUserId,
@@ -7357,6 +7922,9 @@ class $OfflineCacheDatabaseManager {
               _db, _db.cachedRecipeIngredientRows);
   $$CachedRecipeStepRowsTableTableManager get cachedRecipeStepRows =>
       $$CachedRecipeStepRowsTableTableManager(_db, _db.cachedRecipeStepRows);
+  $$CachedRecipeEquipmentRowsTableTableManager get cachedRecipeEquipmentRows =>
+      $$CachedRecipeEquipmentRowsTableTableManager(
+          _db, _db.cachedRecipeEquipmentRows);
   $$CacheSyncMetadataRowsTableTableManager get cacheSyncMetadataRows =>
       $$CacheSyncMetadataRowsTableTableManager(_db, _db.cacheSyncMetadataRows);
   $$CachedPantryIngredientRowsTableTableManager
