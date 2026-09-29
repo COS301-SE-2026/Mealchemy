@@ -5,11 +5,14 @@ import '../../../core/shared_widgets/Molecules/app_section_header.dart';
 import '../../../core/shared_widgets/atoms/app_multi_select.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../offline/widgets/offline_unavailable_state.dart';
 import '../models/user_profile.dart';
 import '../providers/profile_provider.dart';
 
 class InformationSection extends ConsumerWidget {
-  const InformationSection({super.key});
+  const InformationSection({super.key, this.readOnly = false});
+
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,11 +29,20 @@ class InformationSection extends ConsumerWidget {
         const SizedBox(height: 20),
         profileAsync.when(
           loading: () => const _MetadataSkeleton(),
-          error: (_, __) => _ErrorLine(
-            message: 'Could not load your account.',
-            onRetry: () => ref.read(profileProvider.notifier).reload(),
+          error: (_, __) => readOnly
+              ? const OfflineUnavailableState(
+                  message:
+                      'Account details are available when you are back online.',
+                  compact: true,
+                )
+              : _ErrorLine(
+                  message: 'Could not load your account.',
+                  onRetry: () => ref.read(profileProvider.notifier).reload(),
+                ),
+          data: (edit) => _InformationBody(
+            profile: edit.draft,
+            readOnly: readOnly,
           ),
-          data: (edit) => _InformationBody(profile: edit.draft),
         ),
       ],
     );
@@ -38,9 +50,13 @@ class InformationSection extends ConsumerWidget {
 }
 
 class _InformationBody extends ConsumerWidget {
-  const _InformationBody({required this.profile});
+  const _InformationBody({
+    required this.profile,
+    required this.readOnly,
+  });
 
   final UserProfile profile;
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -58,7 +74,7 @@ class _InformationBody extends ConsumerWidget {
         const SizedBox(height: 14),
         _UnitToggle(
           value: profile.preferredUnit,
-          onChanged: notifier.setPreferredUnit,
+          onChanged: readOnly ? null : notifier.setPreferredUnit,
         ),
         const SizedBox(height: 26),
         const AppSectionHeader(
@@ -71,19 +87,34 @@ class _InformationBody extends ConsumerWidget {
           style: AppTextStyles.bodyBold.copyWith(color: AppColors.textLight),
         ),
         const SizedBox(height: 14),
-        _EquipmentPicker(selected: profile.equipment),
+        _EquipmentPicker(
+          selected: profile.equipment,
+          readOnly: readOnly,
+        ),
       ],
     );
   }
 }
 
 class _EquipmentPicker extends ConsumerWidget {
-  const _EquipmentPicker({required this.selected});
+  const _EquipmentPicker({
+    required this.selected,
+    required this.readOnly,
+  });
 
   final List<String> selected;
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (readOnly) {
+      final labels = selected.map(_formatOption).join(', ');
+      return Text(
+        labels.isEmpty ? 'No equipment saved.' : labels,
+        style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+      );
+    }
+
     final optionsAsync = ref.watch(equipmentProvider);
     final notifier = ref.read(profileProvider.notifier);
 
@@ -104,6 +135,17 @@ class _EquipmentPicker extends ConsumerWidget {
         onToggle: notifier.toggleEquipment,
       ),
     );
+  }
+
+  String _formatOption(String value) {
+    return value
+        .split('_')
+        .where((part) => part.isNotEmpty)
+        .map(
+          (part) =>
+              '${part[0].toUpperCase()}${part.substring(1).toLowerCase()}',
+        )
+        .join(' ');
   }
 }
 
@@ -202,29 +244,32 @@ class _UnitToggle extends StatelessWidget {
   const _UnitToggle({required this.value, required this.onChanged});
 
   final PreferredUnit value;
-  final ValueChanged<PreferredUnit> onChanged;
+  final ValueChanged<PreferredUnit>? onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceWhite,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.inputBorder),
-      ),
-      child: Row(
-        children: [
-          for (final unit in PreferredUnit.values)
-            Expanded(child: _segment(unit, unit == value)),
-        ],
+    return Opacity(
+      opacity: onChanged == null ? 0.65 : 1,
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceWhite,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.inputBorder),
+        ),
+        child: Row(
+          children: [
+            for (final unit in PreferredUnit.values)
+              Expanded(child: _segment(unit, unit == value)),
+          ],
+        ),
       ),
     );
   }
 
   Widget _segment(PreferredUnit unit, bool selected) {
     return GestureDetector(
-      onTap: () => onChanged(unit),
+      onTap: onChanged == null ? null : () => onChanged!(unit),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(vertical: 12),
