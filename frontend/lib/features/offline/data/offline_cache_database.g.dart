@@ -6012,6 +6012,1013 @@ class CachedShoppingListItemRowsCompanion
   }
 }
 
+class $CachedMealPlanRowsTable extends CachedMealPlanRows
+    with TableInfo<$CachedMealPlanRowsTable, CachedMealPlanRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedMealPlanRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _viewerUserIdMeta =
+      const VerificationMeta('viewerUserId');
+  @override
+  late final GeneratedColumn<int> viewerUserId = GeneratedColumn<int>(
+      'viewer_user_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _vaultIdMeta =
+      const VerificationMeta('vaultId');
+  @override
+  late final GeneratedColumn<int> vaultId = GeneratedColumn<int>(
+      'vault_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _planIdMeta = const VerificationMeta('planId');
+  @override
+  late final GeneratedColumn<int> planId = GeneratedColumn<int>(
+      'plan_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [viewerUserId, vaultId, planId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_meal_plan_rows';
+  @override
+  VerificationContext validateIntegrity(Insertable<CachedMealPlanRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('viewer_user_id')) {
+      context.handle(
+          _viewerUserIdMeta,
+          viewerUserId.isAcceptableOrUnknown(
+              data['viewer_user_id']!, _viewerUserIdMeta));
+    } else if (isInserting) {
+      context.missing(_viewerUserIdMeta);
+    }
+    if (data.containsKey('vault_id')) {
+      context.handle(_vaultIdMeta,
+          vaultId.isAcceptableOrUnknown(data['vault_id']!, _vaultIdMeta));
+    } else if (isInserting) {
+      context.missing(_vaultIdMeta);
+    }
+    if (data.containsKey('plan_id')) {
+      context.handle(_planIdMeta,
+          planId.isAcceptableOrUnknown(data['plan_id']!, _planIdMeta));
+    } else if (isInserting) {
+      context.missing(_planIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {viewerUserId, vaultId};
+  @override
+  CachedMealPlanRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedMealPlanRow(
+      viewerUserId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}viewer_user_id'])!,
+      vaultId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}vault_id'])!,
+      planId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}plan_id'])!,
+    );
+  }
+
+  @override
+  $CachedMealPlanRowsTable createAlias(String alias) {
+    return $CachedMealPlanRowsTable(attachedDatabase, alias);
+  }
+}
+
+class CachedMealPlanRow extends DataClass
+    implements Insertable<CachedMealPlanRow> {
+  final int viewerUserId;
+  final int vaultId;
+  final int planId;
+  const CachedMealPlanRow(
+      {required this.viewerUserId,
+      required this.vaultId,
+      required this.planId});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['viewer_user_id'] = Variable<int>(viewerUserId);
+    map['vault_id'] = Variable<int>(vaultId);
+    map['plan_id'] = Variable<int>(planId);
+    return map;
+  }
+
+  CachedMealPlanRowsCompanion toCompanion(bool nullToAbsent) {
+    return CachedMealPlanRowsCompanion(
+      viewerUserId: Value(viewerUserId),
+      vaultId: Value(vaultId),
+      planId: Value(planId),
+    );
+  }
+
+  factory CachedMealPlanRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedMealPlanRow(
+      viewerUserId: serializer.fromJson<int>(json['viewerUserId']),
+      vaultId: serializer.fromJson<int>(json['vaultId']),
+      planId: serializer.fromJson<int>(json['planId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'viewerUserId': serializer.toJson<int>(viewerUserId),
+      'vaultId': serializer.toJson<int>(vaultId),
+      'planId': serializer.toJson<int>(planId),
+    };
+  }
+
+  CachedMealPlanRow copyWith({int? viewerUserId, int? vaultId, int? planId}) =>
+      CachedMealPlanRow(
+        viewerUserId: viewerUserId ?? this.viewerUserId,
+        vaultId: vaultId ?? this.vaultId,
+        planId: planId ?? this.planId,
+      );
+  CachedMealPlanRow copyWithCompanion(CachedMealPlanRowsCompanion data) {
+    return CachedMealPlanRow(
+      viewerUserId: data.viewerUserId.present
+          ? data.viewerUserId.value
+          : this.viewerUserId,
+      vaultId: data.vaultId.present ? data.vaultId.value : this.vaultId,
+      planId: data.planId.present ? data.planId.value : this.planId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedMealPlanRow(')
+          ..write('viewerUserId: $viewerUserId, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('planId: $planId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(viewerUserId, vaultId, planId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedMealPlanRow &&
+          other.viewerUserId == this.viewerUserId &&
+          other.vaultId == this.vaultId &&
+          other.planId == this.planId);
+}
+
+class CachedMealPlanRowsCompanion extends UpdateCompanion<CachedMealPlanRow> {
+  final Value<int> viewerUserId;
+  final Value<int> vaultId;
+  final Value<int> planId;
+  final Value<int> rowid;
+  const CachedMealPlanRowsCompanion({
+    this.viewerUserId = const Value.absent(),
+    this.vaultId = const Value.absent(),
+    this.planId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CachedMealPlanRowsCompanion.insert({
+    required int viewerUserId,
+    required int vaultId,
+    required int planId,
+    this.rowid = const Value.absent(),
+  })  : viewerUserId = Value(viewerUserId),
+        vaultId = Value(vaultId),
+        planId = Value(planId);
+  static Insertable<CachedMealPlanRow> custom({
+    Expression<int>? viewerUserId,
+    Expression<int>? vaultId,
+    Expression<int>? planId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (viewerUserId != null) 'viewer_user_id': viewerUserId,
+      if (vaultId != null) 'vault_id': vaultId,
+      if (planId != null) 'plan_id': planId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CachedMealPlanRowsCompanion copyWith(
+      {Value<int>? viewerUserId,
+      Value<int>? vaultId,
+      Value<int>? planId,
+      Value<int>? rowid}) {
+    return CachedMealPlanRowsCompanion(
+      viewerUserId: viewerUserId ?? this.viewerUserId,
+      vaultId: vaultId ?? this.vaultId,
+      planId: planId ?? this.planId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (viewerUserId.present) {
+      map['viewer_user_id'] = Variable<int>(viewerUserId.value);
+    }
+    if (vaultId.present) {
+      map['vault_id'] = Variable<int>(vaultId.value);
+    }
+    if (planId.present) {
+      map['plan_id'] = Variable<int>(planId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedMealPlanRowsCompanion(')
+          ..write('viewerUserId: $viewerUserId, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('planId: $planId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CachedMealPlanEntryRowsTable extends CachedMealPlanEntryRows
+    with TableInfo<$CachedMealPlanEntryRowsTable, CachedMealPlanEntryRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedMealPlanEntryRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _viewerUserIdMeta =
+      const VerificationMeta('viewerUserId');
+  @override
+  late final GeneratedColumn<int> viewerUserId = GeneratedColumn<int>(
+      'viewer_user_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _vaultIdMeta =
+      const VerificationMeta('vaultId');
+  @override
+  late final GeneratedColumn<int> vaultId = GeneratedColumn<int>(
+      'vault_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _weekStartMeta =
+      const VerificationMeta('weekStart');
+  @override
+  late final GeneratedColumn<String> weekStart = GeneratedColumn<String>(
+      'week_start', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _lineIndexMeta =
+      const VerificationMeta('lineIndex');
+  @override
+  late final GeneratedColumn<int> lineIndex = GeneratedColumn<int>(
+      'line_index', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _entryIdMeta =
+      const VerificationMeta('entryId');
+  @override
+  late final GeneratedColumn<int> entryId = GeneratedColumn<int>(
+      'entry_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _planIdMeta = const VerificationMeta('planId');
+  @override
+  late final GeneratedColumn<int> planId = GeneratedColumn<int>(
+      'plan_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _recipeIdMeta =
+      const VerificationMeta('recipeId');
+  @override
+  late final GeneratedColumn<int> recipeId = GeneratedColumn<int>(
+      'recipe_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _entryDateMeta =
+      const VerificationMeta('entryDate');
+  @override
+  late final GeneratedColumn<String> entryDate = GeneratedColumn<String>(
+      'entry_date', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _mealSlotMeta =
+      const VerificationMeta('mealSlot');
+  @override
+  late final GeneratedColumn<String> mealSlot = GeneratedColumn<String>(
+      'meal_slot', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _mealTimeMinutesMeta =
+      const VerificationMeta('mealTimeMinutes');
+  @override
+  late final GeneratedColumn<int> mealTimeMinutes = GeneratedColumn<int>(
+      'meal_time_minutes', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+      'title', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+      'note', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+      'source', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _addedByMeta =
+      const VerificationMeta('addedBy');
+  @override
+  late final GeneratedColumn<int> addedBy = GeneratedColumn<int>(
+      'added_by', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _recipeTitleMeta =
+      const VerificationMeta('recipeTitle');
+  @override
+  late final GeneratedColumn<String> recipeTitle = GeneratedColumn<String>(
+      'recipe_title', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _recipePhotoUrlMeta =
+      const VerificationMeta('recipePhotoUrl');
+  @override
+  late final GeneratedColumn<String> recipePhotoUrl = GeneratedColumn<String>(
+      'recipe_photo_url', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        viewerUserId,
+        vaultId,
+        weekStart,
+        lineIndex,
+        entryId,
+        planId,
+        recipeId,
+        entryDate,
+        mealSlot,
+        mealTimeMinutes,
+        title,
+        note,
+        source,
+        addedBy,
+        recipeTitle,
+        recipePhotoUrl
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_meal_plan_entry_rows';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<CachedMealPlanEntryRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('viewer_user_id')) {
+      context.handle(
+          _viewerUserIdMeta,
+          viewerUserId.isAcceptableOrUnknown(
+              data['viewer_user_id']!, _viewerUserIdMeta));
+    } else if (isInserting) {
+      context.missing(_viewerUserIdMeta);
+    }
+    if (data.containsKey('vault_id')) {
+      context.handle(_vaultIdMeta,
+          vaultId.isAcceptableOrUnknown(data['vault_id']!, _vaultIdMeta));
+    } else if (isInserting) {
+      context.missing(_vaultIdMeta);
+    }
+    if (data.containsKey('week_start')) {
+      context.handle(_weekStartMeta,
+          weekStart.isAcceptableOrUnknown(data['week_start']!, _weekStartMeta));
+    } else if (isInserting) {
+      context.missing(_weekStartMeta);
+    }
+    if (data.containsKey('line_index')) {
+      context.handle(_lineIndexMeta,
+          lineIndex.isAcceptableOrUnknown(data['line_index']!, _lineIndexMeta));
+    } else if (isInserting) {
+      context.missing(_lineIndexMeta);
+    }
+    if (data.containsKey('entry_id')) {
+      context.handle(_entryIdMeta,
+          entryId.isAcceptableOrUnknown(data['entry_id']!, _entryIdMeta));
+    }
+    if (data.containsKey('plan_id')) {
+      context.handle(_planIdMeta,
+          planId.isAcceptableOrUnknown(data['plan_id']!, _planIdMeta));
+    }
+    if (data.containsKey('recipe_id')) {
+      context.handle(_recipeIdMeta,
+          recipeId.isAcceptableOrUnknown(data['recipe_id']!, _recipeIdMeta));
+    } else if (isInserting) {
+      context.missing(_recipeIdMeta);
+    }
+    if (data.containsKey('entry_date')) {
+      context.handle(_entryDateMeta,
+          entryDate.isAcceptableOrUnknown(data['entry_date']!, _entryDateMeta));
+    } else if (isInserting) {
+      context.missing(_entryDateMeta);
+    }
+    if (data.containsKey('meal_slot')) {
+      context.handle(_mealSlotMeta,
+          mealSlot.isAcceptableOrUnknown(data['meal_slot']!, _mealSlotMeta));
+    } else if (isInserting) {
+      context.missing(_mealSlotMeta);
+    }
+    if (data.containsKey('meal_time_minutes')) {
+      context.handle(
+          _mealTimeMinutesMeta,
+          mealTimeMinutes.isAcceptableOrUnknown(
+              data['meal_time_minutes']!, _mealTimeMinutesMeta));
+    } else if (isInserting) {
+      context.missing(_mealTimeMinutesMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+          _titleMeta, title.isAcceptableOrUnknown(data['title']!, _titleMeta));
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+          _noteMeta, note.isAcceptableOrUnknown(data['note']!, _noteMeta));
+    }
+    if (data.containsKey('source')) {
+      context.handle(_sourceMeta,
+          source.isAcceptableOrUnknown(data['source']!, _sourceMeta));
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    if (data.containsKey('added_by')) {
+      context.handle(_addedByMeta,
+          addedBy.isAcceptableOrUnknown(data['added_by']!, _addedByMeta));
+    }
+    if (data.containsKey('recipe_title')) {
+      context.handle(
+          _recipeTitleMeta,
+          recipeTitle.isAcceptableOrUnknown(
+              data['recipe_title']!, _recipeTitleMeta));
+    }
+    if (data.containsKey('recipe_photo_url')) {
+      context.handle(
+          _recipePhotoUrlMeta,
+          recipePhotoUrl.isAcceptableOrUnknown(
+              data['recipe_photo_url']!, _recipePhotoUrlMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey =>
+      {viewerUserId, vaultId, weekStart, lineIndex};
+  @override
+  CachedMealPlanEntryRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedMealPlanEntryRow(
+      viewerUserId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}viewer_user_id'])!,
+      vaultId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}vault_id'])!,
+      weekStart: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}week_start'])!,
+      lineIndex: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}line_index'])!,
+      entryId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}entry_id']),
+      planId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}plan_id']),
+      recipeId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}recipe_id'])!,
+      entryDate: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}entry_date'])!,
+      mealSlot: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}meal_slot'])!,
+      mealTimeMinutes: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}meal_time_minutes'])!,
+      title: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}title']),
+      note: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}note']),
+      source: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}source'])!,
+      addedBy: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}added_by']),
+      recipeTitle: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}recipe_title']),
+      recipePhotoUrl: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}recipe_photo_url']),
+    );
+  }
+
+  @override
+  $CachedMealPlanEntryRowsTable createAlias(String alias) {
+    return $CachedMealPlanEntryRowsTable(attachedDatabase, alias);
+  }
+}
+
+class CachedMealPlanEntryRow extends DataClass
+    implements Insertable<CachedMealPlanEntryRow> {
+  final int viewerUserId;
+  final int vaultId;
+  final String weekStart;
+  final int lineIndex;
+  final int? entryId;
+  final int? planId;
+  final int recipeId;
+  final String entryDate;
+  final String mealSlot;
+  final int mealTimeMinutes;
+  final String? title;
+  final String? note;
+  final String source;
+  final int? addedBy;
+  final String? recipeTitle;
+  final String? recipePhotoUrl;
+  const CachedMealPlanEntryRow(
+      {required this.viewerUserId,
+      required this.vaultId,
+      required this.weekStart,
+      required this.lineIndex,
+      this.entryId,
+      this.planId,
+      required this.recipeId,
+      required this.entryDate,
+      required this.mealSlot,
+      required this.mealTimeMinutes,
+      this.title,
+      this.note,
+      required this.source,
+      this.addedBy,
+      this.recipeTitle,
+      this.recipePhotoUrl});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['viewer_user_id'] = Variable<int>(viewerUserId);
+    map['vault_id'] = Variable<int>(vaultId);
+    map['week_start'] = Variable<String>(weekStart);
+    map['line_index'] = Variable<int>(lineIndex);
+    if (!nullToAbsent || entryId != null) {
+      map['entry_id'] = Variable<int>(entryId);
+    }
+    if (!nullToAbsent || planId != null) {
+      map['plan_id'] = Variable<int>(planId);
+    }
+    map['recipe_id'] = Variable<int>(recipeId);
+    map['entry_date'] = Variable<String>(entryDate);
+    map['meal_slot'] = Variable<String>(mealSlot);
+    map['meal_time_minutes'] = Variable<int>(mealTimeMinutes);
+    if (!nullToAbsent || title != null) {
+      map['title'] = Variable<String>(title);
+    }
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    map['source'] = Variable<String>(source);
+    if (!nullToAbsent || addedBy != null) {
+      map['added_by'] = Variable<int>(addedBy);
+    }
+    if (!nullToAbsent || recipeTitle != null) {
+      map['recipe_title'] = Variable<String>(recipeTitle);
+    }
+    if (!nullToAbsent || recipePhotoUrl != null) {
+      map['recipe_photo_url'] = Variable<String>(recipePhotoUrl);
+    }
+    return map;
+  }
+
+  CachedMealPlanEntryRowsCompanion toCompanion(bool nullToAbsent) {
+    return CachedMealPlanEntryRowsCompanion(
+      viewerUserId: Value(viewerUserId),
+      vaultId: Value(vaultId),
+      weekStart: Value(weekStart),
+      lineIndex: Value(lineIndex),
+      entryId: entryId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(entryId),
+      planId:
+          planId == null && nullToAbsent ? const Value.absent() : Value(planId),
+      recipeId: Value(recipeId),
+      entryDate: Value(entryDate),
+      mealSlot: Value(mealSlot),
+      mealTimeMinutes: Value(mealTimeMinutes),
+      title:
+          title == null && nullToAbsent ? const Value.absent() : Value(title),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      source: Value(source),
+      addedBy: addedBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(addedBy),
+      recipeTitle: recipeTitle == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recipeTitle),
+      recipePhotoUrl: recipePhotoUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recipePhotoUrl),
+    );
+  }
+
+  factory CachedMealPlanEntryRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedMealPlanEntryRow(
+      viewerUserId: serializer.fromJson<int>(json['viewerUserId']),
+      vaultId: serializer.fromJson<int>(json['vaultId']),
+      weekStart: serializer.fromJson<String>(json['weekStart']),
+      lineIndex: serializer.fromJson<int>(json['lineIndex']),
+      entryId: serializer.fromJson<int?>(json['entryId']),
+      planId: serializer.fromJson<int?>(json['planId']),
+      recipeId: serializer.fromJson<int>(json['recipeId']),
+      entryDate: serializer.fromJson<String>(json['entryDate']),
+      mealSlot: serializer.fromJson<String>(json['mealSlot']),
+      mealTimeMinutes: serializer.fromJson<int>(json['mealTimeMinutes']),
+      title: serializer.fromJson<String?>(json['title']),
+      note: serializer.fromJson<String?>(json['note']),
+      source: serializer.fromJson<String>(json['source']),
+      addedBy: serializer.fromJson<int?>(json['addedBy']),
+      recipeTitle: serializer.fromJson<String?>(json['recipeTitle']),
+      recipePhotoUrl: serializer.fromJson<String?>(json['recipePhotoUrl']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'viewerUserId': serializer.toJson<int>(viewerUserId),
+      'vaultId': serializer.toJson<int>(vaultId),
+      'weekStart': serializer.toJson<String>(weekStart),
+      'lineIndex': serializer.toJson<int>(lineIndex),
+      'entryId': serializer.toJson<int?>(entryId),
+      'planId': serializer.toJson<int?>(planId),
+      'recipeId': serializer.toJson<int>(recipeId),
+      'entryDate': serializer.toJson<String>(entryDate),
+      'mealSlot': serializer.toJson<String>(mealSlot),
+      'mealTimeMinutes': serializer.toJson<int>(mealTimeMinutes),
+      'title': serializer.toJson<String?>(title),
+      'note': serializer.toJson<String?>(note),
+      'source': serializer.toJson<String>(source),
+      'addedBy': serializer.toJson<int?>(addedBy),
+      'recipeTitle': serializer.toJson<String?>(recipeTitle),
+      'recipePhotoUrl': serializer.toJson<String?>(recipePhotoUrl),
+    };
+  }
+
+  CachedMealPlanEntryRow copyWith(
+          {int? viewerUserId,
+          int? vaultId,
+          String? weekStart,
+          int? lineIndex,
+          Value<int?> entryId = const Value.absent(),
+          Value<int?> planId = const Value.absent(),
+          int? recipeId,
+          String? entryDate,
+          String? mealSlot,
+          int? mealTimeMinutes,
+          Value<String?> title = const Value.absent(),
+          Value<String?> note = const Value.absent(),
+          String? source,
+          Value<int?> addedBy = const Value.absent(),
+          Value<String?> recipeTitle = const Value.absent(),
+          Value<String?> recipePhotoUrl = const Value.absent()}) =>
+      CachedMealPlanEntryRow(
+        viewerUserId: viewerUserId ?? this.viewerUserId,
+        vaultId: vaultId ?? this.vaultId,
+        weekStart: weekStart ?? this.weekStart,
+        lineIndex: lineIndex ?? this.lineIndex,
+        entryId: entryId.present ? entryId.value : this.entryId,
+        planId: planId.present ? planId.value : this.planId,
+        recipeId: recipeId ?? this.recipeId,
+        entryDate: entryDate ?? this.entryDate,
+        mealSlot: mealSlot ?? this.mealSlot,
+        mealTimeMinutes: mealTimeMinutes ?? this.mealTimeMinutes,
+        title: title.present ? title.value : this.title,
+        note: note.present ? note.value : this.note,
+        source: source ?? this.source,
+        addedBy: addedBy.present ? addedBy.value : this.addedBy,
+        recipeTitle: recipeTitle.present ? recipeTitle.value : this.recipeTitle,
+        recipePhotoUrl:
+            recipePhotoUrl.present ? recipePhotoUrl.value : this.recipePhotoUrl,
+      );
+  CachedMealPlanEntryRow copyWithCompanion(
+      CachedMealPlanEntryRowsCompanion data) {
+    return CachedMealPlanEntryRow(
+      viewerUserId: data.viewerUserId.present
+          ? data.viewerUserId.value
+          : this.viewerUserId,
+      vaultId: data.vaultId.present ? data.vaultId.value : this.vaultId,
+      weekStart: data.weekStart.present ? data.weekStart.value : this.weekStart,
+      lineIndex: data.lineIndex.present ? data.lineIndex.value : this.lineIndex,
+      entryId: data.entryId.present ? data.entryId.value : this.entryId,
+      planId: data.planId.present ? data.planId.value : this.planId,
+      recipeId: data.recipeId.present ? data.recipeId.value : this.recipeId,
+      entryDate: data.entryDate.present ? data.entryDate.value : this.entryDate,
+      mealSlot: data.mealSlot.present ? data.mealSlot.value : this.mealSlot,
+      mealTimeMinutes: data.mealTimeMinutes.present
+          ? data.mealTimeMinutes.value
+          : this.mealTimeMinutes,
+      title: data.title.present ? data.title.value : this.title,
+      note: data.note.present ? data.note.value : this.note,
+      source: data.source.present ? data.source.value : this.source,
+      addedBy: data.addedBy.present ? data.addedBy.value : this.addedBy,
+      recipeTitle:
+          data.recipeTitle.present ? data.recipeTitle.value : this.recipeTitle,
+      recipePhotoUrl: data.recipePhotoUrl.present
+          ? data.recipePhotoUrl.value
+          : this.recipePhotoUrl,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedMealPlanEntryRow(')
+          ..write('viewerUserId: $viewerUserId, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('weekStart: $weekStart, ')
+          ..write('lineIndex: $lineIndex, ')
+          ..write('entryId: $entryId, ')
+          ..write('planId: $planId, ')
+          ..write('recipeId: $recipeId, ')
+          ..write('entryDate: $entryDate, ')
+          ..write('mealSlot: $mealSlot, ')
+          ..write('mealTimeMinutes: $mealTimeMinutes, ')
+          ..write('title: $title, ')
+          ..write('note: $note, ')
+          ..write('source: $source, ')
+          ..write('addedBy: $addedBy, ')
+          ..write('recipeTitle: $recipeTitle, ')
+          ..write('recipePhotoUrl: $recipePhotoUrl')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      viewerUserId,
+      vaultId,
+      weekStart,
+      lineIndex,
+      entryId,
+      planId,
+      recipeId,
+      entryDate,
+      mealSlot,
+      mealTimeMinutes,
+      title,
+      note,
+      source,
+      addedBy,
+      recipeTitle,
+      recipePhotoUrl);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedMealPlanEntryRow &&
+          other.viewerUserId == this.viewerUserId &&
+          other.vaultId == this.vaultId &&
+          other.weekStart == this.weekStart &&
+          other.lineIndex == this.lineIndex &&
+          other.entryId == this.entryId &&
+          other.planId == this.planId &&
+          other.recipeId == this.recipeId &&
+          other.entryDate == this.entryDate &&
+          other.mealSlot == this.mealSlot &&
+          other.mealTimeMinutes == this.mealTimeMinutes &&
+          other.title == this.title &&
+          other.note == this.note &&
+          other.source == this.source &&
+          other.addedBy == this.addedBy &&
+          other.recipeTitle == this.recipeTitle &&
+          other.recipePhotoUrl == this.recipePhotoUrl);
+}
+
+class CachedMealPlanEntryRowsCompanion
+    extends UpdateCompanion<CachedMealPlanEntryRow> {
+  final Value<int> viewerUserId;
+  final Value<int> vaultId;
+  final Value<String> weekStart;
+  final Value<int> lineIndex;
+  final Value<int?> entryId;
+  final Value<int?> planId;
+  final Value<int> recipeId;
+  final Value<String> entryDate;
+  final Value<String> mealSlot;
+  final Value<int> mealTimeMinutes;
+  final Value<String?> title;
+  final Value<String?> note;
+  final Value<String> source;
+  final Value<int?> addedBy;
+  final Value<String?> recipeTitle;
+  final Value<String?> recipePhotoUrl;
+  final Value<int> rowid;
+  const CachedMealPlanEntryRowsCompanion({
+    this.viewerUserId = const Value.absent(),
+    this.vaultId = const Value.absent(),
+    this.weekStart = const Value.absent(),
+    this.lineIndex = const Value.absent(),
+    this.entryId = const Value.absent(),
+    this.planId = const Value.absent(),
+    this.recipeId = const Value.absent(),
+    this.entryDate = const Value.absent(),
+    this.mealSlot = const Value.absent(),
+    this.mealTimeMinutes = const Value.absent(),
+    this.title = const Value.absent(),
+    this.note = const Value.absent(),
+    this.source = const Value.absent(),
+    this.addedBy = const Value.absent(),
+    this.recipeTitle = const Value.absent(),
+    this.recipePhotoUrl = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CachedMealPlanEntryRowsCompanion.insert({
+    required int viewerUserId,
+    required int vaultId,
+    required String weekStart,
+    required int lineIndex,
+    this.entryId = const Value.absent(),
+    this.planId = const Value.absent(),
+    required int recipeId,
+    required String entryDate,
+    required String mealSlot,
+    required int mealTimeMinutes,
+    this.title = const Value.absent(),
+    this.note = const Value.absent(),
+    required String source,
+    this.addedBy = const Value.absent(),
+    this.recipeTitle = const Value.absent(),
+    this.recipePhotoUrl = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : viewerUserId = Value(viewerUserId),
+        vaultId = Value(vaultId),
+        weekStart = Value(weekStart),
+        lineIndex = Value(lineIndex),
+        recipeId = Value(recipeId),
+        entryDate = Value(entryDate),
+        mealSlot = Value(mealSlot),
+        mealTimeMinutes = Value(mealTimeMinutes),
+        source = Value(source);
+  static Insertable<CachedMealPlanEntryRow> custom({
+    Expression<int>? viewerUserId,
+    Expression<int>? vaultId,
+    Expression<String>? weekStart,
+    Expression<int>? lineIndex,
+    Expression<int>? entryId,
+    Expression<int>? planId,
+    Expression<int>? recipeId,
+    Expression<String>? entryDate,
+    Expression<String>? mealSlot,
+    Expression<int>? mealTimeMinutes,
+    Expression<String>? title,
+    Expression<String>? note,
+    Expression<String>? source,
+    Expression<int>? addedBy,
+    Expression<String>? recipeTitle,
+    Expression<String>? recipePhotoUrl,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (viewerUserId != null) 'viewer_user_id': viewerUserId,
+      if (vaultId != null) 'vault_id': vaultId,
+      if (weekStart != null) 'week_start': weekStart,
+      if (lineIndex != null) 'line_index': lineIndex,
+      if (entryId != null) 'entry_id': entryId,
+      if (planId != null) 'plan_id': planId,
+      if (recipeId != null) 'recipe_id': recipeId,
+      if (entryDate != null) 'entry_date': entryDate,
+      if (mealSlot != null) 'meal_slot': mealSlot,
+      if (mealTimeMinutes != null) 'meal_time_minutes': mealTimeMinutes,
+      if (title != null) 'title': title,
+      if (note != null) 'note': note,
+      if (source != null) 'source': source,
+      if (addedBy != null) 'added_by': addedBy,
+      if (recipeTitle != null) 'recipe_title': recipeTitle,
+      if (recipePhotoUrl != null) 'recipe_photo_url': recipePhotoUrl,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CachedMealPlanEntryRowsCompanion copyWith(
+      {Value<int>? viewerUserId,
+      Value<int>? vaultId,
+      Value<String>? weekStart,
+      Value<int>? lineIndex,
+      Value<int?>? entryId,
+      Value<int?>? planId,
+      Value<int>? recipeId,
+      Value<String>? entryDate,
+      Value<String>? mealSlot,
+      Value<int>? mealTimeMinutes,
+      Value<String?>? title,
+      Value<String?>? note,
+      Value<String>? source,
+      Value<int?>? addedBy,
+      Value<String?>? recipeTitle,
+      Value<String?>? recipePhotoUrl,
+      Value<int>? rowid}) {
+    return CachedMealPlanEntryRowsCompanion(
+      viewerUserId: viewerUserId ?? this.viewerUserId,
+      vaultId: vaultId ?? this.vaultId,
+      weekStart: weekStart ?? this.weekStart,
+      lineIndex: lineIndex ?? this.lineIndex,
+      entryId: entryId ?? this.entryId,
+      planId: planId ?? this.planId,
+      recipeId: recipeId ?? this.recipeId,
+      entryDate: entryDate ?? this.entryDate,
+      mealSlot: mealSlot ?? this.mealSlot,
+      mealTimeMinutes: mealTimeMinutes ?? this.mealTimeMinutes,
+      title: title ?? this.title,
+      note: note ?? this.note,
+      source: source ?? this.source,
+      addedBy: addedBy ?? this.addedBy,
+      recipeTitle: recipeTitle ?? this.recipeTitle,
+      recipePhotoUrl: recipePhotoUrl ?? this.recipePhotoUrl,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (viewerUserId.present) {
+      map['viewer_user_id'] = Variable<int>(viewerUserId.value);
+    }
+    if (vaultId.present) {
+      map['vault_id'] = Variable<int>(vaultId.value);
+    }
+    if (weekStart.present) {
+      map['week_start'] = Variable<String>(weekStart.value);
+    }
+    if (lineIndex.present) {
+      map['line_index'] = Variable<int>(lineIndex.value);
+    }
+    if (entryId.present) {
+      map['entry_id'] = Variable<int>(entryId.value);
+    }
+    if (planId.present) {
+      map['plan_id'] = Variable<int>(planId.value);
+    }
+    if (recipeId.present) {
+      map['recipe_id'] = Variable<int>(recipeId.value);
+    }
+    if (entryDate.present) {
+      map['entry_date'] = Variable<String>(entryDate.value);
+    }
+    if (mealSlot.present) {
+      map['meal_slot'] = Variable<String>(mealSlot.value);
+    }
+    if (mealTimeMinutes.present) {
+      map['meal_time_minutes'] = Variable<int>(mealTimeMinutes.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (addedBy.present) {
+      map['added_by'] = Variable<int>(addedBy.value);
+    }
+    if (recipeTitle.present) {
+      map['recipe_title'] = Variable<String>(recipeTitle.value);
+    }
+    if (recipePhotoUrl.present) {
+      map['recipe_photo_url'] = Variable<String>(recipePhotoUrl.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedMealPlanEntryRowsCompanion(')
+          ..write('viewerUserId: $viewerUserId, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('weekStart: $weekStart, ')
+          ..write('lineIndex: $lineIndex, ')
+          ..write('entryId: $entryId, ')
+          ..write('planId: $planId, ')
+          ..write('recipeId: $recipeId, ')
+          ..write('entryDate: $entryDate, ')
+          ..write('mealSlot: $mealSlot, ')
+          ..write('mealTimeMinutes: $mealTimeMinutes, ')
+          ..write('title: $title, ')
+          ..write('note: $note, ')
+          ..write('source: $source, ')
+          ..write('addedBy: $addedBy, ')
+          ..write('recipeTitle: $recipeTitle, ')
+          ..write('recipePhotoUrl: $recipePhotoUrl, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$OfflineCacheDatabase extends GeneratedDatabase {
   _$OfflineCacheDatabase(QueryExecutor e) : super(e);
   $OfflineCacheDatabaseManager get managers =>
@@ -6040,6 +7047,10 @@ abstract class _$OfflineCacheDatabase extends GeneratedDatabase {
       $CachedShoppingListRowsTable(this);
   late final $CachedShoppingListItemRowsTable cachedShoppingListItemRows =
       $CachedShoppingListItemRowsTable(this);
+  late final $CachedMealPlanRowsTable cachedMealPlanRows =
+      $CachedMealPlanRowsTable(this);
+  late final $CachedMealPlanEntryRowsTable cachedMealPlanEntryRows =
+      $CachedMealPlanEntryRowsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -6056,7 +7067,9 @@ abstract class _$OfflineCacheDatabase extends GeneratedDatabase {
         cacheSyncMetadataRows,
         cachedPantryIngredientRows,
         cachedShoppingListRows,
-        cachedShoppingListItemRows
+        cachedShoppingListItemRows,
+        cachedMealPlanRows,
+        cachedMealPlanEntryRows
       ];
 }
 
@@ -9027,6 +10040,504 @@ typedef $$CachedShoppingListItemRowsTableProcessedTableManager
         ),
         CachedShoppingListItemRow,
         PrefetchHooks Function()>;
+typedef $$CachedMealPlanRowsTableCreateCompanionBuilder
+    = CachedMealPlanRowsCompanion Function({
+  required int viewerUserId,
+  required int vaultId,
+  required int planId,
+  Value<int> rowid,
+});
+typedef $$CachedMealPlanRowsTableUpdateCompanionBuilder
+    = CachedMealPlanRowsCompanion Function({
+  Value<int> viewerUserId,
+  Value<int> vaultId,
+  Value<int> planId,
+  Value<int> rowid,
+});
+
+class $$CachedMealPlanRowsTableFilterComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedMealPlanRowsTable> {
+  $$CachedMealPlanRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get planId => $composableBuilder(
+      column: $table.planId, builder: (column) => ColumnFilters(column));
+}
+
+class $$CachedMealPlanRowsTableOrderingComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedMealPlanRowsTable> {
+  $$CachedMealPlanRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get planId => $composableBuilder(
+      column: $table.planId, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CachedMealPlanRowsTableAnnotationComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedMealPlanRowsTable> {
+  $$CachedMealPlanRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId, builder: (column) => column);
+
+  GeneratedColumn<int> get vaultId =>
+      $composableBuilder(column: $table.vaultId, builder: (column) => column);
+
+  GeneratedColumn<int> get planId =>
+      $composableBuilder(column: $table.planId, builder: (column) => column);
+}
+
+class $$CachedMealPlanRowsTableTableManager extends RootTableManager<
+    _$OfflineCacheDatabase,
+    $CachedMealPlanRowsTable,
+    CachedMealPlanRow,
+    $$CachedMealPlanRowsTableFilterComposer,
+    $$CachedMealPlanRowsTableOrderingComposer,
+    $$CachedMealPlanRowsTableAnnotationComposer,
+    $$CachedMealPlanRowsTableCreateCompanionBuilder,
+    $$CachedMealPlanRowsTableUpdateCompanionBuilder,
+    (
+      CachedMealPlanRow,
+      BaseReferences<_$OfflineCacheDatabase, $CachedMealPlanRowsTable,
+          CachedMealPlanRow>
+    ),
+    CachedMealPlanRow,
+    PrefetchHooks Function()> {
+  $$CachedMealPlanRowsTableTableManager(
+      _$OfflineCacheDatabase db, $CachedMealPlanRowsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedMealPlanRowsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedMealPlanRowsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedMealPlanRowsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> viewerUserId = const Value.absent(),
+            Value<int> vaultId = const Value.absent(),
+            Value<int> planId = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CachedMealPlanRowsCompanion(
+            viewerUserId: viewerUserId,
+            vaultId: vaultId,
+            planId: planId,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required int viewerUserId,
+            required int vaultId,
+            required int planId,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CachedMealPlanRowsCompanion.insert(
+            viewerUserId: viewerUserId,
+            vaultId: vaultId,
+            planId: planId,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CachedMealPlanRowsTableProcessedTableManager = ProcessedTableManager<
+    _$OfflineCacheDatabase,
+    $CachedMealPlanRowsTable,
+    CachedMealPlanRow,
+    $$CachedMealPlanRowsTableFilterComposer,
+    $$CachedMealPlanRowsTableOrderingComposer,
+    $$CachedMealPlanRowsTableAnnotationComposer,
+    $$CachedMealPlanRowsTableCreateCompanionBuilder,
+    $$CachedMealPlanRowsTableUpdateCompanionBuilder,
+    (
+      CachedMealPlanRow,
+      BaseReferences<_$OfflineCacheDatabase, $CachedMealPlanRowsTable,
+          CachedMealPlanRow>
+    ),
+    CachedMealPlanRow,
+    PrefetchHooks Function()>;
+typedef $$CachedMealPlanEntryRowsTableCreateCompanionBuilder
+    = CachedMealPlanEntryRowsCompanion Function({
+  required int viewerUserId,
+  required int vaultId,
+  required String weekStart,
+  required int lineIndex,
+  Value<int?> entryId,
+  Value<int?> planId,
+  required int recipeId,
+  required String entryDate,
+  required String mealSlot,
+  required int mealTimeMinutes,
+  Value<String?> title,
+  Value<String?> note,
+  required String source,
+  Value<int?> addedBy,
+  Value<String?> recipeTitle,
+  Value<String?> recipePhotoUrl,
+  Value<int> rowid,
+});
+typedef $$CachedMealPlanEntryRowsTableUpdateCompanionBuilder
+    = CachedMealPlanEntryRowsCompanion Function({
+  Value<int> viewerUserId,
+  Value<int> vaultId,
+  Value<String> weekStart,
+  Value<int> lineIndex,
+  Value<int?> entryId,
+  Value<int?> planId,
+  Value<int> recipeId,
+  Value<String> entryDate,
+  Value<String> mealSlot,
+  Value<int> mealTimeMinutes,
+  Value<String?> title,
+  Value<String?> note,
+  Value<String> source,
+  Value<int?> addedBy,
+  Value<String?> recipeTitle,
+  Value<String?> recipePhotoUrl,
+  Value<int> rowid,
+});
+
+class $$CachedMealPlanEntryRowsTableFilterComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedMealPlanEntryRowsTable> {
+  $$CachedMealPlanEntryRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get weekStart => $composableBuilder(
+      column: $table.weekStart, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get lineIndex => $composableBuilder(
+      column: $table.lineIndex, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get entryId => $composableBuilder(
+      column: $table.entryId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get planId => $composableBuilder(
+      column: $table.planId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get recipeId => $composableBuilder(
+      column: $table.recipeId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get entryDate => $composableBuilder(
+      column: $table.entryDate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get mealSlot => $composableBuilder(
+      column: $table.mealSlot, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get mealTimeMinutes => $composableBuilder(
+      column: $table.mealTimeMinutes,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get title => $composableBuilder(
+      column: $table.title, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get note => $composableBuilder(
+      column: $table.note, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get addedBy => $composableBuilder(
+      column: $table.addedBy, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get recipeTitle => $composableBuilder(
+      column: $table.recipeTitle, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get recipePhotoUrl => $composableBuilder(
+      column: $table.recipePhotoUrl,
+      builder: (column) => ColumnFilters(column));
+}
+
+class $$CachedMealPlanEntryRowsTableOrderingComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedMealPlanEntryRowsTable> {
+  $$CachedMealPlanEntryRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get weekStart => $composableBuilder(
+      column: $table.weekStart, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get lineIndex => $composableBuilder(
+      column: $table.lineIndex, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get entryId => $composableBuilder(
+      column: $table.entryId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get planId => $composableBuilder(
+      column: $table.planId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get recipeId => $composableBuilder(
+      column: $table.recipeId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get entryDate => $composableBuilder(
+      column: $table.entryDate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get mealSlot => $composableBuilder(
+      column: $table.mealSlot, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get mealTimeMinutes => $composableBuilder(
+      column: $table.mealTimeMinutes,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get title => $composableBuilder(
+      column: $table.title, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get note => $composableBuilder(
+      column: $table.note, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get addedBy => $composableBuilder(
+      column: $table.addedBy, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get recipeTitle => $composableBuilder(
+      column: $table.recipeTitle, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get recipePhotoUrl => $composableBuilder(
+      column: $table.recipePhotoUrl,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$CachedMealPlanEntryRowsTableAnnotationComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedMealPlanEntryRowsTable> {
+  $$CachedMealPlanEntryRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId, builder: (column) => column);
+
+  GeneratedColumn<int> get vaultId =>
+      $composableBuilder(column: $table.vaultId, builder: (column) => column);
+
+  GeneratedColumn<String> get weekStart =>
+      $composableBuilder(column: $table.weekStart, builder: (column) => column);
+
+  GeneratedColumn<int> get lineIndex =>
+      $composableBuilder(column: $table.lineIndex, builder: (column) => column);
+
+  GeneratedColumn<int> get entryId =>
+      $composableBuilder(column: $table.entryId, builder: (column) => column);
+
+  GeneratedColumn<int> get planId =>
+      $composableBuilder(column: $table.planId, builder: (column) => column);
+
+  GeneratedColumn<int> get recipeId =>
+      $composableBuilder(column: $table.recipeId, builder: (column) => column);
+
+  GeneratedColumn<String> get entryDate =>
+      $composableBuilder(column: $table.entryDate, builder: (column) => column);
+
+  GeneratedColumn<String> get mealSlot =>
+      $composableBuilder(column: $table.mealSlot, builder: (column) => column);
+
+  GeneratedColumn<int> get mealTimeMinutes => $composableBuilder(
+      column: $table.mealTimeMinutes, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<int> get addedBy =>
+      $composableBuilder(column: $table.addedBy, builder: (column) => column);
+
+  GeneratedColumn<String> get recipeTitle => $composableBuilder(
+      column: $table.recipeTitle, builder: (column) => column);
+
+  GeneratedColumn<String> get recipePhotoUrl => $composableBuilder(
+      column: $table.recipePhotoUrl, builder: (column) => column);
+}
+
+class $$CachedMealPlanEntryRowsTableTableManager extends RootTableManager<
+    _$OfflineCacheDatabase,
+    $CachedMealPlanEntryRowsTable,
+    CachedMealPlanEntryRow,
+    $$CachedMealPlanEntryRowsTableFilterComposer,
+    $$CachedMealPlanEntryRowsTableOrderingComposer,
+    $$CachedMealPlanEntryRowsTableAnnotationComposer,
+    $$CachedMealPlanEntryRowsTableCreateCompanionBuilder,
+    $$CachedMealPlanEntryRowsTableUpdateCompanionBuilder,
+    (
+      CachedMealPlanEntryRow,
+      BaseReferences<_$OfflineCacheDatabase, $CachedMealPlanEntryRowsTable,
+          CachedMealPlanEntryRow>
+    ),
+    CachedMealPlanEntryRow,
+    PrefetchHooks Function()> {
+  $$CachedMealPlanEntryRowsTableTableManager(
+      _$OfflineCacheDatabase db, $CachedMealPlanEntryRowsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedMealPlanEntryRowsTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedMealPlanEntryRowsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedMealPlanEntryRowsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> viewerUserId = const Value.absent(),
+            Value<int> vaultId = const Value.absent(),
+            Value<String> weekStart = const Value.absent(),
+            Value<int> lineIndex = const Value.absent(),
+            Value<int?> entryId = const Value.absent(),
+            Value<int?> planId = const Value.absent(),
+            Value<int> recipeId = const Value.absent(),
+            Value<String> entryDate = const Value.absent(),
+            Value<String> mealSlot = const Value.absent(),
+            Value<int> mealTimeMinutes = const Value.absent(),
+            Value<String?> title = const Value.absent(),
+            Value<String?> note = const Value.absent(),
+            Value<String> source = const Value.absent(),
+            Value<int?> addedBy = const Value.absent(),
+            Value<String?> recipeTitle = const Value.absent(),
+            Value<String?> recipePhotoUrl = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CachedMealPlanEntryRowsCompanion(
+            viewerUserId: viewerUserId,
+            vaultId: vaultId,
+            weekStart: weekStart,
+            lineIndex: lineIndex,
+            entryId: entryId,
+            planId: planId,
+            recipeId: recipeId,
+            entryDate: entryDate,
+            mealSlot: mealSlot,
+            mealTimeMinutes: mealTimeMinutes,
+            title: title,
+            note: note,
+            source: source,
+            addedBy: addedBy,
+            recipeTitle: recipeTitle,
+            recipePhotoUrl: recipePhotoUrl,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required int viewerUserId,
+            required int vaultId,
+            required String weekStart,
+            required int lineIndex,
+            Value<int?> entryId = const Value.absent(),
+            Value<int?> planId = const Value.absent(),
+            required int recipeId,
+            required String entryDate,
+            required String mealSlot,
+            required int mealTimeMinutes,
+            Value<String?> title = const Value.absent(),
+            Value<String?> note = const Value.absent(),
+            required String source,
+            Value<int?> addedBy = const Value.absent(),
+            Value<String?> recipeTitle = const Value.absent(),
+            Value<String?> recipePhotoUrl = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CachedMealPlanEntryRowsCompanion.insert(
+            viewerUserId: viewerUserId,
+            vaultId: vaultId,
+            weekStart: weekStart,
+            lineIndex: lineIndex,
+            entryId: entryId,
+            planId: planId,
+            recipeId: recipeId,
+            entryDate: entryDate,
+            mealSlot: mealSlot,
+            mealTimeMinutes: mealTimeMinutes,
+            title: title,
+            note: note,
+            source: source,
+            addedBy: addedBy,
+            recipeTitle: recipeTitle,
+            recipePhotoUrl: recipePhotoUrl,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CachedMealPlanEntryRowsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$OfflineCacheDatabase,
+        $CachedMealPlanEntryRowsTable,
+        CachedMealPlanEntryRow,
+        $$CachedMealPlanEntryRowsTableFilterComposer,
+        $$CachedMealPlanEntryRowsTableOrderingComposer,
+        $$CachedMealPlanEntryRowsTableAnnotationComposer,
+        $$CachedMealPlanEntryRowsTableCreateCompanionBuilder,
+        $$CachedMealPlanEntryRowsTableUpdateCompanionBuilder,
+        (
+          CachedMealPlanEntryRow,
+          BaseReferences<_$OfflineCacheDatabase, $CachedMealPlanEntryRowsTable,
+              CachedMealPlanEntryRow>
+        ),
+        CachedMealPlanEntryRow,
+        PrefetchHooks Function()>;
 
 class $OfflineCacheDatabaseManager {
   final _$OfflineCacheDatabase _db;
@@ -9066,4 +10577,9 @@ class $OfflineCacheDatabaseManager {
       get cachedShoppingListItemRows =>
           $$CachedShoppingListItemRowsTableTableManager(
               _db, _db.cachedShoppingListItemRows);
+  $$CachedMealPlanRowsTableTableManager get cachedMealPlanRows =>
+      $$CachedMealPlanRowsTableTableManager(_db, _db.cachedMealPlanRows);
+  $$CachedMealPlanEntryRowsTableTableManager get cachedMealPlanEntryRows =>
+      $$CachedMealPlanEntryRowsTableTableManager(
+          _db, _db.cachedMealPlanEntryRows);
 }
