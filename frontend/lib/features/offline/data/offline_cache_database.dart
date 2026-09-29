@@ -219,6 +219,42 @@ class CachedShoppingListItemRows extends Table {
   @override
   Set<Column<Object>> get primaryKey => {viewerUserId, listId, itemKey};
 }
+
+class CachedMealPlanRows extends Table {
+  IntColumn get viewerUserId => integer()();
+  IntColumn get vaultId => integer()();
+  IntColumn get planId => integer()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {viewerUserId, vaultId};
+}
+
+class CachedMealPlanEntryRows extends Table {
+  IntColumn get viewerUserId => integer()();
+  IntColumn get vaultId => integer()();
+  TextColumn get weekStart => text()();
+  IntColumn get lineIndex => integer()();
+  IntColumn get entryId => integer().nullable()();
+  IntColumn get planId => integer().nullable()();
+  IntColumn get recipeId => integer()();
+  TextColumn get entryDate => text()();
+  TextColumn get mealSlot => text()();
+  IntColumn get mealTimeMinutes => integer()();
+  TextColumn get title => text().nullable()();
+  TextColumn get note => text().nullable()();
+  TextColumn get source => text()();
+  IntColumn get addedBy => integer().nullable()();
+  TextColumn get recipeTitle => text().nullable()();
+  TextColumn get recipePhotoUrl => text().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {
+        viewerUserId,
+        vaultId,
+        weekStart,
+        lineIndex,
+      };
+}
 // coverage:ignore-end
 
 @DriftDatabase(
@@ -235,6 +271,8 @@ class CachedShoppingListItemRows extends Table {
     CachedPantryIngredientRows,
     CachedShoppingListRows,
     CachedShoppingListItemRows,
+    CachedMealPlanRows,
+    CachedMealPlanEntryRows,
   ],
 )
 class OfflineCacheDatabase extends _$OfflineCacheDatabase {
@@ -242,7 +280,7 @@ class OfflineCacheDatabase extends _$OfflineCacheDatabase {
       : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -257,6 +295,10 @@ class OfflineCacheDatabase extends _$OfflineCacheDatabase {
           }
           if (from < 4) {
             await migrator.createTable(cachedRecipeNutritionRows);
+          }
+          if (from < 5) {
+            await migrator.createTable(cachedMealPlanRows);
+            await migrator.createTable(cachedMealPlanEntryRows);
           }
         },
       );
