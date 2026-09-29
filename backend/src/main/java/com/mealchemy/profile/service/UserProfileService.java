@@ -24,10 +24,12 @@ public class UserProfileService {
 
     private final UserProfileRepository userProfileRepository;
     private final EquipmentService equipmentService;
+    private final UserRepository userRepository;
 
-    public UserProfileService(UserProfileRepository userProfileRepository, EquipmentService equipmentService) {
+    public UserProfileService(UserProfileRepository userProfileRepository, EquipmentService equipmentService, UserRepository userRepository) {
         this.userProfileRepository = userProfileRepository;
         this.equipmentService = equipmentService;
+        this.userRepository = userRepository;
     }
 
     // GET request - Logic to get user profile
@@ -35,13 +37,7 @@ public class UserProfileService {
         UserProfile userProfile = userProfileRepository.findByUserId(userId)
                                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User profile not found")); //need to send correct error code
 
-        return new UserProfileResponse(
-                            userProfile.getDisplayName(),
-                            userProfile.getAvatarUrl(),
-                            userProfile.getPreferredUnit(),
-                            userProfile.getEquipment(),
-                            userProfile.getUpdatedAt()
-                    );
+        return buildResponse(userProfile, userId);
     }
 
     @Transactional
@@ -77,13 +73,23 @@ public class UserProfileService {
 
         userProfileRepository.save(userProfile);
 
+        return buildResponse(userProfile, userId);
+    }
+
+    /* Helpers */
+
+    private UserProfileResponse buildResponse(UserProfile userProfile, Integer userId) {
+        String email = userRepository.findById(userId)
+                                     .map(User::getEmail)
+                                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
         return new UserProfileResponse(
                             userProfile.getDisplayName(),
                             userProfile.getAvatarUrl(),
                             userProfile.getPreferredUnit(),
                             userProfile.getEquipment(),
-                            userProfile.getUpdatedAt()
+                            userProfile.getUpdatedAt(),
+                            email
                     );
     }
-
 }
