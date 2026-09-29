@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.web.bind.annotation.*;
 
 /* Import classes */
-import com.mealchemy.tags.dto.TagDto;
+import com.mealchemy.tags.dto.TagsResponse;
 import com.mealchemy.tags.service.TagsService;
 import com.mealchemy.shared.dto.ErrorResponse;
 
@@ -31,13 +31,13 @@ public class TagsController {
 
     @Operation(summary = "Get active tags", description = "Returns all active tags. When the dietary query parameter is supplied, results are filtered to tags whose dietary flag matches it (e.g. dietary=true returns only active dietary tags). When omitted, all active tags are returned regardless of the dietary flag.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Tags retrieved successfully", content = @Content(array = @ArraySchema(schema = @Schema(implementation = TagDto.class)))),
+        @ApiResponse(responseCode = "200", description = "Tags retrieved successfully", content = @Content(array = @ArraySchema(schema = @Schema(implementation = TagsResponse.class)))),
         @ApiResponse(responseCode = "400", description = "Invalid value supplied for the dietary parameter", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping
-    public List<TagDto> getTags(@RequestParam(required = false) Boolean dietary)
+    public List<TagsResponse> getTags(@RequestParam(required = false) Boolean dietary)
     {
         return tagsService.getActiveTags(dietary);
     }
