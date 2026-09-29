@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mealchemy/features/offline/data/offline_cache_database.dart';
 import 'package:mealchemy/features/offline/data/offline_cache_store.dart';
 import 'package:mealchemy/features/offline/repositories/cached_recipe_repository.dart';
+import 'package:mealchemy/features/recipe/models/equipment.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
@@ -70,7 +71,7 @@ void main() {
     await expectLater(repository.getRecipes(), throwsA(same(error)));
   });
 
-  test('complete cached aggregate backs detail ingredients and steps',
+  test('complete cached aggregate backs detail ingredients steps and equipment',
       () async {
     final cachedRecipe = _recipe('Complete cached recipe', complete: true);
     await cache.storeCompleteRecipe(
@@ -91,6 +92,10 @@ void main() {
     expect((await repository.getRecipeById(7)).title, 'Complete cached recipe');
     expect((await repository.getRecipeIngredients(7)).single.name, 'Milk');
     expect((await repository.getRecipeSteps(7)).single.content, 'Mix');
+    expect(
+      (await repository.getRecipeEquipment(7)).single.label,
+      'Mixing bowl',
+    );
   });
 
   test('missing aggregate and anonymous viewers rethrow transport failures',
@@ -177,6 +182,15 @@ Recipe _recipe(String title, {bool complete = false}) => Recipe(
               ),
             ]
           : null,
+      equipment: complete
+          ? const [
+              Equipment(
+                id: 3,
+                value: 'mixing_bowl',
+                label: 'Mixing bowl',
+              ),
+            ]
+          : null,
     );
 
 class _RecipeRemote extends MockRecipeRepository {
@@ -212,6 +226,12 @@ class _RecipeRemote extends MockRecipeRepository {
   Future<List<RecipeStep>> getRecipeSteps(int recipeId) async {
     if (detailError case final error?) throw error;
     return recipe.steps ?? const [];
+  }
+
+  @override
+  Future<List<Equipment>> getRecipeEquipment(int recipeId) async {
+    if (detailError case final error?) throw error;
+    return recipe.equipment ?? const [];
   }
 
   @override

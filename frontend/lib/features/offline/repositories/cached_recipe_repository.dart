@@ -139,14 +139,15 @@ class CachedRecipeRepository implements RecipeRepository {
       removeVideo: removeVideo,
     );
   }
-// equipment isn't in the offline cache yet so offline returns none
+
   @override
   Future<List<Equipment>> getRecipeEquipment(int recipeId) async {
     try {
       return await _remote.getRecipeEquipment(recipeId);
     } catch (error) {
-      if (!isOfflineTransportFailure(error)) rethrow;
-      return const [];
+      final cached = await _cachedRecipeForTransportFailure(error, recipeId);
+      if (cached?.equipment == null) rethrow;
+      return cached!.equipment!;
     }
   }
 }
