@@ -52,6 +52,12 @@ abstract class ShoppingListRepository {
 
   //marks every item in one shopping list as not purchased/unchecked
   Future<List<ShoppingListItem>> deselectAllItems(String listId);
+
+  Future<void> deleteShoppingListItem({
+    required String listId,
+    required String itemId,
+  });
+
   //deletes several selected items from one shopping list
   Future<void> deleteShoppingListItems({
     required String listId,
@@ -78,5 +84,14 @@ abstract class ShoppingListRepository {
     required String listId,
     required int recipeId,
     required bool includeAvailablePantryItems,
+  });
+
+  //adds every recipe planned between two dates into an existing list
+  Future<({ShoppingList list, List<int> skippedRecipeIds})> smartAddFromMealPlan({
+    required String listId,
+    required int planId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required bool compareToPantry,
   });
 }

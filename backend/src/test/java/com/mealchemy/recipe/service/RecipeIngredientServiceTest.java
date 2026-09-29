@@ -33,6 +33,7 @@ import com.mealchemy.recipe.repository.RecipeIngredientRepository;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.profile.repository.UserProfileRepository;
+import com.mealchemy.vault.service.RecipeEditLockService;
 
 import com.mealchemy.shared.enums.PreferredUnit;
 
@@ -49,6 +50,9 @@ public class RecipeIngredientServiceTest {
 
     @Mock
     private IngredientCatalogueRepository ingredientCatalogueRepository;
+
+    @Mock
+    private RecipeEditLockService recipeEditLockService;    
 
     @InjectMocks
     private RecipeIngredientService recipeIngredientService;
@@ -101,6 +105,7 @@ public class RecipeIngredientServiceTest {
     {
         when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(recipeIngredient));
         when(ingredientCatalogueRepository.findAllById(List.of(1))).thenReturn(List.of(existingIngredientCatalogue));
+        when(recipeRepository.findAccessibleByIdAndUserId(1, 1)).thenReturn(Optional.of(recipe));
 
         List<RecipeIngredientResponse> result = recipeIngredientService.getAllIngredientsByRecipeId(1, 1);
 
@@ -113,6 +118,7 @@ public class RecipeIngredientServiceTest {
     void getAllIngredientsByRecipeId_returnsEmptyList_whenNoneFound()
     {
         when(recipeIngredientRepository.findByRecipe_RecipeId(99)).thenReturn(List.of());
+        when(recipeRepository.findAccessibleByIdAndUserId(99, 1)).thenReturn(Optional.of(recipe));
 
         List<RecipeIngredientResponse> result = recipeIngredientService.getAllIngredientsByRecipeId(99, 1);
 
@@ -138,7 +144,8 @@ public class RecipeIngredientServiceTest {
     void getAllIngredientsByRecipeId_returnsUnknownIngredient_whenOrphaned()
     {
         when(recipeIngredientRepository.findByRecipe_RecipeId(1)).thenReturn(List.of(recipeIngredient));
-        when(ingredientCatalogueRepository.findAllById(List.of(1))).thenReturn(List.of()); // orphaned - not found
+        when(ingredientCatalogueRepository.findAllById(List.of(1))).thenReturn(List.of());
+        when(recipeRepository.findAccessibleByIdAndUserId(1, 1)).thenReturn(Optional.of(recipe));
 
         List<RecipeIngredientResponse> result = recipeIngredientService.getAllIngredientsByRecipeId(1, 1);
 
@@ -161,11 +168,12 @@ public class RecipeIngredientServiceTest {
     void createRecipeIngredient_throwsException_whenNotOwner()
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeEditLockService.canEditRecipe(1, 99)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.createRecipeIngredient(request, 1, 99));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of this recipe can modify its ingredients.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
     }
 
     @Test
@@ -211,11 +219,12 @@ public class RecipeIngredientServiceTest {
     void updateRecipeIngredient_throwsException_whenNotOwner()
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeEditLockService.canEditRecipe(1, 99)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.updateRecipeIngredient(1, request, 1, 99));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of this recipe can modify its ingredients.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
     }
 
     @Test
@@ -239,8 +248,8 @@ public class RecipeIngredientServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.updateRecipeIngredient(1, request, 1, 1));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Ingredient must be part of the recipe.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Ingredient not found.", ex.getReason());
     }
 
     @Test
@@ -283,11 +292,12 @@ public class RecipeIngredientServiceTest {
     void deleteRecipeIngredient_throwsException_whenNotOwner()
     {
         when(recipeRepository.findById(1)).thenReturn(Optional.of(recipe));
+        when(recipeEditLockService.canEditRecipe(1, 99)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.deleteRecipeIngredient(1, 1, 99));
         
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Only the owner of this recipe can modify its ingredients.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Recipe not found.", ex.getReason());
     }
 
     @Test
@@ -311,7 +321,7 @@ public class RecipeIngredientServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> recipeIngredientService.deleteRecipeIngredient(1, 1, 1));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("Ingredient must be part of the recipe.", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Ingredient not found.", ex.getReason());
     }
 }

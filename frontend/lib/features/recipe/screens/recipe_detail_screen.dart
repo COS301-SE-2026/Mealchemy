@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/connectivity/network_status_provider.dart';
+import '../../offline/widgets/offline_unavailable_state.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/shared_widgets/atoms/app_button.dart';
 import '../../../core/shared_widgets/Molecules/app_refresh.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../cook_mode/providers/cook_session_provider.dart';
+import '../models/equipment.dart';
 import '../models/recipe.dart';
 import '../models/recipe_ingredient.dart';
 import '../models/recipe_step.dart';
 import '../providers/recipe_provider.dart';
+import '../widgets/recipe_equipment_section.dart';
 import '../widgets/recipe_hero.dart';
 import '../widgets/recipe_ingredient_row.dart';
 import '../widgets/recipe_nutrition_tab.dart';
@@ -19,12 +25,20 @@ import '../widgets/recipe_step_row.dart';
 import '../widgets/recipe_tab_bar.dart';
 import '../../offline/data/offline_cache_store.dart';
 import '../../offline/widgets/cache_freshness_label.dart';
+import '../widgets/shared_recipe_lock_status.dart';
 
 //tabs need controller with animation support
 class RecipeDetailScreen extends ConsumerStatefulWidget {
-  const RecipeDetailScreen({super.key, required this.recipeId});
+  const RecipeDetailScreen({
+    super.key,
+    required this.recipeId,
+    this.allowReporting = false,
+    this.sharedVaultId,
+  });
 
   final int recipeId;
+  final bool allowReporting;
+  final int? sharedVaultId;
 
   @override
   ConsumerState<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
@@ -37,10 +51,10 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
-//4 tabs are overview, ingredients, steops and nutrition
+//5 tabs are overview, ingredients, equipment, steops and nutrition
   @override
   void dispose() {
     _tabController.dispose();
@@ -73,34 +87,53 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
         recipe: recipe,
         tabController: _tabController,
         onRefresh: _refresh,
+        allowReporting: widget.allowReporting,
+        sharedVaultId: widget.sharedVaultId,
       ),
     );
   }
 }
 
-class _RecipeDetailContent extends StatelessWidget {
+class _RecipeDetailContent extends ConsumerWidget {
   const _RecipeDetailContent({
     required this.recipe,
     required this.tabController,
     required this.onRefresh,
+    required this.allowReporting,
+    required this.sharedVaultId,
   });
 
   final Recipe recipe;
   final TabController tabController;
   final Future<void> Function() onRefresh;
+  final bool allowReporting;
+  final int? sharedVaultId;
 
 //ingredients and steps are null on endpoint
 //sorted* guards against null
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ingredients = _sortedIngredients(recipe.ingredients);
     final steps = _sortedSteps(recipe.steps);
+    final session =
+        ref.watch(cookSessionForRecipeProvider(recipe.recipeId)).valueOrNull;
+    final resumeIndex = session?.matchingStepIndex(steps);
     //to make hero stay fixed at top, while scroll
     return Scaffold(
       backgroundColor: AppColors.bgLight,
       body: Column(
         children: [
-          RecipeHero(recipe: recipe),
+          RecipeHero(
+            recipe: recipe,
+            allowReporting: allowReporting,
+          ),
+          if (sharedVaultId != null && sharedVaultId! > 0)
+            SharedRecipeLockStatus(
+              target: (
+                vaultId: sharedVaultId!,
+                recipeId: recipe.recipeId,
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
             child: CacheFreshnessLabel(
@@ -114,10 +147,26 @@ class _RecipeDetailContent extends StatelessWidget {
               controller: tabController,
               children: [
                 _OverviewTab(
-                  recipe: recipe, ingredients: ingredients, steps: steps, onRefresh: onRefresh, ),
-                _IngredientsTab( recipe: recipe, ingredients: ingredients, onRefresh: onRefresh,),
+                  recipe: recipe,
+                  ingredients: ingredients,
+                  steps: steps,
+                  onRefresh: onRefresh,
+                ),
+                _IngredientsTab(
+                  recipe: recipe,
+                  ingredients: ingredients,
+                  onRefresh: onRefresh,
+                ),
+                _EquipmentTab(
+                  equipment: recipe.equipment ?? const [],
+                  onRefresh: onRefresh,
+                ),
                 _StepsTab(steps: steps, onRefresh: onRefresh),
-                AppRefresh( onRefresh: onRefresh, child: RecipeNutritionTab(recipeId: recipe.recipeId),)              ],
+                AppRefresh(
+                  onRefresh: onRefresh,
+                  child: RecipeNutritionTab(recipeId: recipe.recipeId),
+                )
+              ],
             ),
           ),
         ],
@@ -126,8 +175,12 @@ class _RecipeDetailContent extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
           child: AppButton.primary(
-            label: 'Start Cooking',
-            onPressed: () {},
+            label: resumeIndex == null
+                ? 'Start Cooking'
+                : 'Resume Step ${resumeIndex + 1}',
+            onPressed: steps.isEmpty
+                ? null
+                : () => context.push('/recipe/${recipe.recipeId}/cook'),
             leftIcon: Icons.restaurant_menu_outlined,
             isFullWidth: true,
             size: ButtonSize.large,
@@ -136,7 +189,7 @@ class _RecipeDetailContent extends StatelessWidget {
       ),
     );
   }
-} //simulate to start cooking, to still be implemented
+}
 
 class _OverviewTab extends StatelessWidget {
   const _OverviewTab({
@@ -165,6 +218,12 @@ class _OverviewTab extends StatelessWidget {
             recipeId: recipe.recipeId,
             baseServings: recipe.servingSize ?? 1,
           ),
+          if (recipe.equipment?.isNotEmpty ?? false) ...[
+            const SizedBox(height: 26),
+            const _SectionTitle(title: 'Equipment'),
+            const SizedBox(height: 12),
+            RecipeEquipmentSection(equipment: recipe.equipment!),
+          ],
           const SizedBox(height: 26),
           const _SectionTitle(title: 'Ingredients'),
           const SizedBox(height: 12),
@@ -187,7 +246,10 @@ class _OverviewTab extends StatelessWidget {
 }
 
 class _IngredientsTab extends StatelessWidget {
-  const _IngredientsTab({required this.recipe, required this.ingredients, required this.onRefresh});
+  const _IngredientsTab(
+      {required this.recipe,
+      required this.ingredients,
+      required this.onRefresh});
   final Recipe recipe;
   final List<RecipeIngredient> ingredients;
   final Future<void> Function() onRefresh;
@@ -209,6 +271,35 @@ class _IngredientsTab extends StatelessWidget {
               baseServings: recipe.servingSize ?? 1,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EquipmentTab extends StatelessWidget {
+  const _EquipmentTab({required this.equipment, required this.onRefresh});
+
+  final List<Equipment> equipment;
+  final Future<void> Function() onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppRefresh(
+      onRefresh: onRefresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
+        children: [
+          const _SectionTitle(title: 'Equipment'),
+          const SizedBox(height: 12),
+          if (equipment.isEmpty)
+            Text(
+              'No equipment listed for this recipe.',
+              style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+            )
+          else
+            RecipeEquipmentSection(equipment: equipment),
         ],
       ),
     );
@@ -287,13 +378,20 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _RecipeDetailError extends StatelessWidget {
+class _RecipeDetailError extends ConsumerWidget {
   const _RecipeDetailError({required this.message});
 
   final String message;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (ref.watch(offlineReadOnlyProvider)) {
+      return const OfflineUnavailableState(
+        message:
+            'This recipe is not saved for offline use. Open it while connected to make it available offline.',
+      );
+    }
+
     return Center(
       child: Text(
         'Unable to load recipe.',

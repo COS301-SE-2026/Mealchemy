@@ -8,6 +8,7 @@ import '../../../core/connectivity/network_status_provider.dart';
 import '../../../core/shared_widgets/Molecules/app_section_header.dart';
 import '../../../core/shared_widgets/atoms/app_button.dart';
 import '../../../core/shared_widgets/atoms/app_text_field.dart';
+import '../../../core/shared_widgets/atoms/app_unit_dropdown.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/ingredient_catalogue_item.dart';
@@ -17,20 +18,8 @@ import '../repositories/ingredient_catalogue_repository.dart';
 
 const double _blurArea = 240;
 const double _sheetTop = 212;
-
-//units for the unit dropdown
-//need to be made dynamic in the future to support custom units and unit conversion
-const List<String> _unitOptions = [
-  'g',
-  'kg',
-  'ml',
-  'L',
-  'cups',
-  'tbsp',
-  'tsp',
-  'oz',
-  'pcs',
-];
+const double _dismissDistance = 120;
+const double _dismissVelocity = 700;
 
 class AddIngredientScreen extends ConsumerWidget {
   const AddIngredientScreen({super.key});
@@ -118,10 +107,47 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
   AppButtonStatus _saveStatus = AppButtonStatus.idle;
   String? _saveError;
 
+  double _drag = 0;
+  bool _dragging = false;
+
   @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  void _dragBy(double dy) {
+    setState(() {
+      _dragging = true;
+      _drag = (_drag + dy).clamp(0, double.infinity);
+    });
+  }
+
+  void _release(double velocity) {
+    if (!_dragging) return;
+    if (_drag > _dismissDistance || velocity > _dismissVelocity) {
+      context.pop();
+      return;
+    }
+    setState(() {
+      _dragging = false;
+      _drag = 0;
+    });
+  }
+
+  bool _onScroll(ScrollNotification n) {
+    if (n is OverscrollNotification &&
+        n.overscroll < 0 &&
+        n.dragDetails != null) {
+      _dragBy(-n.overscroll);
+    } else if (n is ScrollUpdateNotification &&
+        _drag > 0 &&
+        n.dragDetails != null) {
+      _dragBy(-(n.scrollDelta ?? 0));
+    } else if (n is ScrollEndNotification) {
+      _release(n.dragDetails?.primaryVelocity ?? 0);
+    }
+    return false;
   }
 
   @override
@@ -129,17 +155,37 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
     final hasName = _nameController.text.trim().isNotEmpty;
     final hasUnit = _selectedUnit != null;
 
+    final fade = 1 - (_drag / _dismissDistance).clamp(0.0, 1.0);
+
     return Stack(
       children: [
-        const Positioned(
+        Positioned(
           top: 0,
           left: 0,
           right: 0,
           height: _blurArea,
-          child: _PantryHeader(),
+          child: IgnorePointer(
+            ignoring: fade == 0,
+            child: AnimatedOpacity(
+              duration:
+                  _dragging ? Duration.zero : const Duration(milliseconds: 220),
+              opacity: fade,
+              child: GestureDetector(
+                onVerticalDragUpdate: (d) => _dragBy(d.delta.dy),
+                onVerticalDragEnd: (d) => _release(d.primaryVelocity ?? 0),
+                child: const _PantryHeader(),
+              ),
+            ),
+          ),
         ),
-        Positioned.fill(
-          top: _sheetTop,
+        AnimatedPositioned(
+          duration:
+              _dragging ? Duration.zero : const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          top: _sheetTop + _drag,
+          bottom: -_drag,
+          left: 0,
+          right: 0,
           child: Container(
             decoration: const BoxDecoration(
               color: AppColors.bgCream,
@@ -148,110 +194,124 @@ class _AddIngredientContentState extends ConsumerState<_AddIngredientContent> {
                 topRight: Radius.circular(20),
               ),
             ),
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+            child: Column(
               children: [
-                const Align(
-                  alignment: Alignment.topCenter,
-                  child: _SheetHandle(),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Pantry Entry',
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.heading2.copyWith(
-                    color: AppColors.primary,
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onVerticalDragUpdate: (d) => _dragBy(d.delta.dy),
+                  onVerticalDragEnd: (d) => _release(d.primaryVelocity ?? 0),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 14),
+                    child: Center(child: _SheetHandle()),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Add Ingredient Manually',
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.textMuted,
-                  ),
-                ),
-                const SizedBox(height: 26),
-
-                //ingredient details
-                const AppSectionHeader(title: 'Ingredient Details'),
-                const SizedBox(height: 14),
-                AppTextField(
-                  controller: _nameController,
-                  label: 'Ingredient Name',
-                  hint: 'Search catalogue, e.g. Chicken Breast',
-                  prefixIcon: Icons.search,
-                  onChanged: _onSearchChanged,
-                ),
-                if (_showValidation && !hasName)
-                  const _ValidationText('Ingredient name is required.'),
-                if (_showValidation && _selectedIngredient == null && hasName)
-                  const _ValidationText(
-                    'Please select an ingredient from the catalogue.',
-                  ),
-                if (_ingredientSearchError != null)
-                  _ValidationText(_ingredientSearchError!),
-                if (_isSearchingIngredients)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 10),
-                    child: LinearProgressIndicator(),
-                  ),
-                if (_ingredientOptions.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  _IngredientSearchResults(
-                    ingredients: _ingredientOptions,
-                    selectedIngredient: _selectedIngredient,
-                    onSelected: _onIngredientSelected,
-                  ),
-                ],
-                const SizedBox(height: 14),
-                _SelectedCategoryLabel(
-                  category:
-                      _selectedIngredient?.category ?? 'Select an ingredient',
-                ),
-                const SizedBox(height: 28),
-
-                //quantity
-                const AppSectionHeader(title: 'Quantity'),
-                const SizedBox(height: 14),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: _LabelledField(
-                        label: 'Quantity',
-                        child: _QuantityStepper(
-                          value: _quantity,
-                          onChanged: (value) =>
-                              setState(() => _quantity = value),
+                Expanded(
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: _onScroll,
+                    child: ListView(
+                      physics: const ClampingScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+                      children: [
+                        Text(
+                          'Pantry Entry',
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.heading2.copyWith(
+                            color: AppColors.primary,
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Add Ingredient Manually',
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                        const SizedBox(height: 26),
+
+                        //ingredient details
+                        const AppSectionHeader(title: 'Ingredient Details'),
+                        const SizedBox(height: 14),
+                        AppTextField(
+                          controller: _nameController,
+                          label: 'Ingredient Name',
+                          hint: 'Search catalogue, e.g. Chicken Breast',
+                          prefixIcon: Icons.search,
+                          onChanged: _onSearchChanged,
+                        ),
+                        if (_showValidation && !hasName)
+                          const _ValidationText('Ingredient name is required.'),
+                        if (_showValidation &&
+                            _selectedIngredient == null &&
+                            hasName)
+                          const _ValidationText(
+                            'Please select an ingredient from the catalogue.',
+                          ),
+                        if (_ingredientSearchError != null)
+                          _ValidationText(_ingredientSearchError!),
+                        if (_isSearchingIngredients)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 10),
+                            child: LinearProgressIndicator(),
+                          ),
+                        if (_ingredientOptions.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          _IngredientSearchResults(
+                            ingredients: _ingredientOptions,
+                            selectedIngredient: _selectedIngredient,
+                            onSelected: _onIngredientSelected,
+                          ),
+                        ],
+                        const SizedBox(height: 14),
+                        _SelectedCategoryLabel(
+                          category: _selectedIngredient?.category ??
+                              'Select an ingredient',
+                        ),
+                        const SizedBox(height: 28),
+
+                        //quantity
+                        const AppSectionHeader(title: 'Quantity'),
+                        const SizedBox(height: 14),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: _LabelledField(
+                                label: 'Quantity',
+                                child: _QuantityStepper(
+                                  value: _quantity,
+                                  onChanged: (value) =>
+                                      setState(() => _quantity = value),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: AppUnitDropdown(
+                                value: _selectedUnit,
+                                hint: 'e.g. oz',
+                                onChanged: (value) =>
+                                    setState(() => _selectedUnit = value),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (_showValidation && !hasUnit)
+                          const _ValidationText('Unit is required.'),
+                        const SizedBox(height: 36),
+                        AppButton.primary(
+                          label: 'Save Ingredient',
+                          onPressed: _saveIngredient,
+                          isFullWidth: true,
+                          isRounded: true,
+                          status: _saveStatus,
+                          errorMessage: _saveError,
+                          //pop only after the tick has played
+                          onSuccessComplete: () => context.pop(),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _LabelledDropdown(
-                        label: 'Unit',
-                        hint: 'e.g. oz',
-                        value: _selectedUnit,
-                        options: _unitOptions,
-                        onChanged: (value) =>
-                            setState(() => _selectedUnit = value),
-                      ),
-                    ),
-                  ],
-                ),
-                if (_showValidation && !hasUnit)
-                  const _ValidationText('Unit is required.'),
-                const SizedBox(height: 36),
-                AppButton.primary(
-                  label: 'Save Ingredient',
-                  onPressed: _saveIngredient,
-                  isFullWidth: true,
-                  isRounded: true,
-                  status: _saveStatus,
-                  errorMessage: _saveError,
-                  //pop only after the tick has played
-                  onSuccessComplete: () => context.pop(),
+                  ),
                 ),
               ],
             ),
@@ -502,35 +562,14 @@ class _PantryHeader extends StatelessWidget {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _HeaderCircleButton(
-                    icon: Icons.arrow_back,
-                    onTap: () => context.pop(),
-                    background: AppColors.textMuted.withValues(alpha: 0.45),
-                    iconColor: AppColors.textDark,
-                  ),
-                  const Spacer(),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _HeaderCircleButton(
-                        icon: Icons.add,
-                        onTap: () {},
-                        background: AppColors.textMuted.withValues(alpha: 0.25),
-                        iconColor: AppColors.primary,
-                      ),
-                      const SizedBox(height: 10),
-                      _HeaderCircleButton(
-                        icon: Icons.photo_camera_outlined,
-                        onTap: () {},
-                        background: AppColors.textMuted.withValues(alpha: 0.25),
-                        iconColor: AppColors.primary,
-                      ),
-                    ],
-                  ),
-                ],
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: _HeaderCircleButton(
+                  icon: Icons.arrow_back,
+                  onTap: () => context.pop(),
+                  background: AppColors.textLight.withValues(alpha: 0.45),
+                  iconColor: AppColors.textDark,
+                ),
               ),
             ),
           ),
@@ -685,73 +724,6 @@ class _LabelledField extends StatelessWidget {
         const SizedBox(height: 6),
         child,
       ],
-    );
-  }
-}
-
-class _LabelledDropdown extends StatelessWidget {
-  const _LabelledDropdown({
-    required this.label,
-    required this.hint,
-    required this.value,
-    required this.options,
-    required this.onChanged,
-  });
-
-  final String label;
-  final String hint;
-  final String? value;
-  final List<String> options;
-  final ValueChanged<String?> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return _LabelledField(
-      label: label,
-      child: DropdownButtonFormField<String>(
-        initialValue: value,
-        onChanged: onChanged,
-        isExpanded: true,
-        icon: const Icon(
-          Icons.keyboard_arrow_down,
-          color: AppColors.primary,
-          size: 20,
-        ),
-        hint: Text(
-          hint,
-          style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
-        ),
-        style: AppTextStyles.body.copyWith(color: AppColors.textLight),
-        dropdownColor: AppColors.surfaceWhite,
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: AppColors.surfaceMuted,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide:
-                const BorderSide(color: AppColors.inputBorder, width: 1),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide:
-                const BorderSide(color: AppColors.inputBorder, width: 1),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-          ),
-        ),
-        items: options
-            .map(
-              (option) => DropdownMenuItem<String>(
-                value: option,
-                child: Text(option),
-              ),
-            )
-            .toList(),
-      ),
     );
   }
 }

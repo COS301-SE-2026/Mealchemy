@@ -15,6 +15,8 @@ import com.mealchemy.recipe.model.RecipeIngredient;
 import com.mealchemy.recipe.model.RecipeStep;
 import com.mealchemy.vault.model.VaultFolder;
 import com.mealchemy.vault.model.Vault;
+import com.mealchemy.recipe.model.RecipeEquipment;
+import com.mealchemy.equipment.model.Equipment;
 import com.mealchemy.shared.enums.VaultType;
 import com.mealchemy.vault.dto.VaultFolderRecipeRequest;
 import com.mealchemy.recipe.dto.RecipeRequest;
@@ -24,11 +26,16 @@ import com.mealchemy.recipe.dto.RecipeIngredientRequest;
 import com.mealchemy.recipe.dto.RecipeStepRequest;
 import com.mealchemy.recipe.dto.RecipeResponse;
 import com.mealchemy.recipe.event.RecipePhotoCleanupEvent;
+import com.mealchemy.recipe.event.RecipeVideoCleanupEvent;
 import com.mealchemy.recipe.repository.RecipeRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.cuisinetype.repository.FlavourProfileOptionsRepository;
 import com.mealchemy.vault.repository.VaultFolderRepository;
+import com.mealchemy.equipment.repository.EquipmentRepository;
 import com.mealchemy.vault.service.VaultFolderRecipeService;
+import com.mealchemy.vault.service.RecipeEditLockService;
+import com.mealchemy.mealprep.repository.MealPlanEntryRepository;
+import com.mealchemy.shared.unitconverter.UnitConverter;
 
 @Service
 public class RecipeService
@@ -41,21 +48,30 @@ public class RecipeService
 
     private final VaultFolderRepository vaultFolderRepository;
 
+    private final EquipmentRepository equipmentRepository;
+
     private final VaultFolderRecipeService vaultFolderRecipeService;
+
+    private final RecipeEditLockService recipeEditLockService;
 
     // lets it annouce that an old photo needs cleanup without making RecipeService directly responsible for GC Storage
     private final ApplicationEventPublisher eventPublisher;
 
+    private final MealPlanEntryRepository mealPlanEntryRepository;
+
     public RecipeService(RecipeRepository recipeRepository, IngredientCatalogueRepository ingredientCatalogueRepository, 
-        FlavourProfileOptionsRepository flavourProfileOptionsRepository, VaultFolderRepository vaultFolderRepository, 
-        VaultFolderRecipeService vaultFolderRecipeService, ApplicationEventPublisher eventPublisher)
+        FlavourProfileOptionsRepository flavourProfileOptionsRepository, VaultFolderRepository vaultFolderRepository, EquipmentRepository equipmentRepository,
+        VaultFolderRecipeService vaultFolderRecipeService, RecipeEditLockService recipeEditLockService, ApplicationEventPublisher eventPublisher, MealPlanEntryRepository mealPlanEntryRepository)
     {
         this.recipeRepository = recipeRepository;
         this.ingredientCatalogueRepository = ingredientCatalogueRepository;
         this.flavourProfileOptionsRepository = flavourProfileOptionsRepository;
         this.vaultFolderRepository = vaultFolderRepository;
+        this.equipmentRepository = equipmentRepository;
         this.vaultFolderRecipeService = vaultFolderRecipeService;
+        this.recipeEditLockService = recipeEditLockService;
         this.eventPublisher = eventPublisher;
+        this.mealPlanEntryRepository = mealPlanEntryRepository;
     }
 
     // Get all recipes
@@ -71,23 +87,19 @@ public class RecipeService
         return recipeRepository.findByIsCommunityPublishedTrue().stream().map(RecipeResponse::from).collect(Collectors.toList());
     }
 
+    // Get all community published recipes with curated videos.
+    public List<RecipeResponse> getAllCommunitySizzles()
+    {
+        return recipeRepository.findCommunitySizzles().stream().map(RecipeResponse::from).collect(Collectors.toList());
+    }
+
     // Get a single recipe by Id
     // Modified to find accessible recipe, returns it when acess allowed, checkif reciepe exists if acess fails, returns 403 if exists but not allowed access, returns 404 when it doesnt exist.
     public RecipeResponse getRecipeById(Integer id, Integer userId)
     {
-        Optional<Recipe> accessibleRecipe = recipeRepository.findAccessibleByIdAndUserId(id, userId);
+        Recipe recipeForReturn = recipeRepository.findAccessibleByIdAndUserId(id, userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
-        if (accessibleRecipe.isEmpty())
-        {
-            if (recipeRepository.existsById(id))
-            {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to view this recipe.");
-            }
-
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.");
-        }
-
-        Recipe recipeForReturn = accessibleRecipe.get();
         return RecipeResponse.from(recipeForReturn);
     }
 
@@ -108,6 +120,7 @@ public class RecipeService
         validateFolderIsInPrivateVault(request.folderId(), ownerId);
 
         Recipe recipeForReturn = mapRequestToEntity(request, ownerId);
+        recipeForReturn.setEquipment(mapEquipmentRequests(request.equipmentIds(), recipeForReturn));
         Recipe saved = recipeRepository.save(recipeForReturn);
 
         vaultFolderRecipeService.createVaultFolderRecipe(
@@ -145,7 +158,8 @@ public class RecipeService
 
         recipeForReturn.setIngredients(ingredients);
         recipeForReturn.setSteps(steps);
-
+        recipeForReturn.setEquipment(mapEquipmentRequests(request.equipmentIds(), recipeForReturn));    
+           
         Recipe saved = recipeRepository.save(recipeForReturn);
 
         vaultFolderRecipeService.createVaultFolderRecipe(
@@ -159,14 +173,11 @@ public class RecipeService
 
     // Put to update an existing recipe
     @Transactional
-    public RecipeResponse updateRecipe(int id, RecipeUpdateRequest request, Integer ownerId)
+    public RecipeResponse updateRecipe(int id, RecipeUpdateRequest request, Integer userId)
     {
         Recipe recipeForReturn = recipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
         
-        if (!recipeForReturn.getOwnerId().equals(ownerId))
-        {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can edit it.");
-        }
+        recipeEditLockService.canEditRecipe(id, userId);
 
         if (!flavourProfileOptionsRepository.existsByValue(request.cuisineType()))
         {
@@ -174,6 +185,7 @@ public class RecipeService
         }
 
         String oldPhotoUrl = recipeForReturn.getPhotoUrl();
+        String oldVideoUrl = recipeForReturn.getVideoUrl();
 
         if (request.removePhoto() && request.photoUrl() != null && !request.photoUrl().isBlank())
         {
@@ -194,12 +206,36 @@ public class RecipeService
             newPhotoUrl = request.photoUrl();
         }
 
+        if (request.removeVideo() && request.videoUrl() != null && !request.videoUrl().isBlank())
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A replacement video URL cannot be supplied when removing the video.");
+        }
+
+        String newVideoUrl = oldVideoUrl;
+        if (request.removeVideo())
+        {
+            newVideoUrl = null;
+        }
+        else if (request.videoUrl() != null)
+        {
+            if (request.videoUrl().isBlank())
+            {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Video URL cannot be blank.");
+            }
+            newVideoUrl = request.videoUrl();
+        }
+
         List<RecipeIngredient> ingredients = request.ingredients() == null
             ? null
             : mapIngredientRequests(request.ingredients(), recipeForReturn);
+
         List<RecipeStep> steps = request.steps() == null
             ? null
             : mapStepRequests(request.steps(), recipeForReturn);
+
+        List<RecipeEquipment> equipment = request.equipmentIds() == null
+            ? null
+            : mapEquipmentRequests(request.equipmentIds(), recipeForReturn);
 
         recipeForReturn.setTitle(request.title());
         recipeForReturn.setDescription(request.description());
@@ -208,7 +244,7 @@ public class RecipeService
         recipeForReturn.setCookingTimeMins(request.cookingTimeMins());
         recipeForReturn.setServingSize(request.servingSize());
         recipeForReturn.setPhotoUrl(newPhotoUrl);
-        recipeForReturn.setVideoUrl(request.videoUrl());
+        recipeForReturn.setVideoUrl(newVideoUrl);
         recipeForReturn.setExternalUrl(request.externalUrl());
         recipeForReturn.setIsCommunityPublished(request.isCommunityPublished());
 
@@ -220,7 +256,11 @@ public class RecipeService
         {
             recipeForReturn.getSteps().clear();
         }
-        if (ingredients != null || steps != null)
+        if (equipment != null)
+        {
+            recipeForReturn.getEquipment().clear();
+        }
+        if (ingredients != null || steps != null || equipment != null)
         {
             recipeRepository.saveAndFlush(recipeForReturn);
         }
@@ -232,26 +272,34 @@ public class RecipeService
         {
             recipeForReturn.getSteps().addAll(steps);
         }
+        if (equipment != null)
+        {
+            recipeForReturn.getEquipment().addAll(equipment);
+        }
 
         Recipe saved = recipeRepository.save(recipeForReturn);
         publishPhotoCleanupWhenChanged(id, oldPhotoUrl, newPhotoUrl);
+        publishVideoCleanupWhenChanged(id, oldVideoUrl, newVideoUrl);
 
         return RecipeResponse.from(saved);
     }
 
-    // Delete a specific vault using id
+    // Delete a specific recipe using id
     @Transactional
-    public void deleteRecipe(int id, Integer ownerId)
+    public void deleteRecipe(int id, Integer userId)
     {
         Recipe recipeForDeletion = recipeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
-        if (!recipeForDeletion.getOwnerId().equals(ownerId))
+        recipeEditLockService.canEditRecipe(id, userId);
+
+        if (mealPlanEntryRepository.existsByRecipeId(id))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can delete it.");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This recipe is used in one or more meal plans and cannot be deleted. Remove recipe from meal plan first.");
         }
 
         recipeRepository.deleteById(id);
         publishPhotoCleanup(id, recipeForDeletion.getPhotoUrl());
+        publishVideoCleanup(id, recipeForDeletion.getVideoUrl());
     }
 
     /* Mapping functions */
@@ -305,10 +353,12 @@ public class RecipeService
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One of the ingredients you want to add does not exist.");
             }
 
+            UnitConverter.NormalisedQuantity normalised = UnitConverter.normaliseIngredient(request.quantity(), request.unit());
+
             RecipeIngredient recipeIngredient = new RecipeIngredient();
             recipeIngredient.setIngId(request.ingId());
-            recipeIngredient.setQuantity(request.quantity());
-            recipeIngredient.setUnit(request.unit());
+            recipeIngredient.setQuantity(normalised.quantity());
+            recipeIngredient.setUnit(normalised.unit());
             recipeIngredient.setSortOrder(request.sortOrder());
             recipeIngredient.setRecipe(recipe);
             return recipeIngredient;
@@ -327,6 +377,29 @@ public class RecipeService
             recipeStep.setRecipe(recipe);
             return recipeStep;
         }).toList();
+    }
+
+    private List<RecipeEquipment> mapEquipmentRequests(
+        List<Integer> equipmentIds,
+        Recipe recipe
+    )
+    {
+        // check ids not null
+        if (equipmentIds == null)
+        {
+            return List.of(); //empty list
+        }
+
+        return equipmentIds.stream().map(equipmentId -> {
+            Equipment equipmentItem = equipmentRepository.findById(equipmentId)
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "One of the equipment items you want to add does not exist."));
+
+            RecipeEquipment recipeEquipment = new RecipeEquipment();
+            recipeEquipment.setEquipment(equipmentItem);
+            recipeEquipment.setRecipe(recipe);
+            return recipeEquipment;
+        }).toList();
+
     }
 
     /* Helper */
@@ -352,15 +425,35 @@ public class RecipeService
         }
     }
 
-    private void validateFolderIsInPrivateVault(Integer folderId, Integer ownerId)
-{
-    VaultFolder folder = vaultFolderRepository.findById(folderId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
-
-    Vault vault = folder.getVault();
-
-    if (!vault.getOwnerId().equals(ownerId) || !vault.getVaultType().equals(VaultType.PRIVATE))
+    private void publishVideoCleanupWhenChanged(
+        Integer recipeId,
+        String oldVideoUrl,
+        String newVideoUrl
+    )
     {
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Recipes can only be added to a folder in your private vault.");
+        if (!Objects.equals(oldVideoUrl, newVideoUrl))
+        {
+            publishVideoCleanup(recipeId, oldVideoUrl);
+        }
     }
-}
+
+    private void publishVideoCleanup(Integer recipeId, String videoUrl)
+    {
+        if (videoUrl != null && !videoUrl.isBlank())
+        {
+            eventPublisher.publishEvent(new RecipeVideoCleanupEvent(recipeId, videoUrl));
+        }
+    }
+
+    private void validateFolderIsInPrivateVault(Integer folderId, Integer ownerId)
+    {
+        VaultFolder folder = vaultFolderRepository.findById(folderId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found."));
+
+        Vault vault = folder.getVault();
+
+        if (!vault.getOwnerId().equals(ownerId) || !vault.getVaultType().equals(VaultType.PRIVATE))
+        {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found.");
+        }
+    }
 }

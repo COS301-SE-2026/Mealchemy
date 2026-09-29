@@ -19,6 +19,8 @@ import com.mealchemy.recipe.dto.RecipeStepReorderRequest;
 import com.mealchemy.recipe.repository.RecipeStepRepository;
 import com.mealchemy.recipe.repository.RecipeRepository;
 
+import com.mealchemy.vault.service.RecipeEditLockService;
+
 @Service
 public class RecipeStepService {
 
@@ -26,27 +28,30 @@ public class RecipeStepService {
 
     private final RecipeRepository recipeRepository;
 
-    public RecipeStepService(RecipeStepRepository recipeStepRepository, RecipeRepository recipeRepository)
+    private final RecipeEditLockService recipeEditLockService;
+
+    public RecipeStepService(RecipeStepRepository recipeStepRepository, RecipeRepository recipeRepository, RecipeEditLockService recipeEditLockService)
     {
         this.recipeStepRepository = recipeStepRepository;
         this.recipeRepository = recipeRepository;
+        this.recipeEditLockService = recipeEditLockService;
     }
 
     // Retrieve all steps relating to a specific recipe
-    public List<RecipeStepResponse> getAllStepsByRecipeId(Integer recipeId)
+    public List<RecipeStepResponse> getAllStepsByRecipeId(Integer recipeId, Integer userId)
     {
+        recipeRepository.findAccessibleByIdAndUserId(recipeId, userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
+        
         return recipeStepRepository.findByRecipe_RecipeIdOrderByStepNrAsc(recipeId).stream().map(RecipeStepResponse::from).collect(Collectors.toList());
     }
 
     // Create a new step for a specific recipe
-    public RecipeStepResponse createRecipeStep(RecipeStepRequest request, Integer recipeId, Integer ownerId)
+    public RecipeStepResponse createRecipeStep(RecipeStepRequest request, Integer recipeId, Integer userId)
     {
         Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
-        if(!recipeToCheck.getOwnerId().equals(ownerId))
-        {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its steps.");
-        }
+        recipeEditLockService.canEditRecipe(recipeId, userId);
 
         RecipeStep recipeStepForReturn = mapRequestToEntity(request, recipeToCheck);
 
@@ -54,20 +59,17 @@ public class RecipeStepService {
     }
 
     // Update a specific step in an existing recipe
-    public RecipeStepResponse updateRecipeStep(int id, RecipeStepRequest request, Integer recipeId, Integer ownerId)
+    public RecipeStepResponse updateRecipeStep(int id, RecipeStepRequest request, Integer recipeId, Integer userId)
     {
         Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
-        if(!recipeToCheck.getOwnerId().equals(ownerId))
-        {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its steps.");
-        }
+        recipeEditLockService.canEditRecipe(recipeId, userId);
 
         RecipeStep recipeStepForReturn = recipeStepRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Step not found."));
 
         if(!recipeStepForReturn.getRecipe().getRecipeId().equals(recipeId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Step must be part of the recipe.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Step not found.");
         }
 
         recipeStepForReturn.setStepNr(request.stepNr());
@@ -77,20 +79,17 @@ public class RecipeStepService {
     }
 
     // Delete a specific step in an existing recipe
-    public void deleteRecipeStep(int id, Integer recipeId, Integer ownerId)
+    public void deleteRecipeStep(int id, Integer recipeId, Integer userId)
     {
         Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
 
-        if (!recipeToCheck.getOwnerId().equals(ownerId))
-        {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its steps.");
-        }
+        recipeEditLockService.canEditRecipe(recipeId, userId);
 
         RecipeStep recipeStepForReturn = recipeStepRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Step not found."));
 
         if (!recipeStepForReturn.getRecipe().getRecipeId().equals(recipeId))
         {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Step must be part of the recipe.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Step not found.");
         }
 
         recipeStepRepository.deleteById(id);
@@ -98,14 +97,11 @@ public class RecipeStepService {
 
     // Reorder recipe steps
     @Transactional
-    public List<RecipeStepResponse> reorderSteps(Integer recipeId, RecipeStepReorderRequest request, Integer ownerId)
+    public List<RecipeStepResponse> reorderSteps(Integer recipeId, RecipeStepReorderRequest request, Integer userId)
     {
         Recipe recipeToCheck = recipeRepository.findById(recipeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."));
         
-        if (!recipeToCheck.getOwnerId().equals(ownerId))
-        {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of the recipe can manipulate the order of the steps.");
-        }
+        recipeEditLockService.canEditRecipe(recipeId, userId);
 
         List<RecipeStep> existingSteps = recipeStepRepository.findByRecipe_RecipeIdOrderByStepNrAsc(recipeId);
 

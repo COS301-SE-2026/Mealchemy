@@ -2,6 +2,7 @@ import '../../recipe/models/recipe.dart';
 import '../../recipe/models/recipe_ingredient.dart';
 import '../../recipe/models/recipe_step.dart';
 import '../../recipe/models/unit_of_measurement.dart';
+import '../../recipe/models/equipment.dart';
 import '../../recipe/repositories/recipe_repository.dart';
 import '../data/offline_cache_policy.dart';
 import '../data/offline_cache_store.dart';
@@ -95,8 +96,9 @@ class CachedRecipeRepository implements RecipeRepository {
   Future<void> addRecipeIngredient(
     int recipeId,
     RecipeIngredient ingredient,
-  ) {
-    return _remote.addRecipeIngredient(recipeId, ingredient);
+  ) async {
+    await _remote.addRecipeIngredient(recipeId, ingredient);
+    await _clearCachedNutrition(recipeId);
   }
 
   @override
@@ -105,8 +107,9 @@ class CachedRecipeRepository implements RecipeRepository {
   }
 
   @override
-  Future<void> deleteRecipe(int recipeId) {
-    return _remote.deleteRecipe(recipeId);
+  Future<void> deleteRecipe(int recipeId) async {
+    await _remote.deleteRecipe(recipeId);
+    await _clearCachedNutrition(recipeId);
   }
 
   @override
@@ -120,8 +123,10 @@ class CachedRecipeRepository implements RecipeRepository {
   }
 
   @override
-  Future<Recipe> updateRecipe(int id, Recipe recipe) {
-    return _remote.updateRecipe(id, recipe);
+  Future<Recipe> updateRecipe(int id, Recipe recipe) async {
+    final updated = await _remote.updateRecipe(id, recipe);
+    await _clearCachedNutrition(id);
+    return updated;
   }
 
   @override
@@ -129,11 +134,35 @@ class CachedRecipeRepository implements RecipeRepository {
     int id,
     Recipe recipe, {
     bool removePhoto = false,
-  }) {
-    return _remote.updateRecipeFull(
+    bool removeVideo = false,
+  }) async {
+    final updated = await _remote.updateRecipeFull(
       id,
       recipe,
       removePhoto: removePhoto,
+      removeVideo: removeVideo,
     );
+    await _clearCachedNutrition(id);
+    return updated;
+  }
+
+  Future<void> _clearCachedNutrition(int recipeId) async {
+    final viewerUserId = _viewerUserId;
+    if (viewerUserId == null) return;
+    await _cache.deleteRecipeNutrition(
+      viewerUserId: viewerUserId,
+      recipeId: recipeId,
+    );
+  }
+
+  @override
+  Future<List<Equipment>> getRecipeEquipment(int recipeId) async {
+    try {
+      return await _remote.getRecipeEquipment(recipeId);
+    } catch (error) {
+      final cached = await _cachedRecipeForTransportFailure(error, recipeId);
+      if (cached?.equipment == null) rethrow;
+      return cached!.equipment!;
+    }
   }
 }

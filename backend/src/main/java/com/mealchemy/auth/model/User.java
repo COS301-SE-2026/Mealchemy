@@ -35,7 +35,14 @@ public class User {
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
 
-    // Getters and setters
+    @Column(name = "failed_login_count", nullable = false)
+    private int failedLoginCount = 0;
+
+    @Column(name = "locked_until")
+    private OffsetDateTime lockedUntil;
+
+
+    // Getters
     public Integer getUserId() {
         return userId;
     }
@@ -52,6 +59,15 @@ public class User {
         return passwordHash;
     }
 
+    public int getFailedLoginCount() {
+        return failedLoginCount;
+    }
+
+    public OffsetDateTime getLockedUntil() {
+        return lockedUntil;
+    }
+
+    // setters
     public void setPasswordHash(String p) {
         this.passwordHash = p;
     }
@@ -74,5 +90,13 @@ public class User {
 
     public void setDeletedAt(OffsetDateTime t) {
         this.deletedAt = t;
+    }
+
+    public void setFailedLoginCount(int failedLoginCount) {
+        this.failedLoginCount = failedLoginCount;
+    }
+
+    public void setLockedUntil(OffsetDateTime lockedUntil) {
+        this.lockedUntil = lockedUntil;
     }
 }

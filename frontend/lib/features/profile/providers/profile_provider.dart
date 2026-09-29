@@ -40,12 +40,10 @@ enum SaveStatus { idle, saving, success, error }
 
 class ProfileEditState {
   const ProfileEditState({
-
     required this.original,
     required this.draft,
     this.saveStatus = SaveStatus.idle,
     this.errorMessage,
-
   });
 
   final UserProfile original;
@@ -108,7 +106,6 @@ class ProfileNotifier extends StateNotifier<AsyncValue<ProfileEditState>> {
   void setPreferredUnit(PreferredUnit unit) =>
       _edit((d) => d.copyWith(preferredUnit: unit));
 
-
   void toggleEquipment(String value) {
     _edit((d) {
       final next = [...d.equipment];
@@ -116,7 +113,6 @@ class ProfileNotifier extends StateNotifier<AsyncValue<ProfileEditState>> {
       return d.copyWith(equipment: next);
     });
   }
-
 
   Future<void> save() async {
     final current = state.valueOrNull;
@@ -146,7 +142,7 @@ class ProfileNotifier extends StateNotifier<AsyncValue<ProfileEditState>> {
 // rebuild and refetch when the user changes
 final profileProvider =
     StateNotifierProvider<ProfileNotifier, AsyncValue<ProfileEditState>>((ref) {
-  ref.watch(activeIdentityProvider); 
+  ref.watch(activeIdentityProvider);
   return ProfileNotifier(ref.watch(profileRepositoryProvider));
 });
 
@@ -202,7 +198,6 @@ class PreferencesNotifier
     });
   }
 
-
   Future<void> reload() => _load();
 
   void _edit(UserPreferences Function(UserPreferences draft) update) {
@@ -222,18 +217,17 @@ class PreferencesNotifier
     return next;
   }
 
-  void toggleDietary(String value) =>
-      _edit((d) => d.copyWith(dietaryRestrictions: _toggle(d.dietaryRestrictions, value)));
+  void toggleDietary(String value) => _edit((d) =>
+      d.copyWith(dietaryRestrictions: _toggle(d.dietaryRestrictions, value)));
 
   void toggleAllergy(String value) =>
       _edit((d) => d.copyWith(allergies: _toggle(d.allergies, value)));
 
-  void toggleFlavour(String value) =>
-      _edit((d) => d.copyWith(flavourProfile: _toggle(d.flavourProfile, value)));
+  void toggleFlavour(String value) => _edit(
+      (d) => d.copyWith(flavourProfile: _toggle(d.flavourProfile, value)));
 
-  void toggleGoal(String value) =>
-      _edit((d) => d.copyWith(nutritionalGoals: _toggle(d.nutritionalGoals, value)));
-
+  void toggleGoal(String value) => _edit(
+      (d) => d.copyWith(nutritionalGoals: _toggle(d.nutritionalGoals, value)));
 
   void addDislikedIngredient(String name) {
     final current = state.valueOrNull;
@@ -244,11 +238,10 @@ class PreferencesNotifier
         ));
   }
 
-  void removeDislikedIngredient(String name) =>
-      _edit((d) => d.copyWith(
-            dislikedIngredients:
-                d.dislikedIngredients.where((i) => i != name).toList(),
-          ));
+  void removeDislikedIngredient(String name) => _edit((d) => d.copyWith(
+        dislikedIngredients:
+            d.dislikedIngredients.where((i) => i != name).toList(),
+      ));
 
   Future<void> save() async {
     final current = state.valueOrNull;
@@ -276,15 +269,18 @@ class PreferencesNotifier
 }
 
 // rebuild and refetch when the user changes
-final preferencesProvider =
-    StateNotifierProvider<PreferencesNotifier, AsyncValue<PreferencesEditState>>(
-        (ref) {
+final preferencesProvider = StateNotifierProvider<PreferencesNotifier,
+    AsyncValue<PreferencesEditState>>((ref) {
   ref.watch(activeIdentityProvider);
   return PreferencesNotifier(ref.watch(profileRepositoryProvider));
 });
-
 
 bool _sameSet(List<String> a, List<String> b) {
   if (a.length != b.length) return false;
   return a.toSet().containsAll(b);
 }
+
+final unitSystemProvider = Provider<PreferredUnit>((ref) {
+  final profile = ref.watch(profileProvider).valueOrNull;
+  return profile?.original.preferredUnit ?? PreferredUnit.metric;
+});

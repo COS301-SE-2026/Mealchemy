@@ -9,6 +9,7 @@ import java.util.*;
 import com.mealchemy.engine.service.RecommendationService;
 import com.mealchemy.engine.dto.EnrichedRecommendationResponse;
 import com.mealchemy.shared.dto.ErrorResponse;
+import com.mealchemy.engine.dto.RecommendationFilters;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -16,7 +17,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 
 @RestController
 @RequestMapping("/discovery")
@@ -32,9 +32,10 @@ public class RecommendationController {
     /* Mapping functions */
 
     // Get
-    @Operation(summary = "Get personalized recipe recommendations", description = "Builds the authenticated user's current state (preferences, pantry, swipe history, cuisine affinities) and candidate pool of community-published recipes, then requests a scored, ranked batch of recommendations from the discovery engine. If the candidate pool is empty, returns an empty response rather than an error.")
+    @Operation(summary = "Get personalized recipe recommendations", description = "Builds the authenticated user's current state (preferences, pantry, swipe history, cuisine affinities) and candidate pool of community-published recipes, then requests a scored, ranked batch of recommendations from the discovery engine. If the candidate pool is empty, returns an empty response rather than an error. Optional filters (max cooking time, max total time, dietary tags) are applied to the candidate pool before ranking and batching, so clients must send the same filters on every batch request.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Recommendations retrieved successfully (may be empty if no candidates are available)", content = @Content(schema = @Schema(implementation = EnrichedRecommendationResponse.class))),
+        @ApiResponse(responseCode = "400", description = "batchSize or a time filter is not greater than 0, or a dietary tag is not a recognised dietary tag", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error, including user preferences/weights not initialized, or a failure communicating with the recommendation engine", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -42,8 +43,13 @@ public class RecommendationController {
     public EnrichedRecommendationResponse getRecommendations(@AuthenticationPrincipal String userId, 
     @RequestParam(required = false) Integer batchSize,
     @RequestParam(required = false) List<Integer> excludeRecipeIds,
-    @RequestParam(required = false) Integer seed)
+    @RequestParam(required = false) Integer seed,
+    @RequestParam(required = false) Integer maxCookingTimeMins,
+    @RequestParam(required = false) Integer maxTotalTimeMins,
+    @RequestParam(required = false) List<String> dietaryTags
+    )
     {
-        return recommendationService.getRecommendations(Integer.parseInt(userId), batchSize, excludeRecipeIds, seed);
+        RecommendationFilters filters = new RecommendationFilters(maxCookingTimeMins, maxTotalTimeMins, dietaryTags);
+        return recommendationService.getRecommendations(Integer.parseInt(userId), batchSize, excludeRecipeIds, seed, filters);
     }
 }

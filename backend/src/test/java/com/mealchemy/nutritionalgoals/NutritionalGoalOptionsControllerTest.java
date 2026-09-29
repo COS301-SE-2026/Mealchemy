@@ -1,4 +1,4 @@
-// unit testing for allergens
+// unit testing for nutritionalGoalOptionsController
 
 package com.mealchemy.nutritionalgoals;
 

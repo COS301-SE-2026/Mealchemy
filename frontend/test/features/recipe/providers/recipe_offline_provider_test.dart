@@ -12,6 +12,7 @@ import 'package:mealchemy/features/recipe/models/recipe_step.dart';
 import 'package:mealchemy/features/recipe/models/unit_of_measurement.dart';
 import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
 import 'package:mealchemy/features/recipe/repositories/recipe_repository.dart';
+import 'package:mealchemy/features/recipe/models/equipment.dart';
 
 void main() {
   late OfflineCacheDatabase database;
@@ -52,6 +53,7 @@ void main() {
     expect(result.title, 'Previously cached');
     expect(result.ingredients?.single.name, 'Salt');
     expect(result.steps?.single.content, 'Cached step');
+    expect(result.equipment?.single.label, 'Mixing bowl');
     final persisted =
         await cache.readCompleteRecipe(viewerUserId: 11, recipeId: 42);
     expect(persisted?.title, 'Previously cached');
@@ -75,6 +77,9 @@ Recipe _completeRecipe(String title) => Recipe(
           stepNr: 1,
           content: 'Cached step',
         ),
+      ],
+      equipment: const [
+        Equipment(id: 3, value: 'mixing_bowl', label: 'Mixing bowl'),
       ],
     );
 
@@ -127,6 +132,9 @@ class _RecipeRepositoryStub implements RecipeRepository {
     int id,
     Recipe recipe, {
     bool removePhoto = false,
+    bool removeVideo = false,
   }) =>
       throw UnimplementedError();
+  @override
+  Future<List<Equipment>> getRecipeEquipment(int recipeId) async => const [];
 }

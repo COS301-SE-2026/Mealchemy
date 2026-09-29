@@ -12,6 +12,7 @@ public record RecommendationRequest(
     @JsonProperty("candidate_pool") @NotNull List<CandidatePoolEntryRequest> candidatePool,
     @JsonProperty("batch_size") Integer batchSize,
     @JsonProperty("exclude_recipe_ids") List<Integer> excludeRecipeIds,
-    Integer seed
+    Integer seed,
+    @JsonProperty("required_tags") List<String> requiredTags
 )
 {}

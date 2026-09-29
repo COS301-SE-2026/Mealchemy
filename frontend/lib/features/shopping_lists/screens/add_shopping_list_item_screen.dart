@@ -6,24 +6,13 @@ import '../../../core/connectivity/network_status_provider.dart';
 import '../../../core/shared_widgets/Molecules/app_section_header.dart';
 import '../../../core/shared_widgets/atoms/app_button.dart';
 import '../../../core/shared_widgets/atoms/app_text_field.dart';
+import '../../../core/shared_widgets/atoms/app_unit_dropdown.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../pantry/models/ingredient_catalogue_item.dart';
-import '../../pantry/providers/pantry_provider.dart';
 import '../providers/shopping_list_provider.dart';
 import '../../pantry/repositories/ingredient_catalogue_repository.dart';
-
-const List<String> _unitOptions = [
-  'g',
-  'kg',
-  'ml',
-  'L',
-  'cups',
-  'tbsp',
-  'tsp',
-  'oz',
-  'pcs',
-];
+import '../../pantry/providers/pantry_provider.dart';
 
 enum _ItemEntryMode {
   catalogue,
@@ -196,7 +185,7 @@ class _AddShoppingListItemScreenState
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _UnitDropdown(
+                  child: AppUnitDropdown(
                     value: _selectedUnit,
                     errorText: _unitError,
                     onChanged: (value) {
@@ -657,80 +646,6 @@ class _CategoryLabel extends StatelessWidget {
             color: AppColors.textLight,
             fontWeight: FontWeight.w500,
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class _UnitDropdown extends StatelessWidget {
-  const _UnitDropdown({
-    required this.value,
-    required this.errorText,
-    required this.onChanged,
-  });
-
-  final String? value;
-  final String? errorText;
-  final ValueChanged<String?> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Unit',
-          style: AppTextStyles.bodySmall.copyWith(
-            fontWeight: FontWeight.w500,
-            color: AppColors.textLight,
-          ),
-        ),
-        const SizedBox(height: 6),
-        DropdownButtonFormField<String>(
-          initialValue: value,
-          isExpanded: true,
-          hint: Text(
-            'Select unit',
-            style: AppTextStyles.body.copyWith(
-              color: AppColors.textMuted,
-            ),
-          ),
-          decoration: InputDecoration(
-            errorText: errorText,
-            filled: true,
-            fillColor: AppColors.surfaceMuted,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppColors.inputBorder,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppColors.inputBorder,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppColors.primary,
-                width: 1.5,
-              ),
-            ),
-          ),
-          items: _unitOptions.map((unit) {
-            return DropdownMenuItem<String>(
-              value: unit,
-              child: Text(unit),
-            );
-          }).toList(),
-          onChanged: onChanged,
         ),
       ],
     );

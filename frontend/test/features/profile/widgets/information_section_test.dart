@@ -40,14 +40,16 @@ class _FakeRepo implements ProfileRepository {
       throw UnimplementedError('${invocation.memberName} not stubbed');
 }
 
-Widget _host() {
+Widget _host({bool readOnly = false}) {
   return ProviderScope(
     overrides: [
       profileRepositoryProvider.overrideWithValue(_FakeRepo()),
     ],
-    child: const MaterialApp(
+    child: MaterialApp(
       home: Scaffold(
-        body: SingleChildScrollView(child: InformationSection()),
+        body: SingleChildScrollView(
+          child: InformationSection(readOnly: readOnly),
+        ),
       ),
     ),
   );
@@ -101,5 +103,25 @@ void main() {
     await tester.tap(find.text('Blender'));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(AppChip, 'Blender'), findsOneWidget);
+  });
+
+  testWidgets('read only keeps saved values visible and disables editing',
+      (tester) async {
+    await tester.pumpWidget(_host(readOnly: true));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mutombo Kabau'), findsOneWidget);
+    expect(find.text('Oven'), findsOneWidget);
+    expect(find.text('Add equipment'), findsNothing);
+
+    final imperialGesture = tester.widget<GestureDetector>(
+      find
+          .ancestor(
+            of: find.text('Imperial'),
+            matching: find.byType(GestureDetector),
+          )
+          .first,
+    );
+    expect(imperialGesture.onTap, isNull);
   });
 }

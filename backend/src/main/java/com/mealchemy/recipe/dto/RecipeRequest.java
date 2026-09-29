@@ -4,6 +4,7 @@ package com.mealchemy.recipe.dto;
 
 import java.time.OffsetDateTime;
 import jakarta.validation.constraints.*;
+import java.util.List;
 
 /* Import classes */
 
@@ -18,6 +19,7 @@ public record RecipeRequest(
     String videoUrl,
     String externalUrl,
     boolean isCommunityPublished,
-    Integer folderId
+    Integer folderId,
+    List<Integer> equipmentIds
 )
 {}

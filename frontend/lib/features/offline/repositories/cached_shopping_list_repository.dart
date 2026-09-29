@@ -123,6 +123,16 @@ class CachedShoppingListRepository implements ShoppingListRepository {
       _remote.deselectAllItems(listId);
 
   @override
+  Future<void> deleteShoppingListItem({
+    required String listId,
+    required String itemId,
+  }) =>
+      _remote.deleteShoppingListItem(
+        listId: listId,
+        itemId: itemId,
+      );
+
+  @override
   Future<void> deleteShoppingListItems({
     required String listId,
     required List<int> itemIds,
@@ -167,5 +177,21 @@ class CachedShoppingListRepository implements ShoppingListRepository {
         listId: listId,
         recipeId: recipeId,
         includeAvailablePantryItems: includeAvailablePantryItems,
+      );
+
+  @override
+  Future<({ShoppingList list, List<int> skippedRecipeIds})> smartAddFromMealPlan({
+    required String listId,
+    required int planId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required bool compareToPantry,
+  }) =>
+      _remote.smartAddFromMealPlan(
+        listId: listId,
+        planId: planId,
+        startDate: startDate,
+        endDate: endDate,
+        compareToPantry: compareToPantry,
       );
 }

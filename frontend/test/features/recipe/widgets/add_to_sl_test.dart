@@ -24,10 +24,28 @@ class _FakeSlRepo implements ShoppingListRepository {
   final List<({int recipeId, String name, bool includeAvailable})> generated =
       [];
   final List<({String listId, int recipeId, bool includeAvailable})> added = [];
+  final List<String> created = [];
+  final List<
+      ({
+        String listId,
+        int planId,
+        DateTime start,
+        DateTime end,
+        bool compareToPantry
+      })> smartAdded = [];
   bool throwOnWrite = false;
 
   @override
   Future<List<ShoppingList>> getShoppingLists() async => _seed;
+
+  @override
+  Future<ShoppingList?> getShoppingListById(String id) async {
+    final all = [
+      ..._seed,
+      if (created.isNotEmpty) _list('new-plan', created.last),
+    ];
+    return all.where((l) => l.id == id).firstOrNull;
+  }
 
   @override
   Future<ShoppingList> generateFromRecipe({
@@ -60,6 +78,35 @@ class _FakeSlRepo implements ShoppingListRepository {
   }
 
   @override
+  Future<ShoppingList> createShoppingList({
+    required String name,
+    String status = 'ACTIVE',
+  }) async {
+    if (throwOnWrite) throw Exception('create failed');
+    created.add(name);
+    return _list('new-plan', name);
+  }
+
+  @override
+  Future<({ShoppingList list, List<int> skippedRecipeIds})>
+      smartAddFromMealPlan({
+    required String listId,
+    required int planId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required bool compareToPantry,
+  }) async {
+    smartAdded.add((
+      listId: listId,
+      planId: planId,
+      start: startDate,
+      end: endDate,
+      compareToPantry: compareToPantry,
+    ));
+    return (list: _list(listId, 'Plan'), skippedRecipeIds: const <int>[]);
+  }
+
+  @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} not stubbed');
 }
@@ -83,6 +130,32 @@ void main() {
                     ref: ref,
                     recipeId: 42,
                     recipeName: 'Test Pasta',
+                  ),
+                  child: const Text('open'),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget planHost(_FakeSlRepo repo) {
+    return ProviderScope(
+      overrides: [
+        shoppingListRepositoryProvider.overrideWithValue(repo),
+      ],
+      child: MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              return Center(
+                child: ElevatedButton(
+                  onPressed: () => showAddPlanToSl(
+                    context: context,
+                    planId: 5,
+                    start: DateTime(2026, 9, 28),
                   ),
                   child: const Text('open'),
                 ),
@@ -185,5 +258,89 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Create Shopping List'), findsOneWidget);
+  });
+
+  group('meal plan mode', () {
+    testWidgets('shows the dates and a dated default name', (tester) async {
+      await tester.pumpWidget(planHost(_FakeSlRepo([])));
+      await openSheet(tester);
+
+      expect(find.text('FROM YOUR MEAL PLAN'), findsOneWidget);
+      expect(find.text('DATES'), findsOneWidget);
+      expect(find.text('28 Sep'), findsOneWidget);
+      expect(find.text('4 Oct'), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'Meal plan 28 Sep - 4 Oct'),
+          findsOneWidget);
+    });
+
+    testWidgets('new list is created first, then smart added with the pantry',
+        (tester) async {
+      final repo = _FakeSlRepo([]);
+      await tester.pumpWidget(planHost(repo));
+      await openSheet(tester);
+
+      await tester.tap(find.text('Create List'));
+      await tester.pumpAndSettle();
+
+      expect(repo.created, ['Meal plan 28 Sep - 4 Oct']);
+      expect(repo.smartAdded, [
+        (
+          listId: 'new-plan',
+          planId: 5,
+          start: DateTime(2026, 9, 28),
+          end: DateTime(2026, 10, 4),
+          compareToPantry: true,
+        ),
+      ]);
+      expect(repo.generated, isEmpty);
+      expect(find.text('Create Shopping List'), findsNothing);
+    });
+
+    testWidgets('existing list locks Smart add and sends no pantry compare',
+        (tester) async {
+      final repo = _FakeSlRepo([_list('7', 'Weekend Cooking')]);
+      await tester.pumpWidget(planHost(repo));
+      await openSheet(tester);
+      await tester.tap(find.text('New list'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Weekend Cooking').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Only available when creating a new list'),
+          findsOneWidget);
+
+      await tester.tap(find.text('Smart add'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add to List'));
+      await tester.pumpAndSettle();
+
+      expect(repo.created, isEmpty);
+      expect(repo.smartAdded.single.listId, '7');
+      expect(repo.smartAdded.single.compareToPantry, isFalse);
+    });
+
+    testWidgets('switching back to a new list restores Smart add',
+        (tester) async {
+      final repo = _FakeSlRepo([_list('7', 'Weekend Cooking')]);
+      await tester.pumpWidget(planHost(repo));
+      await openSheet(tester);
+
+      await tester.tap(find.text('New list'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Weekend Cooking').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Weekend Cooking'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('New list').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Skips items already in your pantry'), findsOneWidget);
+
+      await tester.tap(find.text('Create List'));
+      await tester.pumpAndSettle();
+
+      expect(repo.smartAdded.single.compareToPantry, isTrue);
+    });
   });
 }

@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mealchemy/features/dashboard/models/trending_recipe_data.dart';
 import 'package:mealchemy/features/dashboard/providers/dashboard_provider.dart';
 import 'package:mealchemy/features/dashboard/repositories/dashboard_repository.dart';
 import 'package:mealchemy/features/dashboard/repositories/mock_dashboard_repository.dart';
+import 'package:mealchemy/features/guided_discovery/models/discovery_tag.dart';
 import 'package:mealchemy/features/guided_discovery/models/recommendation.dart';
 import 'package:mealchemy/features/guided_discovery/models/signal_scores.dart';
 import 'package:mealchemy/features/guided_discovery/models/swipe.dart';
@@ -35,6 +35,8 @@ class _FakeGuidedDiscoveryRepo implements GuidedDiscoveryRepository {
   Future<List<Recommendation>> getRecommendations({
     int batchSize = 10,
     List<int> excludeRecipeIds = const [],
+    List<String>? dietaryTags,
+    int? maxTotalTimeMins,
   }) async =>
       [_rec(1, 'Saffron Risotto'), _rec(2, 'Butter Chicken')];
 
@@ -47,7 +49,12 @@ class _FakeGuidedDiscoveryRepo implements GuidedDiscoveryRepository {
         action: request.action,
         swipedAt: DateTime.now(),
       );
+
+  @override
+  Future<List<DiscoveryTag>> getDietaryTags() async => const [];
 }
+
+
 
 // Guided discovery returns nothing (empty deck)
 class _EmptyGuidedDiscoveryRepo implements GuidedDiscoveryRepository {
@@ -55,12 +62,17 @@ class _EmptyGuidedDiscoveryRepo implements GuidedDiscoveryRepository {
   Future<List<Recommendation>> getRecommendations({
     int batchSize = 10,
     List<int> excludeRecipeIds = const [],
+    List<String>? dietaryTags,
+    int? maxTotalTimeMins,
   }) async =>
       const [];
 
   @override
   Future<SwipeResponse> recordSwipe(SwipeRequest request) async =>
       throw UnimplementedError();
+
+  @override
+  Future<List<DiscoveryTag>> getDietaryTags() async => const [];
 }
 
 // Fake dashboard repo that throws on every call to test stat load failure.
@@ -74,9 +86,6 @@ class _ThrowingDashboardRepo implements DashboardRepository {
       throw Exception('network error');
   @override
   Future<int> getSmartSuggestionRecipeCount() async =>
-      throw Exception('network error');
-  @override
-  Future<List<TrendingRecipeData>> getTrendingRecipes() async =>
       throw Exception('network error');
 }
 
@@ -110,10 +119,6 @@ void main() {
     test('starts with empty recommendedRecipes', () {
       const state = DashboardState();
       expect(state.recommendedRecipes, isEmpty);
-    });
-    test('starts with empty trendingRecipes', () {
-      const state = DashboardState();
-      expect(state.trendingRecipes, isEmpty);
     });
     test('starts with null errorMessage', () {
       const state = DashboardState();
@@ -152,7 +157,6 @@ void main() {
       expect(state.displayName, isNotEmpty);
       expect(state.pantryItemCount, greaterThan(0));
       expect(state.recommendedRecipes, isNotEmpty);
-      expect(state.trendingRecipes, isNotEmpty);
       expect(state.errorMessage, isNull);
     });
 
@@ -181,7 +185,6 @@ void main() {
       // Stats failed, but recommendations from guided discovery still loaded.
       expect(state.isLoading, false);
       expect(state.recommendedRecipes, isNotEmpty);
-      expect(state.trendingRecipes, isEmpty);
     });
 
     test('keeps recommendations empty when guided discovery is empty',

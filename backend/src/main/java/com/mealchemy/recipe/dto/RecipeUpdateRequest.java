@@ -18,9 +18,11 @@ public record RecipeUpdateRequest(
     String photoUrl,
     boolean removePhoto,
     String videoUrl,
+    boolean removeVideo,
     String externalUrl,
     boolean isCommunityPublished,
     List<@Valid RecipeIngredientRequest> ingredients,
-    List<@Valid RecipeStepRequest> steps
+    List<@Valid RecipeStepRequest> steps,
+    List<Integer> equipmentIds
 )
 {}

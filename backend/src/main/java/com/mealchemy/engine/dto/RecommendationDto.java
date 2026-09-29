@@ -13,11 +13,13 @@ public record RecommendationDto(
     BigDecimal score,
     @JsonProperty("score_breakdown") SignalScoresResponse scoreBreakdown,
     @JsonProperty("pantry_gap_count") Integer pantryGapCount,
-    @JsonProperty("missing_ingredients") List<String> missingIngredients
+    @JsonProperty("missing_ingredients") List<String> missingIngredients,
+    List<SignalHighlightResponse> transparency
 )
 {
     public static RecommendationDto from(Integer recipeIdIn, String cuisineTypeIn, BigDecimal scoreIn, 
-        SignalScoresResponse scoreBreakdownIn, Integer pantryGapCountIn, List<String> missingIngredientsIn)
+        SignalScoresResponse scoreBreakdownIn, Integer pantryGapCountIn, List<String> missingIngredientsIn,
+        List<SignalHighlightResponse> transparencyIn)
     {
         return new RecommendationDto(
             recipeIdIn,
@@ -25,7 +27,8 @@ public record RecommendationDto(
             scoreIn,
             scoreBreakdownIn,
             pantryGapCountIn,
-            missingIngredientsIn
+            missingIngredientsIn,
+            transparencyIn
         );
     }    
 }

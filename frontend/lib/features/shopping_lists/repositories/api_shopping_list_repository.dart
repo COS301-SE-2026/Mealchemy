@@ -173,30 +173,48 @@ class ApiShoppingListRepository implements ShoppingListRepository {
 
   @override
   Future<List<ShoppingListItem>> selectAllItems(String listId) async {
-    final response = await _dio.put<List<dynamic>>(
+    final response = await _dio.put<Map<String, dynamic>>(
       '/api/shopping-lists/$listId/items/select-all',
     );
 
-    final data = response.data ?? [];
+    final data = response.data ?? {};
+    final items = data['items'] as List<dynamic>? ?? [];
 
-    //backend sends updated items back
-    return data
-        .map((item) => ShoppingListItem.fromJson(item as Map<String, dynamic>))
+    return items
+        .map(
+          (item) => ShoppingListItem.fromJson(
+            item as Map<String, dynamic>,
+          ),
+        )
         .toList();
   }
 
   @override
   Future<List<ShoppingListItem>> deselectAllItems(String listId) async {
-    final response = await _dio.put<List<dynamic>>(
+    final response = await _dio.put<Map<String, dynamic>>(
       '/api/shopping-lists/$listId/items/deselect-all',
     );
 
-    final data = response.data ?? [];
+    final data = response.data ?? {};
+    final items = data['items'] as List<dynamic>? ?? [];
 
-    //same idea as select all
-    return data
-        .map((item) => ShoppingListItem.fromJson(item as Map<String, dynamic>))
+    return items
+        .map(
+          (item) => ShoppingListItem.fromJson(
+            item as Map<String, dynamic>,
+          ),
+        )
         .toList();
+  }
+
+  @override
+  Future<void> deleteShoppingListItem({
+    required String listId,
+    required String itemId,
+  }) async {
+    await _dio.delete<void>(
+      '/api/shopping-lists/$listId/items/$itemId',
+    );
   }
 
   @override
@@ -273,4 +291,35 @@ class ApiShoppingListRepository implements ShoppingListRepository {
     );
     return ShoppingList.fromJson(response.data ?? {});
   }
+
+  @override
+  Future<({ShoppingList list, List<int> skippedRecipeIds})> smartAddFromMealPlan({
+    required String listId,
+    required int planId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required bool compareToPantry,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/api/shopping-lists/$listId/smart-add-from-meal-plan/$planId',
+      queryParameters: {
+        'startDate': _date(startDate),
+        'endDate': _date(endDate),
+        'compareToPantry': compareToPantry,
+      },
+    );
+
+    final data = response.data ?? {};
+    final skipped = (data['skipped_recipe_ids'] as List<dynamic>? ?? [])
+        .map((id) => int.parse(id.toString()))
+        .toList();
+
+    return (
+      list: ShoppingList.fromJson(data['shopping_list'] as Map<String, dynamic>? ?? {}),
+      skippedRecipeIds: skipped,
+    );
+  }
+
+  String _date(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 }

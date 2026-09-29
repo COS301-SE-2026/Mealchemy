@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/features/discovery/providers/discovery_provider.dart';
 import 'package:mealchemy/features/discovery/repositories/discovery_repository.dart';
 import 'package:mealchemy/features/discovery/widgets/explore_section.dart';
@@ -31,14 +32,18 @@ void main() {
     Recipe(recipeId: 4, title: 'Sirloin', cuisineType: 'italian'),
   ];
 
-  Widget host(DiscoveryState state) {
+  Widget host(
+    DiscoveryState state, {
+    String query = '',
+    bool offline = false,
+  }) {
     final router = GoRouter(
       initialLocation: '/',
       routes: [
         GoRoute(
           path: '/',
-          builder: (_, __) => const Scaffold(
-            body: SingleChildScrollView(child: ExploreSection()),
+          builder: (_, __) => Scaffold(
+            body: SingleChildScrollView(child: ExploreSection(query: query)),
           ),
         ),
         GoRoute(
@@ -51,19 +56,26 @@ void main() {
     return ProviderScope(
       overrides: [
         discoveryProvider.overrideWith((ref) => _FakeDiscoveryNotifier(state)),
+        offlineReadOnlyProvider.overrideWith((ref) => offline),
       ],
       child: MaterialApp.router(routerConfig: router),
     );
   }
 
-  Future<void> pump(WidgetTester tester, DiscoveryState state) async {
-    tester.view.physicalSize = const Size(1080, 2400);
+  Future<void> pump(
+    WidgetTester tester,
+    DiscoveryState state, {
+    String query = '',
+    bool offline = false,
+    Size size = const Size(1080, 2400),
+  }) async {
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
     });
-    await tester.pumpWidget(host(state));
+    await tester.pumpWidget(host(state, query: query, offline: offline));
     await tester.pumpAndSettle();
   }
 
@@ -74,6 +86,33 @@ void main() {
 
       expect(find.text('Explore'), findsOneWidget);
       expect(find.text('No published recipes yet.'), findsOneWidget);
+    });
+
+    testWidgets(
+        'offline empty state explains that published recipes need a connection',
+        (tester) async {
+      await pump(
+        tester,
+        const DiscoveryState(recipes: []),
+        offline: true,
+      );
+
+      expect(
+        find.text('Published recipes are available when you are back online.'),
+        findsOneWidget,
+      );
+      expect(find.text('No published recipes yet.'), findsNothing);
+    });
+
+    testWidgets('offline keeps recipes already held in memory', (tester) async {
+      await pump(
+        tester,
+        const DiscoveryState(recipes: recipes),
+        offline: true,
+      );
+
+      expect(find.text('Beet Salad'), findsOneWidget);
+      expect(find.text('Sirloin'), findsOneWidget);
     });
 
     testWidgets('renders the Explore header and recipe titles', (tester) async {
@@ -108,9 +147,29 @@ void main() {
       );
 
       expect(find.text('Beet Salad'), findsOneWidget);
-      expect(find.text('Ramen'), findsNothing); 
+      expect(find.text('Ramen'), findsNothing);
     });
-    
+
+    testWidgets('filters by the search query', (tester) async {
+      await pump(
+        tester,
+        const DiscoveryState(recipes: recipes),
+        query: 'beet',
+      );
+      expect(find.text('Beet Salad'), findsOneWidget);
+      expect(find.text('Sirloin'), findsNothing);
+    });
+
+    testWidgets('shows a no-results message for an unmatched query',
+        (tester) async {
+      await pump(
+        tester,
+        const DiscoveryState(recipes: recipes),
+        query: 'zzz',
+      );
+      expect(find.text('No recipes found for "zzz".'), findsOneWidget);
+    });
+
     testWidgets('tapping a cell navigates to the recipe detail',
         (tester) async {
       await pump(tester, const DiscoveryState(recipes: recipes));
@@ -119,6 +178,24 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Recipe Detail'), findsOneWidget);
+    });
+
+    testWidgets('long titles do not overflow on a small screen',
+        (tester) async {
+      await pump(
+        tester,
+        const DiscoveryState(
+          recipes: [
+            Recipe(
+              recipeId: 1,
+              title: 'Slow Roasted Mediterranean Chickpea and Spinach Stew',
+              cuisineType: 'italian',
+            ),
+          ],
+        ),
+        size: const Size(360, 640),
+      );
+      expect(tester.takeException(), isNull);
     });
   });
 }

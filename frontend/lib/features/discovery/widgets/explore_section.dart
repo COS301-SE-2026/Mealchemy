@@ -1,23 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_section_header.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/discovery/providers/discovery_provider.dart';
+import 'package:mealchemy/features/offline/widgets/offline_unavailable_state.dart';
 import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
 
 const double _cellHeight = 130.0;
 const double _gap = 2;
 
 class ExploreSection extends ConsumerWidget {
-  const ExploreSection({super.key});
+  const ExploreSection({super.key, this.query = ''});
+
+  final String query;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(discoveryProvider);
-    final recipes = state.visibleRecipes;
+    final offline = ref.watch(offlineReadOnlyProvider);
+    final cleaned = query.trim().toLowerCase();
+    final recipes = cleaned.isEmpty
+        ? state.visibleRecipes
+        : state.visibleRecipes
+            .where((r) => r.title.toLowerCase().contains(cleaned))
+            .toList();
 
     final title = state.selectedCuisine != null
         ? 'Explore ${_formatCuisine(state.selectedCuisine!)}'
@@ -32,10 +42,24 @@ class ExploreSection extends ConsumerWidget {
             child: AppSectionHeader(title: title),
           ),
           const SizedBox(height: 12),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Text('No published recipes yet.'),
-          ),
+          if (offline)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: OfflineUnavailableState(
+                message:
+                    'Published recipes are available when you are back online.',
+                compact: true,
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                cleaned.isEmpty
+                    ? 'No published recipes yet.'
+                    : 'No recipes found for "$query".',
+              ),
+            ),
         ],
       );
     }
@@ -83,7 +107,9 @@ class _RecipeCell extends StatelessWidget {
     final photoUrl = recipe.photoUrl;
 
     return GestureDetector(
-      onTap: () => context.push('/recipe/${recipe.recipeId}'),
+      onTap: () => context.push(
+        '/recipe/${recipe.recipeId}?report=true',
+      ),
       child: SizedBox(
         height: _cellHeight,
         child: Stack(

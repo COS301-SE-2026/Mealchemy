@@ -56,15 +56,17 @@ class _FakeRepo implements ProfileRepository {
   Future<List<PreferenceOption>> getEquipmentOptions() async => const [];
 }
 
-Widget _host(_FakeRepo repo) {
+Widget _host(_FakeRepo repo, {bool readOnly = false}) {
   return ProviderScope(
     overrides: [
       profileRepositoryProvider.overrideWithValue(repo),
       catalogueSearchProvider.overrideWith((ref, query) async => const []),
     ],
-    child: const MaterialApp(
+    child: MaterialApp(
       home: Scaffold(
-        body: SingleChildScrollView(child: PreferencesSection()),
+        body: SingleChildScrollView(
+          child: PreferencesSection(readOnly: readOnly),
+        ),
       ),
     ),
   );
@@ -96,6 +98,19 @@ void main() {
     expect(find.text('Aversions'), findsOneWidget);
     expect(find.text('Flavour Profiles'), findsOneWidget);
     expect(find.text('Nutritional Goals'), findsOneWidget);
+  });
+
+  testWidgets('read only replaces preference controls with offline guidance',
+      (tester) async {
+    await tester.pumpWidget(_host(_FakeRepo(), readOnly: true));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Preference editing is available when you are back online.'),
+      findsOneWidget,
+    );
+    expect(find.text('Add restriction'), findsNothing);
+    expect(find.text('Retry'), findsNothing);
   });
 
   testWidgets('renders a selected preference as a chip', (tester) async {

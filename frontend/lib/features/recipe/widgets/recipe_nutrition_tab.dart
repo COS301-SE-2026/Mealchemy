@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 
+import '../../../core/connectivity/network_status_provider.dart';
 import '../../../core/shared_widgets/Molecules/app_section_header.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../offline/data/offline_cache_store.dart';
+import '../../offline/widgets/cache_freshness_label.dart';
 import '../models/recipe_nutrition.dart';
 import '../providers/recipe_nutrition_provider.dart';
 
@@ -34,6 +37,7 @@ class _RecipeNutritionTabState extends ConsumerState<RecipeNutritionTab> {
     final nutritionState = ref.watch(
       recipeNutritionProvider(widget.recipeId),
     );
+    final isOffline = ref.watch(offlineReadOnlyProvider);
 
     return ColoredBox(
       color: AppColors.bgLight,
@@ -44,12 +48,14 @@ class _RecipeNutritionTabState extends ConsumerState<RecipeNutritionTab> {
           ),
         ),
         error: (error, stackTrace) => _NutritionError(
-          message: _nutritionErrorMessage(error),
-          onRetry: () {
-            ref.invalidate(
-              recipeNutritionProvider(widget.recipeId),
-            );
-          },
+          message: _nutritionErrorMessage(error, isOffline: isOffline),
+          onRetry: isOffline
+              ? null
+              : () {
+                  ref.invalidate(
+                    recipeNutritionProvider(widget.recipeId),
+                  );
+                },
         ),
         data: (nutrition) {
           final selectedValues = _selectedView == _NutritionView.perRecipe
@@ -72,6 +78,11 @@ class _RecipeNutritionTabState extends ConsumerState<RecipeNutritionTab> {
                 style: AppTextStyles.body.copyWith(
                   color: AppColors.textMuted,
                 ),
+              ),
+              const SizedBox(height: 8),
+              CacheFreshnessLabel(
+                collection: CacheCollection.recipeNutrition,
+                scopeId: widget.recipeId.toString(),
               ),
               const SizedBox(height: 18),
               _NutritionViewToggle(
@@ -162,7 +173,7 @@ class _RecipeNutritionTabState extends ConsumerState<RecipeNutritionTab> {
               ),
               const SizedBox(height: 14),
               if (nutrition.ingredients.isEmpty)
-                const _EmptyIngredients()
+                _EmptyIngredients(isOffline: isOffline)
               else
                 ...nutrition.ingredients.map(
                   (ingredient) => Padding(
@@ -613,7 +624,9 @@ class _IngredientValueRow extends StatelessWidget {
 }
 
 class _EmptyIngredients extends StatelessWidget {
-  const _EmptyIngredients();
+  const _EmptyIngredients({required this.isOffline});
+
+  final bool isOffline;
 
   @override
   Widget build(BuildContext context) {
@@ -624,7 +637,9 @@ class _EmptyIngredients extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
       ),
       child: Text(
-        'No ingredient nutrition is available for this recipe.',
+        isOffline
+            ? 'Ingredient breakdown is available when you reconnect.'
+            : 'No ingredient nutrition is available for this recipe.',
         textAlign: TextAlign.center,
         style: AppTextStyles.body.copyWith(
           color: AppColors.textMuted,
@@ -641,7 +656,7 @@ class _NutritionError extends StatelessWidget {
   });
 
   final String message;
-  final VoidCallback onRetry;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -665,15 +680,16 @@ class _NutritionError extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            TextButton(
-              onPressed: onRetry,
-              child: Text(
-                'Try again',
-                style: AppTextStyles.bodyBold.copyWith(
-                  color: AppColors.primary,
+            if (onRetry != null)
+              TextButton(
+                onPressed: onRetry,
+                child: Text(
+                  'Try again',
+                  style: AppTextStyles.bodyBold.copyWith(
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -681,7 +697,11 @@ class _NutritionError extends StatelessWidget {
   }
 }
 
-String _nutritionErrorMessage(Object error) {
+String _nutritionErrorMessage(Object error, {required bool isOffline}) {
+  if (isOffline) {
+    return 'Nutrition for this recipe has not been saved for offline use.';
+  }
+
   if (error is DioException) {
     final statusCode = error.response?.statusCode;
 

@@ -43,8 +43,7 @@ public class VaultFolderRecipeController
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Recipe associations retrieved successfully", content = @Content(array = @ArraySchema(schema = @Schema(implementation = VaultFolderRecipeResponse.class)))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller is not the owner or a member of the folder's vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Folder not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Folder not found, or the caller is not the owner or a member of its vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/recipes/{folderId}")
@@ -59,8 +58,7 @@ public class VaultFolderRecipeController
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Recipe associations retrieved successfully", content = @Content(array = @ArraySchema(schema = @Schema(implementation = VaultFolderRecipeResponse.class)))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller does not own this recipe", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Recipe not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Recipe not found, or not owned by the caller", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/folders/{recipeId}")
@@ -75,8 +73,7 @@ public class VaultFolderRecipeController
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Association retrieved successfully", content = @Content(schema = @Schema(implementation = VaultFolderRecipeResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller is not the owner or a member of the associated vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Association not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Association not found, or the caller is not the owner or a member of its vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}")
@@ -91,8 +88,7 @@ public class VaultFolderRecipeController
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Recipe added to folder successfully", content = @Content(schema = @Schema(implementation = VaultFolderRecipeResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller is not the owner or a member of the folder's vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Folder not found, recipe not found, or authenticated user not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Folder not found or the caller is not the owner or a member of its vault, recipe not found or not accessible, or authenticated user not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/folder/{folderId}")
@@ -107,8 +103,7 @@ public class VaultFolderRecipeController
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Association moved successfully", content = @Content(schema = @Schema(implementation = VaultFolderRecipeResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller does not own the vault, or the target folder is in a different vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Association not found, or target folder not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Association not found (or not owned by the caller), or target folder not found (including a folder that exists but belongs to a different vault)", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/{id}")
@@ -123,8 +118,7 @@ public class VaultFolderRecipeController
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Association deleted successfully"),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller is not the vault owner or the member who added this association", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Association not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Association not found, or the caller is neither the vault owner nor the member who added it", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/{id}")

@@ -20,6 +20,7 @@ public record RecipeFullRequest(
     boolean isCommunityPublished,
     @NotEmpty List<RecipeIngredientRequest> ingredients,
     @NotEmpty List<RecipeStepRequest> steps,
-    @NotNull Integer folderId
+    @NotNull Integer folderId,
+    List<Integer> equipmentIds
 )
 {}

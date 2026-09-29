@@ -5,6 +5,7 @@ from src.core.signals import (
     novelty_score,
     nutrition_score,
 )
+from src.core.transparency import build_transparency_card
 from src.models.recipe import CandidatePoolEntry
 from src.models.recommendation import RecommendationItem, ScoreBreakdown
 from src.models.user_state import PreferenceWeights, UserState
@@ -38,11 +39,12 @@ def score_recipe(breakdown: ScoreBreakdown, weights: PreferenceWeights) -> float
 
 
 def build_recommendation_item(
-    recipe: CandidatePoolEntry, user_state: UserState
+    recipe: CandidatePoolEntry, user_state: UserState, seed: int | None = None
 ) -> RecommendationItem:
     breakdown, missing_ids = compute_score_breakdown(recipe, user_state)
     total_score = score_recipe(breakdown, user_state.preference_weights)
     missing = [ing.name for ing in recipe.ingredients if ing.ing_id in missing_ids]
+    transparency = build_transparency_card(recipe, user_state, breakdown, seed)
 
     return RecommendationItem(
         recipe_id=recipe.recipe_id,
@@ -51,4 +53,5 @@ def build_recommendation_item(
         score_breakdown=breakdown,
         pantry_gap_count=len(missing),
         missing_ingredients=missing,
+        transparency=transparency,
     )

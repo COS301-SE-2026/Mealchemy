@@ -58,8 +58,7 @@ public class VaultFolderController
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Folders retrieved successfully", content = @Content(array = @ArraySchema(schema = @Schema(implementation = VaultFolderResponse.class)))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller is not the owner or a member of this vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Vault not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Vault not found, or the caller is not its owner or a member", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/vault/{vaultId}")
@@ -74,8 +73,7 @@ public class VaultFolderController
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Folder retrieved successfully", content = @Content(schema = @Schema(implementation = VaultFolderResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller is not the owner or a member of the specified vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Vault not found, ot no folder matches the given name", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Vault not found or the caller is not its owner or a member, or no folder matches the given name", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{vaultId}/folder/name/{name}")
@@ -90,8 +88,7 @@ public class VaultFolderController
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Folder retrieved successfully", content = @Content(schema = @Schema(implementation = VaultFolderResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller is not the owner or a member of the specified vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Vault not found, or no folder matches the given name", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Vault not found or the caller is not its owner or a member, or no folder matches the given ID", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{vaultId}/folder/{id}")
@@ -102,11 +99,11 @@ public class VaultFolderController
 
 
     // Post
-    @Operation(summary = "Create a vault folder", description = "Creates a new folder in a vault. Only the vault owner may create folders.")
+    @Operation(summary = "Create a vault folder", description = "Creates a new folder in a vault. The vault owner or an editor may create folders in a SHARED vault; in a PRIVATE vault, only the owner can.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Folder created successfully", content = @Content(schema = @Schema(implementation = VaultFolderResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller does not own the specified vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "403", description = "Caller is not the vault owner or an editor", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "404", description = "Vault not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -118,11 +115,11 @@ public class VaultFolderController
 
 
     // Put
-    @Operation(summary = "Update a vault folder", description = "Updates a folder's vault and/or name. Only the vault owner may modify folders.")
+    @Operation(summary = "Update a vault folder", description = "Updates a folder's vault and/or name. The vault owner or an editor may update folders in a SHARED vault; in a PRIVATE vault, only the owner can.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Folder updated successfully", content = @Content(schema = @Schema(implementation = VaultFolderResponse.class))),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller does not own the specified vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "403", description = "Caller is not the vault owner or an editor", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "404", description = "Vault not found, or folder not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -134,11 +131,11 @@ public class VaultFolderController
 
 
     // Delete
-    @Operation(summary = "Delete a vault folder", description = "Deletes a folder from a vault. Only the vault owner may delete folders.")
+    @Operation(summary = "Delete a vault folder", description = "Deletes a folder from a vault. The vault owner or an editor may delete folders in a SHARED vault; in a PRIVATE vault, only the owner can.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Folder deleted successfully"),
         @ApiResponse(responseCode = "401", description = "No valid JWT present", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Caller does not own the specified vault", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "403", description = "Caller is not the vault owner or an editor", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "404", description = "Vault not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })

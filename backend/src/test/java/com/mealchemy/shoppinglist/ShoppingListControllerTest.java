@@ -15,6 +15,7 @@ import com.mealchemy.shoppinglist.dto.UpdateShoppingListRequest;
 import com.mealchemy.shoppinglist.dto.DeleteBatchItemsRequest;
 import com.mealchemy.shoppinglist.dto.CompleteShopResponse;
 import com.mealchemy.shoppinglist.dto.AddRecipeToShoppingListRequest;
+import com.mealchemy.shoppinglist.dto.SmartAddMealPlanResponse;
 
 // controller
 import com.mealchemy.shoppinglist.controller.ShoppingListController;
@@ -47,6 +48,7 @@ import java.util.List;
 import java.util.Optional;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
@@ -56,6 +58,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -233,21 +236,21 @@ public class ShoppingListControllerTest {
     }
     
     @Test
-    void updateShoppingList_notOwned_return403() throws Exception {
+    void updateShoppingList_notOwned_return404() throws Exception {
         UpdateShoppingListRequest mockRequest = new UpdateShoppingListRequest(
             "Updated List",
             ShoppingListStatus.COMPLETED
         );
 
-        when(shoppingListService.updateShoppingList(anyInt(), eq(1), any(UpdateShoppingListRequest.class))).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list"));
+        when(shoppingListService.updateShoppingList(anyInt(), eq(1), any(UpdateShoppingListRequest.class))).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
 
         // Act and assert
         mockMvc.perform(put("/api/shopping-lists/{id}", 1).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
                 // fields in response object
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(mockRequest)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("You do not own this shopping list"));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Shopping list not found"));
     }
 
     @Test
@@ -286,14 +289,14 @@ public class ShoppingListControllerTest {
     }
 
     @Test
-    void deleteShoppingList_notOwned_returns403() throws Exception {
+    void deleteShoppingList_notOwned_returns404() throws Exception {
 
-        doThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list")).when(shoppingListService).deleteShoppingList(anyInt(), eq(3));
+        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found")).when(shoppingListService).deleteShoppingList(anyInt(), eq(3));
 
         // Act and Assert
         mockMvc.perform(delete("/api/shopping-lists/{id}", 3).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of()))))  
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("You do not own this shopping list"));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Shopping list not found"));
     }
 
 
@@ -357,16 +360,16 @@ public class ShoppingListControllerTest {
     }
     
     @Test
-    void getListWithItems_notOwned_returns403() throws Exception {
+    void getListWithItems_notOwned_returns404() throws Exception {
         
-        when(shoppingListService.getSpecificListItems(anyInt(), eq(1))).thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shopping list"));
+        when(shoppingListService.getSpecificListItems(anyInt(), eq(1))).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
 
         // Act and assert
         mockMvc.perform(get("/api/shopping-lists/{id}", 1).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
                 // fields in response object
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("You do not own this shopping list"));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Shopping list not found"));
     }
 
     // ========== POST Testing (POST /api/shopping-lists/{id}/items) - add item to a specified shopping list ==========
@@ -896,6 +899,104 @@ public class ShoppingListControllerTest {
                 .content(objectMapper.writeValueAsString(mockRequest)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Recipe not found"));
+    }
+
+    
+    // ========== POST Testing (POST /api/shopping-lists/{id}/smart-add-from-meal-plan/{planId}) ===========
+
+    @Test
+    void smartAddMealPlan_validRequest_return200() throws Exception {
+        // Arrange 
+        ShoppingListItemResponse itemResponse = new ShoppingListItemResponse(
+            1, 
+            5, 
+            2, 
+            "Hummus", 
+            "Legumes and Legume Products",
+            new BigDecimal("60"), 
+            "g", 
+            false
+        );
+
+        ShoppingListWithItemsResponse listResponse = new ShoppingListWithItemsResponse(
+            5, 
+            1, 
+            "Weekly Groceries", 
+            ShoppingListStatus.ACTIVE,
+            OffsetDateTime.parse("2026-07-23T23:00:00Z"), 
+            1, 
+            List.of(itemResponse)
+        );
+
+        SmartAddMealPlanResponse mockResponse = new SmartAddMealPlanResponse(listResponse, List.of());
+
+        when(shoppingListService.smartAddMealPlanToShoppingList(anyInt(), eq(5), eq(9), eq(LocalDate.of(2026, 10, 1)), eq(LocalDate.of(2026, 10, 7)), eq(true))).thenReturn(mockResponse);
+
+        // Act and assert
+        mockMvc.perform(post("/api/shopping-lists/{id}/smart-add-from-meal-plan/{planId}", 5, 9)
+                .with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                .param("startDate", "2026-10-01")
+                .param("endDate", "2026-10-07")
+                .param("compareToPantry", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.shopping_list.shopping_list_id").value(5))
+                .andExpect(jsonPath("$.shopping_list.user_id").value(1))
+                .andExpect(jsonPath("$.shopping_list.items[0].item_id").value(1))
+                .andExpect(jsonPath("$.shopping_list.items[0].quantity").value(60))
+                .andExpect(jsonPath("$.skipped_recipe_ids").isArray())
+                .andExpect(jsonPath("$.skipped_recipe_ids").isEmpty());
+    }
+
+    @Test
+    void smartAddMealPlanToShoppingList_compareToPantryFalse_return() throws Exception {
+        // Arrange 
+        ShoppingListWithItemsResponse listResponse = new ShoppingListWithItemsResponse(
+                5, 
+                1, 
+                "Weekly Groceries", 
+                ShoppingListStatus.ACTIVE,
+                OffsetDateTime.parse("2026-07-23T23:00:00Z"), 
+                0, 
+                List.of()
+        );
+
+        SmartAddMealPlanResponse mockResponse = new SmartAddMealPlanResponse(listResponse, List.of());
+
+        when(shoppingListService.smartAddMealPlanToShoppingList(anyInt(), eq(5), eq(9), any(LocalDate.class), any(LocalDate.class), eq(false))).thenReturn(mockResponse);
+
+        // Act and assert
+        mockMvc.perform(post("/api/shopping-lists/{id}/smart-add-from-meal-plan/{planId}", 5, 9).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                // fields in response object
+                .param("startDate", "2026-10-01")
+                .param("endDate", "2026-10-07")
+                .param("compareToPantry", "false"))
+                .andExpect(status().isOk());
+
+        verify(shoppingListService).smartAddMealPlanToShoppingList(anyInt(), eq(5), eq(9), any(LocalDate.class), any(LocalDate.class), eq(false));
+    }
+
+    @Test 
+    void smartAddMealPlanToShoppingList_listNotFound_returns404() throws Exception{
+        // Arrange
+        when(shoppingListService.smartAddMealPlanToShoppingList(anyInt(), eq(5), eq(9), any(LocalDate.class), any(LocalDate.class), any(Boolean.class))).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Shopping list not found"));
+
+        // Act and assert
+        mockMvc.perform(post("/api/shopping-lists/{id}/smart-add-from-meal-plan/{planId}", 5, 9).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                // fields in response object
+                .param("startDate", "2026-10-01")
+                .param("endDate", "2026-10-07"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Shopping list not found"));
+    }
+
+    @Test 
+    void smartAddMealPlanToShoppingList_missingStartDate_returns400() throws Exception{
+    
+        // Act and assert
+        mockMvc.perform(post("/api/shopping-lists/{id}/smart-add-from-meal-plan/{planId}", 5, 9).with(authentication(new UsernamePasswordAuthenticationToken("1", null, List.of())))
+                // fields in response object
+                .param("endDate", "2026-10-07"))
+                .andExpect(status().isBadRequest());
     }
 
 }

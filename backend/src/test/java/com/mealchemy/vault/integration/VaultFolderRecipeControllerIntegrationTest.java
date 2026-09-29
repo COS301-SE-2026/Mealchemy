@@ -188,11 +188,11 @@ public class VaultFolderRecipeControllerIntegrationTest {
     }
 
     @Test
-    void getRecipesByFolderId_returns403_whenNotOwnerOrMember() throws Exception {
+    void getRecipesByFolderId_returns404_whenNotOwnerOrMember() throws Exception {
         mockMvc.perform(get("/recipefolders/recipes/{folderId}", folderInOwnerVault.getFolderId())
-                        .with(authentication(authAs(otherUser))))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message", is("Only a vault member/owner can can interact with folders/recipe relationships.")));
+                .with(authentication(authAs(otherUser))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", is("Folder not found.")));
     }
 
     /* getFoldersByRecipeId */
@@ -215,11 +215,11 @@ public class VaultFolderRecipeControllerIntegrationTest {
     }
 
     @Test
-    void getFoldersByRecipeId_returns403_whenNotRecipeOwner() throws Exception {
+    void getFoldersByRecipeId_returns404_whenNotRecipeOwner() throws Exception {
         mockMvc.perform(get("/recipefolders/folders/{recipeId}", recipe.getRecipeId())
-                        .with(authentication(authAs(owner))))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message", is("Only the recipe owner can see where it has been added.")));
+                .with(authentication(authAs(owner))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", is("Recipe not found.")));
     }
 
     /* getFolderRecipeById */
@@ -250,21 +250,21 @@ public class VaultFolderRecipeControllerIntegrationTest {
     }
 
     @Test
-    void getFolderRecipeById_returns403_whenNotOwnerOrMember() throws Exception {
+    void getFolderRecipeById_returns404_whenNotOwnerOrMember() throws Exception {
         mockMvc.perform(get("/recipefolders/{id}", vaultFolderRecipe.getId())
-                        .with(authentication(authAs(otherUser))))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message", is("Only a vault member/owner can can interact with folders/recipe relationships.")));
+                .with(authentication(authAs(otherUser))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", is("No record found.")));
     }
 
     /* createVaultFolderRecipe */
 
     @Test
-    void createVaultFolderRecipe_createsRecord_whenAuthenticatedUserIsOwner() throws Exception {
-        Recipe secondRecipe = saveRecipe(recipeOwner, "Second Recipe");
+    void createVaultFolderRecipe_createsClone_whenAuthenticatedUserIsOwnerAndVaultIsShared() throws Exception {
+        Recipe secondRecipe = saveRecipe(owner, "Second Recipe");
         VaultFolderRecipeRequest request = new VaultFolderRecipeRequest(folderInOwnerVault.getFolderId(), secondRecipe.getRecipeId());
 
-        mockMvc.perform(post("/recipefolders/folder/{folderId}", folderInOwnerVault.getFolderId())
+        String responseJson = mockMvc.perform(post("/recipefolders/folder/{folderId}", folderInOwnerVault.getFolderId())
                         .with(authentication(authAs(owner)))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -272,9 +272,18 @@ public class VaultFolderRecipeControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", notNullValue()))
                 .andExpect(jsonPath("$.folderId", is(folderInOwnerVault.getFolderId())))
-                .andExpect(jsonPath("$.recipeId", is(secondRecipe.getRecipeId())))
+                .andExpect(jsonPath("$.recipeId", is(org.hamcrest.Matchers.not(secondRecipe.getRecipeId()))))
                 .andExpect(jsonPath("$.addedByUserId", is(owner.getUserId())))
-                .andExpect(jsonPath("$.addedAt", notNullValue()));
+                .andReturn().getResponse().getContentAsString();
+
+        Integer cloneId = objectMapper.readTree(responseJson).get("recipeId").asInt();
+        Recipe clone = recipeRepository.findById(cloneId)
+                .orElseThrow(() -> new IllegalStateException("Clone was not persisted"));
+
+        org.junit.jupiter.api.Assertions.assertEquals(owner.getUserId(), clone.getOwnerId());
+        org.junit.jupiter.api.Assertions.assertEquals(secondRecipe.getRecipeId(), clone.getParentRecipe().getRecipeId());
+        org.junit.jupiter.api.Assertions.assertEquals("Second Recipe", clone.getTitle());
+        org.junit.jupiter.api.Assertions.assertFalse(clone.getIsCommunityPublished());
 
         List<VaultFolderRecipe> saved = vaultFolderRecipeRepository.findByFolder_FolderId(folderInOwnerVault.getFolderId());
         org.junit.jupiter.api.Assertions.assertEquals(2, saved.size());
@@ -294,16 +303,16 @@ public class VaultFolderRecipeControllerIntegrationTest {
     }
 
     @Test
-    void createVaultFolderRecipe_returns403_whenNotOwnerOrMember() throws Exception {
+    void createVaultFolderRecipe_returns404_whenNotOwnerOrMember() throws Exception {
         VaultFolderRecipeRequest request = new VaultFolderRecipeRequest(folderInOwnerVault.getFolderId(), recipe.getRecipeId());
 
         mockMvc.perform(post("/recipefolders/folder/{folderId}", folderInOwnerVault.getFolderId())
-                        .with(authentication(authAs(otherUser)))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message", is("Only a vault member/owner can can interact with folders/recipe relationships.")));
+                .with(authentication(authAs(otherUser)))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", is("Folder not found.")));
     }
 
     @Test
@@ -366,16 +375,16 @@ public class VaultFolderRecipeControllerIntegrationTest {
     }
 
     @Test
-    void updateVaultFolderRecipe_returns403_whenAuthenticatedUserIsNotOwner() throws Exception {
+    void updateVaultFolderRecipe_returns404_whenAuthenticatedUserIsNotOwner() throws Exception {
         VaultFolderRecipeMoveRequest request = new VaultFolderRecipeMoveRequest(secondFolderInOwnerVault.getFolderId());
 
         mockMvc.perform(put("/recipefolders/{id}", vaultFolderRecipe.getId())
-                        .with(authentication(authAs(memberUser)))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message", is("Only a vault owner can interact with folders/recipe relationships.")));
+                .with(authentication(authAs(memberUser)))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", is("No record found.")));
     }
 
     @Test
@@ -392,16 +401,20 @@ public class VaultFolderRecipeControllerIntegrationTest {
     }
 
     @Test
-    void updateVaultFolderRecipe_returns403_whenMovingBetweenDifferentVaults() throws Exception {
+    void updateVaultFolderRecipe_returns404_whenMovingBetweenDifferentVaults() throws Exception {
         VaultFolderRecipeMoveRequest request = new VaultFolderRecipeMoveRequest(folderInOtherVault.getFolderId());
 
         mockMvc.perform(put("/recipefolders/{id}", vaultFolderRecipe.getId())
-                        .with(authentication(authAs(owner)))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message", is("Recipes can only moved between folders in the same vault.")));
+                .with(authentication(authAs(owner)))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", is("New folder not found.")));
+
+        VaultFolderRecipe unchanged = vaultFolderRecipeRepository.findById(vaultFolderRecipe.getId())
+            .orElseThrow(() -> new IllegalStateException("Record disappeared"));
+        org.junit.jupiter.api.Assertions.assertEquals(folderInOwnerVault.getFolderId(), unchanged.getFolder().getFolderId());
     }
 
     /* deleteVaultFolderRecipe */
@@ -440,12 +453,12 @@ public class VaultFolderRecipeControllerIntegrationTest {
     }
 
     @Test
-    void deleteVaultFolderRecipe_returns403_whenNotOwnerOrAddingMember() throws Exception {
+    void deleteVaultFolderRecipe_returns404_whenNotOwnerOrAddingMember() throws Exception {
         mockMvc.perform(delete("/recipefolders/{id}", vaultFolderRecipe.getId())
-                        .with(authentication(authAs(otherUser)))
-                        .with(csrf()))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message", is("Only a vault member who added the recipe/vault owner can delete the folders.")));
+                .with(authentication(authAs(otherUser)))
+                .with(csrf()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", is("No record found.")));
 
         org.junit.jupiter.api.Assertions.assertTrue(
                 vaultFolderRecipeRepository.findById(vaultFolderRecipe.getId()).isPresent()

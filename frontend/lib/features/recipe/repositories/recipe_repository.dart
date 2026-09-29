@@ -2,6 +2,7 @@ import '../models/recipe.dart';
 import '../models/recipe_step.dart';
 import '../models/recipe_ingredient.dart';
 import '../models/unit_of_measurement.dart';
+import '../models/equipment.dart';
 //essentially an abstract class/interface
 
 //uses mock/API data
@@ -15,8 +16,12 @@ abstract class RecipeRepository {
   //update recipe meadata, including photo url. (used for photo linking)
   Future<Recipe> updateRecipe(int id, Recipe recipe);
   //complete edit flow includes ingredients, steps, url update
-  Future<Recipe> updateRecipeFull(int id, Recipe recipe,
-      {bool removePhoto = false});
+  Future<Recipe> updateRecipeFull(
+    int id,
+    Recipe recipe, {
+    bool removePhoto = false,
+    bool removeVideo = false,
+  });
 
   //cuisine type enum values
   Future<List<String>> getCuisineTypes();
@@ -24,8 +29,9 @@ abstract class RecipeRepository {
   Future<void> addRecipeIngredient(int recipeId, RecipeIngredient ingredient);
   Future<List<RecipeIngredient>> getRecipeIngredients(int recipeId);
   Future<List<RecipeStep>> getRecipeSteps(int recipeId);
+  Future<List<Equipment>> getRecipeEquipment(int recipeId);
   Future<List<UnitOfMeasurement>> getUnits();
 
-  //Delete 
+  //Delete
   Future<void> deleteRecipe(int recipeId);
 }

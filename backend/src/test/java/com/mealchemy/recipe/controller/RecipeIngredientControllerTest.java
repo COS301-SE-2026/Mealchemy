@@ -157,13 +157,13 @@ public class RecipeIngredientControllerTest {
     }
 
     @Test
-    void deleteRecipeIngredient_returns403_whenNotOwner() throws Exception
+    void deleteRecipeIngredient_returns404_whenNotOwner() throws Exception
     {
-        doThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner of this recipe can modify its ingredients."))
+        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found."))
             .when(recipeIngredientService).deleteRecipeIngredient(1, 1, 1);
 
         mockMvc.perform(delete("/ingredients/recipe/1/ingredient/1/delete").with(csrf()))
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.message").value("Only the owner of this recipe can modify its ingredients."));
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message").value("Recipe not found."));
     }
 }

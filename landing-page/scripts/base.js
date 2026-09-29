@@ -65,6 +65,31 @@
         );
       });
     });
-  })();
+    const bonusTrack = document.querySelector("[data-bonus-track]");
+  const bonusButtons = Array.from(document.querySelectorAll("[data-bonus-scroll]"));
+
+  if (bonusTrack && bonusButtons.length) {
+    const updateBonusControls = () => {
+      const atStart = bonusTrack.scrollLeft <= 4;
+      const atEnd = bonusTrack.scrollLeft + bonusTrack.clientWidth >= bonusTrack.scrollWidth - 4;
+
+      bonusButtons.forEach(button => {
+        button.disabled = button.dataset.bonusScroll === "previous" ? atStart : atEnd;
+      });
+    };
+
+    bonusButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        const direction = button.dataset.bonusScroll === "previous" ? -1 : 1;
+        const distance = Math.min(bonusTrack.clientWidth * 0.82, 610);
+        bonusTrack.scrollBy({ left: direction * distance, behavior: "smooth" });
+      });
+    });
+
+    bonusTrack.addEventListener("scroll", updateBonusControls, { passive: true });
+    window.addEventListener("resize", updateBonusControls);
+    updateBonusControls();
+  }
+})();
   
   

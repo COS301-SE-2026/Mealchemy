@@ -328,6 +328,44 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     state = AsyncData(current.copyWith(lists: updatedLists));
   }
 
+//deletes one item from a shopping list
+  Future<void> deleteItem({
+    required String listId,
+    required String itemId,
+  }) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final list = current.getListById(listId);
+    if (list == null) return;
+
+    final item = list.items.cast<ShoppingListItem?>().firstWhere(
+          (item) => item?.id == itemId,
+          orElse: () => null,
+        );
+
+    if (item?.itemId == null) return;
+
+    await _repository.deleteShoppingListItem(
+      listId: listId,
+      itemId: item!.itemId.toString(),
+    );
+
+    final updatedLists = current.lists.map((existingList) {
+      if (existingList.id != listId) return existingList;
+
+      final remainingItems = existingList.items
+          .where((existingItem) => existingItem.id != itemId)
+          .toList();
+
+      return existingList.copyWith(items: remainingItems);
+    }).toList();
+
+    state = AsyncData(
+      current.copyWith(lists: updatedLists),
+    );
+  }
+
   //deletes every checked item from one shopping list
   Future<void> deleteSelectedItems(String listId) async {
     final current = state.valueOrNull;
@@ -490,6 +528,43 @@ class ShoppingListsNotifier extends AsyncNotifier<ShoppingListsState> {
     state = AsyncData(current.copyWith(lists: updatedLists));
 
     return current.getListById(listId)?.copyWith(items: updatedList.items);
+  }
+
+  Future<int> addFromMealPlan({
+    String? listId,
+    required String newListName,
+    required int planId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required bool compareToPantry,
+  }) async {
+    
+    final current = state.valueOrNull;
+    if (current == null) return 0;
+
+    var lists = current.lists;
+    var targetId = listId;
+
+    if (targetId == null) {
+      final created = await _repository.createShoppingList(name: newListName);
+      lists = [...lists, created];
+      targetId = created.id;
+    }
+
+    final result = await _repository.smartAddFromMealPlan(
+      listId: targetId,
+      planId: planId,
+      startDate: startDate,
+      endDate: endDate,
+      compareToPantry: compareToPantry,
+    );
+    final updatedLists = lists.map((list) {
+      if (list.id != targetId) return list;
+      return list.copyWith(items: result.list.items);
+    }).toList();
+
+    state = AsyncData(current.copyWith(lists: updatedLists));
+    return result.skippedRecipeIds.toSet().length;
   }
 }
 

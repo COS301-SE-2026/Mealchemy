@@ -11,11 +11,13 @@ class ShoppingItemRow extends StatelessWidget {
     required this.item,
     this.onChanged,
     this.onEdit,
+    this.onDelete,
   });
 
   final ShoppingListItem item;
   final ValueChanged<bool?>? onChanged;
   final VoidCallback? onEdit;
+  final Future<void> Function()? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +74,21 @@ class ShoppingItemRow extends StatelessWidget {
               icon: const Icon(
                 Icons.edit_outlined,
                 color: AppColors.primary,
+                size: 20,
+              ),
+            ),
+          ],
+          if (onDelete != null) ...[
+            const SizedBox(width: 2),
+            IconButton(
+              onPressed: () async {
+                await onDelete?.call();
+              },
+              tooltip: 'Delete ${item.name}',
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(
+                Icons.delete_outline,
+                color: AppColors.error,
                 size: 20,
               ),
             ),

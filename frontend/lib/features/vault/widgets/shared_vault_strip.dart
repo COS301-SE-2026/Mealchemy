@@ -114,17 +114,17 @@ class _StripItem extends StatelessWidget {
 }
 
 Future<void> _createVault(BuildContext context, WidgetRef ref) async {
-    final name = await showAppInputDialog(
-      context: context,
-      title: 'New Shared Vault',
-      label: 'Vault Name',
-      hint: 'e.g. Family Recipes',
-      confirmLabel: 'Create',
-      prefixIcon: Icons.group_outlined,
-    );
-    if (name == null) return;
+  final name = await showAppInputDialog(
+    context: context,
+    title: 'New Shared Vault',
+    label: 'Vault Name',
+    hint: 'e.g. Family Recipes',
+    confirmLabel: 'Create',
+    prefixIcon: Icons.group_outlined,
+  );
+  if (name == null) return;
 
-    final vault = await ref.read(vaultRepositoryProvider).createVault(name);
-    ref.invalidate(vaultsProvider);
-    ref.read(selectedVaultIdProvider.notifier).state = vault.vaultId;
-  }
+  final vault = await ref.read(vaultRepositoryProvider).createVault(name);
+  ref.invalidate(vaultsProvider);
+  ref.read(selectedVaultIdProvider.notifier).state = vault.vaultId;
+}

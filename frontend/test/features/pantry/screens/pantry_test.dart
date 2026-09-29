@@ -14,6 +14,16 @@ import 'package:mealchemy/features/pantry/models/ingredient_catalogue_item.dart'
 import 'package:mealchemy/features/pantry/repositories/ingredient_catalogue_repository.dart';
 import 'package:mealchemy/features/pantry/models/ingredient_category.dart';
 import 'package:mealchemy/features/pantry/models/pending_external_ingredient.dart';
+import 'package:mealchemy/features/recipe/models/unit_of_measurement.dart';
+import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
+
+const _testUnits = [
+  UnitOfMeasurement(unitId: 1, name: 'g', system: 'METRIC'),
+  UnitOfMeasurement(unitId: 2, name: 'kg', system: 'METRIC'),
+  UnitOfMeasurement(unitId: 3, name: 'ml', system: 'METRIC'),
+  UnitOfMeasurement(unitId: 4, name: 'L', system: 'METRIC'),
+  UnitOfMeasurement(unitId: 5, name: 'pcs', system: 'GENERAL'),
+];
 
 class _ExternalIngredientCatalogueRepository
     extends IngredientCatalogueRepository {
@@ -160,11 +170,13 @@ void main() {
     MockPantryRepository? pantryRepository,
     IngredientCatalogueRepository? catalogueRepository,
     bool isOffline = false,
+    List<UnitOfMeasurement> units = _testUnits,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           offlineReadOnlyProvider.overrideWithValue(isOffline),
+          unitsProvider.overrideWith((ref) async => units),
           pantryRepositoryProvider.overrideWithValue(
             pantryRepository ?? MockPantryRepository(),
           ),
@@ -192,7 +204,7 @@ void main() {
     expect(find.text('Chicken Breast'), findsOneWidget);
   });
 
-  testWidgets('PantryScreen keeps cached reads and disables writes offline', (
+  testWidgets('PantryScreen keeps cached reads and opens add flow offline', (
     tester,
   ) async {
     await pumpPantryScreen(tester, isOffline: true);
@@ -211,7 +223,7 @@ void main() {
     final addButton = tester.widget<FloatingActionButton>(
       find.byType(FloatingActionButton),
     );
-    expect(addButton.onPressed, isNull);
+    expect(addButton.onPressed, isNotNull);
 
     await tester.enterText(find.byType(TextField), 'milk');
     await tester.pumpAndSettle();
@@ -286,6 +298,54 @@ void main() {
 
     expect(find.text('Chicken Breast'), findsOneWidget);
     expect(find.text('2kg • Pantry'), findsOneWidget);
+  });
+
+  testWidgets('PantryScreen uses dynamic units when editing', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await pumpPantryScreen(
+      tester,
+      units: const [
+        UnitOfMeasurement(
+          unitId: 90,
+          name: 'dynamic-unit',
+          system: 'GENERAL',
+        ),
+      ],
+    );
+
+    final chickenCard = find.ancestor(
+      of: find.text('Chicken Breast'),
+      matching: find.byType(PantryItemCard),
+    );
+
+    final editIcon = find.descendant(
+      of: chickenCard,
+      matching: find.byIcon(Icons.edit_outlined),
+    );
+
+    await tester.ensureVisible(chickenCard);
+    await tester.pumpAndSettle();
+
+    await tester.tap(editIcon, warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byType(DropdownButtonFormField<String>),
+    );
+    await tester.pumpAndSettle();
+
+    //preserve ingredient’s current stored unit
+    expect(find.text('g'), findsWidgets);
+
+    //new choices must come from dynamic provider
+    expect(find.text('dynamic-unit'), findsOneWidget);
+
+    //old hard-coded choices must not be present
+    expect(find.text('cups'), findsNothing);
   });
 
   testWidgets('PantryScreen validates edit pantry ingredient form',
@@ -526,6 +586,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          unitsProvider.overrideWith((ref) async => _testUnits),
           pantryRepositoryProvider.overrideWithValue(MockPantryRepository()),
           ingredientCatalogueRepositoryProvider.overrideWith(
             (ref) => throw Exception('Search failed'),

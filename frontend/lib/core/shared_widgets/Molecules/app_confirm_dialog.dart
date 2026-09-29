@@ -3,7 +3,7 @@ import '../../theme/app_colours.dart';
 import '../../theme/app_typography.dart';
 import '../atoms/app_button.dart';
 
-//Centered confirm dialog. Returns true if confirmed, false/null otherwise.
+//Centered confirm dialog, returns true if confirmed, false/null otherwise
 Future<bool?> showAppConfirmDialog({
   required BuildContext context,
   required String title,
@@ -16,6 +16,7 @@ Future<bool?> showAppConfirmDialog({
     context: context,
     builder: (context) => Dialog(
       backgroundColor: AppColors.bgLight,
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -33,7 +34,9 @@ Future<bool?> showAppConfirmDialog({
             const SizedBox(height: 10),
             Text(
               message,
-              style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.textLight,
+              ),
             ),
             const SizedBox(height: 24),
             Row(

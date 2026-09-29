@@ -1,24 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/routes/app_routes.dart';
+import '../../../core/shared_widgets/atoms/app_badge.dart';
 import '../../../core/shared_widgets/atoms/app_chip.dart';
+import '../../../core/shared_widgets/atoms/app_icon_button.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../shopping_lists/providers/shopping_list_provider.dart';
 
-//header section for Discovery page (add button, tabs, filter button)
-class DiscoveryHeader extends StatelessWidget {
+enum DiscoveryTab { discover, sizzles }
+
+//header section for Discovery page (filter button, tabs, shopping list button)
+class DiscoveryHeader extends ConsumerWidget {
   const DiscoveryHeader({
     super.key,
     required this.selectedFilter,
     required this.filters,
     required this.onFilterSelected,
+    this.selectedTab = DiscoveryTab.discover,
+    this.onTabSelected,
+    this.settingsEnabled = true,
   });
 
   final String selectedFilter;
   final List<String> filters;
   final ValueChanged<String> onFilterSelected;
+  final DiscoveryTab selectedTab;
+  final ValueChanged<DiscoveryTab>? onTabSelected;
+  final bool settingsEnabled;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cartCount = ref.watch(shoppingListCountProvider);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(22, 18, 22, 10),
       child: Column(
@@ -27,10 +43,14 @@ class DiscoveryHeader extends StatelessWidget {
           Row(
             children: [
               IconButton(
-                onPressed: () {},
-                icon: const Icon(
-                  Icons.add,
-                  color: AppColors.textLight,
+                onPressed: settingsEnabled
+                    ? () => context.push(AppRoutes.recommendationSettings)
+                    : null,
+                icon: Icon(
+                  Icons.tune,
+                  color: settingsEnabled
+                      ? AppColors.textLight
+                      : AppColors.textMuted,
                 ),
               ),
               Expanded(
@@ -39,47 +59,59 @@ class DiscoveryHeader extends StatelessWidget {
                   alignment: Alignment.center,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       _DiscoveryTab(
                         label: 'Discover',
-                        selected: true,
+                        selected: selectedTab == DiscoveryTab.discover,
+                        onTap: () => onTabSelected?.call(DiscoveryTab.discover),
                       ),
-                      SizedBox(width: 24),
+                      const SizedBox(width: 24),
                       _DiscoveryTab(
                         label: 'Sizzles',
-                        selected: false,
+                        selected: selectedTab == DiscoveryTab.sizzles,
+                        onTap: () => onTabSelected?.call(DiscoveryTab.sizzles),
                       ),
                     ],
                   ),
                 ),
               ),
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(
-                  Icons.tune,
-                  color: AppColors.textLight,
-                ),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AppIconButton.ghost(
+                    icon: Icons.shopping_cart_outlined,
+                    onPressed: () => context.push(AppRoutes.shoppingLists),
+                    customColor: AppColors.textLight,
+                  ),
+                  Positioned(
+                    top: 2,
+                    right: 2,
+                    child: AppBadge(count: cartCount),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 42,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: filters.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                final filter = filters[index];
+          if (selectedTab == DiscoveryTab.discover) ...[
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 42,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: filters.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final filter = filters[index];
 
-                return AppChip(
-                  label: filter,
-                  selected: selectedFilter == filter,
-                  onTap: () => onFilterSelected(filter),
-                );
-              },
+                  return AppChip(
+                    label: filter,
+                    selected: selectedFilter == filter,
+                    onTap: () => onFilterSelected(filter),
+                  );
+                },
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -92,34 +124,39 @@ class _DiscoveryTab extends StatelessWidget {
   const _DiscoveryTab({
     required this.label,
     required this.selected,
+    required this.onTap,
   });
 
   final String label;
   final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          label,
-          maxLines: 1,
-          style: AppTextStyles.heading2.copyWith(
-            color: selected ? AppColors.textLight : AppColors.textMuted,
-            fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            style: AppTextStyles.heading2.copyWith(
+              color: selected ? AppColors.textLight : AppColors.textMuted,
+              fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
+            ),
           ),
-        ),
-        const SizedBox(height: 5),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          height: 3,
-          width: selected ? 92 : 0,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(99),
+          const SizedBox(height: 5),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            height: 3,
+            width: selected ? 92 : 0,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(99),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

@@ -10,6 +10,8 @@ import com.mealchemy.auth.repository.UserRepository;
 import com.mealchemy.profile.repository.UserProfileRepository;
 import com.mealchemy.ingredient.repository.IngredientCatalogueRepository;
 import com.mealchemy.pantry.repository.PantryIngredientRepository;
+import com.mealchemy.mealprep.repository.MealPlanRepository;
+import com.mealchemy.mealprep.repository.MealPlanEntryRepository;
 // dto
 import com.mealchemy.pantry.dto.PantryIngredientRequest;
 // enums
@@ -57,6 +59,12 @@ public class PantryControllerIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private MealPlanEntryRepository mealPlanEntryRepository;
+
+    @Autowired
+    private MealPlanRepository mealPlanRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
@@ -70,7 +78,10 @@ public class PantryControllerIntegrationTest {
     void setUp() {
         //clear pantry data
         pantryIngredientRepository.deleteAll();
+        mealPlanEntryRepository.deleteAll();
+        mealPlanRepository.deleteAll(); 
         userRepository.deleteAll(); 
+
 
         // create the user 
         User testUser = new User();

@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/api_service_provider.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../offline/providers/offline_cache_provider.dart';
+import '../../offline/repositories/cached_recipe_nutrition_repository.dart';
 import '../models/recipe_nutrition.dart';
 import '../repositories/api_recipe_nutrition_repository.dart';
 import '../repositories/mock_recipe_nutrition_repository.dart';
@@ -22,7 +25,15 @@ final recipeNutritionRepositoryProvider =
     return MockRecipeNutritionRepository();
   }
 
-  return ref.watch(remoteRecipeNutritionRepositoryProvider);
+  final remote = ref.watch(remoteRecipeNutritionRepositoryProvider);
+  final viewerUserId = ref.watch(activeIdentityProvider);
+  if (viewerUserId == null) return remote;
+
+  return CachedRecipeNutritionRepository(
+    remote: remote,
+    cache: ref.watch(offlineCacheStoreProvider),
+    viewerUserId: viewerUserId,
+  );
 });
 
 //loads the complete nutrition response for one recipe

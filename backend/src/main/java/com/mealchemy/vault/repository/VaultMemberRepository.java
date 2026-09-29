@@ -4,6 +4,8 @@ package com.mealchemy.vault.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import java.util.*;
 
 /* Import classes */
@@ -18,4 +20,21 @@ public interface VaultMemberRepository extends JpaRepository<VaultMember, Intege
     boolean existsByVault_VaultIdAndUser_UserId(Integer vaultId, Integer userId);
     Optional<VaultMember> findByVault_VaultIdAndUser_UserId(Integer vaultId, Integer userId);
     List<VaultMember> findByUser_UserId(Integer userId);
+
+    // for collaborative vaults
+
+    // is user also a member of whichever vault the recipe is shared in
+    @Query("""
+            SELECT DISTINCT member
+            FROM VaultMember member
+            Where member.user.userId = :userId
+                AND EXISTS (
+                    SELECT folderRecipe.id
+                    FROM VaultFolderRecipe folderRecipe
+                    WHERE folderRecipe.recipe.recipeId = :recipeId
+                    AND folderRecipe.folder.vault = member.vault
+                )
+    """)
+    Optional<VaultMember> findVaultMembershipForRecipe(@Param("recipeId") Integer recipeId, @Param("userId") Integer userId);
+
 }

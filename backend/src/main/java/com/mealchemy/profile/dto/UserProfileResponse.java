@@ -13,5 +13,6 @@ public record UserProfileResponse(
     @JsonProperty("avatar_url") String avatarUrl,
     @JsonProperty("preferred_unit") PreferredUnit preferredUnit,
     List<String> equipment,
-    @JsonProperty("updated_at") OffsetDateTime updatedAt
+    @JsonProperty("updated_at") OffsetDateTime updatedAt,
+    String email
 ) {}

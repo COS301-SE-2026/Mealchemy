@@ -2,7 +2,12 @@
 
 from datetime import UTC, datetime, timedelta
 
-from src.core.hard_filter import hard_filter, passes_dietary_restrictions, passes_dislike_time_check
+from src.core.hard_filter import (
+    hard_filter,
+    passes_dietary_restrictions,
+    passes_dislike_time_check,
+    passes_required_tags,
+)
 
 
 class TestPassesDietaryRestrictions:
@@ -26,6 +31,34 @@ class TestPassesDietaryRestrictions:
             )
             is True
         )
+
+
+class TestPassesRequiredTags:
+    def test_no_required_tags_always_passes(self):
+        assert passes_required_tags(["VEGAN"], set()) is True
+        assert passes_required_tags([], set()) is True
+
+    def test_recipe_with_the_tag_passes(self):
+        assert passes_required_tags(["VEGETARIAN", "GLUTEN_FREE"], {"vegetarian"}) is True
+
+    def test_recipe_without_the_tag_fails(self):
+        assert passes_required_tags(["GLUTEN_FREE"], {"vegetarian"}) is False
+
+    def test_recipe_tags_are_matched_case_insensitively(self):
+        assert passes_required_tags(["DIABETES_Friendly"], {"diabetes_friendly"}) is True
+
+    def test_all_required_tags_must_be_present(self):
+        assert passes_required_tags(["VEGETARIAN"], {"vegetarian", "gluten_free"}) is False
+        assert (
+            passes_required_tags(["VEGETARIAN", "GLUTEN_FREE"], {"vegetarian", "gluten_free"})
+            is True
+        )
+
+    def test_vegan_does_not_implicitly_satisfy_vegetarian(self):
+        assert passes_required_tags(["VEGAN"], {"vegetarian"}) is False
+
+    def test_required_tags_need_not_be_pre_casefolded(self):
+        assert passes_required_tags(["VEGETARIAN"], {"Vegetarian"}) is True
 
 
 class TestPassesDislikeTimeCheck:
@@ -144,3 +177,40 @@ class TestHardFilter:
         result = hard_filter([recipe], user_state)
 
         assert result == []
+
+    def test_required_tags_removes_recipe_without_the_tag(self, recipe_factory, user_state_factory):
+        recipe = recipe_factory(recipe_id=1, dietary_tags=[])
+        user_state = user_state_factory()
+
+        result = hard_filter([recipe], user_state, required_tags=["VEGETARIAN"])
+
+        assert result == []
+
+    def test_required_tags_keeps_only_recipes_carrying_the_tag(
+        self, recipe_factory, user_state_factory
+    ):
+        vegetarian = recipe_factory(recipe_id=1, dietary_tags=["VEGETARIAN"])
+        plain = recipe_factory(recipe_id=2, dietary_tags=[])
+        user_state = user_state_factory()
+
+        result = hard_filter([vegetarian, plain], user_state, required_tags=["vegetarian"])
+
+        assert result == [vegetarian]
+
+    def test_required_tags_none_or_empty_does_not_filter(self, recipe_factory, user_state_factory):
+        recipe = recipe_factory(recipe_id=1, dietary_tags=[])
+        user_state = user_state_factory()
+
+        assert hard_filter([recipe], user_state, required_tags=None) == [recipe]
+        assert hard_filter([recipe], user_state, required_tags=[]) == [recipe]
+
+    def test_required_tags_stack_with_users_own_dietary_restrictions(
+        self, recipe_factory, user_state_factory
+    ):
+        both = recipe_factory(recipe_id=1, dietary_tags=["VEGETARIAN", "GLUTEN_FREE"])
+        only_filter_tag = recipe_factory(recipe_id=2, dietary_tags=["VEGETARIAN"])
+        user_state = user_state_factory(dietary_restrictions=["GLUTEN_FREE"])
+
+        result = hard_filter([both, only_filter_tag], user_state, required_tags=["VEGETARIAN"])
+
+        assert result == [both]

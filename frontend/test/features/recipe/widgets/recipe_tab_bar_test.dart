@@ -17,7 +17,7 @@ class _TabHostState extends State<_TabHost>
   @override
   void initState() {
     super.initState();
-    _controller = TabController(length: 4, vsync: this);
+    _controller = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -39,13 +39,23 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  testWidgets('RecipeTabBar renders all four tab labels', (tester) async {
+  testWidgets('RecipeTabBar renders all five tab labels in order',
+      (tester) async {
     await tester.pumpWidget(const _TabHost());
 
-    expect(find.text('Overview'), findsOneWidget);
-    expect(find.text('Ingredients'), findsOneWidget);
-    expect(find.text('Steps'), findsOneWidget);
-    expect(find.text('Nutrition'), findsOneWidget);
     expect(find.byType(TabBar), findsOneWidget);
+    final labels = tester
+        .widgetList<Tab>(find.byType(Tab))
+        .map((t) => t.text)
+        .toList();
+    expect(labels, ['Overview', 'Ingredients', 'Equipment', 'Steps', 'Nutrition']);
+  });
+
+  testWidgets('scrolls instead of truncating labels', (tester) async {
+    await tester.pumpWidget(const _TabHost());
+
+    final bar = tester.widget<TabBar>(find.byType(TabBar));
+    expect(bar.isScrollable, isTrue);
+    expect(bar.tabAlignment, TabAlignment.start);
   });
 }

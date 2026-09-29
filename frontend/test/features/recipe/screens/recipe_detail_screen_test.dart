@@ -2,6 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
+import 'package:mealchemy/features/auth/providers/auth_provider.dart';
+import 'package:mealchemy/features/cook_mode/models/cook_session.dart';
+import 'package:mealchemy/features/cook_mode/providers/cook_session_provider.dart';
+import 'package:mealchemy/features/recipe/models/equipment.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
@@ -9,6 +14,7 @@ import 'package:mealchemy/features/recipe/providers/recipe_provider.dart';
 import 'package:mealchemy/features/recipe/screens/recipe_detail_screen.dart';
 import 'package:mealchemy/features/recipe/providers/recipe_nutrition_provider.dart';
 import 'package:mealchemy/features/recipe/repositories/mock_recipe_nutrition_repository.dart';
+import 'package:mealchemy/core/shared_widgets/atoms/app_button.dart';
 
 const _fixture = Recipe(
   recipeId: 1,
@@ -37,11 +43,22 @@ const _fixture = Recipe(
     RecipeStep(stepNr: 1, content: 'Warm the stock.'),
     RecipeStep(stepNr: 2, content: 'Toast the rice.'),
   ],
+  equipment: [
+    Equipment(id: 2, value: 'STOVETOP', label: 'Stovetop'),
+  ],
 );
 
-Widget _host(Widget child, List<Override> overrides) {
+Widget _host(
+  Widget child,
+  List<Override> overrides, {
+  bool offline = false,
+}) {
   return ProviderScope(
-    overrides: overrides,
+    overrides: [
+      activeIdentityProvider.overrideWithValue(null),
+      offlineReadOnlyProvider.overrideWith((ref) => offline),
+      ...overrides,
+    ],
     child: MaterialApp(home: child),
   );
 }
@@ -86,6 +103,50 @@ void main() {
     expect(find.text('Saffron-Infused Risotto'), findsWidgets);
     expect(find.text('30m'), findsOneWidget); // cook time
     expect(find.text('15m'), findsOneWidget); // prep time
+
+    final startCooking = tester.widget<AppButton>(
+      find.widgetWithText(AppButton, 'Start Cooking'),
+    );
+    expect(startCooking.onPressed, isNotNull);
+  });
+
+  testWidgets('offers the matching saved step as the resume action',
+      (tester) async {
+    final saved = CookSession(
+      recipeId: 1,
+      recipeTitle: _fixture.title,
+      stepIndex: 1,
+      stepNumber: 2,
+      stepText: 'Toast the rice.',
+      stepCount: 2,
+      savedAt: DateTime.utc(2026, 9, 13),
+    );
+    await tester.pumpWidget(_host(const RecipeDetailScreen(recipeId: 1), [
+      recipeDetailProvider(1).overrideWith((ref) async => _fixture),
+      cookSessionForRecipeProvider(1).overrideWith((ref) async => saved),
+    ]));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(AppButton, 'Resume Step 2'), findsOneWidget);
+  });
+
+  testWidgets('does not offer resume for a changed saved step', (tester) async {
+    final saved = CookSession(
+      recipeId: 1,
+      recipeTitle: _fixture.title,
+      stepIndex: 1,
+      stepNumber: 2,
+      stepText: 'Old instruction.',
+      stepCount: 2,
+      savedAt: DateTime.utc(2026, 9, 13),
+    );
+    await tester.pumpWidget(_host(const RecipeDetailScreen(recipeId: 1), [
+      recipeDetailProvider(1).overrideWith((ref) async => _fixture),
+      cookSessionForRecipeProvider(1).overrideWith((ref) async => saved),
+    ]));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(AppButton, 'Start Cooking'), findsOneWidget);
   });
 
   testWidgets('renders ingredient names from the recipe', (tester) async {
@@ -125,6 +186,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300)); // let tabs settle
     expect(tester.takeException(), isNull);
     expect(find.text('Ingredient #42'), findsOneWidget);
+
+    final startCooking = tester.widget<AppButton>(
+      find.widgetWithText(AppButton, 'Start Cooking'),
+    );
+    expect(startCooking.onPressed, isNull);
   });
 
   testWidgets('shows an error state when the recipe fails to load',
@@ -139,6 +205,27 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Unable to load recipe.'), findsOneWidget);
+  });
+
+  testWidgets('explains when a failed recipe is not cached offline',
+      (tester) async {
+    await tester.pumpWidget(_host(
+      const RecipeDetailScreen(recipeId: 1),
+      [
+        recipeDetailProvider(1)
+            .overrideWith((ref) async => throw Exception('offline')),
+      ],
+      offline: true,
+    ));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'This recipe is not saved for offline use. Open it while connected to make it available offline.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Unable to load recipe.'), findsNothing);
   });
 
   testWidgets('shows the save (bookmark) action in the hero', (tester) async {
@@ -200,5 +287,47 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('320 g'), findsOneWidget);
+  });
+
+  testWidgets('lists the equipment on the overview', (tester) async {
+    await tester.pumpWidget(_host(
+      const RecipeDetailScreen(recipeId: 1),
+      [recipeDetailProvider(1).overrideWith((ref) async => _fixture)],
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Stovetop'), findsOneWidget);
+    expect(find.byIcon(Icons.local_fire_department_outlined), findsWidgets);
+  });
+
+  testWidgets('the Equipment tab shows the recipe equipment', (tester) async {
+    await tester.pumpWidget(_host(
+      const RecipeDetailScreen(recipeId: 1),
+      [recipeDetailProvider(1).overrideWith((ref) async => _fixture)],
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(Tab, 'Equipment'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Stovetop'), findsWidgets);
+  });
+
+  testWidgets('hides the overview section and explains an empty tab',
+      (tester) async {
+    final noEquipment = _fixture.copyWith(equipment: const []);
+    await tester.pumpWidget(_host(
+      const RecipeDetailScreen(recipeId: 1),
+      [recipeDetailProvider(1).overrideWith((ref) async => noEquipment)],
+    ));
+    await tester.pumpAndSettle();
+
+    // only the tab label, no overview section title
+    expect(find.text('Equipment'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(Tab, 'Equipment'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No equipment listed for this recipe.'), findsOneWidget);
   });
 }

@@ -8,14 +8,19 @@ import 'package:mealchemy/features/vault/widgets/folder_recipe_row.dart';
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
-  Widget host(Recipe recipe,{VoidCallback? onEditTap, VoidCallback? onDeleteConfirmed}) {
+  Widget host(Recipe recipe,
+      {VoidCallback? onEditTap, VoidCallback? onDeleteConfirmed}) {
     final router = GoRouter(
       initialLocation: '/',
       routes: [
         GoRoute(
           path: '/',
           builder: (_, __) => Scaffold(
-            body: FolderRecipeRow( recipe: recipe,onEditTap: onEditTap, onDeleteConfirmed: onDeleteConfirmed, ),
+            body: FolderRecipeRow(
+              recipe: recipe,
+              onEditTap: onEditTap,
+              onDeleteConfirmed: onDeleteConfirmed,
+            ),
           ),
         ),
         GoRoute(

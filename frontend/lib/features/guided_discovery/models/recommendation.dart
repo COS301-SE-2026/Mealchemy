@@ -1,5 +1,7 @@
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'signal_scores.dart';
+import 'signal.dart';
+
 // A single recommended recipe from the discovery engine.
 class Recommendation {
   final int recipeId;
@@ -8,6 +10,7 @@ class Recommendation {
   final SignalScores scoreBreakdown;
   final int pantryGapCount;
   final List<String> missingIngredients;
+  final List<Signal> transparency;
   final Recipe recipe;
 
   const Recommendation({
@@ -17,6 +20,7 @@ class Recommendation {
     required this.scoreBreakdown,
     required this.pantryGapCount,
     required this.missingIngredients,
+    this.transparency = const [],
     required this.recipe,
   });
 
@@ -31,6 +35,9 @@ class Recommendation {
       missingIngredients:
           (json['missingIngredients'] as List<dynamic>?)?.cast<String>() ??
               const [],
+      transparency: (json['transparency'] as List<dynamic>? ?? const [])
+          .map((e) => Signal.fromJson(e as Map<String, dynamic>))
+          .toList(),
       recipe: Recipe.fromJson(json['recipe'] as Map<String, dynamic>),
     );
   }

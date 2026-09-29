@@ -3,6 +3,7 @@ import '../models/recipe_ingredient.dart';
 import '../models/recipe_step.dart';
 import 'recipe_repository.dart';
 import '../models/unit_of_measurement.dart';
+import '../models/equipment.dart';
 
 class MockRecipeRepository implements RecipeRepository {
   static final List<Recipe> _recipes = [
@@ -521,8 +522,12 @@ class MockRecipeRepository implements RecipeRepository {
   }
 
   @override
-  Future<Recipe> updateRecipeFull(int id, Recipe recipe,
-      {bool removePhoto = false}) async {
+  Future<Recipe> updateRecipeFull(
+    int id,
+    Recipe recipe, {
+    bool removePhoto = false,
+    bool removeVideo = false,
+  }) async {
     await Future.delayed(const Duration(milliseconds: 350));
     return recipe.copyWith(recipeId: id, ownerId: recipe.ownerId ?? 1);
   }
@@ -587,4 +592,10 @@ class MockRecipeRepository implements RecipeRepository {
 
   @override
   Future<void> deleteRecipe(int recipeId) async {}
+
+  @override
+  Future<List<Equipment>> getRecipeEquipment(int recipeId) async {
+    final recipe = await getRecipeById(recipeId);
+    return recipe.equipment ?? const [];
+  }
 }

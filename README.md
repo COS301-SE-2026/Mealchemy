@@ -55,7 +55,7 @@
 | Backend (staging) | [Deployed Backend Staging](https://mealchemy-backend-staging-otygypdv7a-ey.a.run.app) |
 | UpTime Robot Status Page | [Production Monitor Page](https://stats.uptimerobot.com/wnmHUXyJfN)|
 | Landing page | [Static-Landing-Page](https://mealchemy-firebase.web.app/)|
-| Android app | [Android App download](https://appdistribution.firebase.dev/i/9aea731b3a1ce2f6)|
+| Android app | [Android App download](https://appdistribution.firebase.dev/i/3d354d60d11cde9b)|
 | Brand style guide | [Brand Guide](https://cos301-se-2026.github.io/Mealchemy/)|
 | Service Contracts | [OpenAPI/Swagger Schema](https://mealchemy-backend-staging-otygypdv7a-ey.a.run.app/swagger-ui/index.html#/vault-controller/getVault) |
 

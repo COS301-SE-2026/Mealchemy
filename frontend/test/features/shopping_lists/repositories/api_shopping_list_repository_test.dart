@@ -124,28 +124,36 @@ void main() {
               Response(
                 requestOptions: options,
                 statusCode: 200,
-                data: [
-                  {
-                    'item_id': 10,
-                    'shopping_list_id': 1,
-                    'ing_id': null,
-                    'name': 'Greek Yogurt',
-                    'category': null,
-                    'quantity': 907.000,
-                    'unit': 'g',
-                    'purchased': true,
-                  },
-                  {
-                    'item_id': 11,
-                    'shopping_list_id': 1,
-                    'ing_id': null,
-                    'name': 'Fresh Basil',
-                    'category': null,
-                    'quantity': 1,
-                    'unit': 'bunch',
-                    'purchased': true,
-                  },
-                ],
+                data: {
+                  'shopping_list_id': 1,
+                  'user_id': 3,
+                  'name': 'Weekly Groceries',
+                  'status': 'ACTIVE',
+                  'created_at': '2026-07-13T14:20:00Z',
+                  'num_items': 2,
+                  'items': [
+                    {
+                      'item_id': 10,
+                      'shopping_list_id': 1,
+                      'ing_id': null,
+                      'name': 'Greek Yogurt',
+                      'category': null,
+                      'quantity': 907.000,
+                      'unit': 'g',
+                      'purchased': true,
+                    },
+                    {
+                      'item_id': 11,
+                      'shopping_list_id': 1,
+                      'ing_id': null,
+                      'name': 'Fresh Basil',
+                      'category': null,
+                      'quantity': 1,
+                      'unit': 'bunch',
+                      'purchased': true,
+                    },
+                  ],
+                },
               ),
             );
             return;
@@ -157,28 +165,36 @@ void main() {
               Response(
                 requestOptions: options,
                 statusCode: 200,
-                data: [
-                  {
-                    'item_id': 10,
-                    'shopping_list_id': 1,
-                    'ing_id': null,
-                    'name': 'Greek Yogurt',
-                    'category': null,
-                    'quantity': 907.000,
-                    'unit': 'g',
-                    'purchased': false,
-                  },
-                  {
-                    'item_id': 11,
-                    'shopping_list_id': 1,
-                    'ing_id': null,
-                    'name': 'Fresh Basil',
-                    'category': null,
-                    'quantity': 1,
-                    'unit': 'bunch',
-                    'purchased': false,
-                  },
-                ],
+                data: {
+                  'shopping_list_id': 1,
+                  'user_id': 3,
+                  'name': 'Weekly Groceries',
+                  'status': 'ACTIVE',
+                  'created_at': '2026-07-13T14:20:00Z',
+                  'num_items': 2,
+                  'items': [
+                    {
+                      'item_id': 10,
+                      'shopping_list_id': 1,
+                      'ing_id': null,
+                      'name': 'Greek Yogurt',
+                      'category': null,
+                      'quantity': 907.000,
+                      'unit': 'g',
+                      'purchased': false,
+                    },
+                    {
+                      'item_id': 11,
+                      'shopping_list_id': 1,
+                      'ing_id': null,
+                      'name': 'Fresh Basil',
+                      'category': null,
+                      'quantity': 1,
+                      'unit': 'bunch',
+                      'purchased': false,
+                    },
+                  ],
+                },
               ),
             );
             return;
@@ -553,6 +569,19 @@ void main() {
     expect(items, hasLength(2));
     expect(items.every((item) => item.checked), isFalse);
     expect(items.last.name, 'Fresh Basil');
+  });
+
+  test('deleteShoppingListItem deletes one item endpoint', () async {
+    await repository.deleteShoppingListItem(
+      listId: '1',
+      itemId: '10',
+    );
+
+    expect(lastRequest?.method, 'DELETE');
+    expect(
+      lastRequest?.path,
+      '/api/shopping-lists/1/items/10',
+    );
   });
 
   test('deleteShoppingListItems posts batch-delete request', () async {

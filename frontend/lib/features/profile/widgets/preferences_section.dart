@@ -5,18 +5,19 @@ import '../../../core/shared_widgets/Molecules/app_section_header.dart';
 import '../../../core/shared_widgets/atoms/app_multi_select.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../offline/widgets/offline_unavailable_state.dart';
 import '../models/preference_option.dart';
 import '../models/user_preferences.dart';
 import '../providers/profile_provider.dart';
 import 'aversions_section.dart';
 
 class PreferencesSection extends ConsumerWidget {
-  const PreferencesSection({super.key});
+  const PreferencesSection({super.key, this.readOnly = false});
+
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final prefsAsync = ref.watch(preferencesProvider);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -26,14 +27,22 @@ class PreferencesSection extends ConsumerWidget {
           icon: Icons.tune,
         ),
         const SizedBox(height: 22),
-        prefsAsync.when(
-          loading: () => const _SectionSkeleton(),
-          error: (_, __) => _ErrorLine(
-            message: 'Could not load your preferences.',
-            onRetry: () => ref.read(preferencesProvider.notifier).reload(),
-          ),
-          data: (edit) => _PreferencesBody(prefs: edit.draft),
-        ),
+        if (readOnly)
+          const OfflineUnavailableState(
+            message:
+                'Preference editing is available when you are back online.',
+            compact: true,
+          )
+        else
+          ref.watch(preferencesProvider).when(
+                loading: () => const _SectionSkeleton(),
+                error: (_, __) => _ErrorLine(
+                  message: 'Could not load your preferences.',
+                  onRetry: () =>
+                      ref.read(preferencesProvider.notifier).reload(),
+                ),
+                data: (edit) => _PreferencesBody(prefs: edit.draft),
+              ),
       ],
     );
   }

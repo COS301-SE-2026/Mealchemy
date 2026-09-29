@@ -39,6 +39,7 @@ class AppMultiSelect extends StatefulWidget {
 
 class _AppMultiSelectState extends State<AppMultiSelect> {
   final _link = LayerLink();
+  final _triggerKey = GlobalKey();
   final _controller = OverlayPortalController();
 
   bool get _open => _controller.isShowing;
@@ -58,7 +59,19 @@ class _AppMultiSelectState extends State<AppMultiSelect> {
 
   void _pick(String value) {
     widget.onToggle(value);
+    _repositionAfterLayout();
+  }
+
+  void _remove(String value) {
+    widget.onToggle(value);
+    _repositionAfterLayout();
+  }
+
+  void _repositionAfterLayout() {
     setState(() {});
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -76,7 +89,7 @@ class _AppMultiSelectState extends State<AppMultiSelect> {
               AppChip(
                 label: option.label,
                 variant: AppChipVariant.white,
-                onRemove: () => widget.onToggle(option.value),
+                onRemove: () => _remove(option.value),
               ),
             if (_available.isNotEmpty) _addTrigger(),
           ],
@@ -97,18 +110,17 @@ class _AppMultiSelectState extends State<AppMultiSelect> {
     final screenWidth = media.size.width;
     const margin = 12.0;
 
-    final box = context.findRenderObject() as RenderBox?;
+    //measure the add button itself, not the whole chip row
+    final box = _triggerKey.currentContext?.findRenderObject() as RenderBox?;
     final triggerWidth = box?.size.width ?? 0;
     final triggerLeft =
         box != null ? box.localToGlobal(Offset.zero).dx : margin;
     final triggerRight = triggerLeft + triggerWidth;
 
-    final wide = triggerWidth >= screenWidth / 2;
-    final desired = wide ? triggerWidth : triggerWidth * 2;
     final maxOnScreen = screenWidth - (margin * 2);
-    final menuWidth = desired.clamp(0.0, maxOnScreen).toDouble();
+    final menuWidth = 260.0.clamp(0.0, maxOnScreen).toDouble();
 
-    final alignRight = triggerRight > screenWidth / 2;
+    final alignRight = (triggerLeft + triggerWidth / 2) > screenWidth / 2;
     final Alignment targetAnchor =
         alignRight ? Alignment.bottomRight : Alignment.bottomLeft;
     final Alignment followerAnchor =
@@ -163,6 +175,7 @@ class _AppMultiSelectState extends State<AppMultiSelect> {
           onTap: _toggleMenu,
           borderRadius: BorderRadius.circular(8),
           child: Container(
+            key: _triggerKey,
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
             decoration: BoxDecoration(
               color: widget.surface == MultiSelectSurface.white
@@ -180,11 +193,15 @@ class _AppMultiSelectState extends State<AppMultiSelect> {
                   color: AppColors.primary,
                 ),
                 const SizedBox(width: 6),
-                Text(
-                  widget.addLabel,
-                  style: AppTextStyles.label.copyWith(
-                    color: AppColors.primary,
-                    letterSpacing: 0.6,
+                Flexible(
+                  child: Text(
+                    widget.addLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.label.copyWith(
+                      color: AppColors.primary,
+                      letterSpacing: 0.6,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -233,60 +250,62 @@ class _MultiSelectMenu extends StatelessWidget {
         width: width,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxHeight: 280),
-        child: Container(
-          decoration: BoxDecoration(
-            color: fill,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.10)),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.12),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (var i = 0; i < options.length; i++) ...[
-                    if (i > 0)
-                      Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: AppColors.primary.withValues(alpha: 0.08),
-                      ),
-                    InkWell(
-                      onTap: () => onPick(options[i].value),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.add,
-                                size: 18, color: AppColors.primary),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Text(
-                                options[i].label,
-                                style: AppTextStyles.body
-                                    .copyWith(color: AppColors.textLight),
+          child: Container(
+            key: const ValueKey('multi-select-menu'),
+            decoration: BoxDecoration(
+              color: fill,
+              borderRadius: BorderRadius.circular(14),
+              border:
+                  Border.all(color: AppColors.primary.withValues(alpha: 0.10)),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  blurRadius: 24,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (var i = 0; i < options.length; i++) ...[
+                      if (i > 0)
+                        Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: AppColors.primary.withValues(alpha: 0.08),
+                        ),
+                      InkWell(
+                        onTap: () => onPick(options[i].value),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.add,
+                                  size: 18, color: AppColors.primary),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Text(
+                                  options[i].label,
+                                  style: AppTextStyles.body
+                                      .copyWith(color: AppColors.textLight),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
-        ),
         ),
       ),
     );

@@ -44,7 +44,6 @@
   
     .problem-grid,
     .feature-grid,
-    .wow-grid,
     .mockup-gallery {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -123,7 +122,6 @@
     .hero-metrics,
     .problem-grid,
     .feature-grid,
-    .wow-grid,
     .mockup-gallery {
       grid-template-columns: 1fr;
     }
@@ -376,5 +374,78 @@
     .site-footer {
       flex-direction: column;
     }
+  
+  .bonus-panel {
+    padding: 28px 18px;
   }
+
+  .bonus-heading {
+    align-items: flex-start;
+    margin-bottom: 22px;
+  }
+
+  .bonus-heading h2 {
+    font-size: clamp(2.2rem, 11vw, 3.2rem);
+  }
+
+  .bonus-controls {
+    display: none;
+  }
+
+  .bonus-card,
+  .bonus-card--wide {
+    flex-basis: min(86vw, 390px);
+  }
+
+  .bonus-card-copy {
+    min-height: 255px;
+    padding: 24px;
+  }
+
+  .bonus-number {
+    top: 24px;
+    right: 22px;
+    font-size: 2.35rem;
+  }
+
+  .bonus-card h3 {
+    max-width: 82%;
+    font-size: 2rem;
+  }
+
+  .bonus-card-media {
+    min-height: 420px;
+  }
+
+  .bonus-card-media--pair,
+  .bonus-card-media--single {
+    gap: 10px;
+    padding: 26px 12px 0;
+  }
+
+  .bonus-phone-shot {
+    width: 47%;
+    border-width: 5px;
+    border-radius: 22px 22px 0 0;
+  }
+
+  .bonus-card-media--single .bonus-phone-shot {
+    width: min(62%, 210px);
+  }
+
+  .bonus-vault-media {
+    padding: 22px;
+  }
+
+  .shared-vault-preview {
+    padding: 20px;
+  }
+
+  .site-footer {
+    flex-direction: column;
+  }
+}
+
+
+  
   

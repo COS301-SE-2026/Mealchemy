@@ -1,4 +1,3 @@
-import 'package:mealchemy/features/dashboard/models/trending_recipe_data.dart';
 import 'dashboard_repository.dart';
 
 //implement all methods using Dio at integration
@@ -23,9 +22,4 @@ class ApiDashboardRepository implements DashboardRepository {
     throw UnimplementedError('Dashboard API integration not implemented yet.');
   }
 
-
-  @override
-  Future<List<TrendingRecipeData>> getTrendingRecipes() {
-    throw UnimplementedError('Dashboard API integration not implemented yet.');
-  }
 }

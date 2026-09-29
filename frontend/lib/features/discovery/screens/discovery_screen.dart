@@ -5,10 +5,8 @@ import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/shared_widgets/atoms/app_badge.dart';
 import 'package:mealchemy/core/shared_widgets/atoms/app_icon_button.dart';
-import 'package:mealchemy/core/shared_widgets/Molecules/app_page_filter.dart';
-import 'package:mealchemy/core/shared_widgets/Molecules/app_refresh.dart';
-import 'package:mealchemy/core/shared_widgets/Molecules/app_section_header.dart';
-import 'package:mealchemy/features/discovery/widgets/popular_categories_section.dart';
+import 'package:mealchemy/core/shared_widgets/Molecules/app_search_bar.dart';
+import 'package:mealchemy/core/shared_widgets/Molecules/app_refresh.dart';import 'package:mealchemy/features/discovery/widgets/popular_categories_section.dart';
 import 'package:mealchemy/features/discovery/providers/discovery_provider.dart';
 import 'package:mealchemy/features/discovery/widgets/explore_section.dart';
 import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
@@ -21,13 +19,8 @@ class DiscoveryScreen extends ConsumerStatefulWidget {
 }
 
 class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
-  int _selectedFilterIndex = 0;
-  static const _filters = [
-    PageFilterOption(label: 'Favourites', icon: Icons.favorite_outline),
-    PageFilterOption(label: 'History', icon: Icons.history),
-    PageFilterOption(label: 'Following', icon: Icons.person_outline),
-    PageFilterOption(label: 'Trending'),
-  ];
+  final _searchCtrl = TextEditingController();
+  String _query = '';
 
   @override
   void initState() {
@@ -35,6 +28,12 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
     Future.microtask(
       () => ref.read(discoveryProvider.notifier).loadDiscovery(),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
   @override
@@ -50,15 +49,14 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
             children: [
               const SizedBox(height: 40),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.fromLTRB(20, 0, 12, 0),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
-                      child: AppSectionHeader(
-                        title: 'Discover',
-                        size: SectionHeaderSize.large,
-                        weight: SectionHeaderWeight.bold,
+                      child: AppSearchBar(
+                        controller: _searchCtrl,
+                        hint: 'Search recipes...',
+                        onChanged: (v) => setState(() => _query = v),
                       ),
                     ),
                     Stack(
@@ -80,18 +78,10 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: AppPageFilter(
-                  options: _filters,
-                  selectedIndex: _selectedFilterIndex,
-                  onSelected: (i) => setState(() => _selectedFilterIndex = i),
-                ),
-              ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 16),
               const PopularCategoriesSection(),
-              const SizedBox(height: 28),
-              const ExploreSection(),
+              const SizedBox(height: 20),
+              ExploreSection(query: _query),
               const SizedBox(height: 32),
             ],
           ),

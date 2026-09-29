@@ -3,13 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mealchemy/features/dashboard/models/trending_recipe_data.dart';
 import 'package:mealchemy/features/dashboard/providers/dashboard_provider.dart';
 import 'package:mealchemy/features/dashboard/providers/shopping_list_provider.dart';
 import 'package:mealchemy/features/dashboard/repositories/dashboard_repository.dart';
 import 'package:mealchemy/features/dashboard/widgets/recommended_recipes_section.dart';
 import 'package:mealchemy/features/dashboard/widgets/smart_suggestion_card.dart';
-import 'package:mealchemy/features/dashboard/widgets/trending_recipes_section.dart';
 import 'package:mealchemy/features/guided_discovery/models/recommendation.dart';
 import 'package:mealchemy/features/guided_discovery/models/signal_scores.dart';
 import 'package:mealchemy/features/guided_discovery/models/swipe.dart';
@@ -17,6 +15,7 @@ import 'package:mealchemy/features/guided_discovery/providers/guided_discovery_p
 import 'package:mealchemy/features/guided_discovery/repositories/guided_discovery_repository.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/shopping_lists/models/shopping_list.dart';
+import 'package:mealchemy/features/guided_discovery/models/discovery_tag.dart';
 
 const _signals = SignalScores(
   pantryMatch: 0.9,
@@ -49,21 +48,6 @@ class _FakeDashboardRepo implements DashboardRepository {
   @override
   Future<int> getSmartSuggestionRecipeCount() async => 10;
 
-  @override
-  Future<List<TrendingRecipeData>> getTrendingRecipes() async {
-    return const [
-      TrendingRecipeData(
-        recipe: Recipe(recipeId: 3, title: 'Avocado & Kale Superbowl'),
-        trendType: TrendType.trendingNow,
-        subtitle: '4.2k saves this week',
-      ),
-      TrendingRecipeData(
-        recipe: Recipe(recipeId: 5, title: 'Dark Chocolate & Gold Ganache'),
-        trendType: TrendType.editorsChoice,
-        subtitle: 'New seasonal favourite',
-      ),
-    ];
-  }
 }
 
 class _FakeGuidedDiscoveryRepo implements GuidedDiscoveryRepository {
@@ -71,16 +55,21 @@ class _FakeGuidedDiscoveryRepo implements GuidedDiscoveryRepository {
   Future<List<Recommendation>> getRecommendations({
     int batchSize = 10,
     List<int> excludeRecipeIds = const [],
+    List<String>? dietaryTags,
+    int? maxTotalTimeMins,
   }) async =>
       [
         _rec(1, 'Saffron Risotto'),
         _rec(2, 'Butter Chicken'),
       ];
-
   @override
   Future<SwipeResponse> recordSwipe(SwipeRequest request) async =>
       throw UnimplementedError();
+
+  @override
+  Future<List<DiscoveryTag>> getDietaryTags() async => const [];
 }
+
 
 ShoppingList _list({required String title, required int count}) => ShoppingList(
       id: 't',
@@ -220,60 +209,6 @@ void main() {
 
       expect(find.text('Recommended for You'), findsOneWidget);
     });
-
-    testWidgets('renders View all trailing label', (tester) async {
-      await pump(tester, const RecommendedRecipesSection());
-      await tester.pumpAndSettle();
-
-      expect(find.text('View all'), findsOneWidget);
-    });
   });
 
-  group('TrendingRecipesSection', () {
-    testWidgets('renders nothing before data loads', (tester) async {
-      await pump(tester, const TrendingRecipesSection());
-      await tester.pump();
-
-      expect(find.text('Trending Recipes'), findsNothing);
-    });
-
-  
-
-    testWidgets('renders trending subtitles after data loads', (tester) async {
-      await pump(tester, const TrendingRecipesSection());
-
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(TrendingRecipesSection)),
-      );
-      await container.read(dashboardProvider.notifier).loadDashboard();
-      await tester.pumpAndSettle();
-
-      expect(find.text('4.2k saves this week'), findsOneWidget);
-      expect(find.text('New seasonal favourite'), findsOneWidget);
-    });
-
-    testWidgets('renders TRENDING NOW badge label', (tester) async {
-      await pump(tester, const TrendingRecipesSection());
-
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(TrendingRecipesSection)),
-      );
-      await container.read(dashboardProvider.notifier).loadDashboard();
-      await tester.pumpAndSettle();
-
-      expect(find.text('TRENDING NOW'), findsOneWidget);
-    });
-
-    testWidgets("renders EDITOR'S CHOICE badge label", (tester) async {
-      await pump(tester, const TrendingRecipesSection());
-
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(TrendingRecipesSection)),
-      );
-      await container.read(dashboardProvider.notifier).loadDashboard();
-      await tester.pumpAndSettle();
-
-      expect(find.text("EDITOR'S CHOICE"), findsOneWidget);
-    });
-  });
 }

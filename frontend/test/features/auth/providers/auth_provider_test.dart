@@ -9,9 +9,69 @@ import 'package:mealchemy/features/auth/models/user.dart';
 import 'package:mealchemy/features/auth/providers/auth_provider.dart';
 import 'package:mealchemy/features/auth/repositories/auth_repository.dart';
 import 'package:mealchemy/features/auth/storage/auth_session_storage.dart';
+import 'package:mealchemy/features/auth/providers/login_lockout_provider.dart';
 
 void main() {
   group('AuthNotifier offline identity', () {
+    test('429 records lockout and prevents repeat requests for that email',
+        () async {
+      final repository = _FakeAuthRepository(
+        loginResult: AuthResult.locked(300),
+      );
+
+      final container = _container(
+        storage: _FakeAuthSessionStorage(),
+        repository: repository,
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(authProvider.notifier);
+      await notifier.restore();
+
+      expect(
+        await notifier.login('first@example.com', 'wrong-password'),
+        isFalse,
+      );
+
+      expect(repository.loginCalls, 1);
+      expect(
+        container
+            .read(loginLockoutProvider.notifier)
+            .remainingSeconds('first@example.com'),
+        greaterThan(0),
+      );
+
+      await notifier.login('first@example.com', 'correct-password');
+      expect(repository.loginCalls, 1);
+
+      await notifier.login('second@example.com', 'password');
+      expect(repository.loginCalls, 2);
+
+      expect(container.read(authProvider).isLoading, isFalse);
+      expect(container.read(authProvider).hasValidCredential, isFalse);
+    });
+
+    test('ordinary credential failure does not create a countdown', () async {
+      final repository = _FakeAuthRepository(
+        loginResult: AuthResult.failure('Invalid email or password'),
+      );
+
+      final container = _container(
+        storage: _FakeAuthSessionStorage(),
+        repository: repository,
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(authProvider.notifier);
+      await notifier.restore();
+      await notifier.login('test@example.com', 'wrong-password');
+
+      expect(container.read(loginLockoutProvider), isEmpty);
+      expect(
+        container.read(authProvider).errorMessage,
+        'Invalid email or password',
+      );
+    });
     test('keeps identity when the persisted token has expired', () async {
       final storage = _FakeAuthSessionStorage(
         identity: _user(7),
@@ -169,8 +229,11 @@ class _FakeAuthRepository implements AuthRepository {
   final AuthResult? loginResult;
   final bool failLogout;
 
+  int loginCalls = 0;
+
   @override
   Future<AuthResult> login(String email, String password) async {
+    loginCalls++;
     return loginResult ?? AuthResult.failure('Not configured');
   }
 

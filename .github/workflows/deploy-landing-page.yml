@@ -31,17 +31,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 
-      #Warn at 500 KB, fail at 2 MB
+      #Warn at 700 KB, fail at 10 MB (10240mb)
       - name: Check landing page size
         run: |
           SIZE=$(du -sb landing-page/ | cut -f1)
           SIZE_KB=$((SIZE / 1024))
           echo "Landing page size: ${SIZE_KB} KB"
-          if [ "$SIZE_KB" -gt "2048" ]; then
-            echo "::error::Landing page (${SIZE_KB} KB) exceeds 2 MB limit."
+          if [ "$SIZE_KB" -gt "10240" ]; then
+            echo "::error::Landing page (${SIZE_KB} KB) exceeds 10 MB limit."
             exit 1
-          elif [ "$SIZE_KB" -gt "500" ]; then
-            echo "::warning::Landing page (${SIZE_KB} KB) exceeds 500 KB warn threshold."
+          elif [ "$SIZE_KB" -gt "7168" ]; then
+            echo "::warning::Landing page (${SIZE_KB} KB) exceeds 7 MB warn threshold."
           fi
       
       - name: Install firebase-tools

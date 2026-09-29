@@ -10,6 +10,7 @@ import 'package:mealchemy/features/shopping_lists/screens/shopping_lists_screen.
 import 'package:mealchemy/features/shopping_lists/widgets/shopping_list_row.dart';
 import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
 import 'package:mealchemy/features/shopping_lists/repositories/mock_shopping_list_repository.dart';
+import 'package:mealchemy/core/shared_widgets/atoms/app_toast_host.dart';
 
 void main() {
   setUpAll(() {
@@ -31,8 +32,10 @@ void main() {
           //start each test with search closed so state does not leak between them
           searchOpenProvider.overrideWith((ref) => false),
         ],
-        child: const MaterialApp(
-          home: ShoppingListsScreen(),
+        child: MaterialApp(
+          home: const ShoppingListsScreen(),
+          builder: (context, child) =>
+              AppToastHost(child: child ?? const SizedBox.shrink()),
         ),
       ),
     );
@@ -69,7 +72,7 @@ void main() {
       final addButton = tester.widget<FloatingActionButton>(
         find.byType(FloatingActionButton),
       );
-      expect(addButton.onPressed, isNull);
+      expect(addButton.onPressed, isNotNull);
 
       await tester.tap(find.byIcon(Icons.search));
       await tester.pumpAndSettle();
@@ -78,6 +81,15 @@ void main() {
 
       expect(find.text('Weekly Groceries'), findsOneWidget);
       expect(find.text('General List'), findsNothing);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Changes are unavailable offline'), findsOneWidget);
+      expect(
+        find.text('Your shopping lists are still available to view.'),
+        findsOneWidget,
+      );
     },
   );
 

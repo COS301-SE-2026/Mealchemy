@@ -27,7 +27,8 @@ void main() {
   Widget host({List<Recipe> folderRecipes = recipes}) {
     return ProviderScope(
       overrides: [
-        folderRecipeDisplayProvider(1).overrideWith((ref) async => folderRecipes),
+        folderRecipeDisplayProvider(1)
+            .overrideWith((ref) async => folderRecipes),
       ],
       child: MaterialApp.router(
         theme: AppTheme.light,
@@ -36,12 +37,12 @@ void main() {
           routes: [
             GoRoute(
               path: '/',
-              builder: (_, __) => Scaffold(body: VaultFolderCard(folder: folder)),
+              builder: (_, __) =>
+                  Scaffold(body: VaultFolderCard(folder: folder)),
             ),
             GoRoute(
               path: '/recipe/:id',
-              builder: (_, __) =>
-                  const Scaffold(body: Text('Recipe Detail')),
+              builder: (_, __) => const Scaffold(body: Text('Recipe Detail')),
             ),
           ],
         ),

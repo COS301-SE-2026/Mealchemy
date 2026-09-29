@@ -134,6 +134,16 @@ public class RecipeStepControllerIntegrationTest {
                 .andExpect(jsonPath("$", hasSize(0)));
     }
 
+    @Test
+    void getStepsByRecipeId_returns404_whenRecipeNotAccessible() throws Exception {
+        saveStepRow(recipe, 1, "First step.");
+
+        mockMvc.perform(get("/steps/recipe/{recipeId}", recipe.getRecipeId())
+                .with(authentication(authAs(otherUser.getUserId()))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Recipe not found."));
+    }
+
     // POST /steps/recipe/{recipeId}/step/create
 
     @Test
@@ -170,16 +180,16 @@ public class RecipeStepControllerIntegrationTest {
     }
 
     @Test
-    void createStep_returns403_whenNotOwner() throws Exception {
+    void createStep_returns404_whenNotOwner() throws Exception {
         RecipeStepRequest request = stepRequest(1, "Mix everything.");
 
         mockMvc.perform(post("/steps/recipe/{recipeId}/step/create", recipe.getRecipeId())
-                        .with(authentication(authAs(otherUser.getUserId())))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Only the owner of this recipe can modify its steps."));
+                .with(authentication(authAs(otherUser.getUserId())))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Recipe not found."));
     }
 
     @Test
@@ -243,17 +253,17 @@ public class RecipeStepControllerIntegrationTest {
     }
 
     @Test
-    void updateStep_returns403_whenNotOwner() throws Exception {
+    void updateStep_returns404_whenNotOwner() throws Exception {
         RecipeStep row = saveStepRow(recipe, 1, "Old content.");
         RecipeStepRequest request = stepRequest(2, "New content.");
 
         mockMvc.perform(put("/steps/recipe/{recipeId}/step/{id}/edit", recipe.getRecipeId(), row.getStepId())
-                        .with(authentication(authAs(otherUser.getUserId())))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Only the owner of this recipe can modify its steps."));
+                .with(authentication(authAs(otherUser.getUserId())))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Recipe not found."));
     }
 
     @Test
@@ -270,18 +280,18 @@ public class RecipeStepControllerIntegrationTest {
     }
 
     @Test
-    void updateStep_returns403_whenStepBelongsToDifferentRecipe() throws Exception {
+    void updateStep_returns404_whenStepBelongsToDifferentRecipe() throws Exception {
         Recipe otherRecipe = saveRecipe(owner, "Other Recipe");
         RecipeStep rowOnOther = saveStepRow(otherRecipe, 1, "Belongs elsewhere.");
         RecipeStepRequest request = stepRequest(2, "New content.");
 
         mockMvc.perform(put("/steps/recipe/{recipeId}/step/{id}/edit", recipe.getRecipeId(), rowOnOther.getStepId())
-                        .with(authentication(authAs(owner.getUserId())))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Step must be part of the recipe."));
+                .with(authentication(authAs(owner.getUserId())))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Step not found."));
     }
 
     // PUT /steps/recipe/{recipeId}/reorder
@@ -327,7 +337,7 @@ public class RecipeStepControllerIntegrationTest {
     }
 
     @Test
-    void reorderSteps_returns403_whenNotOwner() throws Exception {
+    void reorderSteps_returns404_whenNotOwner() throws Exception {
         RecipeStep first = saveStepRow(recipe, 1, "Step A.");
         RecipeStep second = saveStepRow(recipe, 2, "Step B.");
         RecipeStepReorderRequest request = new RecipeStepReorderRequest(
@@ -335,12 +345,12 @@ public class RecipeStepControllerIntegrationTest {
         );
 
         mockMvc.perform(put("/steps/recipe/{recipeId}/reorder", recipe.getRecipeId())
-                        .with(authentication(authAs(otherUser.getUserId())))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Only the owner of the recipe can manipulate the order of the steps."));
+                .with(authentication(authAs(otherUser.getUserId())))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Recipe not found."));
     }
 
     @Test
@@ -401,14 +411,14 @@ public class RecipeStepControllerIntegrationTest {
     }
 
     @Test
-    void deleteStep_returns403_whenNotOwner() throws Exception {
+    void deleteStep_returns404_whenNotOwner() throws Exception {
         RecipeStep row = saveStepRow(recipe, 1, "Owner's step.");
 
         mockMvc.perform(delete("/steps/recipe/{recipeId}/step/{id}/delete", recipe.getRecipeId(), row.getStepId())
-                        .with(authentication(authAs(otherUser.getUserId())))
-                        .with(csrf()))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Only the owner of this recipe can modify its steps."));
+                .with(authentication(authAs(otherUser.getUserId())))
+                .with(csrf()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Recipe not found."));
 
         org.junit.jupiter.api.Assertions.assertTrue(
                 recipeStepRepository.findById(row.getStepId()).isPresent()
@@ -425,15 +435,15 @@ public class RecipeStepControllerIntegrationTest {
     }
 
     @Test
-    void deleteStep_returns403_whenStepBelongsToDifferentRecipe() throws Exception {
+    void deleteStep_returns404_whenStepBelongsToDifferentRecipe() throws Exception {
         Recipe otherRecipe = saveRecipe(owner, "Other Recipe");
         RecipeStep rowOnOther = saveStepRow(otherRecipe, 1, "Belongs elsewhere.");
 
         mockMvc.perform(delete("/steps/recipe/{recipeId}/step/{id}/delete", recipe.getRecipeId(), rowOnOther.getStepId())
-                        .with(authentication(authAs(owner.getUserId())))
-                        .with(csrf()))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Step must be part of the recipe."));
+                .with(authentication(authAs(owner.getUserId())))
+                .with(csrf()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Step not found."));
 
         org.junit.jupiter.api.Assertions.assertTrue(
                 recipeStepRepository.findById(rowOnOther.getStepId()).isPresent()

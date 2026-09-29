@@ -10,6 +10,7 @@ import '../repositories/auth_repository.dart';
 import '../repositories/mock_auth_repository.dart';
 import '../storage/auth_session_storage.dart';
 import '../../../core/providers/api_service_provider.dart';
+import 'login_lockout_provider.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   if (AppConfig.mockAuth) {
@@ -139,19 +140,53 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<bool> login(String email, String password) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-
-    final result = await _repository.login(email, password);
-
-    if (result.success) {
-      return _acceptAuthentication(result);
+    if (state.isRestoring) {
+      await restore();
     }
 
-    state = state.copyWith(
-      isLoading: false,
-      errorMessage: result.errorMessage,
-    );
-    return false;
+    if (!mounted || state.isLoading) return false;
+
+    final submittedEmail = email.trim();
+    final lockouts = _ref.read(loginLockoutProvider.notifier);
+
+    if (lockouts.remainingSeconds(submittedEmail) > 0) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Too many failed login attempts. Please try again later.',
+      );
+      return false;
+    }
+
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      final result = await _repository.login(submittedEmail, password);
+      if (!mounted) return false;
+
+      final retryAfter = result.retryAfterSeconds;
+      if (retryAfter != null) {
+        lockouts.record(submittedEmail, retryAfter);
+      }
+
+      if (result.success) {
+        lockouts.clear(submittedEmail);
+        return await _acceptAuthentication(result);
+      }
+
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: result.errorMessage,
+      );
+      return false;
+    } catch (_) {
+      if (mounted) {
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'Unable to sign in. Please try again.',
+        );
+      }
+      return false;
+    }
   }
 
   Future<bool> register(

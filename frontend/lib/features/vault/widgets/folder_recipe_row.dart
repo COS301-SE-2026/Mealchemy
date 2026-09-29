@@ -14,12 +14,24 @@ class FolderRecipeRow extends StatelessWidget {
     this.onEditTap,
     this.onDeleteConfirmed,
     this.mutationsEnabled = true,
+    this.allowReporting = false,
+    this.showEditAction = true,
+    this.showDeleteAction = true,
+    this.editEnabled = true,
+    this.editDisabledReason = 'Editing unavailable',
+    this.detailLocation,
   });
 
   final Recipe recipe;
   final VoidCallback? onEditTap;
   final VoidCallback? onDeleteConfirmed;
   final bool mutationsEnabled;
+  final bool allowReporting;
+  final bool showEditAction;
+  final bool showDeleteAction;
+  final bool editEnabled;
+  final String editDisabledReason;
+  final String? detailLocation;
 
   String get _subtitle {
     final total = (recipe.prepTimeMins ?? 0) + (recipe.cookingTimeMins ?? 0);
@@ -54,7 +66,11 @@ class FolderRecipeRow extends StatelessWidget {
         color: AppColors.surfaceWhite,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          onTap: () => context.push('/recipe/${recipe.recipeId}'),
+          onTap: () => context.push(
+            detailLocation ??
+                '/recipe/${recipe.recipeId}'
+                    '${allowReporting ? '?report=true' : ''}',
+          ),
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(12),
@@ -93,42 +109,46 @@ class FolderRecipeRow extends StatelessWidget {
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
-                      onPressed: mutationsEnabled
-                          ? () => _handleDeleteTap(context)
-                          : null,
-                      tooltip: mutationsEnabled
-                          ? 'Delete recipe'
-                          : 'Unavailable offline',
-                      icon: Icon(
-                        Icons.delete_outline,
-                        size: 18,
-                        color: mutationsEnabled
-                            ? AppColors.primary
-                            : AppColors.textMuted,
+                    if (showDeleteAction)
+                      IconButton(
+                        onPressed: mutationsEnabled
+                            ? () => _handleDeleteTap(context)
+                            : null,
+                        tooltip: mutationsEnabled
+                            ? 'Delete recipe'
+                            : 'Unavailable offline',
+                        icon: Icon(
+                          Icons.delete_outline,
+                          size: 18,
+                          color: mutationsEnabled
+                              ? AppColors.primary
+                              : AppColors.textMuted,
+                        ),
+                        constraints: const BoxConstraints(),
+                        padding: const EdgeInsets.all(6),
                       ),
-                      constraints: const BoxConstraints(),
-                      padding: const EdgeInsets.all(6),
-                    ),
-                    IconButton(
-                      onPressed: mutationsEnabled
-                          ? onEditTap ??
-                              () => context
-                                  .push('/edit-recipe/${recipe.recipeId}')
-                          : null,
-                      tooltip: mutationsEnabled
-                          ? 'Edit recipe'
-                          : 'Unavailable offline',
-                      icon: Icon(
-                        Icons.edit_outlined,
-                        size: 18,
-                        color: mutationsEnabled
-                            ? AppColors.primary
-                            : AppColors.textMuted,
+                    if (showEditAction)
+                      IconButton(
+                        onPressed: mutationsEnabled && editEnabled
+                            ? onEditTap ??
+                                () => context
+                                    .push('/edit-recipe/${recipe.recipeId}')
+                            : null,
+                        tooltip: !mutationsEnabled
+                            ? 'Unavailable offline'
+                            : !editEnabled
+                                ? editDisabledReason
+                                : 'Edit recipe',
+                        icon: Icon(
+                          Icons.edit_outlined,
+                          size: 18,
+                          color: mutationsEnabled && editEnabled
+                              ? AppColors.primary
+                              : AppColors.textMuted,
+                        ),
+                        constraints: const BoxConstraints(),
+                        padding: const EdgeInsets.all(6),
                       ),
-                      constraints: const BoxConstraints(),
-                      padding: const EdgeInsets.all(6),
-                    ),
                   ],
                 ),
               ],

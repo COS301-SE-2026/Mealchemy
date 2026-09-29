@@ -30,7 +30,7 @@
 		<java.version>21</java.version>
 		<postgresql.version>42.7.12</postgresql.version>
 		<tomcat.version>10.1.59</tomcat.version>
-		<jackson-bom.version>2.21.4</jackson-bom.version>
+		<jackson-bom.version>2.21.7</jackson-bom.version>
 		<springdoc.version>2.8.9</springdoc.version>
 
 		<!-- gcp photo storage -->
@@ -92,6 +92,12 @@
 			<groupId>com.google.cloud</groupId>
 			<artifactId>google-cloud-storage</artifactId>
 			<version>${google-cloud-storage.version}</version>
+		</dependency>
+
+		<!-- websockets -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket</artifactId>
 		</dependency>
 
         <!-- engine auth interceptor -->

@@ -8,8 +8,7 @@ class SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: 
-        BorderRadius.circular(30),
+      borderRadius: BorderRadius.circular(30),
       child: SizedBox(
         height: 400,
         width: double.infinity,
@@ -28,7 +27,8 @@ class SectionHeader extends StatelessWidget {
             Positioned.fill(
               child: Container(
                 decoration: const BoxDecoration(
-                  gradient: AppColors.brandOverlay, //used the overlay created in the app_colours
+                  gradient: AppColors
+                      .brandOverlay, //used the overlay created in the app_colours
                 ),
               ),
             ),
@@ -37,7 +37,7 @@ class SectionHeader extends StatelessWidget {
             Positioned.fill(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center, 
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
                     'Mealchemy',
@@ -56,7 +56,6 @@ class SectionHeader extends StatelessWidget {
                       letterSpacing: 2,
                     ),
                   ),
-                  
                 ],
               ),
             ),

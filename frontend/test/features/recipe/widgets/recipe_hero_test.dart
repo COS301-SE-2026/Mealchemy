@@ -76,4 +76,43 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Create Shopping List'), findsOneWidget);
   });
+
+  testWidgets('the report button only shows for a published community recipe',
+      (tester) async {
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => Scaffold(
+            body: RecipeHero(
+              recipe: baseRecipe.copyWith(isCommunityPublished: true),
+              allowReporting: true,
+            ),
+          ),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          shoppingListRepositoryProvider
+              .overrideWithValue(MockShoppingListRepository()),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.flag_outlined), findsOneWidget);
+  });
+
+  testWidgets('the report button is hidden when reporting is not allowed',
+      (tester) async {
+    await tester.pumpWidget(
+      host(baseRecipe.copyWith(isCommunityPublished: true)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.flag_outlined), findsNothing);
+  });
 }
