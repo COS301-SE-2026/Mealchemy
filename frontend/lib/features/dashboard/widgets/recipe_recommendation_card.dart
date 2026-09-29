@@ -4,6 +4,8 @@ import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/features/guided_discovery/models/recommendation.dart';
 import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mealchemy/core/routes/app_routes.dart';
 
 class RecipeRecommendationCard extends StatelessWidget {
   const RecipeRecommendationCard({
@@ -23,6 +25,9 @@ class RecipeRecommendationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      onTap: () => context.push(
+        AppRoutes.recipeDetail.replaceFirst(':id', '${data.recipe.recipeId}'),
+      ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: SizedBox(
