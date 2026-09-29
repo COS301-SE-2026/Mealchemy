@@ -31,23 +31,6 @@ void main() {
               padding: const EdgeInsets.all(20),
               child: Align(
                 alignment: alignment,
-                child: const SizedBox(
-                  width: 170,
-                  child: SizedBox.shrink(),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Align(
-                alignment: alignment,
                 child: SizedBox(
                   width: 170,
                   child: AppMultiSelect(

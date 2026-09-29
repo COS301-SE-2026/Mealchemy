@@ -66,6 +66,7 @@ class _AppMultiSelectState extends State<AppMultiSelect> {
     widget.onToggle(value);
     _repositionAfterLayout();
   }
+
   void _repositionAfterLayout() {
     setState(() {});
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -192,11 +193,15 @@ class _AppMultiSelectState extends State<AppMultiSelect> {
                   color: AppColors.primary,
                 ),
                 const SizedBox(width: 6),
-                Text(
-                  widget.addLabel,
-                  style: AppTextStyles.label.copyWith(
-                    color: AppColors.primary,
-                    letterSpacing: 0.6,
+                Flexible(
+                  child: Text(
+                    widget.addLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.label.copyWith(
+                      color: AppColors.primary,
+                      letterSpacing: 0.6,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -245,60 +250,62 @@ class _MultiSelectMenu extends StatelessWidget {
         width: width,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxHeight: 280),
-        child: Container(
-          decoration: BoxDecoration(
-            color: fill,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.10)),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.12),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (var i = 0; i < options.length; i++) ...[
-                    if (i > 0)
-                      Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: AppColors.primary.withValues(alpha: 0.08),
-                      ),
-                    InkWell(
-                      onTap: () => onPick(options[i].value),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.add,
-                                size: 18, color: AppColors.primary),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Text(
-                                options[i].label,
-                                style: AppTextStyles.body
-                                    .copyWith(color: AppColors.textLight),
+          child: Container(
+            key: const ValueKey('multi-select-menu'),
+            decoration: BoxDecoration(
+              color: fill,
+              borderRadius: BorderRadius.circular(14),
+              border:
+                  Border.all(color: AppColors.primary.withValues(alpha: 0.10)),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  blurRadius: 24,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (var i = 0; i < options.length; i++) ...[
+                      if (i > 0)
+                        Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: AppColors.primary.withValues(alpha: 0.08),
+                        ),
+                      InkWell(
+                        onTap: () => onPick(options[i].value),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.add,
+                                  size: 18, color: AppColors.primary),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Text(
+                                  options[i].label,
+                                  style: AppTextStyles.body
+                                      .copyWith(color: AppColors.textLight),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
-        ),
         ),
       ),
     );
