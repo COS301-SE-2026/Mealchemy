@@ -20,26 +20,27 @@ class _ListFavRepository implements FavRepository {
   @override
   Future<List<Favourite>> getFavs() async => favs;
   @override
-  Future<void> removeFav(int recipeId) async {}
+  Future<void> removeFav(int recipeId, {required String cuisineValue}) async {}
 }
 
 class _ErrorFavRepository implements FavRepository {
   @override
   Future<List<Favourite>> getFavs() async => throw Exception('boom');
   @override
-  Future<void> removeFav(int recipeId) async {}
+  Future<void> removeFav(int recipeId, {required String cuisineValue}) async {}
 }
 
 class _PendingFavRepository implements FavRepository {
   @override
   Future<List<Favourite>> getFavs() => Completer<List<Favourite>>().future;
   @override
-  Future<void> removeFav(int recipeId) async {}
+  Future<void> removeFav(int recipeId, {required String cuisineValue}) async {}
 }
 
 Favourite _fav() => Favourite(
       favouriteId: 1,
       recipeId: 1,
+      cuisineValue: 'ITALIAN',
       createdAt: DateTime(2026, 2, 14),
       recipe: const Recipe(recipeId: 1, title: 'Test Pasta'),
     );

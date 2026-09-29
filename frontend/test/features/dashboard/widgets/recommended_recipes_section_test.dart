@@ -12,6 +12,7 @@ import 'package:mealchemy/features/guided_discovery/models/swipe.dart';
 import 'package:mealchemy/features/guided_discovery/providers/guided_discovery_provider.dart';
 import 'package:mealchemy/features/guided_discovery/repositories/guided_discovery_repository.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
+import 'package:mealchemy/features/guided_discovery/models/discovery_tag.dart';
 
 const _signals = SignalScores(
   pantryMatch: 0.9,
@@ -48,6 +49,8 @@ class _FakeGuidedDiscoveryRepo implements GuidedDiscoveryRepository {
   Future<List<Recommendation>> getRecommendations({
     int batchSize = 10,
     List<int> excludeRecipeIds = const [],
+    List<String>? dietaryTags,
+    int? maxTotalTimeMins,
   }) async =>
       [
         _rec(1, 'Saffron Risotto', 'ITALIAN', 0.92),
@@ -57,6 +60,9 @@ class _FakeGuidedDiscoveryRepo implements GuidedDiscoveryRepository {
   @override
   Future<SwipeResponse> recordSwipe(SwipeRequest request) async =>
       throw UnimplementedError();
+
+  @override
+  Future<List<DiscoveryTag>> getDietaryTags() async => const [];
 }
 
 void main() {

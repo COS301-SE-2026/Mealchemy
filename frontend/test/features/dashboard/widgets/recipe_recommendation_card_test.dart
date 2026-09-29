@@ -113,10 +113,20 @@ void main() {
     });
 
     testWidgets('long titles do not overflow ', (tester) async {
-      await pump(tester, _rec(
-        title: 'Slow Roasted Mediterranean Chickpea and Spinach Stew',
-      ));
+      await pump(
+          tester,
+          _rec(
+            title: 'Slow Roasted Mediterranean Chickpea and Spinach Stew',
+          ));
       expect(tester.takeException(), isNull);
+    });
+    testWidgets('tapping the card opens that recipe', (tester) async {
+      await pump(tester, _rec(id: 7));
+
+      await tester.tap(find.text('Saffron Risotto'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Detail 7'), findsOneWidget);
     });
   });
 }
