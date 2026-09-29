@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/features/auth/providers/auth_provider.dart';
 import 'package:mealchemy/features/cook_mode/models/cook_session.dart';
 import 'package:mealchemy/features/cook_mode/providers/cook_session_provider.dart';
@@ -47,9 +48,17 @@ const _fixture = Recipe(
   ],
 );
 
-Widget _host(Widget child, List<Override> overrides) {
+Widget _host(
+  Widget child,
+  List<Override> overrides, {
+  bool offline = false,
+}) {
   return ProviderScope(
-    overrides: [activeIdentityProvider.overrideWithValue(null), ...overrides],
+    overrides: [
+      activeIdentityProvider.overrideWithValue(null),
+      offlineReadOnlyProvider.overrideWith((ref) => offline),
+      ...overrides,
+    ],
     child: MaterialApp(home: child),
   );
 }
@@ -196,6 +205,27 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Unable to load recipe.'), findsOneWidget);
+  });
+
+  testWidgets('explains when a failed recipe is not cached offline',
+      (tester) async {
+    await tester.pumpWidget(_host(
+      const RecipeDetailScreen(recipeId: 1),
+      [
+        recipeDetailProvider(1)
+            .overrideWith((ref) async => throw Exception('offline')),
+      ],
+      offline: true,
+    ));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'This recipe is not saved for offline use. Open it while connected to make it available offline.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Unable to load recipe.'), findsNothing);
   });
 
   testWidgets('shows the save (bookmark) action in the hero', (tester) async {

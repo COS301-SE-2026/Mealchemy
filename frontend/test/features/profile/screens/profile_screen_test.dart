@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/core/shared_widgets/atoms/app_button.dart';
 import 'package:mealchemy/features/profile/models/preference_option.dart';
@@ -58,7 +59,7 @@ class _FakeRepo implements ProfileRepository {
       throw UnimplementedError('${invocation.memberName} not stubbed');
 }
 
-Widget _host(ProfileRepository repo) {
+Widget _host(ProfileRepository repo, {bool offline = false}) {
   final router = GoRouter(
     initialLocation: AppRoutes.profile,
     routes: [
@@ -75,6 +76,7 @@ Widget _host(ProfileRepository repo) {
       adminAccessProvider.overrideWith(
         (ref) async => AdminAccess.forbidden,
       ),
+      offlineReadOnlyProvider.overrideWith((ref) => offline),
     ],
     child: MaterialApp.router(routerConfig: router),
   );
@@ -129,5 +131,29 @@ void main() {
       find.widgetWithText(AppButton, 'Save Changes'),
     );
     expect(button.onPressed, isNotNull);
+  });
+
+  testWidgets('offline profile is view only and cannot be saved',
+      (tester) async {
+    await tester.pumpWidget(_host(_FakeRepo(), offline: true));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Profile changes are unavailable offline. Reconnect to update your details.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Mutombo Kabau'), findsOneWidget);
+    expect(find.text('Add equipment'), findsNothing);
+    expect(
+      find.text('Preference editing is available when you are back online.'),
+      findsOneWidget,
+    );
+
+    final button = tester.widget<AppButton>(
+      find.widgetWithText(AppButton, 'Changes unavailable offline'),
+    );
+    expect(button.onPressed, isNull);
   });
 }

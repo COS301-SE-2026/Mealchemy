@@ -1,5 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:drift/native.dart';
+import 'package:mealchemy/features/auth/providers/auth_provider.dart';
+import 'package:mealchemy/features/offline/data/offline_cache_database.dart';
+import 'package:mealchemy/features/offline/data/offline_cache_store.dart';
+import 'package:mealchemy/features/offline/providers/offline_cache_provider.dart';
+import 'package:mealchemy/features/offline/repositories/cached_recipe_nutrition_repository.dart';
 import 'package:mealchemy/features/recipe/models/recipe_nutrition.dart';
 import 'package:mealchemy/features/recipe/providers/recipe_nutrition_provider.dart';
 import 'package:mealchemy/features/recipe/repositories/recipe_nutrition_repository.dart';
@@ -71,6 +77,30 @@ void main() {
     );
 
     expect(repository, same(remoteRepository));
+  });
+
+  test('nutrition repository decorates API mode for authenticated users', () {
+    final remoteRepository = _RecordingNutritionRepository();
+    final database = OfflineCacheDatabase(NativeDatabase.memory());
+    final cache = OfflineCacheStore(database);
+    addTearDown(database.close);
+
+    final container = ProviderContainer(
+      overrides: [
+        mockRecipeEnabledProvider.overrideWithValue(false),
+        activeIdentityProvider.overrideWithValue(11),
+        offlineCacheStoreProvider.overrideWithValue(cache),
+        remoteRecipeNutritionRepositoryProvider.overrideWithValue(
+          remoteRepository,
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    expect(
+      container.read(recipeNutritionRepositoryProvider),
+      isA<CachedRecipeNutritionRepository>(),
+    );
   });
 
   test('recipeNutritionProvider loads nutrition for requested recipe',

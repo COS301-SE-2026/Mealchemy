@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/offline_cache_database.dart';
 import '../data/offline_cache_store.dart';
+import '../data/meal_plan_cache_store.dart';
 import '../data/pantry_cache_store.dart';
 import '../data/shopping_list_cache_store.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -27,6 +28,13 @@ final pantryCacheStoreProvider = Provider<PantryCacheStore>((ref) {
 
 final shoppingListCacheStoreProvider = Provider<ShoppingListCacheStore>((ref) {
   return ShoppingListCacheStore(
+    ref.watch(offlineCacheDatabaseProvider),
+    ref.watch(offlineCacheStoreProvider),
+  );
+});
+
+final mealPlanCacheStoreProvider = Provider<MealPlanCacheStore>((ref) {
+  return MealPlanCacheStore(
     ref.watch(offlineCacheDatabaseProvider),
     ref.watch(offlineCacheStoreProvider),
   );

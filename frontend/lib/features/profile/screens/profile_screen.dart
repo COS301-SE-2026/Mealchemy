@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/connectivity/network_status_provider.dart';
 import '../../../core/providers/feedback_provider.dart';
 import '../../../core/shared_widgets/atoms/app_button.dart';
 import '../../../core/shared_widgets/atoms/app_toast.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../offline/widgets/offline_unavailable_state.dart';
 import '../providers/profile_provider.dart';
 import '../widgets/information_section.dart';
 import '../widgets/preferences_section.dart';
@@ -16,17 +18,27 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final readOnly = ref.watch(offlineReadOnlyProvider);
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
-      children: const [
-        _Intro(),
-        SizedBox(height: 30),
-        InformationSection(),
-        SizedBox(height: 40),
-        PreferencesSection(),
-        SizedBox(height: 32),
-        _SaveBar(),
-        AdminProfileEntry(),
+      children: [
+        const _Intro(),
+        if (readOnly) ...[
+          const SizedBox(height: 18),
+          const OfflineUnavailableState(
+            message:
+                'Profile changes are unavailable offline. Reconnect to update your details.',
+            compact: true,
+          ),
+        ],
+        const SizedBox(height: 30),
+        InformationSection(readOnly: readOnly),
+        const SizedBox(height: 40),
+        PreferencesSection(readOnly: readOnly),
+        const SizedBox(height: 32),
+        _SaveBar(readOnly: readOnly),
+        const AdminProfileEntry(),
       ],
     );
   }
@@ -71,10 +83,19 @@ class _Intro extends StatelessWidget {
 
 // One save action commits both profile and preferences changes
 class _SaveBar extends ConsumerWidget {
-  const _SaveBar();
+  const _SaveBar({required this.readOnly});
+
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (readOnly) {
+      return AppButton(
+        label: 'Changes unavailable offline',
+        onPressed: null,
+      );
+    }
+
     final profileState = ref.watch(profileProvider).valueOrNull;
     final prefsState = ref.watch(preferencesProvider).valueOrNull;
 

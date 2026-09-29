@@ -15,8 +15,8 @@ void main() {
     final database = OfflineCacheDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
-    expect(database.schemaVersion, 2);
-    expect(database.allTables, hasLength(10));
+    expect(database.schemaVersion, 5);
+    expect(database.allTables, hasLength(14));
     expect(
       database.allTables.map((table) => table.actualTableName).toSet(),
       {
@@ -26,10 +26,14 @@ void main() {
         'cached_recipe_rows',
         'cached_recipe_ingredient_rows',
         'cached_recipe_step_rows',
+        'cached_recipe_equipment_rows',
+        'cached_recipe_nutrition_rows',
         'cache_sync_metadata_rows',
         'cached_pantry_ingredient_rows',
         'cached_shopping_list_rows',
         'cached_shopping_list_item_rows',
+        'cached_meal_plan_rows',
+        'cached_meal_plan_entry_rows',
       },
     );
     for (final table in database.allTables) {

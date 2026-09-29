@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/guided_discovery/models/discovery_tag.dart';
 import 'package:mealchemy/features/guided_discovery/models/recommendation.dart';
@@ -104,12 +105,16 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  Widget host(GuidedDiscoveryRepository repository) {
+  Widget host(
+    GuidedDiscoveryRepository repository, {
+    bool offline = false,
+  }) {
     return ProviderScope(
       overrides: [
         guidedDiscoveryRepositoryProvider.overrideWithValue(repository),
         shoppingListRepositoryProvider
             .overrideWithValue(MockShoppingListRepository()),
+        offlineReadOnlyProvider.overrideWith((ref) => offline),
       ],
       child: const MaterialApp(
         home: Scaffold(body: GuidedDiscoveryScreen()),
@@ -183,6 +188,19 @@ void main() {
 
     expect(find.textContaining('Discovery failure'), findsOneWidget);
     expect(find.text('Try Again'), findsOneWidget);
+  });
+
+  testWidgets('offline replaces the API error with an online-required state',
+      (tester) async {
+    await tester.pumpWidget(host(_FailingRepo(), offline: true));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Recipe discovery is available when you are back online.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Discovery failure'), findsNothing);
+    expect(find.text('Try Again'), findsNothing);
   });
 
   testWidgets('swiping right advances to the next card', (tester) async {

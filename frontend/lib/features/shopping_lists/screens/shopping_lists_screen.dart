@@ -14,6 +14,7 @@ import '../providers/shopping_list_provider.dart';
 import '../widgets/shopping_list_row.dart';
 import '../widgets/shopping_section_header.dart';
 import '../../offline/data/offline_cache_store.dart';
+import '../../offline/screens/offline_changes_unavailable_screen.dart';
 import '../../offline/widgets/cache_freshness_label.dart';
 
 //main overview screen
@@ -28,19 +29,28 @@ class ShoppingListsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.bgLight,
       floatingActionButton: FloatingActionButton(
-        onPressed: isReadOnly
-            ? null
-            : () => _showCreateListDialog(
-                  context,
-                  ref,
-                  (name) async {
-                    await ref
-                        .read(shoppingListsProvider.notifier)
-                        .createShoppingList(name: name);
-                  },
+        onPressed: () {
+          if (isReadOnly) {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const OfflineChangesUnavailableScreen(
+                  message: 'Your shopping lists are still available to view.',
                 ),
-        backgroundColor:
-            isReadOnly ? AppColors.surfaceMuted : AppColors.primary,
+              ),
+            );
+            return;
+          }
+          _showCreateListDialog(
+            context,
+            ref,
+            (name) async {
+              await ref
+                  .read(shoppingListsProvider.notifier)
+                  .createShoppingList(name: name);
+            },
+          );
+        },
+        backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textDark,
         elevation: 8,
         child: const Icon(Icons.add),

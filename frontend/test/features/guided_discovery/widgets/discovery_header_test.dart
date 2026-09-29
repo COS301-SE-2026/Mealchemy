@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/features/guided_discovery/widgets/discovery_header.dart';
 import 'package:mealchemy/features/shopping_lists/providers/shopping_list_provider.dart';
 
@@ -15,6 +16,13 @@ void main() {
     int cartCount = 0,
     ValueChanged<String>? onFilterSelected,
     DiscoveryTab selectedTab = DiscoveryTab.discover,
+    bool settingsEnabled = true,
+    List<String> filters = const [
+      'All',
+      'Quick Meals',
+      'High Protein',
+      'Vegetarian',
+    ],
   }) {
     return ProviderScope(
       overrides: [
@@ -24,14 +32,10 @@ void main() {
         home: Scaffold(
           body: DiscoveryHeader(
             selectedFilter: 'All',
-            filters: const [
-              'All',
-              'Quick Meals',
-              'High Protein',
-              'Vegetarian',
-            ],
+            filters: filters,
             onFilterSelected: onFilterSelected ?? (_) {},
             selectedTab: selectedTab,
+            settingsEnabled: settingsEnabled,
           ),
         ),
       ),
@@ -88,5 +92,22 @@ void main() {
     await tester.pumpWidget(host(cartCount: 3));
 
     expect(find.text('3'), findsOneWidget);
+  });
+
+  //tune button is disabled and muted when settings are turned off
+  testWidgets('DiscoveryHeader disables recommendation settings offline', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(filters: const ['All'], settingsEnabled: false),
+    );
+
+    final button = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.tune),
+    );
+    final icon = tester.widget<Icon>(find.byIcon(Icons.tune));
+
+    expect(button.onPressed, isNull);
+    expect(icon.color, AppColors.textMuted);
   });
 }

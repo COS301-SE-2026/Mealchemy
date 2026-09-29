@@ -4,8 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mealchemy/features/offline/data/offline_cache_database.dart';
 import 'package:mealchemy/features/offline/data/offline_cache_store.dart';
 import 'package:mealchemy/features/offline/repositories/cached_recipe_repository.dart';
+import 'package:mealchemy/features/recipe/models/equipment.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
+import 'package:mealchemy/features/recipe/models/recipe_nutrition.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
 import 'package:mealchemy/features/recipe/repositories/mock_recipe_repository.dart';
 
@@ -70,7 +72,7 @@ void main() {
     await expectLater(repository.getRecipes(), throwsA(same(error)));
   });
 
-  test('complete cached aggregate backs detail ingredients and steps',
+  test('complete cached aggregate backs detail ingredients steps and equipment',
       () async {
     final cachedRecipe = _recipe('Complete cached recipe', complete: true);
     await cache.storeCompleteRecipe(
@@ -91,6 +93,10 @@ void main() {
     expect((await repository.getRecipeById(7)).title, 'Complete cached recipe');
     expect((await repository.getRecipeIngredients(7)).single.name, 'Milk');
     expect((await repository.getRecipeSteps(7)).single.content, 'Mix');
+    expect(
+      (await repository.getRecipeEquipment(7)).single.label,
+      'Mixing bowl',
+    );
   });
 
   test('missing aggregate and anonymous viewers rethrow transport failures',
@@ -115,6 +121,27 @@ void main() {
     await expectLater(
       anonymousRepository.getRecipeIngredients(7),
       throwsA(same(error)),
+    );
+  });
+
+  test('successful recipe updates clear stale cached nutrition', () async {
+    final recipe = _recipe('Updated recipe', complete: true);
+    await cache.storeRecipeNutrition(
+      viewerUserId: 11,
+      nutrition: _nutrition(),
+      syncedAt: DateTime.now().toUtc(),
+    );
+    final repository = CachedRecipeRepository(
+      remote: _RecipeRemote(recipe: recipe),
+      cache: cache,
+      viewerUserId: 11,
+    );
+
+    await repository.updateRecipeFull(7, recipe);
+
+    expect(
+      await cache.readRecipeNutrition(viewerUserId: 11, recipeId: 7),
+      isNull,
     );
   });
 
@@ -177,6 +204,37 @@ Recipe _recipe(String title, {bool complete = false}) => Recipe(
               ),
             ]
           : null,
+      equipment: complete
+          ? const [
+              Equipment(
+                id: 3,
+                value: 'mixing_bowl',
+                label: 'Mixing bowl',
+              ),
+            ]
+          : null,
+    );
+
+RecipeNutrition _nutrition() => const RecipeNutrition(
+      recipeId: 7,
+      servings: 2,
+      totals: NutritionValues(
+        caloriesKcal: 600,
+        proteinG: 30,
+        carbsG: 70,
+        fatG: 20,
+        fibreG: 8,
+        sodiumMg: 900,
+      ),
+      perServing: NutritionValues(
+        caloriesKcal: 300,
+        proteinG: 15,
+        carbsG: 35,
+        fatG: 10,
+        fibreG: 4,
+        sodiumMg: 450,
+      ),
+      ingredients: [],
     );
 
 class _RecipeRemote extends MockRecipeRepository {
@@ -212,6 +270,12 @@ class _RecipeRemote extends MockRecipeRepository {
   Future<List<RecipeStep>> getRecipeSteps(int recipeId) async {
     if (detailError case final error?) throw error;
     return recipe.steps ?? const [];
+  }
+
+  @override
+  Future<List<Equipment>> getRecipeEquipment(int recipeId) async {
+    if (detailError case final error?) throw error;
+    return recipe.equipment ?? const [];
   }
 
   @override
