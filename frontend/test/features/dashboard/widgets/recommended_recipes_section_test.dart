@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/features/dashboard/providers/dashboard_provider.dart';
 import 'package:mealchemy/features/dashboard/repositories/dashboard_repository.dart';
 import 'package:mealchemy/features/dashboard/widgets/recommended_recipes_section.dart';
@@ -64,7 +65,7 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  Widget host(Widget child) {
+  Widget host(Widget child, {bool offline = false}) {
     final router = GoRouter(
       initialLocation: '/',
       routes: [
@@ -85,6 +86,7 @@ void main() {
         dashboardRepositoryProvider.overrideWithValue(_FakeDashboardRepo()),
         guidedDiscoveryRepositoryProvider
             .overrideWithValue(_FakeGuidedDiscoveryRepo()),
+        offlineReadOnlyProvider.overrideWith((ref) => offline),
       ],
       child: MaterialApp.router(routerConfig: router),
     );
@@ -93,6 +95,7 @@ void main() {
   Future<void> pump(
     WidgetTester tester,
     Widget child, {
+    bool offline = false,
     Size size = const Size(1080, 2400),
   }) async {
     tester.view.physicalSize = size;
@@ -101,7 +104,7 @@ void main() {
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
     });
-    await tester.pumpWidget(host(child));
+    await tester.pumpWidget(host(child, offline: offline));
   }
 
   group('RecommendedRecipesSection', () {
@@ -115,6 +118,21 @@ void main() {
       await pump(tester, const RecommendedRecipesSection());
       await tester.pump();
       expect(find.text('View all'), findsNothing);
+    });
+
+    testWidgets('offline empty state replaces the blank spacer',
+        (tester) async {
+      await pump(
+        tester,
+        const RecommendedRecipesSection(),
+        offline: true,
+      );
+      await tester.pump();
+
+      expect(
+        find.text('Recommendations are available when you are back online.'),
+        findsOneWidget,
+      );
     });
   });
 }
