@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/core/providers/feedback_provider.dart';
 import 'package:mealchemy/core/routes/app_routes.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_confirm_dialog.dart';
@@ -11,6 +12,9 @@ import 'package:mealchemy/core/shared_widgets/atoms/app_toast.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/features/recipe/widgets/add_to_sl.dart';
+import 'package:mealchemy/features/offline/data/meal_plan_cache_store.dart';
+import 'package:mealchemy/features/offline/data/offline_cache_store.dart';
+import 'package:mealchemy/features/offline/widgets/cache_freshness_label.dart';
 import 'package:mealchemy/features/vault/models/vault.dart';
 import 'package:mealchemy/features/vault/providers/shared_vault_access_provider.dart';
 import 'package:mealchemy/features/vault/providers/vault_folder_management_provider.dart';
@@ -69,7 +73,8 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
   void _openShoppingList(MealPlanState state) {
     final plan = state.plan;
     if (plan == null) return;
-    showAddPlanToSl(context: context, planId: plan.planId, start: state.selectedDay);
+    showAddPlanToSl(
+        context: context, planId: plan.planId, start: state.selectedDay);
   }
 
   Future<void> _clearDay() async {
@@ -82,19 +87,23 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
     );
     if (ok != true) return;
 
-    final error = await ref.read(mealPlanProvider(_vaultId).notifier).clearDay();
+    final error =
+        await ref.read(mealPlanProvider(_vaultId).notifier).clearDay();
     final feedback = ref.read(feedbackProvider.notifier);
     if (error != null) {
-      feedback.showShort(error, kind: ToastKind.error, icon: Icons.error_outline);
+      feedback.showShort(error,
+          kind: ToastKind.error, icon: Icons.error_outline);
     } else {
-      feedback.showShort('Day cleared', kind: ToastKind.success, icon: Icons.check_circle_outline);
+      feedback.showShort('Day cleared',
+          kind: ToastKind.success, icon: Icons.check_circle_outline);
     }
   }
 
   List<AppDropdownItem> _menuItems(MealPlanState state, bool canEdit) {
     return [
       if (canEdit)
-        AppDropdownItem(label: 'Add meal', icon: Icons.add, onTap: () => _openSheet()),
+        AppDropdownItem(
+            label: 'Add meal', icon: Icons.add, onTap: () => _openSheet()),
       AppDropdownItem(
         label: 'Generate shopping list',
         icon: Icons.shopping_cart_outlined,
@@ -112,6 +121,7 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
 
   @override
   Widget build(BuildContext context) {
+    final offline = ref.watch(offlineReadOnlyProvider);
     final state = ref.watch(mealPlanProvider(_vaultId));
     final notifier = ref.read(mealPlanProvider(_vaultId).notifier);
     final vaults = ref.watch(vaultsProvider).valueOrNull ?? const <Vault>[];
@@ -123,8 +133,8 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
     final checkingAccess = current == null ||
         (current.vaultType == VaultTypes.shared &&
             ref.watch(sharedVaultAccessProvider(current.vaultId)).isLoading);
-    final canEdit = widget.canEdit && canManage;
-    final viewOnly = !canEdit && !checkingAccess;
+    final canEdit = widget.canEdit && canManage && !offline;
+    final viewOnly = offline || (!canEdit && !checkingAccess);
 
     final label = Row(
       mainAxisSize: MainAxisSize.min,
@@ -139,18 +149,22 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
         ),
         if (canSwitch) ...[
           const SizedBox(width: 2),
-          const Icon(Icons.keyboard_arrow_down, color: AppColors.accent, size: 18),
+          const Icon(Icons.keyboard_arrow_down,
+              color: AppColors.accent, size: 18),
         ],
       ],
     );
 
-    final menu = AppDropdown(
-      trigger: const Padding(
-        padding: EdgeInsets.all(4),
-        child: Icon(Icons.more_vert, color: AppColors.textMuted, size: 20),
-      ),
-      items: _menuItems(state, canEdit),
-    );
+    final Widget menu = offline
+        ? const SizedBox.shrink()
+        : AppDropdown(
+            trigger: const Padding(
+              padding: EdgeInsets.all(4),
+              child:
+                  Icon(Icons.more_vert, color: AppColors.textMuted, size: 20),
+            ),
+            items: _menuItems(state, canEdit),
+          );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -171,7 +185,8 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
                                   icon: v.vaultType == VaultTypes.private
                                       ? Icons.person_outline
                                       : Icons.group_outlined,
-                                  onTap: () => setState(() => _vaultId = v.vaultId),
+                                  onTap: () =>
+                                      setState(() => _vaultId = v.vaultId),
                                 ))
                             .toList(),
                       )
@@ -203,20 +218,34 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
             onToday: notifier.goToToday,
             onDateSelected: notifier.selectDay,
           ),
+          CacheFreshnessLabel(
+            collection: CacheCollection.mealPlanWeek,
+            scopeId: mealPlanWeekScope(_vaultId, state.selectedDay),
+          ),
           const SizedBox(height: 16),
-          _buildBody(state, notifier, canEdit),
+          _buildBody(state, notifier, canEdit, offline),
         ],
       ),
     );
   }
 
-  Widget _buildBody(MealPlanState state, MealPlanNotifier notifier, bool canEdit) {
+  Widget _buildBody(
+    MealPlanState state,
+    MealPlanNotifier notifier,
+    bool canEdit,
+    bool offline,
+  ) {
     if (state.isLoading) {
       return const Column(children: [_SkeletonCard(), _SkeletonCard()]);
     }
 
     if (state.errorMessage != null) {
-      return _ErrorState(message: state.errorMessage!, onRetry: notifier.load);
+      return _ErrorState(
+        message: offline
+            ? 'This week has not been saved for offline use.'
+            : state.errorMessage!,
+        onRetry: offline ? null : notifier.load,
+      );
     }
 
     final entries = state.dayEntries;
@@ -227,17 +256,22 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
         child: Center(
           child: Column(
             children: [
-              const Icon(Icons.event_note_outlined, size: 28, color: AppColors.textMuted),
+              const Icon(Icons.event_note_outlined,
+                  size: 28, color: AppColors.textMuted),
               const SizedBox(height: 8),
               Text(
                 'Nothing planned yet',
-                style: AppTextStyles.bodyBold.copyWith(color: AppColors.textLight),
+                style:
+                    AppTextStyles.bodyBold.copyWith(color: AppColors.textLight),
               ),
               const SizedBox(height: 2),
               Text(
-                "The vault owner hasn't added meals for this day.",
+                offline
+                    ? 'No meals were saved for this day.'
+                    : "The vault owner hasn't added meals for this day.",
                 textAlign: TextAlign.center,
-                style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+                style:
+                    AppTextStyles.caption.copyWith(color: AppColors.textMuted),
               ),
             ],
           ),
@@ -258,11 +292,16 @@ class _MealPlanSectionState extends ConsumerState<MealPlanSection> {
           ),
         ),
       if (canEdit)
-        for (final slot in [MealSlot.breakfast, MealSlot.lunch, MealSlot.dinner])
+        for (final slot in [
+          MealSlot.breakfast,
+          MealSlot.lunch,
+          MealSlot.dinner
+        ])
           if (!entries.any((e) => e.mealSlot == slot))
             (
               at: minutes(slot.earliest!),
-              child: _AddSlotRow(slot: slot, onTap: () => _openSheet(slot: slot)),
+              child:
+                  _AddSlotRow(slot: slot, onTap: () => _openSheet(slot: slot)),
             ),
     ]..sort((a, b) => a.at.compareTo(b.at));
 
@@ -295,11 +334,13 @@ class _ViewOnlyTag extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.visibility_outlined, size: 12, color: AppColors.textMuted),
+          const Icon(Icons.visibility_outlined,
+              size: 12, color: AppColors.textMuted),
           const SizedBox(width: 4),
           Text(
             'VIEW ONLY',
-            style: AppTextStyles.label.copyWith(color: AppColors.textMuted, letterSpacing: 1),
+            style: AppTextStyles.label
+                .copyWith(color: AppColors.textMuted, letterSpacing: 1),
           ),
         ],
       ),
@@ -323,11 +364,13 @@ class _AddSlotRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.inputBorder.withValues(alpha: 0.6)),
+          border:
+              Border.all(color: AppColors.inputBorder.withValues(alpha: 0.6)),
         ),
         child: Row(
           children: [
-            Icon(slot?.icon ?? Icons.restaurant_outlined, size: 16, color: AppColors.textMuted),
+            Icon(slot?.icon ?? Icons.restaurant_outlined,
+                size: 16, color: AppColors.textMuted),
             const SizedBox(width: 10),
             Text(
               slot?.label.toUpperCase() ?? 'ANOTHER MEAL',
@@ -341,7 +384,8 @@ class _AddSlotRow extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               'Add',
-              style: AppTextStyles.bodyBold.copyWith(color: AppColors.primaryLight),
+              style: AppTextStyles.bodyBold
+                  .copyWith(color: AppColors.primaryLight),
             ),
           ],
         ),
@@ -370,7 +414,7 @@ class _ErrorState extends StatelessWidget {
   const _ErrorState({required this.message, required this.onRetry});
 
   final String message;
-  final VoidCallback onRetry;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -383,12 +427,14 @@ class _ErrorState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
           ),
-          const SizedBox(height: 8),
-          AppButton.text(
-            label: 'Try again',
-            onPressed: onRetry,
-            customColor: AppColors.primary,
-          ),
+          if (onRetry != null) ...[
+            const SizedBox(height: 8),
+            AppButton.text(
+              label: 'Try again',
+              onPressed: onRetry,
+              customColor: AppColors.primary,
+            ),
+          ],
         ],
       ),
     );

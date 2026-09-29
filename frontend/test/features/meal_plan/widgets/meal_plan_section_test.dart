@@ -63,7 +63,7 @@ final _breakfast = MealPlanEntry(
 );
 
 Future<void> _pump(WidgetTester tester, MealPlanRepository repo,
-    {bool canEdit = true, bool canManage = true}) async {
+    {bool canEdit = true, bool canManage = true, bool offline = false}) async {
   tester.view.physicalSize = const Size(1080, 2400);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
@@ -90,7 +90,7 @@ Future<void> _pump(WidgetTester tester, MealPlanRepository repo,
           ]),
       folderRecipeDisplayProvider.overrideWith((ref, folderId) async =>
           [const Recipe(recipeId: 3, title: 'Burrito Bowl')]),
-      offlineReadOnlyProvider.overrideWith((ref) => false),
+      offlineReadOnlyProvider.overrideWith((ref) => offline),
       canManageVaultFoldersProvider.overrideWith((ref, vault) => canManage),
     ],
     child: MaterialApp(
@@ -218,6 +218,36 @@ void main() {
     expect(find.text('Nothing planned yet'), findsOneWidget);
     expect(find.text("The vault owner hasn't added meals for this day."),
         findsOneWidget);
+  });
+
+  testWidgets('offline cached meals are view only and hide online actions',
+      (tester) async {
+    await _pump(tester, _FakeRepo([_breakfast]), offline: true);
+
+    expect(find.text('VIEW ONLY'), findsOneWidget);
+    expect(find.text('Burrito Bowl'), findsOneWidget);
+    expect(find.byIcon(Icons.edit_outlined), findsNothing);
+    expect(find.byIcon(Icons.more_vert), findsNothing);
+    expect(find.text('LUNCH'), findsNothing);
+  });
+
+  testWidgets('offline cached empty day uses saved-data wording',
+      (tester) async {
+    await _pump(tester, _FakeRepo([]), offline: true);
+
+    expect(find.text('Nothing planned yet'), findsOneWidget);
+    expect(find.text('No meals were saved for this day.'), findsOneWidget);
+    expect(find.text("The vault owner hasn't added meals for this day."),
+        findsNothing);
+  });
+
+  testWidgets('uncached offline week has a clear message without retry',
+      (tester) async {
+    await _pump(tester, _FakeRepo([], fail: true), offline: true);
+
+    expect(find.text('This week has not been saved for offline use.'),
+        findsOneWidget);
+    expect(find.text('Try again'), findsNothing);
   });
 
   testWidgets('editors do not see the view only tag', (tester) async {

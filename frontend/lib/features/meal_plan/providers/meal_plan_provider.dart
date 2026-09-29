@@ -1,6 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealchemy/core/providers/api_service_provider.dart';
+import 'package:mealchemy/features/auth/providers/auth_provider.dart';
+import 'package:mealchemy/features/offline/providers/offline_cache_provider.dart';
+import 'package:mealchemy/features/offline/repositories/cached_meal_plan_repository.dart';
 import '../models/meal_plan.dart';
 import '../models/meal_plan_entry.dart';
 import '../models/meal_slot.dart';
@@ -8,7 +11,14 @@ import '../repositories/meal_plan_repository.dart';
 import '../repositories/api_meal_plan_repository.dart';
 
 final mealPlanRepositoryProvider = Provider<MealPlanRepository>((ref) {
-  return ApiMealPlanRepository(ref.read(dioProvider));
+  final remote = ApiMealPlanRepository(ref.read(dioProvider));
+  final viewerUserId = ref.watch(activeIdentityProvider);
+  if (viewerUserId == null) return remote;
+  return CachedMealPlanRepository(
+    remote: remote,
+    cache: ref.watch(mealPlanCacheStoreProvider),
+    viewerUserId: viewerUserId,
+  );
 });
 
 class MealPlanState {
@@ -70,7 +80,8 @@ bool _sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
 
 DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
-DateTime _weekStart(DateTime d) => _dateOnly(d).subtract(Duration(days: d.weekday - 1));
+DateTime _weekStart(DateTime d) =>
+    _dateOnly(d).subtract(Duration(days: d.weekday - 1));
 
 class MealPlanNotifier extends StateNotifier<MealPlanState> {
   final MealPlanRepository _repository;
@@ -109,7 +120,8 @@ class MealPlanNotifier extends StateNotifier<MealPlanState> {
   }
 
   void nextDay() => selectDay(state.selectedDay.add(const Duration(days: 1)));
-  void previousDay() => selectDay(state.selectedDay.subtract(const Duration(days: 1)));
+  void previousDay() =>
+      selectDay(state.selectedDay.subtract(const Duration(days: 1)));
   void goToToday() => selectDay(DateTime.now());
 
   Future<List<MealPlanEntry>> entriesBetween(DateTime start, DateTime end) =>
@@ -117,15 +129,18 @@ class MealPlanNotifier extends StateNotifier<MealPlanState> {
 
   Future<String?> addEntry(MealPlanEntry entry) => _add(entry);
 
-  Future<String?> acceptRecommendation( MealPlanEntry entry, MealSuggestion suggestion) =>
+  Future<String?> acceptRecommendation(
+          MealPlanEntry entry, MealSuggestion suggestion) =>
       _add(entry, suggestion: suggestion);
 
-  Future<String?> _add(MealPlanEntry entry, {MealSuggestion? suggestion}) async {
+  Future<String?> _add(MealPlanEntry entry,
+      {MealSuggestion? suggestion}) async {
     final plan = state.plan;
     if (plan == null) return 'Meal plan not loaded yet';
     try {
       final saved = suggestion != null
-          ? await _repository.acceptRecommendation(plan.planId, entry, suggestion)
+          ? await _repository.acceptRecommendation(
+              plan.planId, entry, suggestion)
           : await _repository.addEntry(plan.planId, entry);
       if (_inWindow(saved.entryDate)) {
         state = state.copyWith(entries: [...state.entries, saved]);
@@ -177,7 +192,8 @@ class MealPlanNotifier extends StateNotifier<MealPlanState> {
     final start = state.windowStart;
     if (start == null) return false;
     final day = _dateOnly(d);
-    return !day.isBefore(start) && day.isBefore(start.add(const Duration(days: 7)));
+    return !day.isBefore(start) &&
+        day.isBefore(start.add(const Duration(days: 7)));
   }
 
   String _message(Object e) {
@@ -195,13 +211,14 @@ class MealPlanNotifier extends StateNotifier<MealPlanState> {
 }
 
 final mealPlanProvider =
-    StateNotifierProvider.family<MealPlanNotifier, MealPlanState, int>( (ref, vaultId) {
+    StateNotifierProvider.family<MealPlanNotifier, MealPlanState, int>(
+        (ref, vaultId) {
   return MealPlanNotifier(ref.watch(mealPlanRepositoryProvider), vaultId);
 });
 
-final mealSuggestionsProvider = FutureProvider.autoDispose
-    .family<List<MealSuggestion>, ({int vaultId, DateTime date, MealSlot slot})>(
-        (ref, key) async {
+final mealSuggestionsProvider = FutureProvider.autoDispose.family<
+    List<MealSuggestion>,
+    ({int vaultId, DateTime date, MealSlot slot})>((ref, key) async {
   final plan = ref.watch(mealPlanProvider(key.vaultId).select((s) => s.plan));
   if (plan == null) return const [];
   return ref
