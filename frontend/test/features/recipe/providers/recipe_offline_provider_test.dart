@@ -53,6 +53,7 @@ void main() {
     expect(result.title, 'Previously cached');
     expect(result.ingredients?.single.name, 'Salt');
     expect(result.steps?.single.content, 'Cached step');
+    expect(result.equipment?.single.label, 'Mixing bowl');
     final persisted =
         await cache.readCompleteRecipe(viewerUserId: 11, recipeId: 42);
     expect(persisted?.title, 'Previously cached');
@@ -76,6 +77,9 @@ Recipe _completeRecipe(String title) => Recipe(
           stepNr: 1,
           content: 'Cached step',
         ),
+      ],
+      equipment: const [
+        Equipment(id: 3, value: 'mixing_bowl', label: 'Mixing bowl'),
       ],
     );
 

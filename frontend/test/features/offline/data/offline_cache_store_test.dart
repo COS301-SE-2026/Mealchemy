@@ -2,8 +2,10 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mealchemy/features/offline/data/offline_cache_database.dart';
 import 'package:mealchemy/features/offline/data/offline_cache_store.dart';
+import 'package:mealchemy/features/recipe/models/equipment.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
+import 'package:mealchemy/features/recipe/models/recipe_nutrition.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
 import 'package:mealchemy/features/vault/models/vault.dart';
 import 'package:mealchemy/features/vault/models/vault_folder.dart';
@@ -33,10 +35,10 @@ void main() {
       syncedAt: syncedAt,
     );
 
-    expect((await store.readVaults(viewerUserId: 1)).single.name,
-        'User one view');
-    expect((await store.readVaults(viewerUserId: 2)).single.name,
-        'User two view');
+    expect(
+        (await store.readVaults(viewerUserId: 1)).single.name, 'User one view');
+    expect(
+        (await store.readVaults(viewerUserId: 2)).single.name, 'User two view');
   });
 
   test('complete reconciliation only removes rows in its viewer and scope',
@@ -95,6 +97,7 @@ void main() {
     expect(cached?.title, 'Cached complete recipe');
     expect(cached?.ingredients, hasLength(1));
     expect(cached?.steps, hasLength(1));
+    expect(cached?.equipment?.single.label, 'Mixing bowl');
   });
 
   test('sync metadata is independent per collection and scope', () async {
@@ -126,6 +129,30 @@ void main() {
     expect(vaultMetadata?.lastSyncedAt, vaultSync);
     expect(vaultMetadata?.lastAccessedAt, isNotNull);
     expect(recipeMetadata?.lastSyncedAt, recipeSync);
+  });
+
+  test('recipe nutrition summary round trips without ingredient breakdown',
+      () async {
+    final syncedAt = DateTime.utc(2026, 9, 29);
+    await store.storeRecipeNutrition(
+      viewerUserId: 1,
+      nutrition: _nutrition(),
+      syncedAt: syncedAt,
+    );
+
+    final cached = await store.readRecipeNutrition(
+      viewerUserId: 1,
+      recipeId: 42,
+    );
+
+    expect(cached?.servings, 2);
+    expect(cached?.totals.caloriesKcal, 600);
+    expect(cached?.perServing.proteinG, 15);
+    expect(cached?.ingredients, isEmpty);
+    expect(
+      await store.readRecipeNutrition(viewerUserId: 2, recipeId: 42),
+      isNull,
+    );
   });
 }
 
@@ -166,4 +193,29 @@ Recipe _completeRecipe(String title) => Recipe(
           content: 'Mix.',
         ),
       ],
+      equipment: const [
+        Equipment(id: 3, value: 'mixing_bowl', label: 'Mixing bowl'),
+      ],
+    );
+
+RecipeNutrition _nutrition() => const RecipeNutrition(
+      recipeId: 42,
+      servings: 2,
+      totals: NutritionValues(
+        caloriesKcal: 600,
+        proteinG: 30,
+        carbsG: 70,
+        fatG: 20,
+        fibreG: 8,
+        sodiumMg: 900,
+      ),
+      perServing: NutritionValues(
+        caloriesKcal: 300,
+        proteinG: 15,
+        carbsG: 35,
+        fatG: 10,
+        fibreG: 4,
+        sodiumMg: 450,
+      ),
+      ingredients: [],
     );

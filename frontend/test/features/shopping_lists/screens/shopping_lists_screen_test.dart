@@ -72,7 +72,7 @@ void main() {
       final addButton = tester.widget<FloatingActionButton>(
         find.byType(FloatingActionButton),
       );
-      expect(addButton.onPressed, isNull);
+      expect(addButton.onPressed, isNotNull);
 
       await tester.tap(find.byIcon(Icons.search));
       await tester.pumpAndSettle();
@@ -81,6 +81,15 @@ void main() {
 
       expect(find.text('Weekly Groceries'), findsOneWidget);
       expect(find.text('General List'), findsNothing);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Changes are unavailable offline'), findsOneWidget);
+      expect(
+        find.text('Your shopping lists are still available to view.'),
+        findsOneWidget,
+      );
     },
   );
 

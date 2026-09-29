@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/core/shared_widgets/Molecules/app_section_header.dart';
 import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/core/theme/app_typography.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/discovery/providers/discovery_provider.dart';
+import 'package:mealchemy/features/offline/widgets/offline_unavailable_state.dart';
 import 'package:mealchemy/features/recipe/widgets/recipe_network_image.dart';
 
 const double _cellHeight = 130.0;
@@ -19,6 +21,7 @@ class ExploreSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(discoveryProvider);
+    final offline = ref.watch(offlineReadOnlyProvider);
     final cleaned = query.trim().toLowerCase();
     final recipes = cleaned.isEmpty
         ? state.visibleRecipes
@@ -39,14 +42,24 @@ class ExploreSection extends ConsumerWidget {
             child: AppSectionHeader(title: title),
           ),
           const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(
-              cleaned.isEmpty
-                  ? 'No published recipes yet.'
-                  : 'No recipes found for "$query".',
+          if (offline)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: OfflineUnavailableState(
+                message:
+                    'Published recipes are available when you are back online.',
+                compact: true,
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                cleaned.isEmpty
+                    ? 'No published recipes yet.'
+                    : 'No recipes found for "$query".',
+              ),
             ),
-          ),
         ],
       );
     }

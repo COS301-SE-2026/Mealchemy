@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:dio/dio.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/features/recipe/providers/recipe_nutrition_provider.dart';
 import 'package:mealchemy/features/recipe/repositories/mock_recipe_nutrition_repository.dart';
 import 'package:mealchemy/features/recipe/widgets/recipe_nutrition_tab.dart';
@@ -142,6 +143,7 @@ void main() {
     WidgetTester tester, {
     RecipeNutritionRepository? repository,
     bool settle = true,
+    bool isOffline = false,
   }) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 1;
@@ -154,6 +156,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          offlineReadOnlyProvider.overrideWithValue(isOffline),
           recipeNutritionRepositoryProvider.overrideWithValue(
             repository ?? MockRecipeNutritionRepository(),
           ),
@@ -245,6 +248,25 @@ void main() {
     expect(find.text('0 ingredients'), findsOneWidget);
   });
 
+  testWidgets('cached summary explains offline ingredient limitation', (
+    tester,
+  ) async {
+    await pumpNutritionTab(
+      tester,
+      repository: _EmptyNutritionRepository(),
+      isOffline: true,
+    );
+
+    expect(
+      find.text('Ingredient breakdown is available when you reconnect.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('No ingredient nutrition is available for this recipe.'),
+      findsNothing,
+    );
+  });
+
   testWidgets('RecipeNutritionTab displays repository failure', (
     tester,
   ) async {
@@ -258,6 +280,24 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Try again'), findsOneWidget);
+  });
+
+  testWidgets('uncached offline nutrition has a specific non-retry state', (
+    tester,
+  ) async {
+    await pumpNutritionTab(
+      tester,
+      repository: _FailingNutritionRepository(),
+      isOffline: true,
+    );
+
+    expect(
+      find.text(
+        'Nutrition for this recipe has not been saved for offline use.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Try again'), findsNothing);
   });
   testWidgets('RecipeNutritionTab displays unavailable state for 404', (
     tester,

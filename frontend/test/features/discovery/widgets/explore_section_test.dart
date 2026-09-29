@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mealchemy/core/connectivity/network_status_provider.dart';
 import 'package:mealchemy/features/discovery/providers/discovery_provider.dart';
 import 'package:mealchemy/features/discovery/repositories/discovery_repository.dart';
 import 'package:mealchemy/features/discovery/widgets/explore_section.dart';
@@ -31,7 +32,11 @@ void main() {
     Recipe(recipeId: 4, title: 'Sirloin', cuisineType: 'italian'),
   ];
 
-  Widget host(DiscoveryState state, {String query = ''}) {
+  Widget host(
+    DiscoveryState state, {
+    String query = '',
+    bool offline = false,
+  }) {
     final router = GoRouter(
       initialLocation: '/',
       routes: [
@@ -51,6 +56,7 @@ void main() {
     return ProviderScope(
       overrides: [
         discoveryProvider.overrideWith((ref) => _FakeDiscoveryNotifier(state)),
+        offlineReadOnlyProvider.overrideWith((ref) => offline),
       ],
       child: MaterialApp.router(routerConfig: router),
     );
@@ -60,6 +66,7 @@ void main() {
     WidgetTester tester,
     DiscoveryState state, {
     String query = '',
+    bool offline = false,
     Size size = const Size(1080, 2400),
   }) async {
     tester.view.physicalSize = size;
@@ -68,7 +75,7 @@ void main() {
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
     });
-    await tester.pumpWidget(host(state, query: query));
+    await tester.pumpWidget(host(state, query: query, offline: offline));
     await tester.pumpAndSettle();
   }
 
@@ -79,6 +86,33 @@ void main() {
 
       expect(find.text('Explore'), findsOneWidget);
       expect(find.text('No published recipes yet.'), findsOneWidget);
+    });
+
+    testWidgets(
+        'offline empty state explains that published recipes need a connection',
+        (tester) async {
+      await pump(
+        tester,
+        const DiscoveryState(recipes: []),
+        offline: true,
+      );
+
+      expect(
+        find.text('Published recipes are available when you are back online.'),
+        findsOneWidget,
+      );
+      expect(find.text('No published recipes yet.'), findsNothing);
+    });
+
+    testWidgets('offline keeps recipes already held in memory', (tester) async {
+      await pump(
+        tester,
+        const DiscoveryState(recipes: recipes),
+        offline: true,
+      );
+
+      expect(find.text('Beet Salad'), findsOneWidget);
+      expect(find.text('Sirloin'), findsOneWidget);
     });
 
     testWidgets('renders the Explore header and recipe titles', (tester) async {
@@ -113,7 +147,7 @@ void main() {
       );
 
       expect(find.text('Beet Salad'), findsOneWidget);
-      expect(find.text('Ramen'), findsNothing); 
+      expect(find.text('Ramen'), findsNothing);
     });
 
     testWidgets('filters by the search query', (tester) async {
@@ -135,7 +169,7 @@ void main() {
       );
       expect(find.text('No recipes found for "zzz".'), findsOneWidget);
     });
-    
+
     testWidgets('tapping a cell navigates to the recipe detail',
         (tester) async {
       await pump(tester, const DiscoveryState(recipes: recipes));
