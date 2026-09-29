@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../models/discovery_tag.dart';
 import '../models/recommendation.dart';
 import '../models/swipe.dart';
 import 'guided_discovery_repository.dart';
@@ -13,6 +14,8 @@ class ApiGuidedDiscoveryRepository implements GuidedDiscoveryRepository {
   Future<List<Recommendation>> getRecommendations({
     int batchSize = 10,
     List<int> excludeRecipeIds = const [],
+    List<String>? dietaryTags,
+    int? maxTotalTimeMins,
   }) async {
     try {
       final response = await _dio.get(
@@ -20,6 +23,8 @@ class ApiGuidedDiscoveryRepository implements GuidedDiscoveryRepository {
         queryParameters: {
           'batchSize': batchSize,
           if (excludeRecipeIds.isNotEmpty) 'excludeRecipeIds': excludeRecipeIds,
+          if (dietaryTags != null && dietaryTags.isNotEmpty) 'dietaryTags': dietaryTags,
+          if (maxTotalTimeMins != null) 'maxTotalTimeMins': maxTotalTimeMins,
         },
         options: Options(
           receiveTimeout: const Duration(seconds: 30),
@@ -54,6 +59,14 @@ class ApiGuidedDiscoveryRepository implements GuidedDiscoveryRepository {
     } on DioException catch (e) {
       throw _messageFrom(e);
     }
+  }
+
+  @override
+  Future<List<DiscoveryTag>> getDietaryTags() async {
+    final response = await _dio.get('/api/tags', queryParameters: {'dietary': true});
+    return (response.data as List)
+        .map((j) => DiscoveryTag.fromJson(j as Map<String, dynamic>))
+        .toList();
   }
 
   String _messageFrom(DioException e) {

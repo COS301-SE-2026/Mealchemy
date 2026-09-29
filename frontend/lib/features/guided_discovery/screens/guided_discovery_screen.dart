@@ -23,13 +23,6 @@ class GuidedDiscoveryScreen extends ConsumerStatefulWidget {
 }
 
 class _GuidedDiscoveryScreenState extends ConsumerState<GuidedDiscoveryScreen> {
-  static const List<String> _filters = [
-    'All',
-    'Quick Meals',
-    'High Protein',
-    'Vegetarian',
-  ];
-  String _selectedFilter = 'All';
   DiscoveryTab _selectedTab = DiscoveryTab.discover;
 
   @override
@@ -52,13 +45,14 @@ class _GuidedDiscoveryScreenState extends ConsumerState<GuidedDiscoveryScreen> {
               bottom: false,
               child: Column(
                 children: [
+                  //pills come from the tags endpoint, picking one reloads the deck
                   DiscoveryHeader(
-                    selectedFilter: _selectedFilter,
-                    filters: _filters,
+                    selectedFilter: ref.watch(discoveryFilterProvider),
+                    filters: ref.watch(discoveryFilterLabelsProvider),
                     selectedTab: _selectedTab,
                     onTabSelected: (tab) => setState(() => _selectedTab = tab),
                     onFilterSelected: (f) =>
-                        setState(() => _selectedFilter = f),
+                        ref.read(discoveryFilterProvider.notifier).state = f,
                   ),
                   Expanded(
                     child: _selectedTab == DiscoveryTab.sizzles
