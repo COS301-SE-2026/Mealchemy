@@ -187,13 +187,20 @@ void _showRecipePreview(BuildContext context, Recommendation recommendation) {
       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
     ),
     builder: (context) {
-      return FractionallySizedBox(
-        heightFactor: 0.86,
-        child: RecipePreviewSheet(recommendation: recommendation),
+      return DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.86,
+        minChildSize: 0.4,
+        maxChildSize: 0.95,
+        builder: (context, controller) => RecipePreviewSheet(
+          recommendation: recommendation,
+          scrollController: controller,
+        ),
       );
     },
   );
 }
+
 
 class _ErrorState extends StatelessWidget {
   const _ErrorState({required this.message, required this.onRetry});

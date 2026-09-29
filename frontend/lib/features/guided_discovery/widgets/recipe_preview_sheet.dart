@@ -12,10 +12,12 @@ class RecipePreviewSheet extends StatelessWidget {
     super.key,
     required this.recommendation,
     this.onViewFullRecipe,
+    this.scrollController,
   });
 
   final Recommendation recommendation;
   final VoidCallback? onViewFullRecipe;
+  final ScrollController? scrollController;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +26,7 @@ class RecipePreviewSheet extends StatelessWidget {
     return SafeArea(
       top: false,
       child: SingleChildScrollView(
+        controller: scrollController,
         padding: const EdgeInsets.fromLTRB(22, 14, 22, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
