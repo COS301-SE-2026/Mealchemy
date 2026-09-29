@@ -802,6 +802,7 @@ abstract final class CacheCollection {
   static const pantry = 'pantry';
   static const shoppingLists = 'shoppingLists';
   static const shoppingList = 'shoppingList';
+  static const mealPlanWeek = 'mealPlanWeek';
 }
 
 abstract final class CacheScope {
