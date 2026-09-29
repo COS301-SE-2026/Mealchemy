@@ -48,60 +48,52 @@ void main() {
     expect(find.text('What are we cooking today?'), findsOneWidget);
   });
 
-  testWidgets('shows the nothing planned greeting without a plan',
-      (tester) async {
-    await tester.pumpWidget(host());
-    await tester.pumpAndSettle();
-    expect(find.text('Nothing planned yet,'), findsOneWidget);
-    expect(find.text('what are we cooking?'), findsOneWidget);
+ group('welcomeMessage', () {
+  final lunch = _entry(MealSlot.lunch, 12, 30, 'Caprese Pasta Salad');
+  final dinner = _entry(MealSlot.dinner, 18, 30, 'Penne Alla Vodka');
+
+  test('nothing planned asks what we are cooking', () {
+    final m = welcomeMessage([], DateTime(2026, 9, 29, 10));
+    expect(m.lead, 'Nothing planned yet');
+    expect(m.highlight, 'What are we cooking today?');
   });
 
-  group('welcomeMessage', () {
-    final lunch = _entry(MealSlot.lunch, 12, 30, 'Caprese Pasta Salad');
-    final dinner = _entry(MealSlot.dinner, 18, 30, 'Penne Alla Vodka');
-
-    test('nothing planned asks what we are cookin ', () {
-      final m = welcomeMessage([], DateTime(2026, 9, 29, 10));
-      expect(m.lead, 'Nothing planned yet,');
-      expect(m.highlight, 'what are we cooking?');
-    });
-
-    test('within three hours counts down to the meal', () {
-      final m = welcomeMessage([lunch, dinner], DateTime(2026, 9, 29, 10, 15));
-      expect(m.lead, 'Lunch in 2h 15m,');
-      expect(m.highlight, 'Caprese Pasta Salad');
-    });
-
-    test('further out shows the meal time', () {
-      final m = welcomeMessage([dinner], DateTime(2026, 9, 29, 9));
-      expect(m.lead, 'Dinner at 18:30,');
-    });
-
-    test('at meal time  says enjoy', () {
-      final m = welcomeMessage([lunch, dinner], DateTime(2026, 9, 29, 12, 45));
-      expect(m.lead, 'Enjoy your lunch,');
-      expect(m.highlight, 'Caprese Pasta Salad');
-    });
-
-    test('after the eatig window moves to the next meal', () {
-      final m = welcomeMessage([lunch, dinner], DateTime(2026, 9, 29, 14));
-      expect(m.lead, 'Dinner at 18:30,');
-    });
-
-    test('after the last meal suggests planning tomorrow', () {
-      final m = welcomeMessage([lunch, dinner], DateTime(2026, 9, 29, 20));
-      expect(m.lead, "That's today's meals done,");
-    });
-
-    test('ignores meals on other days ', () {
-      final tomorrow = MealPlanEntry(
-        recipeId: 1,
-        entryDate: DateTime(2026, 9, 30),
-        mealSlot: MealSlot.lunch,
-        mealTime: const TimeOfDay(hour: 12, minute: 0),
-      );
-      final m = welcomeMessage([tomorrow], DateTime(2026, 9, 29, 10));
-      expect(m.lead, 'Nothing planned yet,');
-    });
+  test('within three hours counts down to the meal', () {
+    final m = welcomeMessage([lunch, dinner], DateTime(2026, 9, 29, 10, 15));
+    expect(m.lead, 'Lunch in 2h 15m');
+    expect(m.highlight, 'Caprese Pasta Salad');
   });
+
+  test('further out shows the meal time', () {
+    final m = welcomeMessage([dinner], DateTime(2026, 9, 29, 9));
+    expect(m.lead, 'Dinner at 18:30');
+  });
+
+  test('at meal time says enjoy', () {
+    final m = welcomeMessage([lunch, dinner], DateTime(2026, 9, 29, 12, 45));
+    expect(m.lead, 'Enjoy your lunch');
+    expect(m.highlight, 'Caprese Pasta Salad');
+  });
+
+  test('after the eating window moves to the next meal', () {
+    final m = welcomeMessage([lunch, dinner], DateTime(2026, 9, 29, 14));
+    expect(m.lead, 'Dinner at 18:30');
+  });
+
+  test('after the last meal says done for today', () {
+    final m = welcomeMessage([lunch, dinner], DateTime(2026, 9, 29, 20));
+    expect(m.lead, "You're done for today");
+  });
+
+  test('ignores meals on other days', () {
+    final tomorrow = MealPlanEntry(
+      recipeId: 1,
+      entryDate: DateTime(2026, 9, 30),
+      mealSlot: MealSlot.lunch,
+      mealTime: const TimeOfDay(hour: 12, minute: 0),
+    );
+    final m = welcomeMessage([tomorrow], DateTime(2026, 9, 29, 10));
+    expect(m.lead, 'Nothing planned yet');
+  });
+});
 }
