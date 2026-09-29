@@ -2,6 +2,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mealchemy/features/offline/data/offline_cache_database.dart';
 import 'package:mealchemy/features/offline/data/offline_cache_store.dart';
+import 'package:mealchemy/features/recipe/models/equipment.dart';
 import 'package:mealchemy/features/recipe/models/recipe.dart';
 import 'package:mealchemy/features/recipe/models/recipe_ingredient.dart';
 import 'package:mealchemy/features/recipe/models/recipe_step.dart';
@@ -33,10 +34,10 @@ void main() {
       syncedAt: syncedAt,
     );
 
-    expect((await store.readVaults(viewerUserId: 1)).single.name,
-        'User one view');
-    expect((await store.readVaults(viewerUserId: 2)).single.name,
-        'User two view');
+    expect(
+        (await store.readVaults(viewerUserId: 1)).single.name, 'User one view');
+    expect(
+        (await store.readVaults(viewerUserId: 2)).single.name, 'User two view');
   });
 
   test('complete reconciliation only removes rows in its viewer and scope',
@@ -95,6 +96,7 @@ void main() {
     expect(cached?.title, 'Cached complete recipe');
     expect(cached?.ingredients, hasLength(1));
     expect(cached?.steps, hasLength(1));
+    expect(cached?.equipment?.single.label, 'Mixing bowl');
   });
 
   test('sync metadata is independent per collection and scope', () async {
@@ -165,5 +167,8 @@ Recipe _completeRecipe(String title) => Recipe(
           stepNr: 1,
           content: 'Mix.',
         ),
+      ],
+      equipment: const [
+        Equipment(id: 3, value: 'mixing_bowl', label: 'Mixing bowl'),
       ],
     );

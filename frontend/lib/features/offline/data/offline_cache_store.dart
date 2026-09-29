@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../recipe/models/equipment.dart';
 import '../../recipe/models/recipe.dart';
 import '../../recipe/models/recipe_ingredient.dart';
 import '../../recipe/models/recipe_step.dart';
@@ -328,6 +329,16 @@ class OfflineCacheStore {
           ..orderBy([(row) => OrderingTerm.asc(row.lineIndex)]))
         .get();
 
+    final equipmentRows =
+        await (_database.select(_database.cachedRecipeEquipmentRows)
+              ..where(
+                (row) =>
+                    row.viewerUserId.equals(viewerUserId) &
+                    row.recipeId.equals(recipeId),
+              )
+              ..orderBy([(row) => OrderingTerm.asc(row.lineIndex)]))
+            .get();
+
     return Recipe(
       recipeId: recipeRow.recipeId,
       ownerId: recipeRow.ownerId,
@@ -363,6 +374,15 @@ class OfflineCacheStore {
               recipeId: row.recipeId,
               stepNr: row.stepNr,
               content: row.content,
+            ),
+          )
+          .toList(),
+      equipment: equipmentRows
+          .map(
+            (row) => Equipment(
+              id: row.equipmentId,
+              value: row.equipmentValue,
+              label: row.label,
             ),
           )
           .toList(),
@@ -412,6 +432,13 @@ class OfflineCacheStore {
                     row.recipeId.isIn(removedIds),
               ))
             .go();
+        await (_database.delete(_database.cachedRecipeEquipmentRows)
+              ..where(
+                (row) =>
+                    row.viewerUserId.equals(viewerUserId) &
+                    row.recipeId.isIn(removedIds),
+              ))
+            .go();
         await (_database.delete(_database.cachedRecipeRows)
               ..where(
                 (row) =>
@@ -449,6 +476,7 @@ class OfflineCacheStore {
   }) async {
     final ingredients = recipe.ingredients;
     final steps = recipe.steps;
+    final equipment = recipe.equipment ?? const <Equipment>[];
     if (ingredients == null || steps == null) {
       throw ArgumentError(
         'A recipe must be fully assembled before it can be cached.',
@@ -471,6 +499,14 @@ class OfflineCacheStore {
             ))
           .go();
       await (_database.delete(_database.cachedRecipeStepRows)
+            ..where(
+              (row) =>
+                  row.viewerUserId.equals(viewerUserId) &
+                  row.recipeId.equals(recipe.recipeId),
+            ))
+          .go();
+
+      await (_database.delete(_database.cachedRecipeEquipmentRows)
             ..where(
               (row) =>
                   row.viewerUserId.equals(viewerUserId) &
@@ -507,6 +543,20 @@ class OfflineCacheStore {
                 stepId: Value(steps[index].stepId),
                 stepNr: steps[index].stepNr,
                 content: steps[index].content,
+              ),
+          ],
+        );
+        batch.insertAll(
+          _database.cachedRecipeEquipmentRows,
+          [
+            for (var index = 0; index < equipment.length; index++)
+              CachedRecipeEquipmentRowsCompanion.insert(
+                viewerUserId: viewerUserId,
+                recipeId: recipe.recipeId,
+                lineIndex: index,
+                equipmentId: equipment[index].id,
+                equipmentValue: equipment[index].value,
+                label: equipment[index].label,
               ),
           ],
         );
