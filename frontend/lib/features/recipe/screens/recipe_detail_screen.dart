@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/connectivity/network_status_provider.dart';
+import '../../offline/widgets/offline_unavailable_state.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/shared_widgets/atoms/app_button.dart';
@@ -375,13 +378,20 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _RecipeDetailError extends StatelessWidget {
+class _RecipeDetailError extends ConsumerWidget {
   const _RecipeDetailError({required this.message});
 
   final String message;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (ref.watch(offlineReadOnlyProvider)) {
+      return const OfflineUnavailableState(
+        message:
+            'This recipe is not saved for offline use. Open it while connected to make it available offline.',
+      );
+    }
+
     return Center(
       child: Text(
         'Unable to load recipe.',
