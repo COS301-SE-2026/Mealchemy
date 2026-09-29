@@ -1,8 +1,10 @@
 package com.mealchemy.profile.service;
 //models
 import com.mealchemy.profile.model.UserProfile;
+import com.mealchemy.auth.model.User;
 //repositories
 import com.mealchemy.profile.repository.UserProfileRepository;
+import com.mealchemy.auth.repository.UserRepository;
 // services
 import com.mealchemy.equipment.service.EquipmentService;
 
