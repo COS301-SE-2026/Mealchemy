@@ -112,6 +112,22 @@ class CachedRecipeStepRows extends Table {
       };
 }
 
+class CachedRecipeEquipmentRows extends Table {
+  IntColumn get viewerUserId => integer()();
+  IntColumn get recipeId => integer()();
+  IntColumn get lineIndex => integer()();
+  IntColumn get equipmentId => integer()();
+  TextColumn get equipmentValue => text()();
+  TextColumn get label => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {
+        viewerUserId,
+        recipeId,
+        lineIndex,
+      };
+}
+
 class CacheSyncMetadataRows extends Table {
   IntColumn get viewerUserId => integer()();
   TextColumn get collection => text()();
@@ -192,6 +208,7 @@ class CachedShoppingListItemRows extends Table {
     CachedRecipeRows,
     CachedRecipeIngredientRows,
     CachedRecipeStepRows,
+    CachedRecipeEquipmentRows,
     CacheSyncMetadataRows,
     CachedPantryIngredientRows,
     CachedShoppingListRows,
@@ -203,7 +220,7 @@ class OfflineCacheDatabase extends _$OfflineCacheDatabase {
       : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -212,6 +229,9 @@ class OfflineCacheDatabase extends _$OfflineCacheDatabase {
             await migrator.createTable(cachedPantryIngredientRows);
             await migrator.createTable(cachedShoppingListRows);
             await migrator.createTable(cachedShoppingListItemRows);
+          }
+          if (from < 3) {
+            await migrator.createTable(cachedRecipeEquipmentRows);
           }
         },
       );
