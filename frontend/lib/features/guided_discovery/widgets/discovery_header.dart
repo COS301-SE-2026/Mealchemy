@@ -17,6 +17,7 @@ class DiscoveryHeader extends StatelessWidget {
     required this.onFilterSelected,
     this.selectedTab = DiscoveryTab.discover,
     this.onTabSelected,
+    this.settingsEnabled = true,
   });
 
   final String selectedFilter;
@@ -24,6 +25,7 @@ class DiscoveryHeader extends StatelessWidget {
   final ValueChanged<String> onFilterSelected;
   final DiscoveryTab selectedTab;
   final ValueChanged<DiscoveryTab>? onTabSelected;
+  final bool settingsEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -64,10 +66,14 @@ class DiscoveryHeader extends StatelessWidget {
                 ),
               ),
               IconButton(
-                onPressed: ()=> context.push(AppRoutes.recommendationSettings),
-                icon: const Icon(
+                onPressed: settingsEnabled
+                    ? () => context.push(AppRoutes.recommendationSettings)
+                    : null,
+                icon: Icon(
                   Icons.tune,
-                  color: AppColors.textLight,
+                  color: settingsEnabled
+                      ? AppColors.textLight
+                      : AppColors.textMuted,
                 ),
               ),
             ],

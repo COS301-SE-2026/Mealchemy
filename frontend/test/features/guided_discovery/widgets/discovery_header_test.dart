@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mealchemy/core/theme/app_colours.dart';
 import 'package:mealchemy/features/guided_discovery/widgets/discovery_header.dart';
 
 void main() {
@@ -67,5 +68,30 @@ void main() {
     await tester.tap(find.text('High Protein'));
 
     expect(selectedFilter, 'High Protein');
+  });
+
+  testWidgets('DiscoveryHeader disables recommendation settings offline', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DiscoveryHeader(
+            selectedFilter: 'All',
+            filters: const ['All'],
+            settingsEnabled: false,
+            onFilterSelected: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    final button = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.tune),
+    );
+    final icon = tester.widget<Icon>(find.byIcon(Icons.tune));
+
+    expect(button.onPressed, isNull);
+    expect(icon.color, AppColors.textMuted);
   });
 }
