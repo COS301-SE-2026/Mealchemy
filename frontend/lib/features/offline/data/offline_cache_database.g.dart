@@ -3068,6 +3068,781 @@ class CachedRecipeEquipmentRowsCompanion
   }
 }
 
+class $CachedRecipeNutritionRowsTable extends CachedRecipeNutritionRows
+    with TableInfo<$CachedRecipeNutritionRowsTable, CachedRecipeNutritionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedRecipeNutritionRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _viewerUserIdMeta =
+      const VerificationMeta('viewerUserId');
+  @override
+  late final GeneratedColumn<int> viewerUserId = GeneratedColumn<int>(
+      'viewer_user_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _recipeIdMeta =
+      const VerificationMeta('recipeId');
+  @override
+  late final GeneratedColumn<int> recipeId = GeneratedColumn<int>(
+      'recipe_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _servingsMeta =
+      const VerificationMeta('servings');
+  @override
+  late final GeneratedColumn<int> servings = GeneratedColumn<int>(
+      'servings', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _totalCaloriesKcalMeta =
+      const VerificationMeta('totalCaloriesKcal');
+  @override
+  late final GeneratedColumn<double> totalCaloriesKcal =
+      GeneratedColumn<double>('total_calories_kcal', aliasedName, false,
+          type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _totalProteinGMeta =
+      const VerificationMeta('totalProteinG');
+  @override
+  late final GeneratedColumn<double> totalProteinG = GeneratedColumn<double>(
+      'total_protein_g', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _totalCarbsGMeta =
+      const VerificationMeta('totalCarbsG');
+  @override
+  late final GeneratedColumn<double> totalCarbsG = GeneratedColumn<double>(
+      'total_carbs_g', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _totalFatGMeta =
+      const VerificationMeta('totalFatG');
+  @override
+  late final GeneratedColumn<double> totalFatG = GeneratedColumn<double>(
+      'total_fat_g', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _totalFibreGMeta =
+      const VerificationMeta('totalFibreG');
+  @override
+  late final GeneratedColumn<double> totalFibreG = GeneratedColumn<double>(
+      'total_fibre_g', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _totalSodiumMgMeta =
+      const VerificationMeta('totalSodiumMg');
+  @override
+  late final GeneratedColumn<double> totalSodiumMg = GeneratedColumn<double>(
+      'total_sodium_mg', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _perServingCaloriesKcalMeta =
+      const VerificationMeta('perServingCaloriesKcal');
+  @override
+  late final GeneratedColumn<double> perServingCaloriesKcal =
+      GeneratedColumn<double>('per_serving_calories_kcal', aliasedName, false,
+          type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _perServingProteinGMeta =
+      const VerificationMeta('perServingProteinG');
+  @override
+  late final GeneratedColumn<double> perServingProteinG =
+      GeneratedColumn<double>('per_serving_protein_g', aliasedName, false,
+          type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _perServingCarbsGMeta =
+      const VerificationMeta('perServingCarbsG');
+  @override
+  late final GeneratedColumn<double> perServingCarbsG = GeneratedColumn<double>(
+      'per_serving_carbs_g', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _perServingFatGMeta =
+      const VerificationMeta('perServingFatG');
+  @override
+  late final GeneratedColumn<double> perServingFatG = GeneratedColumn<double>(
+      'per_serving_fat_g', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _perServingFibreGMeta =
+      const VerificationMeta('perServingFibreG');
+  @override
+  late final GeneratedColumn<double> perServingFibreG = GeneratedColumn<double>(
+      'per_serving_fibre_g', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _perServingSodiumMgMeta =
+      const VerificationMeta('perServingSodiumMg');
+  @override
+  late final GeneratedColumn<double> perServingSodiumMg =
+      GeneratedColumn<double>('per_serving_sodium_mg', aliasedName, false,
+          type: DriftSqlType.double, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        viewerUserId,
+        recipeId,
+        servings,
+        totalCaloriesKcal,
+        totalProteinG,
+        totalCarbsG,
+        totalFatG,
+        totalFibreG,
+        totalSodiumMg,
+        perServingCaloriesKcal,
+        perServingProteinG,
+        perServingCarbsG,
+        perServingFatG,
+        perServingFibreG,
+        perServingSodiumMg
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_recipe_nutrition_rows';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<CachedRecipeNutritionRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('viewer_user_id')) {
+      context.handle(
+          _viewerUserIdMeta,
+          viewerUserId.isAcceptableOrUnknown(
+              data['viewer_user_id']!, _viewerUserIdMeta));
+    } else if (isInserting) {
+      context.missing(_viewerUserIdMeta);
+    }
+    if (data.containsKey('recipe_id')) {
+      context.handle(_recipeIdMeta,
+          recipeId.isAcceptableOrUnknown(data['recipe_id']!, _recipeIdMeta));
+    } else if (isInserting) {
+      context.missing(_recipeIdMeta);
+    }
+    if (data.containsKey('servings')) {
+      context.handle(_servingsMeta,
+          servings.isAcceptableOrUnknown(data['servings']!, _servingsMeta));
+    } else if (isInserting) {
+      context.missing(_servingsMeta);
+    }
+    if (data.containsKey('total_calories_kcal')) {
+      context.handle(
+          _totalCaloriesKcalMeta,
+          totalCaloriesKcal.isAcceptableOrUnknown(
+              data['total_calories_kcal']!, _totalCaloriesKcalMeta));
+    } else if (isInserting) {
+      context.missing(_totalCaloriesKcalMeta);
+    }
+    if (data.containsKey('total_protein_g')) {
+      context.handle(
+          _totalProteinGMeta,
+          totalProteinG.isAcceptableOrUnknown(
+              data['total_protein_g']!, _totalProteinGMeta));
+    } else if (isInserting) {
+      context.missing(_totalProteinGMeta);
+    }
+    if (data.containsKey('total_carbs_g')) {
+      context.handle(
+          _totalCarbsGMeta,
+          totalCarbsG.isAcceptableOrUnknown(
+              data['total_carbs_g']!, _totalCarbsGMeta));
+    } else if (isInserting) {
+      context.missing(_totalCarbsGMeta);
+    }
+    if (data.containsKey('total_fat_g')) {
+      context.handle(
+          _totalFatGMeta,
+          totalFatG.isAcceptableOrUnknown(
+              data['total_fat_g']!, _totalFatGMeta));
+    } else if (isInserting) {
+      context.missing(_totalFatGMeta);
+    }
+    if (data.containsKey('total_fibre_g')) {
+      context.handle(
+          _totalFibreGMeta,
+          totalFibreG.isAcceptableOrUnknown(
+              data['total_fibre_g']!, _totalFibreGMeta));
+    } else if (isInserting) {
+      context.missing(_totalFibreGMeta);
+    }
+    if (data.containsKey('total_sodium_mg')) {
+      context.handle(
+          _totalSodiumMgMeta,
+          totalSodiumMg.isAcceptableOrUnknown(
+              data['total_sodium_mg']!, _totalSodiumMgMeta));
+    } else if (isInserting) {
+      context.missing(_totalSodiumMgMeta);
+    }
+    if (data.containsKey('per_serving_calories_kcal')) {
+      context.handle(
+          _perServingCaloriesKcalMeta,
+          perServingCaloriesKcal.isAcceptableOrUnknown(
+              data['per_serving_calories_kcal']!, _perServingCaloriesKcalMeta));
+    } else if (isInserting) {
+      context.missing(_perServingCaloriesKcalMeta);
+    }
+    if (data.containsKey('per_serving_protein_g')) {
+      context.handle(
+          _perServingProteinGMeta,
+          perServingProteinG.isAcceptableOrUnknown(
+              data['per_serving_protein_g']!, _perServingProteinGMeta));
+    } else if (isInserting) {
+      context.missing(_perServingProteinGMeta);
+    }
+    if (data.containsKey('per_serving_carbs_g')) {
+      context.handle(
+          _perServingCarbsGMeta,
+          perServingCarbsG.isAcceptableOrUnknown(
+              data['per_serving_carbs_g']!, _perServingCarbsGMeta));
+    } else if (isInserting) {
+      context.missing(_perServingCarbsGMeta);
+    }
+    if (data.containsKey('per_serving_fat_g')) {
+      context.handle(
+          _perServingFatGMeta,
+          perServingFatG.isAcceptableOrUnknown(
+              data['per_serving_fat_g']!, _perServingFatGMeta));
+    } else if (isInserting) {
+      context.missing(_perServingFatGMeta);
+    }
+    if (data.containsKey('per_serving_fibre_g')) {
+      context.handle(
+          _perServingFibreGMeta,
+          perServingFibreG.isAcceptableOrUnknown(
+              data['per_serving_fibre_g']!, _perServingFibreGMeta));
+    } else if (isInserting) {
+      context.missing(_perServingFibreGMeta);
+    }
+    if (data.containsKey('per_serving_sodium_mg')) {
+      context.handle(
+          _perServingSodiumMgMeta,
+          perServingSodiumMg.isAcceptableOrUnknown(
+              data['per_serving_sodium_mg']!, _perServingSodiumMgMeta));
+    } else if (isInserting) {
+      context.missing(_perServingSodiumMgMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {viewerUserId, recipeId};
+  @override
+  CachedRecipeNutritionRow map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedRecipeNutritionRow(
+      viewerUserId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}viewer_user_id'])!,
+      recipeId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}recipe_id'])!,
+      servings: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}servings'])!,
+      totalCaloriesKcal: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}total_calories_kcal'])!,
+      totalProteinG: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}total_protein_g'])!,
+      totalCarbsG: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}total_carbs_g'])!,
+      totalFatG: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}total_fat_g'])!,
+      totalFibreG: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}total_fibre_g'])!,
+      totalSodiumMg: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}total_sodium_mg'])!,
+      perServingCaloriesKcal: attachedDatabase.typeMapping.read(
+          DriftSqlType.double,
+          data['${effectivePrefix}per_serving_calories_kcal'])!,
+      perServingProteinG: attachedDatabase.typeMapping.read(DriftSqlType.double,
+          data['${effectivePrefix}per_serving_protein_g'])!,
+      perServingCarbsG: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}per_serving_carbs_g'])!,
+      perServingFatG: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}per_serving_fat_g'])!,
+      perServingFibreG: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}per_serving_fibre_g'])!,
+      perServingSodiumMg: attachedDatabase.typeMapping.read(DriftSqlType.double,
+          data['${effectivePrefix}per_serving_sodium_mg'])!,
+    );
+  }
+
+  @override
+  $CachedRecipeNutritionRowsTable createAlias(String alias) {
+    return $CachedRecipeNutritionRowsTable(attachedDatabase, alias);
+  }
+}
+
+class CachedRecipeNutritionRow extends DataClass
+    implements Insertable<CachedRecipeNutritionRow> {
+  final int viewerUserId;
+  final int recipeId;
+  final int servings;
+  final double totalCaloriesKcal;
+  final double totalProteinG;
+  final double totalCarbsG;
+  final double totalFatG;
+  final double totalFibreG;
+  final double totalSodiumMg;
+  final double perServingCaloriesKcal;
+  final double perServingProteinG;
+  final double perServingCarbsG;
+  final double perServingFatG;
+  final double perServingFibreG;
+  final double perServingSodiumMg;
+  const CachedRecipeNutritionRow(
+      {required this.viewerUserId,
+      required this.recipeId,
+      required this.servings,
+      required this.totalCaloriesKcal,
+      required this.totalProteinG,
+      required this.totalCarbsG,
+      required this.totalFatG,
+      required this.totalFibreG,
+      required this.totalSodiumMg,
+      required this.perServingCaloriesKcal,
+      required this.perServingProteinG,
+      required this.perServingCarbsG,
+      required this.perServingFatG,
+      required this.perServingFibreG,
+      required this.perServingSodiumMg});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['viewer_user_id'] = Variable<int>(viewerUserId);
+    map['recipe_id'] = Variable<int>(recipeId);
+    map['servings'] = Variable<int>(servings);
+    map['total_calories_kcal'] = Variable<double>(totalCaloriesKcal);
+    map['total_protein_g'] = Variable<double>(totalProteinG);
+    map['total_carbs_g'] = Variable<double>(totalCarbsG);
+    map['total_fat_g'] = Variable<double>(totalFatG);
+    map['total_fibre_g'] = Variable<double>(totalFibreG);
+    map['total_sodium_mg'] = Variable<double>(totalSodiumMg);
+    map['per_serving_calories_kcal'] = Variable<double>(perServingCaloriesKcal);
+    map['per_serving_protein_g'] = Variable<double>(perServingProteinG);
+    map['per_serving_carbs_g'] = Variable<double>(perServingCarbsG);
+    map['per_serving_fat_g'] = Variable<double>(perServingFatG);
+    map['per_serving_fibre_g'] = Variable<double>(perServingFibreG);
+    map['per_serving_sodium_mg'] = Variable<double>(perServingSodiumMg);
+    return map;
+  }
+
+  CachedRecipeNutritionRowsCompanion toCompanion(bool nullToAbsent) {
+    return CachedRecipeNutritionRowsCompanion(
+      viewerUserId: Value(viewerUserId),
+      recipeId: Value(recipeId),
+      servings: Value(servings),
+      totalCaloriesKcal: Value(totalCaloriesKcal),
+      totalProteinG: Value(totalProteinG),
+      totalCarbsG: Value(totalCarbsG),
+      totalFatG: Value(totalFatG),
+      totalFibreG: Value(totalFibreG),
+      totalSodiumMg: Value(totalSodiumMg),
+      perServingCaloriesKcal: Value(perServingCaloriesKcal),
+      perServingProteinG: Value(perServingProteinG),
+      perServingCarbsG: Value(perServingCarbsG),
+      perServingFatG: Value(perServingFatG),
+      perServingFibreG: Value(perServingFibreG),
+      perServingSodiumMg: Value(perServingSodiumMg),
+    );
+  }
+
+  factory CachedRecipeNutritionRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedRecipeNutritionRow(
+      viewerUserId: serializer.fromJson<int>(json['viewerUserId']),
+      recipeId: serializer.fromJson<int>(json['recipeId']),
+      servings: serializer.fromJson<int>(json['servings']),
+      totalCaloriesKcal: serializer.fromJson<double>(json['totalCaloriesKcal']),
+      totalProteinG: serializer.fromJson<double>(json['totalProteinG']),
+      totalCarbsG: serializer.fromJson<double>(json['totalCarbsG']),
+      totalFatG: serializer.fromJson<double>(json['totalFatG']),
+      totalFibreG: serializer.fromJson<double>(json['totalFibreG']),
+      totalSodiumMg: serializer.fromJson<double>(json['totalSodiumMg']),
+      perServingCaloriesKcal:
+          serializer.fromJson<double>(json['perServingCaloriesKcal']),
+      perServingProteinG:
+          serializer.fromJson<double>(json['perServingProteinG']),
+      perServingCarbsG: serializer.fromJson<double>(json['perServingCarbsG']),
+      perServingFatG: serializer.fromJson<double>(json['perServingFatG']),
+      perServingFibreG: serializer.fromJson<double>(json['perServingFibreG']),
+      perServingSodiumMg:
+          serializer.fromJson<double>(json['perServingSodiumMg']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'viewerUserId': serializer.toJson<int>(viewerUserId),
+      'recipeId': serializer.toJson<int>(recipeId),
+      'servings': serializer.toJson<int>(servings),
+      'totalCaloriesKcal': serializer.toJson<double>(totalCaloriesKcal),
+      'totalProteinG': serializer.toJson<double>(totalProteinG),
+      'totalCarbsG': serializer.toJson<double>(totalCarbsG),
+      'totalFatG': serializer.toJson<double>(totalFatG),
+      'totalFibreG': serializer.toJson<double>(totalFibreG),
+      'totalSodiumMg': serializer.toJson<double>(totalSodiumMg),
+      'perServingCaloriesKcal':
+          serializer.toJson<double>(perServingCaloriesKcal),
+      'perServingProteinG': serializer.toJson<double>(perServingProteinG),
+      'perServingCarbsG': serializer.toJson<double>(perServingCarbsG),
+      'perServingFatG': serializer.toJson<double>(perServingFatG),
+      'perServingFibreG': serializer.toJson<double>(perServingFibreG),
+      'perServingSodiumMg': serializer.toJson<double>(perServingSodiumMg),
+    };
+  }
+
+  CachedRecipeNutritionRow copyWith(
+          {int? viewerUserId,
+          int? recipeId,
+          int? servings,
+          double? totalCaloriesKcal,
+          double? totalProteinG,
+          double? totalCarbsG,
+          double? totalFatG,
+          double? totalFibreG,
+          double? totalSodiumMg,
+          double? perServingCaloriesKcal,
+          double? perServingProteinG,
+          double? perServingCarbsG,
+          double? perServingFatG,
+          double? perServingFibreG,
+          double? perServingSodiumMg}) =>
+      CachedRecipeNutritionRow(
+        viewerUserId: viewerUserId ?? this.viewerUserId,
+        recipeId: recipeId ?? this.recipeId,
+        servings: servings ?? this.servings,
+        totalCaloriesKcal: totalCaloriesKcal ?? this.totalCaloriesKcal,
+        totalProteinG: totalProteinG ?? this.totalProteinG,
+        totalCarbsG: totalCarbsG ?? this.totalCarbsG,
+        totalFatG: totalFatG ?? this.totalFatG,
+        totalFibreG: totalFibreG ?? this.totalFibreG,
+        totalSodiumMg: totalSodiumMg ?? this.totalSodiumMg,
+        perServingCaloriesKcal:
+            perServingCaloriesKcal ?? this.perServingCaloriesKcal,
+        perServingProteinG: perServingProteinG ?? this.perServingProteinG,
+        perServingCarbsG: perServingCarbsG ?? this.perServingCarbsG,
+        perServingFatG: perServingFatG ?? this.perServingFatG,
+        perServingFibreG: perServingFibreG ?? this.perServingFibreG,
+        perServingSodiumMg: perServingSodiumMg ?? this.perServingSodiumMg,
+      );
+  CachedRecipeNutritionRow copyWithCompanion(
+      CachedRecipeNutritionRowsCompanion data) {
+    return CachedRecipeNutritionRow(
+      viewerUserId: data.viewerUserId.present
+          ? data.viewerUserId.value
+          : this.viewerUserId,
+      recipeId: data.recipeId.present ? data.recipeId.value : this.recipeId,
+      servings: data.servings.present ? data.servings.value : this.servings,
+      totalCaloriesKcal: data.totalCaloriesKcal.present
+          ? data.totalCaloriesKcal.value
+          : this.totalCaloriesKcal,
+      totalProteinG: data.totalProteinG.present
+          ? data.totalProteinG.value
+          : this.totalProteinG,
+      totalCarbsG:
+          data.totalCarbsG.present ? data.totalCarbsG.value : this.totalCarbsG,
+      totalFatG: data.totalFatG.present ? data.totalFatG.value : this.totalFatG,
+      totalFibreG:
+          data.totalFibreG.present ? data.totalFibreG.value : this.totalFibreG,
+      totalSodiumMg: data.totalSodiumMg.present
+          ? data.totalSodiumMg.value
+          : this.totalSodiumMg,
+      perServingCaloriesKcal: data.perServingCaloriesKcal.present
+          ? data.perServingCaloriesKcal.value
+          : this.perServingCaloriesKcal,
+      perServingProteinG: data.perServingProteinG.present
+          ? data.perServingProteinG.value
+          : this.perServingProteinG,
+      perServingCarbsG: data.perServingCarbsG.present
+          ? data.perServingCarbsG.value
+          : this.perServingCarbsG,
+      perServingFatG: data.perServingFatG.present
+          ? data.perServingFatG.value
+          : this.perServingFatG,
+      perServingFibreG: data.perServingFibreG.present
+          ? data.perServingFibreG.value
+          : this.perServingFibreG,
+      perServingSodiumMg: data.perServingSodiumMg.present
+          ? data.perServingSodiumMg.value
+          : this.perServingSodiumMg,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedRecipeNutritionRow(')
+          ..write('viewerUserId: $viewerUserId, ')
+          ..write('recipeId: $recipeId, ')
+          ..write('servings: $servings, ')
+          ..write('totalCaloriesKcal: $totalCaloriesKcal, ')
+          ..write('totalProteinG: $totalProteinG, ')
+          ..write('totalCarbsG: $totalCarbsG, ')
+          ..write('totalFatG: $totalFatG, ')
+          ..write('totalFibreG: $totalFibreG, ')
+          ..write('totalSodiumMg: $totalSodiumMg, ')
+          ..write('perServingCaloriesKcal: $perServingCaloriesKcal, ')
+          ..write('perServingProteinG: $perServingProteinG, ')
+          ..write('perServingCarbsG: $perServingCarbsG, ')
+          ..write('perServingFatG: $perServingFatG, ')
+          ..write('perServingFibreG: $perServingFibreG, ')
+          ..write('perServingSodiumMg: $perServingSodiumMg')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      viewerUserId,
+      recipeId,
+      servings,
+      totalCaloriesKcal,
+      totalProteinG,
+      totalCarbsG,
+      totalFatG,
+      totalFibreG,
+      totalSodiumMg,
+      perServingCaloriesKcal,
+      perServingProteinG,
+      perServingCarbsG,
+      perServingFatG,
+      perServingFibreG,
+      perServingSodiumMg);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedRecipeNutritionRow &&
+          other.viewerUserId == this.viewerUserId &&
+          other.recipeId == this.recipeId &&
+          other.servings == this.servings &&
+          other.totalCaloriesKcal == this.totalCaloriesKcal &&
+          other.totalProteinG == this.totalProteinG &&
+          other.totalCarbsG == this.totalCarbsG &&
+          other.totalFatG == this.totalFatG &&
+          other.totalFibreG == this.totalFibreG &&
+          other.totalSodiumMg == this.totalSodiumMg &&
+          other.perServingCaloriesKcal == this.perServingCaloriesKcal &&
+          other.perServingProteinG == this.perServingProteinG &&
+          other.perServingCarbsG == this.perServingCarbsG &&
+          other.perServingFatG == this.perServingFatG &&
+          other.perServingFibreG == this.perServingFibreG &&
+          other.perServingSodiumMg == this.perServingSodiumMg);
+}
+
+class CachedRecipeNutritionRowsCompanion
+    extends UpdateCompanion<CachedRecipeNutritionRow> {
+  final Value<int> viewerUserId;
+  final Value<int> recipeId;
+  final Value<int> servings;
+  final Value<double> totalCaloriesKcal;
+  final Value<double> totalProteinG;
+  final Value<double> totalCarbsG;
+  final Value<double> totalFatG;
+  final Value<double> totalFibreG;
+  final Value<double> totalSodiumMg;
+  final Value<double> perServingCaloriesKcal;
+  final Value<double> perServingProteinG;
+  final Value<double> perServingCarbsG;
+  final Value<double> perServingFatG;
+  final Value<double> perServingFibreG;
+  final Value<double> perServingSodiumMg;
+  final Value<int> rowid;
+  const CachedRecipeNutritionRowsCompanion({
+    this.viewerUserId = const Value.absent(),
+    this.recipeId = const Value.absent(),
+    this.servings = const Value.absent(),
+    this.totalCaloriesKcal = const Value.absent(),
+    this.totalProteinG = const Value.absent(),
+    this.totalCarbsG = const Value.absent(),
+    this.totalFatG = const Value.absent(),
+    this.totalFibreG = const Value.absent(),
+    this.totalSodiumMg = const Value.absent(),
+    this.perServingCaloriesKcal = const Value.absent(),
+    this.perServingProteinG = const Value.absent(),
+    this.perServingCarbsG = const Value.absent(),
+    this.perServingFatG = const Value.absent(),
+    this.perServingFibreG = const Value.absent(),
+    this.perServingSodiumMg = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CachedRecipeNutritionRowsCompanion.insert({
+    required int viewerUserId,
+    required int recipeId,
+    required int servings,
+    required double totalCaloriesKcal,
+    required double totalProteinG,
+    required double totalCarbsG,
+    required double totalFatG,
+    required double totalFibreG,
+    required double totalSodiumMg,
+    required double perServingCaloriesKcal,
+    required double perServingProteinG,
+    required double perServingCarbsG,
+    required double perServingFatG,
+    required double perServingFibreG,
+    required double perServingSodiumMg,
+    this.rowid = const Value.absent(),
+  })  : viewerUserId = Value(viewerUserId),
+        recipeId = Value(recipeId),
+        servings = Value(servings),
+        totalCaloriesKcal = Value(totalCaloriesKcal),
+        totalProteinG = Value(totalProteinG),
+        totalCarbsG = Value(totalCarbsG),
+        totalFatG = Value(totalFatG),
+        totalFibreG = Value(totalFibreG),
+        totalSodiumMg = Value(totalSodiumMg),
+        perServingCaloriesKcal = Value(perServingCaloriesKcal),
+        perServingProteinG = Value(perServingProteinG),
+        perServingCarbsG = Value(perServingCarbsG),
+        perServingFatG = Value(perServingFatG),
+        perServingFibreG = Value(perServingFibreG),
+        perServingSodiumMg = Value(perServingSodiumMg);
+  static Insertable<CachedRecipeNutritionRow> custom({
+    Expression<int>? viewerUserId,
+    Expression<int>? recipeId,
+    Expression<int>? servings,
+    Expression<double>? totalCaloriesKcal,
+    Expression<double>? totalProteinG,
+    Expression<double>? totalCarbsG,
+    Expression<double>? totalFatG,
+    Expression<double>? totalFibreG,
+    Expression<double>? totalSodiumMg,
+    Expression<double>? perServingCaloriesKcal,
+    Expression<double>? perServingProteinG,
+    Expression<double>? perServingCarbsG,
+    Expression<double>? perServingFatG,
+    Expression<double>? perServingFibreG,
+    Expression<double>? perServingSodiumMg,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (viewerUserId != null) 'viewer_user_id': viewerUserId,
+      if (recipeId != null) 'recipe_id': recipeId,
+      if (servings != null) 'servings': servings,
+      if (totalCaloriesKcal != null) 'total_calories_kcal': totalCaloriesKcal,
+      if (totalProteinG != null) 'total_protein_g': totalProteinG,
+      if (totalCarbsG != null) 'total_carbs_g': totalCarbsG,
+      if (totalFatG != null) 'total_fat_g': totalFatG,
+      if (totalFibreG != null) 'total_fibre_g': totalFibreG,
+      if (totalSodiumMg != null) 'total_sodium_mg': totalSodiumMg,
+      if (perServingCaloriesKcal != null)
+        'per_serving_calories_kcal': perServingCaloriesKcal,
+      if (perServingProteinG != null)
+        'per_serving_protein_g': perServingProteinG,
+      if (perServingCarbsG != null) 'per_serving_carbs_g': perServingCarbsG,
+      if (perServingFatG != null) 'per_serving_fat_g': perServingFatG,
+      if (perServingFibreG != null) 'per_serving_fibre_g': perServingFibreG,
+      if (perServingSodiumMg != null)
+        'per_serving_sodium_mg': perServingSodiumMg,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CachedRecipeNutritionRowsCompanion copyWith(
+      {Value<int>? viewerUserId,
+      Value<int>? recipeId,
+      Value<int>? servings,
+      Value<double>? totalCaloriesKcal,
+      Value<double>? totalProteinG,
+      Value<double>? totalCarbsG,
+      Value<double>? totalFatG,
+      Value<double>? totalFibreG,
+      Value<double>? totalSodiumMg,
+      Value<double>? perServingCaloriesKcal,
+      Value<double>? perServingProteinG,
+      Value<double>? perServingCarbsG,
+      Value<double>? perServingFatG,
+      Value<double>? perServingFibreG,
+      Value<double>? perServingSodiumMg,
+      Value<int>? rowid}) {
+    return CachedRecipeNutritionRowsCompanion(
+      viewerUserId: viewerUserId ?? this.viewerUserId,
+      recipeId: recipeId ?? this.recipeId,
+      servings: servings ?? this.servings,
+      totalCaloriesKcal: totalCaloriesKcal ?? this.totalCaloriesKcal,
+      totalProteinG: totalProteinG ?? this.totalProteinG,
+      totalCarbsG: totalCarbsG ?? this.totalCarbsG,
+      totalFatG: totalFatG ?? this.totalFatG,
+      totalFibreG: totalFibreG ?? this.totalFibreG,
+      totalSodiumMg: totalSodiumMg ?? this.totalSodiumMg,
+      perServingCaloriesKcal:
+          perServingCaloriesKcal ?? this.perServingCaloriesKcal,
+      perServingProteinG: perServingProteinG ?? this.perServingProteinG,
+      perServingCarbsG: perServingCarbsG ?? this.perServingCarbsG,
+      perServingFatG: perServingFatG ?? this.perServingFatG,
+      perServingFibreG: perServingFibreG ?? this.perServingFibreG,
+      perServingSodiumMg: perServingSodiumMg ?? this.perServingSodiumMg,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (viewerUserId.present) {
+      map['viewer_user_id'] = Variable<int>(viewerUserId.value);
+    }
+    if (recipeId.present) {
+      map['recipe_id'] = Variable<int>(recipeId.value);
+    }
+    if (servings.present) {
+      map['servings'] = Variable<int>(servings.value);
+    }
+    if (totalCaloriesKcal.present) {
+      map['total_calories_kcal'] = Variable<double>(totalCaloriesKcal.value);
+    }
+    if (totalProteinG.present) {
+      map['total_protein_g'] = Variable<double>(totalProteinG.value);
+    }
+    if (totalCarbsG.present) {
+      map['total_carbs_g'] = Variable<double>(totalCarbsG.value);
+    }
+    if (totalFatG.present) {
+      map['total_fat_g'] = Variable<double>(totalFatG.value);
+    }
+    if (totalFibreG.present) {
+      map['total_fibre_g'] = Variable<double>(totalFibreG.value);
+    }
+    if (totalSodiumMg.present) {
+      map['total_sodium_mg'] = Variable<double>(totalSodiumMg.value);
+    }
+    if (perServingCaloriesKcal.present) {
+      map['per_serving_calories_kcal'] =
+          Variable<double>(perServingCaloriesKcal.value);
+    }
+    if (perServingProteinG.present) {
+      map['per_serving_protein_g'] = Variable<double>(perServingProteinG.value);
+    }
+    if (perServingCarbsG.present) {
+      map['per_serving_carbs_g'] = Variable<double>(perServingCarbsG.value);
+    }
+    if (perServingFatG.present) {
+      map['per_serving_fat_g'] = Variable<double>(perServingFatG.value);
+    }
+    if (perServingFibreG.present) {
+      map['per_serving_fibre_g'] = Variable<double>(perServingFibreG.value);
+    }
+    if (perServingSodiumMg.present) {
+      map['per_serving_sodium_mg'] = Variable<double>(perServingSodiumMg.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedRecipeNutritionRowsCompanion(')
+          ..write('viewerUserId: $viewerUserId, ')
+          ..write('recipeId: $recipeId, ')
+          ..write('servings: $servings, ')
+          ..write('totalCaloriesKcal: $totalCaloriesKcal, ')
+          ..write('totalProteinG: $totalProteinG, ')
+          ..write('totalCarbsG: $totalCarbsG, ')
+          ..write('totalFatG: $totalFatG, ')
+          ..write('totalFibreG: $totalFibreG, ')
+          ..write('totalSodiumMg: $totalSodiumMg, ')
+          ..write('perServingCaloriesKcal: $perServingCaloriesKcal, ')
+          ..write('perServingProteinG: $perServingProteinG, ')
+          ..write('perServingCarbsG: $perServingCarbsG, ')
+          ..write('perServingFatG: $perServingFatG, ')
+          ..write('perServingFibreG: $perServingFibreG, ')
+          ..write('perServingSodiumMg: $perServingSodiumMg, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $CacheSyncMetadataRowsTable extends CacheSyncMetadataRows
     with TableInfo<$CacheSyncMetadataRowsTable, CacheSyncMetadataRow> {
   @override
@@ -5255,6 +6030,8 @@ abstract class _$OfflineCacheDatabase extends GeneratedDatabase {
       $CachedRecipeStepRowsTable(this);
   late final $CachedRecipeEquipmentRowsTable cachedRecipeEquipmentRows =
       $CachedRecipeEquipmentRowsTable(this);
+  late final $CachedRecipeNutritionRowsTable cachedRecipeNutritionRows =
+      $CachedRecipeNutritionRowsTable(this);
   late final $CacheSyncMetadataRowsTable cacheSyncMetadataRows =
       $CacheSyncMetadataRowsTable(this);
   late final $CachedPantryIngredientRowsTable cachedPantryIngredientRows =
@@ -5275,6 +6052,7 @@ abstract class _$OfflineCacheDatabase extends GeneratedDatabase {
         cachedRecipeIngredientRows,
         cachedRecipeStepRows,
         cachedRecipeEquipmentRows,
+        cachedRecipeNutritionRows,
         cacheSyncMetadataRows,
         cachedPantryIngredientRows,
         cachedShoppingListRows,
@@ -6846,6 +7624,353 @@ typedef $$CachedRecipeEquipmentRowsTableProcessedTableManager
         ),
         CachedRecipeEquipmentRow,
         PrefetchHooks Function()>;
+typedef $$CachedRecipeNutritionRowsTableCreateCompanionBuilder
+    = CachedRecipeNutritionRowsCompanion Function({
+  required int viewerUserId,
+  required int recipeId,
+  required int servings,
+  required double totalCaloriesKcal,
+  required double totalProteinG,
+  required double totalCarbsG,
+  required double totalFatG,
+  required double totalFibreG,
+  required double totalSodiumMg,
+  required double perServingCaloriesKcal,
+  required double perServingProteinG,
+  required double perServingCarbsG,
+  required double perServingFatG,
+  required double perServingFibreG,
+  required double perServingSodiumMg,
+  Value<int> rowid,
+});
+typedef $$CachedRecipeNutritionRowsTableUpdateCompanionBuilder
+    = CachedRecipeNutritionRowsCompanion Function({
+  Value<int> viewerUserId,
+  Value<int> recipeId,
+  Value<int> servings,
+  Value<double> totalCaloriesKcal,
+  Value<double> totalProteinG,
+  Value<double> totalCarbsG,
+  Value<double> totalFatG,
+  Value<double> totalFibreG,
+  Value<double> totalSodiumMg,
+  Value<double> perServingCaloriesKcal,
+  Value<double> perServingProteinG,
+  Value<double> perServingCarbsG,
+  Value<double> perServingFatG,
+  Value<double> perServingFibreG,
+  Value<double> perServingSodiumMg,
+  Value<int> rowid,
+});
+
+class $$CachedRecipeNutritionRowsTableFilterComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedRecipeNutritionRowsTable> {
+  $$CachedRecipeNutritionRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get recipeId => $composableBuilder(
+      column: $table.recipeId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get servings => $composableBuilder(
+      column: $table.servings, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get totalCaloriesKcal => $composableBuilder(
+      column: $table.totalCaloriesKcal,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get totalProteinG => $composableBuilder(
+      column: $table.totalProteinG, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get totalCarbsG => $composableBuilder(
+      column: $table.totalCarbsG, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get totalFatG => $composableBuilder(
+      column: $table.totalFatG, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get totalFibreG => $composableBuilder(
+      column: $table.totalFibreG, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get totalSodiumMg => $composableBuilder(
+      column: $table.totalSodiumMg, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get perServingCaloriesKcal => $composableBuilder(
+      column: $table.perServingCaloriesKcal,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get perServingProteinG => $composableBuilder(
+      column: $table.perServingProteinG,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get perServingCarbsG => $composableBuilder(
+      column: $table.perServingCarbsG,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get perServingFatG => $composableBuilder(
+      column: $table.perServingFatG,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get perServingFibreG => $composableBuilder(
+      column: $table.perServingFibreG,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get perServingSodiumMg => $composableBuilder(
+      column: $table.perServingSodiumMg,
+      builder: (column) => ColumnFilters(column));
+}
+
+class $$CachedRecipeNutritionRowsTableOrderingComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedRecipeNutritionRowsTable> {
+  $$CachedRecipeNutritionRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get recipeId => $composableBuilder(
+      column: $table.recipeId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get servings => $composableBuilder(
+      column: $table.servings, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get totalCaloriesKcal => $composableBuilder(
+      column: $table.totalCaloriesKcal,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get totalProteinG => $composableBuilder(
+      column: $table.totalProteinG,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get totalCarbsG => $composableBuilder(
+      column: $table.totalCarbsG, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get totalFatG => $composableBuilder(
+      column: $table.totalFatG, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get totalFibreG => $composableBuilder(
+      column: $table.totalFibreG, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get totalSodiumMg => $composableBuilder(
+      column: $table.totalSodiumMg,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get perServingCaloriesKcal => $composableBuilder(
+      column: $table.perServingCaloriesKcal,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get perServingProteinG => $composableBuilder(
+      column: $table.perServingProteinG,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get perServingCarbsG => $composableBuilder(
+      column: $table.perServingCarbsG,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get perServingFatG => $composableBuilder(
+      column: $table.perServingFatG,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get perServingFibreG => $composableBuilder(
+      column: $table.perServingFibreG,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get perServingSodiumMg => $composableBuilder(
+      column: $table.perServingSodiumMg,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$CachedRecipeNutritionRowsTableAnnotationComposer
+    extends Composer<_$OfflineCacheDatabase, $CachedRecipeNutritionRowsTable> {
+  $$CachedRecipeNutritionRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get viewerUserId => $composableBuilder(
+      column: $table.viewerUserId, builder: (column) => column);
+
+  GeneratedColumn<int> get recipeId =>
+      $composableBuilder(column: $table.recipeId, builder: (column) => column);
+
+  GeneratedColumn<int> get servings =>
+      $composableBuilder(column: $table.servings, builder: (column) => column);
+
+  GeneratedColumn<double> get totalCaloriesKcal => $composableBuilder(
+      column: $table.totalCaloriesKcal, builder: (column) => column);
+
+  GeneratedColumn<double> get totalProteinG => $composableBuilder(
+      column: $table.totalProteinG, builder: (column) => column);
+
+  GeneratedColumn<double> get totalCarbsG => $composableBuilder(
+      column: $table.totalCarbsG, builder: (column) => column);
+
+  GeneratedColumn<double> get totalFatG =>
+      $composableBuilder(column: $table.totalFatG, builder: (column) => column);
+
+  GeneratedColumn<double> get totalFibreG => $composableBuilder(
+      column: $table.totalFibreG, builder: (column) => column);
+
+  GeneratedColumn<double> get totalSodiumMg => $composableBuilder(
+      column: $table.totalSodiumMg, builder: (column) => column);
+
+  GeneratedColumn<double> get perServingCaloriesKcal => $composableBuilder(
+      column: $table.perServingCaloriesKcal, builder: (column) => column);
+
+  GeneratedColumn<double> get perServingProteinG => $composableBuilder(
+      column: $table.perServingProteinG, builder: (column) => column);
+
+  GeneratedColumn<double> get perServingCarbsG => $composableBuilder(
+      column: $table.perServingCarbsG, builder: (column) => column);
+
+  GeneratedColumn<double> get perServingFatG => $composableBuilder(
+      column: $table.perServingFatG, builder: (column) => column);
+
+  GeneratedColumn<double> get perServingFibreG => $composableBuilder(
+      column: $table.perServingFibreG, builder: (column) => column);
+
+  GeneratedColumn<double> get perServingSodiumMg => $composableBuilder(
+      column: $table.perServingSodiumMg, builder: (column) => column);
+}
+
+class $$CachedRecipeNutritionRowsTableTableManager extends RootTableManager<
+    _$OfflineCacheDatabase,
+    $CachedRecipeNutritionRowsTable,
+    CachedRecipeNutritionRow,
+    $$CachedRecipeNutritionRowsTableFilterComposer,
+    $$CachedRecipeNutritionRowsTableOrderingComposer,
+    $$CachedRecipeNutritionRowsTableAnnotationComposer,
+    $$CachedRecipeNutritionRowsTableCreateCompanionBuilder,
+    $$CachedRecipeNutritionRowsTableUpdateCompanionBuilder,
+    (
+      CachedRecipeNutritionRow,
+      BaseReferences<_$OfflineCacheDatabase, $CachedRecipeNutritionRowsTable,
+          CachedRecipeNutritionRow>
+    ),
+    CachedRecipeNutritionRow,
+    PrefetchHooks Function()> {
+  $$CachedRecipeNutritionRowsTableTableManager(
+      _$OfflineCacheDatabase db, $CachedRecipeNutritionRowsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedRecipeNutritionRowsTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedRecipeNutritionRowsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedRecipeNutritionRowsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> viewerUserId = const Value.absent(),
+            Value<int> recipeId = const Value.absent(),
+            Value<int> servings = const Value.absent(),
+            Value<double> totalCaloriesKcal = const Value.absent(),
+            Value<double> totalProteinG = const Value.absent(),
+            Value<double> totalCarbsG = const Value.absent(),
+            Value<double> totalFatG = const Value.absent(),
+            Value<double> totalFibreG = const Value.absent(),
+            Value<double> totalSodiumMg = const Value.absent(),
+            Value<double> perServingCaloriesKcal = const Value.absent(),
+            Value<double> perServingProteinG = const Value.absent(),
+            Value<double> perServingCarbsG = const Value.absent(),
+            Value<double> perServingFatG = const Value.absent(),
+            Value<double> perServingFibreG = const Value.absent(),
+            Value<double> perServingSodiumMg = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CachedRecipeNutritionRowsCompanion(
+            viewerUserId: viewerUserId,
+            recipeId: recipeId,
+            servings: servings,
+            totalCaloriesKcal: totalCaloriesKcal,
+            totalProteinG: totalProteinG,
+            totalCarbsG: totalCarbsG,
+            totalFatG: totalFatG,
+            totalFibreG: totalFibreG,
+            totalSodiumMg: totalSodiumMg,
+            perServingCaloriesKcal: perServingCaloriesKcal,
+            perServingProteinG: perServingProteinG,
+            perServingCarbsG: perServingCarbsG,
+            perServingFatG: perServingFatG,
+            perServingFibreG: perServingFibreG,
+            perServingSodiumMg: perServingSodiumMg,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required int viewerUserId,
+            required int recipeId,
+            required int servings,
+            required double totalCaloriesKcal,
+            required double totalProteinG,
+            required double totalCarbsG,
+            required double totalFatG,
+            required double totalFibreG,
+            required double totalSodiumMg,
+            required double perServingCaloriesKcal,
+            required double perServingProteinG,
+            required double perServingCarbsG,
+            required double perServingFatG,
+            required double perServingFibreG,
+            required double perServingSodiumMg,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CachedRecipeNutritionRowsCompanion.insert(
+            viewerUserId: viewerUserId,
+            recipeId: recipeId,
+            servings: servings,
+            totalCaloriesKcal: totalCaloriesKcal,
+            totalProteinG: totalProteinG,
+            totalCarbsG: totalCarbsG,
+            totalFatG: totalFatG,
+            totalFibreG: totalFibreG,
+            totalSodiumMg: totalSodiumMg,
+            perServingCaloriesKcal: perServingCaloriesKcal,
+            perServingProteinG: perServingProteinG,
+            perServingCarbsG: perServingCarbsG,
+            perServingFatG: perServingFatG,
+            perServingFibreG: perServingFibreG,
+            perServingSodiumMg: perServingSodiumMg,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CachedRecipeNutritionRowsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$OfflineCacheDatabase,
+        $CachedRecipeNutritionRowsTable,
+        CachedRecipeNutritionRow,
+        $$CachedRecipeNutritionRowsTableFilterComposer,
+        $$CachedRecipeNutritionRowsTableOrderingComposer,
+        $$CachedRecipeNutritionRowsTableAnnotationComposer,
+        $$CachedRecipeNutritionRowsTableCreateCompanionBuilder,
+        $$CachedRecipeNutritionRowsTableUpdateCompanionBuilder,
+        (
+          CachedRecipeNutritionRow,
+          BaseReferences<_$OfflineCacheDatabase,
+              $CachedRecipeNutritionRowsTable, CachedRecipeNutritionRow>
+        ),
+        CachedRecipeNutritionRow,
+        PrefetchHooks Function()>;
 typedef $$CacheSyncMetadataRowsTableCreateCompanionBuilder
     = CacheSyncMetadataRowsCompanion Function({
   required int viewerUserId,
@@ -7925,6 +9050,9 @@ class $OfflineCacheDatabaseManager {
   $$CachedRecipeEquipmentRowsTableTableManager get cachedRecipeEquipmentRows =>
       $$CachedRecipeEquipmentRowsTableTableManager(
           _db, _db.cachedRecipeEquipmentRows);
+  $$CachedRecipeNutritionRowsTableTableManager get cachedRecipeNutritionRows =>
+      $$CachedRecipeNutritionRowsTableTableManager(
+          _db, _db.cachedRecipeNutritionRows);
   $$CacheSyncMetadataRowsTableTableManager get cacheSyncMetadataRows =>
       $$CacheSyncMetadataRowsTableTableManager(_db, _db.cacheSyncMetadataRows);
   $$CachedPantryIngredientRowsTableTableManager

@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import '../../recipe/models/equipment.dart';
 import '../../recipe/models/recipe.dart';
 import '../../recipe/models/recipe_ingredient.dart';
+import '../../recipe/models/recipe_nutrition.dart';
 import '../../recipe/models/recipe_step.dart';
 import '../../vault/models/vault.dart';
 import '../../vault/models/vault_folder.dart';
@@ -439,6 +440,13 @@ class OfflineCacheStore {
                     row.recipeId.isIn(removedIds),
               ))
             .go();
+        await (_database.delete(_database.cachedRecipeNutritionRows)
+              ..where(
+                (row) =>
+                    row.viewerUserId.equals(viewerUserId) &
+                    row.recipeId.isIn(removedIds),
+              ))
+            .go();
         await (_database.delete(_database.cachedRecipeRows)
               ..where(
                 (row) =>
@@ -570,6 +578,107 @@ class OfflineCacheStore {
     });
   }
 
+  Future<RecipeNutrition?> readRecipeNutrition({
+    required int viewerUserId,
+    required int recipeId,
+  }) async {
+    final row = await (_database.select(_database.cachedRecipeNutritionRows)
+          ..where(
+            (row) =>
+                row.viewerUserId.equals(viewerUserId) &
+                row.recipeId.equals(recipeId),
+          ))
+        .getSingleOrNull();
+    if (row == null) return null;
+
+    await markSyncMetadataAccess(
+      viewerUserId: viewerUserId,
+      collection: CacheCollection.recipeNutrition,
+      scopeId: recipeId.toString(),
+    );
+
+    return RecipeNutrition(
+      recipeId: row.recipeId,
+      servings: row.servings,
+      totals: NutritionValues(
+        caloriesKcal: row.totalCaloriesKcal,
+        proteinG: row.totalProteinG,
+        carbsG: row.totalCarbsG,
+        fatG: row.totalFatG,
+        fibreG: row.totalFibreG,
+        sodiumMg: row.totalSodiumMg,
+      ),
+      perServing: NutritionValues(
+        caloriesKcal: row.perServingCaloriesKcal,
+        proteinG: row.perServingProteinG,
+        carbsG: row.perServingCarbsG,
+        fatG: row.perServingFatG,
+        fibreG: row.perServingFibreG,
+        sodiumMg: row.perServingSodiumMg,
+      ),
+      ingredients: const [],
+    );
+  }
+
+  Future<void> storeRecipeNutrition({
+    required int viewerUserId,
+    required RecipeNutrition nutrition,
+    required DateTime syncedAt,
+  }) {
+    return _database.transaction(() async {
+      await _database
+          .into(_database.cachedRecipeNutritionRows)
+          .insertOnConflictUpdate(
+            CachedRecipeNutritionRowsCompanion.insert(
+              viewerUserId: viewerUserId,
+              recipeId: nutrition.recipeId,
+              servings: nutrition.servings,
+              totalCaloriesKcal: nutrition.totals.caloriesKcal,
+              totalProteinG: nutrition.totals.proteinG,
+              totalCarbsG: nutrition.totals.carbsG,
+              totalFatG: nutrition.totals.fatG,
+              totalFibreG: nutrition.totals.fibreG,
+              totalSodiumMg: nutrition.totals.sodiumMg,
+              perServingCaloriesKcal: nutrition.perServing.caloriesKcal,
+              perServingProteinG: nutrition.perServing.proteinG,
+              perServingCarbsG: nutrition.perServing.carbsG,
+              perServingFatG: nutrition.perServing.fatG,
+              perServingFibreG: nutrition.perServing.fibreG,
+              perServingSodiumMg: nutrition.perServing.sodiumMg,
+            ),
+          );
+      await writeSyncMetadata(
+        viewerUserId: viewerUserId,
+        collection: CacheCollection.recipeNutrition,
+        scopeId: nutrition.recipeId.toString(),
+        syncedAt: syncedAt,
+      );
+    });
+  }
+
+  Future<void> deleteRecipeNutrition({
+    required int viewerUserId,
+    required int recipeId,
+  }) {
+    return _database.transaction(() async {
+      await (_database.delete(_database.cachedRecipeNutritionRows)
+            ..where(
+              (row) =>
+                  row.viewerUserId.equals(viewerUserId) &
+                  row.recipeId.equals(recipeId),
+            ))
+          .go();
+      await (_database.delete(_database.cacheSyncMetadataRows)
+            ..where(
+              (row) =>
+                  row.viewerUserId.equals(viewerUserId) &
+                  row.collection.equals(CacheCollection.recipeNutrition) &
+                  row.scopeId.equals(recipeId.toString()),
+            ))
+          .go();
+    });
+  }
+
   Future<CacheSyncMetadataRow?> readSyncMetadata({
     required int viewerUserId,
     required String collection,
@@ -689,6 +798,7 @@ abstract final class CacheCollection {
   static const folderRecipes = 'folderRecipes';
   static const recipes = 'recipes';
   static const recipe = 'recipe';
+  static const recipeNutrition = 'recipeNutrition';
   static const pantry = 'pantry';
   static const shoppingLists = 'shoppingLists';
   static const shoppingList = 'shoppingList';

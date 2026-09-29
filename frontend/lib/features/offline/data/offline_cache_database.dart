@@ -128,6 +128,27 @@ class CachedRecipeEquipmentRows extends Table {
       };
 }
 
+class CachedRecipeNutritionRows extends Table {
+  IntColumn get viewerUserId => integer()();
+  IntColumn get recipeId => integer()();
+  IntColumn get servings => integer()();
+  RealColumn get totalCaloriesKcal => real()();
+  RealColumn get totalProteinG => real()();
+  RealColumn get totalCarbsG => real()();
+  RealColumn get totalFatG => real()();
+  RealColumn get totalFibreG => real()();
+  RealColumn get totalSodiumMg => real()();
+  RealColumn get perServingCaloriesKcal => real()();
+  RealColumn get perServingProteinG => real()();
+  RealColumn get perServingCarbsG => real()();
+  RealColumn get perServingFatG => real()();
+  RealColumn get perServingFibreG => real()();
+  RealColumn get perServingSodiumMg => real()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {viewerUserId, recipeId};
+}
+
 class CacheSyncMetadataRows extends Table {
   IntColumn get viewerUserId => integer()();
   TextColumn get collection => text()();
@@ -209,6 +230,7 @@ class CachedShoppingListItemRows extends Table {
     CachedRecipeIngredientRows,
     CachedRecipeStepRows,
     CachedRecipeEquipmentRows,
+    CachedRecipeNutritionRows,
     CacheSyncMetadataRows,
     CachedPantryIngredientRows,
     CachedShoppingListRows,
@@ -220,7 +242,7 @@ class OfflineCacheDatabase extends _$OfflineCacheDatabase {
       : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -232,6 +254,9 @@ class OfflineCacheDatabase extends _$OfflineCacheDatabase {
           }
           if (from < 3) {
             await migrator.createTable(cachedRecipeEquipmentRows);
+          }
+          if (from < 4) {
+            await migrator.createTable(cachedRecipeNutritionRows);
           }
         },
       );
