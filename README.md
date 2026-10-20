@@ -30,12 +30,11 @@ An intelligent recipe management and discovery ecosystem, built by Team PUL5E.
 
 <h3>App Trailer</h3>
 
-<!-- TRAILER: GitHub strips <iframe>, so use its native inline video player instead:
-     edit this README on github.com, drag the trailer .mp4 (max 100 MB) into the editor, and GitHub
-     inserts a https://github.com/user-attachments/assets/... URL. Put that URL on a line by itself
-     (replacing the placeholder below). It then renders as an embedded player. -->
+<a href="https://youtube.com/shorts/SEP7DQe_GJk">
+  <img src=docs/photo_documentation/trailer-thumbnail.png alt="Watch the Mealchemy app trailer"/>
+</a>
 
-[PLACEHOLDER_TRAILER_URL]
+<sub>▶ Click to watch the trailer on YouTube</sub>
 
 </div>
 
