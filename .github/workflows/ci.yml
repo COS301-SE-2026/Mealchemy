@@ -413,3 +413,4 @@ jobs:
           exit-code: '1'          # fails the pipeline on findings
           ignore-unfixed: true
           severity: HIGH,CRITICAL  # blocks on HIGH or CRITICAL only
+          trivyignores: .trivyignore
