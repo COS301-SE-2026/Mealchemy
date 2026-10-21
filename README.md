@@ -1,6 +1,7 @@
 <div align="center">
 
 <img src="docs/photo_documentation/logo-full-primary.png" alt="Mealchemy logo" width="320"/>
+<img src="docs/photo_documentation/EPI-USE-Labs-logo.jpg" alt="EPI-USE Labs logo" width="320"/>
 
 # Mealchemy
 
