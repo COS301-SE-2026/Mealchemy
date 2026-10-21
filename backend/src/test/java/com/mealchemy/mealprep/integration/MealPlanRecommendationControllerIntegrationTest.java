@@ -51,6 +51,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,8 +100,12 @@ public class MealPlanRecommendationControllerIntegrationTest {
     private Integer privatePlanId;
     private Integer sharedPlanId;
 
-    @BeforeEach
-    void setUp() {
+    @AfterEach
+    void tearDown() {
+        clearTestData();
+    }
+
+    private void clearTestData() {
         mealPlanEntryRepository.deleteAll();
         mealPlanRepository.deleteAll();
         vaultRepository.deleteAll();
@@ -112,6 +117,11 @@ public class MealPlanRecommendationControllerIntegrationTest {
         userPreferenceWeightsRepository.deleteAll();
         externalLinksRepository.deleteAll();
         userRepository.deleteAll();
+    }
+
+    @BeforeEach
+    void setUp() {
+        clearTestData();
 
         User user = new User();
         user.setEmail("mealplan-rec-test-" + System.nanoTime() + "@example.com");

@@ -1,0 +1,11 @@
+# Temporary Spring Framework vulnerability exceptions.
+# Review and remove by 2027-01-31, or earlier when the backend migrates to Spring Framework 7.0.9 or later through a compatible Spring Boot release.
+
+# Spring rates CVE-2026-47884 MEDIUM. Exploitation requires XsltView together
+# with implicit /** view rendering. This REST backend uses neither feature.
+# https://spring.io/security/cve-2026-47884/
+CVE-2026-47884
+
+# Spring rates CVE-2026-47890 LOW. Exploitation requires Server-Sent Events with view fragments and attacker-controlled data. This backend uses STOMP WebSockets and contains no SSE or view-fragment endpoints.
+# https://spring.io/security/cve-2026-47890/
+CVE-2026-47890

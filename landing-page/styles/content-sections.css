@@ -1,3 +1,75 @@
+.app-trailer {
+  padding: clamp(32px, 5vw, 64px) 0;
+}
+
+.trailer-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
+  align-items: center;
+  gap: clamp(32px, 6vw, 80px);
+  padding: clamp(28px, 5vw, 64px);
+  border: 1px solid var(--line);
+  border-radius: 34px;
+  background:
+    radial-gradient(circle at 95% 15%, rgba(212, 175, 55, 0.18), transparent 26rem),
+    radial-gradient(circle at 5% 90%, rgba(92, 0, 24, 0.06), transparent 24rem),
+    rgba(255, 255, 255, 0.5);
+}
+
+.trailer-copy { min-width: 0; max-width: 530px; }
+.trailer-copy h2 { font-size: clamp(2.2rem, 4.5vw, 4.2rem); }
+.trailer-copy > p:not(.eyebrow) {
+  margin: 24px 0;
+  color: #5a4749;
+  font-size: 1.08rem;
+  font-weight: 650;
+  line-height: 1.7;
+}
+
+.trailer-duration {
+  display: inline-block;
+  color: var(--accent-muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.trailer-media {
+  width: min(320px, 100%);
+  justify-self: center;
+  min-width: 0;
+  margin: 0;
+}
+
+.trailer-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 9 / 16;
+  object-fit: contain;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 26px;
+  background: #17040a;
+  box-shadow: var(--shadow);
+}
+
+.trailer-media figcaption {
+  margin-top: 14px;
+  color: #6b5559;
+  font-size: 0.75rem;
+  font-weight: 650;
+  text-align: center;
+}
+
+.hero-actions .button { gap: 8px; }
+
+@media (max-width: 760px) {
+  .trailer-panel { grid-template-columns: minmax(0, 1fr); gap: 28px; padding: 28px 20px; border-radius: 26px; }
+  .trailer-copy h2 { font-size: clamp(2rem, 8vw, 3rem); }
+  .trailer-copy > p:not(.eyebrow) { margin: 18px 0; font-size: 1rem; }
+  .trailer-media { width: min(300px, 100%); }
+  .trailer-video { border-radius: 22px; }
+}
+
 .download-panel {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(260px, 0.44fr);

@@ -1,451 +1,316 @@
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.001ms !important;
-      animation-iteration-count: 1 !important;
-      scroll-behavior: auto !important;
-      transition-duration: 0.001ms !important;
-    }
-  }
-  
-  @media (max-width: 980px) {
-    .site-header {
-      align-items: stretch;
-      border-radius: 28px;
-      flex-wrap: wrap;
-    }
-  
-    .nav {
-      order: 3;
-      width: 100%;
-      overflow-x: auto;
-      padding-bottom: 4px;
-    }
-  
-    .hero,
-    .solution-panel,
-    .preference-panel,
-    .vault-explainer,
-    .system-user-grid,
-    .showcase-layout,
-    .download-panel,
-    .showcase-phone {
-      grid-template-columns: 1fr;
-    }
-  
-    .hero {
-      min-height: 0;
-    }
-  
-    .hero-stage {
-      min-height: 590px;
-    }
-  
-    .problem-grid,
-    .feature-grid,
-    .mockup-gallery {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  
-    .flow {
-      grid-template-columns: 1fr;
-      gap: 12px;
-    }
-  
-    .flow-line {
-      width: 2px;
-      height: 28px;
-      margin-left: 28px;
-    }
-  
-    .showcase-phone {
-      justify-items: center;
-    }
-  
-    .preference-stats {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  
-    .vault-scene-controls {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  
-    .vault-scene-stage {
-      min-height: 670px;
-    }
-  
-    .candidate-bank {
-      grid-template-columns: repeat(3, minmax(120px, 1fr));
-    }
-  
-    .phase-card-stack,
-    .phase-visual-layer,
-    .system-user-grid .swipe-phone {
-      grid-column: 1;
-    }
-  
-    .phase-visual-layer,
-    .system-user-grid .swipe-phone {
-      grid-row: 1;
-    }
-  
-    .phase-card-stack {
-      grid-row: 2;
-      min-height: 0;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      grid-template-rows: repeat(4, minmax(96px, auto));
-      margin-top: 24px;
-    }
-  
-  }
-  
-  @media (max-width: 680px) {
-    :root {
-      --max: min(100% - 24px, 1180px);
-    }
-  
-    .site-header {
-      margin-top: 8px;
-      padding: 10px;
-    }
-  
-    .brand span,
-    .nav-cta {
-      display: none;
-    }
-  
-    h1 {
-      font-size: clamp(3.4rem, 19vw, 5rem);
-    }
-  
-    .hero-metrics,
-    .problem-grid,
-    .feature-grid,
-    .mockup-gallery {
-      grid-template-columns: 1fr;
-    }
-  
-    .vault-model {
-      grid-template-columns: 1fr;
-      gap: 9px;
-    }
-  
-    .vault-model > i {
-      transform: rotate(90deg);
-    }
-  
-    .vault-explainer {
-      padding: 12px;
-    }
-  
-    .vault-scene-controls {
-      display: flex;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      padding-bottom: 6px;
-    }
-  
-    .vault-scene-button {
-      min-width: 225px;
-      scroll-snap-align: start;
-    }
-  
-    .vault-scene-stage {
-      min-height: 790px;
-    }
-  
-    .vault-scene-panel {
-      padding: 24px 18px;
-    }
-  
-    .vault-scene-copy h3 {
-      font-size: 2.15rem;
-    }
-  
-    .vault-scene-visual {
-      min-height: 500px;
-      padding-top: 16px;
-    }
-  
-    .private-visual,
-    .add-visual,
-    .copy-visual {
-      flex-direction: column;
-    }
-  
-    .private-visual .vault-motion-arrow,
-    .add-visual .vault-motion-arrow,
-    .copy-visual .clone-route {
-      width: 52px;
-      transform: rotate(90deg);
-    }
-  
-    .vault-object,
-    .vault-form-card,
-    .copy-source,
-    .copy-destination {
-      width: min(330px, 92%);
-    }
-  
-    .small-object {
-      width: 44%;
-      padding: 13px;
-    }
-  
-    .small-object .vault-object-head {
-      display: grid;
-    }
-  
-    .protect-visual {
-      flex-wrap: wrap;
-      align-content: center;
-    }
-  
-    .source-recipe-card,
-    .private-copy-card {
-      width: 42%;
-    }
-  
-    .copy-prompt {
-      order: 3;
-      width: 90%;
-    }
-  
-    .global-recipe {
-      width: 95px;
-    }
-  
-    .global-recipe.recipe-a { left: 0; }
-    .global-recipe.recipe-b { right: 0; }
-    .global-recipe.recipe-c { right: 2%; bottom: 8%; }
-  
-    .vault-stage-footer {
-      display: grid;
-      gap: 4px;
-    }
-  
-    .mockup-card {
-      min-height: auto;
-    }
-  
-    .mockup-card img,
-    .mockup-card img.live-screen-image {
-      width: min(200px, 72vw);
-      height: min(434px, 156vw);
-    }
-  
-    .hero-stage {
-      min-height: 500px;
-    }
-  
-    .heuristic-demo {
-      padding: 18px;
-    }
-  
-    .candidate-bank {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  
-    .phase-card-stack {
-      grid-template-columns: 1fr;
-      grid-template-rows: repeat(7, minmax(92px, auto));
-    }
-  
-    .phase-visual-layer {
-      min-height: 660px;
-    }
-  
-    .phase-visual-layer .candidate-bank {
-      inset: 28px 20px auto;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  
-    .phase-visual-layer .bank-card {
-      min-height: 105px;
-    }
-  
-    .phase-visual-layer .bank-card img {
-      height: 58px;
-    }
-  
-    .score-signals > div {
-      grid-template-columns: minmax(96px, 1fr) minmax(76px, 0.9fr) 34px;
-    }
-  
-    .allocation-heading,
-    .learning-flow {
-      grid-template-columns: 1fr;
-    }
-  
-    .allocation-heading {
-      display: grid;
-    }
-  
-    .allocation-heading > span {
-      width: fit-content;
-    }
-  
-    .learning-arrow {
-      justify-self: center;
-    }
-  
-    .ema-result {
-      grid-column: 1;
-    }
-  
-    .bank-card {
-      min-height: 126px;
-    }
-  
-    .bank-card img {
-      height: 78px;
-    }
-  
-    .preference-stats {
-      grid-template-columns: 1fr;
-    }
-  
-    .swipe-phone {
-      width: min(315px, 88vw);
-      min-height: 590px;
-      border-radius: 38px;
-    }
-  
-    .swipe-stack {
-      min-height: 370px;
-    }
-  
-    .meal-content h3 {
-      font-size: 1.22rem;
-    }
-  
-    .meal-content p {
-      font-size: 0.76rem;
-    }
-  
-    .preference-stats {
-      grid-template-columns: 1fr;
-    }
-  
-    .phone {
-      width: min(275px, 82vw);
-      border-radius: 34px;
-      border-width: 10px;
-    }
-  
-    .orbit-one {
-      width: 320px;
-      height: 320px;
-    }
-  
-    .orbit-two {
-      width: 440px;
-      height: 440px;
-    }
-  
-    .match-card {
-      left: -6px;
-      top: 8%;
-    }
-  
-    .swipe-card {
-      right: -4px;
-      bottom: 7%;
-    }
-  
-    .float-card {
-      max-width: 190px;
-      padding: 14px;
-    }
-  
-    .req-row {
-      grid-template-columns: 1fr;
-    }
-  
-    .req-row span:last-child {
-      padding-top: 0;
-    }
-  
-    .req-row.head {
-      display: none;
-    }
-  
-    .site-footer {
-      flex-direction: column;
-    }
-  
-  .bonus-panel {
-    padding: 28px 18px;
+/* Collapse navigation before its links run out of room on smaller laptops. */
+@media (max-width: 1120px) {
+  .site-header {
+    flex-wrap: wrap;
+    gap: 0;
+    min-height: 68px;
+    border-radius: 26px;
+    padding: 10px 16px;
   }
 
-  .bonus-heading {
-    align-items: flex-start;
-    margin-bottom: 22px;
-  }
+  .brand { padding-left: 0; }
+  .site-header > .nav-cta { display: none; }
 
-  .bonus-heading h2 {
-    font-size: clamp(2.2rem, 11vw, 3.2rem);
-  }
-
-  .bonus-controls {
-    display: none;
-  }
-
-  .bonus-card,
-  .bonus-card--wide {
-    flex-basis: min(86vw, 390px);
-  }
-
-  .bonus-card-copy {
-    min-height: 255px;
-    padding: 24px;
-  }
-
-  .bonus-number {
-    top: 24px;
-    right: 22px;
-    font-size: 2.35rem;
-  }
-
-  .bonus-card h3 {
-    max-width: 82%;
-    font-size: 2rem;
-  }
-
-  .bonus-card-media {
-    min-height: 420px;
-  }
-
-  .bonus-card-media--pair,
-  .bonus-card-media--single {
+  .nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     gap: 10px;
-    padding: 26px 12px 0;
+    min-height: 44px;
+    margin-left: auto;
+    padding: 0 14px;
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    border-radius: 16px;
+    color: var(--surface);
+    background: transparent;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 750;
+    cursor: pointer;
   }
 
-  .bonus-phone-shot {
-    width: 47%;
-    border-width: 5px;
-    border-radius: 22px 22px 0 0;
+  .nav-toggle-icon,
+  .nav-toggle-icon::after {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: currentColor;
   }
 
-  .bonus-card-media--single .bonus-phone-shot {
-    width: min(62%, 210px);
+  .nav-toggle-icon { position: relative; transform: translateY(-3px); }
+  .nav-toggle-icon::after { content: ""; position: absolute; top: 6px; }
+  .nav-toggle[aria-expanded="true"] .nav-toggle-icon { transform: rotate(45deg); }
+  .nav-toggle[aria-expanded="true"] .nav-toggle-icon::after { top: 0; transform: rotate(90deg); }
+
+  .nav {
+    flex: 0 0 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+    padding-top: 12px;
   }
 
-  .bonus-vault-media {
-    padding: 22px;
-  }
-
-  .shared-vault-preview {
-    padding: 20px;
-  }
-
-  .site-footer {
-    flex-direction: column;
-  }
+  .nav-ready .nav { display: none; }
+  .nav-ready.is-open .nav { display: grid; }
+  .nav a { min-height: 44px; border-radius: 12px; }
 }
 
+@media (max-width: 980px) {
+  .hero,
+  .solution-panel,
+  .preference-panel,
+  .vault-explainer,
+  .system-user-grid,
+  .showcase-layout,
+  .download-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
 
-  
-  
+  .hero { min-height: 0; gap: 32px; }
+  .hero::before { transform: translate(-50%, -50%); }
+  .hero-copy { max-width: 700px; }
+  .hero-stage { min-height: 640px; }
+  .hero-phone { width: 290px; }
+  .match-card { left: max(0px, calc(50% - 250px)); }
+  .swipe-card { right: max(0px, calc(50% - 250px)); }
+
+  .problem-grid,
+  .feature-grid,
+  .mockup-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .flow-line { display: none; }
+  .vault-model { grid-template-columns: 1fr 24px 1fr 24px 1fr; padding: 12px; }
+  .vault-model div { grid-template-columns: 1fr; gap: 8px; padding: 12px; }
+  .vault-model div span { grid-row: auto; }
+
+  /* Keep the controls beside one another so the demo is within reach. */
+  .vault-scene-controls,
+  .phase-card-stack,
+  .showcase-controls {
+    display: flex;
+    gap: 10px;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) transparent;
+    padding: 4px 4px 12px;
+  }
+
+  .vault-scene-button,
+  .pipeline-card,
+  .screen-tab {
+    flex: 0 0 240px;
+    scroll-snap-align: start;
+  }
+
+  .vault-scene-button { min-height: 82px; }
+  .vault-scene-stage { min-height: 0; }
+  .vault-scene-panel { padding: 28px; }
+  .vault-scene-visual { min-height: 360px; }
+
+  .system-user-grid { margin-top: 0; gap: 16px; }
+  .phase-card-stack { grid-column: 1; grid-row: 1; min-height: 0; margin: 0; }
+  .phase-visual-layer,
+  .system-user-grid .swipe-phone { grid-column: 1; grid-row: 2; }
+  .phase-visual-layer { min-height: 620px; }
+  .heuristic-demo { min-height: 0; padding: 24px; }
+  .heuristic-demo[data-engine-state] .pipeline-card { min-height: 148px; padding-right: 40px; }
+  .heuristic-demo[data-engine-state] .pipeline-card.is-active { transform: none; }
+  .phase-strip { gap: 6px; }
+  .phase-strip span { font-size: 0.63rem; letter-spacing: 0; padding: 6px; }
+
+  .showcase-phone { justify-items: center; }
+  .showcase-phone .phone { width: 280px; }
+  .screen-tab { min-height: 94px; }
+  .preference-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 680px) {
+  :root { --max: min(1180px, calc(100% - 32px)); }
+  html { scroll-padding-top: 88px; }
+  .site-header { margin-top: 8px; min-height: 64px; padding: 8px 12px; border-radius: 22px; }
+  .brand { gap: 8px; font-size: 1.15rem; }
+  .brand img { width: 36px; height: 36px; border-radius: 11px; object-fit: contain; }
+  .nav-toggle { padding: 0 10px; }
+
+  .hero { padding: 36px 0 48px; gap: 28px; }
+  .hero::before { width: 100%; height: 90%; border-radius: 100px; transform: translate(-50%, -50%); }
+  .eyebrow { font-size: 0.65rem; letter-spacing: 0.08em; gap: 8px; }
+  .eyebrow span { flex: 0 0 24px; }
+  h1 { font-size: clamp(2.5rem, 10.8vw, 4rem); line-height: 1.04; }
+  h2 { font-size: clamp(2rem, 8vw, 3rem); line-height: 1.08; }
+  .hero-lede { font-size: 1rem; line-height: 1.65; margin-top: 20px; }
+  .section-heading p:not(.eyebrow) { font-size: 1rem; line-height: 1.65; }
+  .hero-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 24px; }
+  .button { min-height: 50px; padding: 12px 16px; font-size: 0.9rem; }
+  .hero-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 24px; }
+  .hero-metrics div { padding: 14px 10px; border-radius: 16px; }
+  .hero-metrics dt { font-size: clamp(1.4rem, 6vw, 2rem); }
+  .hero-metrics dd { font-size: 0.6rem; line-height: 1.5; }
+
+  .hero-stage { min-height: 560px; }
+  .phone { max-width: 100%; border-width: 9px; border-radius: 34px; }
+  .hero-phone { width: min(250px, 74%); }
+  .alchemy-orbit { max-width: 100%; aspect-ratio: 1; height: auto; }
+  .orbit-one { width: 280px; }
+  .orbit-two { width: 360px; }
+  .float-card { max-width: 150px; padding: 12px; border-radius: 17px; }
+  .float-card strong { font-size: 1.2rem; }
+  .float-card p,
+  .float-card small { font-size: 0.72rem; }
+  .mini-kicker,
+  .swipe-card span { font-size: 0.6rem; }
+  .match-card { left: 0; top: 6%; }
+  .swipe-card { right: 0; bottom: 6%; }
+
+  .problem,
+  .solution,
+  .swipe-demo,
+  .vault-story,
+  .features,
+  .showcase,
+  .download,
+  .requirements,
+  .bonus-features,
+  .final-cta { padding: 48px 0; }
+  .section-heading { margin-bottom: 24px; }
+  .problem-grid,
+  .feature-grid,
+  .mockup-gallery { grid-template-columns: minmax(0, 1fr); }
+  .problem-card,
+  .feature-card { min-height: 0; padding: 24px; }
+  .solution-panel,
+  .download-panel,
+  .preference-panel { padding: 28px 20px; gap: 24px; border-radius: 24px; }
+  .flow { grid-template-columns: minmax(0, 1fr); }
+  .flow-step { min-height: 0; padding: 18px; }
+  .flow-step strong { margin-top: 8px; font-size: 1.5rem; }
+
+  .heuristic-demo { padding: 12px; border-radius: 24px; }
+  .phase-strip { display: none; }
+  .phase-card-stack { gap: 8px; }
+  .pipeline-card { flex-basis: 240px; }
+  .phase-visual-layer { min-height: 580px; border-radius: 22px; }
+  .phase-visual-layer .candidate-bank { inset: 16px 12px auto; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .phase-visual-layer .bank-card { min-height: 102px; border-radius: 14px; }
+  .phase-visual-layer .bank-card img { height: 64px; }
+  .bank-card span { font-size: 0.7rem; padding: 6px 6px 8px; overflow-wrap: anywhere; }
+  .phase-visual { padding: 20px 12px; }
+  .score-demo-card,
+  .allocation-board,
+  .learning-flow { padding: 16px 12px; border-radius: 20px; }
+  .score-recipe-heading { gap: 10px; }
+  .score-recipe-heading img { width: 48px; height: 48px; flex-shrink: 0; }
+  .score-recipe-heading strong { font-size: 1.1rem; }
+  .score-signals > div { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) 30px; gap: 6px; font-size: 0.7rem; }
+  .score-total { gap: 10px; padding: 12px; }
+  .allocation-heading { display: grid; gap: 10px; }
+  .allocation-heading > span { width: fit-content; }
+  .cuisine-buckets { gap: 8px; }
+  .cuisine-bucket { padding: 8px; }
+  .cuisine-bucket strong { font-size: 0.65rem; overflow-wrap: anywhere; }
+  .learning-flow { grid-template-columns: minmax(0, 1fr); }
+  .learning-arrow { justify-self: center; }
+  .ema-result { grid-column: 1; }
+  .swipe-phone { width: min(280px, calc(100% - 16px)); min-height: 540px; padding: 18px 14px; border-width: 9px; border-radius: 34px; }
+  .swipe-topbar { gap: 6px; }
+  .swipe-topbar span { font-size: 1.4rem; }
+  .swipe-topbar small { font-size: 0.65rem; }
+  .swipe-stack { min-height: 330px; }
+  .swipe-actions { gap: 12px; }
+  .swipe-actions span { width: 44px; height: 44px; }
+  .swipe-actions .cook { width: 52px; height: 52px; }
+  .meal-content h3 { font-size: 1.2rem; }
+  .preference-stats { grid-template-columns: minmax(0, 1fr); }
+  .preference-stats article { min-height: 0; }
+  .heuristic-output::before { right: 14px; max-width: calc(100% - 28px); font-size: 0.6rem; }
+
+  .vault-model { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .vault-model div { grid-template-columns: 42px minmax(0, 1fr); column-gap: 12px; row-gap: 0; min-height: 80px; }
+  .vault-model div span { grid-row: 1 / 3; }
+  .vault-model > i { transform: rotate(90deg); line-height: 1; }
+  .vault-explainer { padding: 10px; gap: 12px; border-radius: 26px; }
+  .vault-scene-button { flex-basis: 235px; }
+  .vault-scene-panel { padding: 24px 16px; gap: 16px; }
+  .vault-scene-copy h3 { font-size: clamp(1.7rem, 7.5vw, 2.15rem); line-height: 1.08; }
+  .vault-scene-copy > p:last-child { font-size: 0.9rem; line-height: 1.6; }
+  .vault-scene-visual { min-height: 0; padding: 20px 0 12px; gap: 24px; }
+  .private-visual,
+  .add-visual,
+  .copy-visual,
+  .twin-vault-visual,
+  .protect-visual { flex-direction: column; }
+  .private-visual .vault-motion-arrow,
+  .add-visual .vault-motion-arrow,
+  .copy-visual .clone-route { width: 42px; height: 30px; flex-shrink: 0; transform: rotate(90deg); }
+  .vault-object,
+  .vault-form-card,
+  .copy-source,
+  .copy-destination,
+  .small-object { width: 100%; max-width: 330px; min-height: 0; padding: 16px; }
+  .vault-object-head { flex-wrap: wrap; font-size: 1.15rem; }
+  .vault-folder-object { padding: 12px; }
+  .vault-recipe-mini img { flex: 0 0 38px; width: 38px; height: 38px; }
+  .source-recipe-card,
+  .private-copy-card,
+  .copy-prompt { width: 100%; max-width: 260px; }
+  .protect-visual .copy-prompt { order: 0; }
+  .invite-visual { min-height: 260px; gap: 6px; padding-bottom: 65px; }
+  .invite-user { min-width: 60px; }
+  .invite-user b { width: 52px; height: 52px; }
+  .invite-path { width: 100px; flex-shrink: 1; }
+  .shared-arrival { width: max-content; max-width: 100%; padding: 10px; font-size: 0.8rem; }
+  .global-visual { min-height: 360px; }
+  .global-orbit { width: 150px; height: 150px; }
+  .global-orbit span { font-size: 1.35rem; }
+  .global-recipe { width: 82px; }
+  .global-recipe img { height: 60px; }
+  .global-recipe.recipe-a { left: 0; top: 2%; }
+  .global-recipe.recipe-b { right: 0; top: 5%; }
+  .global-recipe.recipe-c { right: 0; bottom: 0; }
+  .global-browse-label { left: 0; bottom: 7%; font-size: 0.6rem; }
+  .vault-stage-footer { display: grid; gap: 4px; margin: 0 16px 16px; font-size: 0.65rem; }
+
+  .mockup-card { min-height: 0; }
+  .mockup-card img { width: 200px; max-width: 100%; height: 434px; }
+  .showcase-phone .phone { width: min(270px, 86%); }
+  .screen-caption { padding: 24px; }
+  .req-row { grid-template-columns: minmax(0, 1fr); }
+  .req-row span:last-child { padding-top: 0; }
+  .req-row.head { display: none; }
+
+  .bonus-panel { padding: 28px 16px; border-radius: 24px; }
+  .bonus-heading { align-items: flex-start; margin-bottom: 22px; }
+  .bonus-heading h2 { font-size: clamp(2rem, 8vw, 3rem); }
+  .bonus-controls { display: none; }
+  .bonus-card,
+  .bonus-card--wide { flex-basis: 92%; min-width: 0; }
+  .bonus-card-copy { min-height: 0; padding: 24px 18px; }
+  .bonus-number { top: 24px; right: 18px; font-size: 2.35rem; }
+  .bonus-card h3 { max-width: 90%; font-size: 1.8rem; }
+  .bonus-card-media { min-height: 0; }
+  .bonus-card-media--pair,
+  .bonus-card-media--single { gap: 10px; padding: 26px 12px 0; }
+  .bonus-phone-shot { width: 47%; border-width: 5px; border-radius: 22px 22px 0 0; }
+  .bonus-card-media--single .bonus-phone-shot { width: min(72%, 210px); }
+  .bonus-vault-media { padding: 14px; }
+  .shared-vault-preview { padding: 16px; }
+  .shared-vault-title { flex-wrap: wrap; gap: 10px; }
+  .final-panel { padding: 32px 20px; border-radius: 24px; }
+  .final-actions { width: 100%; display: grid; }
+  .site-footer { flex-direction: column; gap: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}
