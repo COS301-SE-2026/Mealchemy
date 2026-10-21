@@ -97,21 +97,9 @@ More detail: [Architectural Requirements](https://github.com/COS301-SE-2026/Meal
 
 <br/>
 
-## Quality and testing
-
-| Practice | Where to look |
-|:---|:---|
-| CI/CD with separate CI, CD, frontend-delivery, landing-page and design-spec workflows | [`.github/workflows`](.github/workflows) |
-| Code coverage split into backend and frontend flags | [`Codecov`](https://codecov.io/gh/COS301-SE-2026/Mealchemy) |
-| Static analysis | [`sonar-project.properties`](sonar-project.properties) |
-| Performance and resilience: k6 load, resilience and comparison tests | [`nfr-tests/performance`](nfr-tests/performance) |
-| Security: authorization matrix and OWASP ZAP tooling | [`nfr-tests/security`](nfr-tests/security) |
-| End-to-end mobile flows with Maestro | [`e2e/`](e2e) |
-| Live production uptime monitoring | [`Status page`](https://stats.uptimerobot.com/wnmHUXyJfN) |
-
-<br/>
-
 ## Quick Links
+
+### General
 
 | Resource | Link |
 |:---|:---|
@@ -127,8 +115,19 @@ More detail: [Architectural Requirements](https://github.com/COS301-SE-2026/Meal
 | Service contracts | [OpenAPI / Swagger](https://mealchemy-backend-staging-otygypdv7a-ey.a.run.app/swagger-ui/index.html#/vault-controller/getVault) |
 | Team email | [pulsefive@gmail.com](mailto:pulsefive@gmail.com) |
 
+### Quality and testing
+| Practice | Where to look |
+|:---|:---|
+| CI/CD with separate CI, CD, frontend-delivery, landing-page and design-spec workflows | [`.github/workflows`](.github/workflows) |
+| Code coverage split into backend and frontend flags | [`Codecov`](https://codecov.io/gh/COS301-SE-2026/Mealchemy) |
+| Static analysis | [`sonar-project.properties`](sonar-project.properties) |
+| Performance and resilience: k6 load, resilience and comparison tests | [`nfr-tests/performance`](nfr-tests/performance) |
+| Security: authorization matrix and OWASP ZAP tooling | [`nfr-tests/security`](nfr-tests/security) |
+| End-to-end mobile flows with Maestro | [`e2e/`](e2e) |
+| Live production uptime monitoring | [`Status page`](https://stats.uptimerobot.com/wnmHUXyJfN) |
 
 <small>_Please note Backend links are not accessible to the public. To view our app, please go through the Landing page_ <small>
+
 <br/>
 
 ## Documentation
