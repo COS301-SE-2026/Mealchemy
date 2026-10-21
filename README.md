@@ -288,24 +288,6 @@ curl http://localhost:8080/actuator/health
 ```
 
 <details>
-<summary><b>Setup guides</b></summary>
-
-<br/>
-
-| Guide | Link |
-|:---|:---|
-| Docker | [docker_setup.MD](docs/docker_setup.MD) |
-| CI | [ci_setup.MD](docs/ci_setup.MD) |
-| Act | [act_setup.MD](docs/act_setup.MD) |
-| pgAdmin | [pgAdmin_setup.MD](docs/pgAdmin_setup.MD) |
-| Render | [render_setup.MD](docs/render_setup.MD) |
-| Security | [security_setup.MD](docs/security_setup.MD) |
-| Design spec deployment | [design_spec_deployment_setup.MD](docs/design_spec_deployment_setup.MD) |
-| Wiki submodule | [wiki_submodule_setup.MD](docs/wiki_submodule_setup.MD) |
-
-</details>
-
-<details>
 <summary><b>Repository structure</b></summary>
 
 <br/>
