@@ -25,6 +25,9 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 100px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -128,7 +131,7 @@ a {
 
 .nav {
   display: flex;
-  gap: 6px;
+  gap: 0;
   align-items: center;
 }
 
@@ -138,7 +141,7 @@ a {
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  padding: 0 14px;
+  padding: 0 10px;
   font-size: 0.86rem;
   font-weight: 800;
   text-decoration: none;
@@ -153,6 +156,7 @@ a {
 }
 
 .nav-cta {
+  flex-shrink: 0;
   color: var(--primary-dark);
   background: var(--accent);
   box-shadow: 0 10px 24px rgba(212, 175, 55, 0.24);
@@ -163,14 +167,24 @@ a {
   margin: 0 auto;
 }
 
+.section-shell > *,
+.system-user-grid > *,
+.vault-explainer > * {
+  min-width: 0;
+}
+
+.nav-toggle {
+  display: none;
+}
+
 .hero {
   position: relative;
   min-height: calc(100vh - 90px);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.78fr);
+  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
   align-items: center;
-  gap: clamp(32px, 6vw, 84px);
-  padding: clamp(54px, 8vw, 96px) 0 72px;
+  gap: clamp(24px, 4vw, 64px);
+  padding: clamp(40px, 5vw, 72px) 0 64px;
 }
 
 .hero::before {
@@ -178,7 +192,7 @@ a {
   position: absolute;
   left: 50%;
   top: 53%;
-  width: 102vw;
+  width: min(1400px, calc(100vw - 64px));
   height: 72%;
   border-radius: 999px;
   background: linear-gradient(135deg, rgba(87, 0, 19, 0.09), rgba(212, 175, 55, 0.13));
@@ -222,15 +236,16 @@ h3 {
 
 h1 {
   max-width: 100%;
-  font-size: clamp(3rem, 6.5vw, 6.5rem);
-  line-height: 0.9;
-  overflow-wrap: break-word;
-  hyphens: auto;
+  font-size: clamp(3.25rem, 5.4vw, 5.1rem);
+  line-height: 1;
+  hyphens: none;
+  text-wrap: balance;
 }
 
 h2 {
   font-size: clamp(2.4rem, 5vw, 4.9rem);
-  line-height: 0.93;
+  line-height: 1.04;
+  text-wrap: balance;
 }
 
 h3 {
@@ -322,26 +337,27 @@ h3 {
 }
 
 .hero-stage {
-  min-height: 680px;
+  min-height: 650px;
   display: grid;
   place-items: center;
 }
 
 .alchemy-orbit {
   position: absolute;
+  max-width: 100%;
+  aspect-ratio: 1;
   border-radius: 50%;
   border: 1px solid rgba(212, 175, 55, 0.42);
-  animation: spin 18s linear infinite;
 }
 
 .orbit-one {
   width: 430px;
-  height: 430px;
+  height: auto;
 }
 
 .orbit-two {
   width: 620px;
-  height: 620px;
+  height: auto;
   border-color: rgba(92, 0, 24, 0.15);
   animation-duration: 28s;
   animation-direction: reverse;

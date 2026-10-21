@@ -6,13 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Mealchemy is an intelligent recipe vault and discovery ecosystem that turns pantry ingredients, preferences, and nutrition goals into personalised meals and shopping decisions.">
     <title>Mealchemy | Intelligent Recipe Discovery</title>
-    <link rel="icon" href="assets/logos/logo-mark.jpg">
-    <link rel="stylesheet" href="styles/base.css">
-    <link rel="stylesheet" href="styles/recommendation-story.css">
-    <link rel="stylesheet" href="styles/vault-story.css">
-    <link rel="stylesheet" href="styles/showcase.css">
-    <link rel="stylesheet" href="styles/content-sections.css">
-    <link rel="stylesheet" href="styles/responsive.css">
+    <link rel="icon" href="assets/logos/logo-mark.png">
+    <link rel="stylesheet" href="styles/base.css?v=20261021-3">
+    <link rel="stylesheet" href="styles/recommendation-story.css?v=20261021-3">
+    <link rel="stylesheet" href="styles/vault-story.css?v=20261021-3">
+    <link rel="stylesheet" href="styles/showcase.css?v=20261021-3">
+    <link rel="stylesheet" href="styles/content-sections.css?v=20261021-3">
+    <link rel="stylesheet" href="styles/responsive.css?v=20261021-3">
   </head>
   <body>
     <div class="scroll-meter" aria-hidden="true"><span></span></div>
@@ -20,11 +20,15 @@
     <!-- header -->
     <header class="site-header" data-elevate>
       <a class="brand" href="#top" aria-label="Mealchemy home">
-        <img src="assets/logos/logo-mark.jpg" alt="" aria-hidden="true">
+        <img src="assets/logos/logo-mark.png" alt="" aria-hidden="true" width="42" height="42">
         <span>Mealchemy</span>
       </a>
 
-      <nav class="nav" aria-label="Landing page navigation">
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-navigation">
+        <span>Menu</span><span class="nav-toggle-icon" aria-hidden="true"></span>
+      </button>
+
+      <nav class="nav" id="main-navigation" aria-label="Landing page navigation">
         <a href="#problem">Problem</a>
         <a href="#swipe-demo">Swipe</a>
         <a href="#vaults">Vaults</a>
@@ -872,7 +876,7 @@
 
       <section class="final-cta section-shell">
         <div class="final-panel reveal">
-          <img src="assets/logos/logo-full.jpg" alt="Mealchemy logo">
+          <img src="assets/logos/logo-full.png" alt="Mealchemy logo">
           <h2>A smarter way to decide what’s for dinner.</h2>
           <p>Mealchemy turns fragmented recipe storage and grocery uncertainty into a guided, intelligent cooking workflow.</p>
           <div class="final-actions">
@@ -891,10 +895,10 @@
     </footer>
     <!-- footer -->
 
-    <script src="scripts/shared.js"></script>
-    <script src="scripts/base.js"></script>
-    <script src="scripts/recommendation-story.js"></script>
-    <script src="scripts/vault-story.js"></script>
-    <script src="scripts/showcase.js"></script>
+    <script src="scripts/shared.js?v=20261021-3"></script>
+    <script src="scripts/base.js?v=20261021-3"></script>
+    <script src="scripts/recommendation-story.js?v=20261021-3"></script>
+    <script src="scripts/vault-story.js?v=20261021-3"></script>
+    <script src="scripts/showcase.js?v=20261021-3"></script>
   </body>
 </html>
