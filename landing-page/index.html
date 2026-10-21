@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="styles/recommendation-story.css?v=20261021-3">
     <link rel="stylesheet" href="styles/vault-story.css?v=20261021-3">
     <link rel="stylesheet" href="styles/showcase.css?v=20261021-3">
-    <link rel="stylesheet" href="styles/content-sections.css?v=20261021-3">
+    <link rel="stylesheet" href="styles/content-sections.css?v=20261021-video">
     <link rel="stylesheet" href="styles/responsive.css?v=20261021-3">
   </head>
   <body>
@@ -55,6 +55,7 @@
           <div class="hero-actions" aria-label="Primary page actions">
             <a class="button button-primary magnetic" href="#features">View core features</a>
             <a class="button button-android magnetic" href="#download">Android download</a>
+            <a class="button button-ghost magnetic" href="https://youtube.com/shorts/SEP7DQe_GJk" target="_blank" rel="noopener noreferrer" aria-label="Watch the Mealchemy demo on YouTube (opens in a new tab)">Watch demo <span aria-hidden="true">↗</span></a>
           
             <a class="button button-ghost magnetic" href="https://cos301-se-2026.github.io/Mealchemy/" target="_blank" rel="noopener">Brand guide</a>
           </div>
@@ -97,6 +98,24 @@
         </div>
       </section>
       <!-- hero end -->
+
+      <section class="app-trailer section-shell" id="app-trailer" aria-labelledby="trailer-title">
+        <div class="trailer-panel">
+          <div class="trailer-copy">
+            <p class="eyebrow"><span></span> See Mealchemy in action</p>
+            <h2 id="trailer-title">Your next meal, made simple.</h2>
+            <p>From the ingredients you have to the meal you’ll love. See how Mealchemy brings pantry-aware discovery, saved recipes, and smarter shopping together.</p>
+            <span class="trailer-duration">A 57-second look inside Mealchemy</span>
+          </div>
+          <figure class="trailer-media">
+            <video class="trailer-video" width="1080" height="1920" controls muted playsinline preload="none" poster="assets/screens/trailer-poster.jpg" aria-label="Mealchemy app demonstration" aria-describedby="trailer-caption">
+              <source src="assets/videos/mealchemy-demo.mp4" type="video/mp4">
+              <a href="https://youtube.com/shorts/SEP7DQe_GJk" target="_blank" rel="noopener noreferrer">Watch the Mealchemy demo on YouTube</a>.
+            </video>
+            <figcaption id="trailer-caption">Starts muted. Turn on sound in the player.</figcaption>
+          </figure>
+        </div>
+      </section>
 
       <!-- problem -->
       <section class="problem section-shell" id="problem">
@@ -897,6 +916,7 @@
 
     <script src="scripts/shared.js?v=20261021-3"></script>
     <script src="scripts/base.js?v=20261021-3"></script>
+    <script src="scripts/trailer.js?v=20261021-video"></script>
     <script src="scripts/recommendation-story.js?v=20261021-3"></script>
     <script src="scripts/vault-story.js?v=20261021-3"></script>
     <script src="scripts/showcase.js?v=20261021-3"></script>
