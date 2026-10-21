@@ -127,6 +127,8 @@ More detail: [Architectural Requirements](https://github.com/COS301-SE-2026/Meal
 | Service contracts | [OpenAPI / Swagger](https://mealchemy-backend-staging-otygypdv7a-ey.a.run.app/swagger-ui/index.html#/vault-controller/getVault) |
 | Team email | [pulsefive@gmail.com](mailto:pulsefive@gmail.com) |
 
+
+<small>_Please note Backend links are not accessible to the public. To view our app, please go through the Landing page_ <small>
 <br/>
 
 ## Documentation
