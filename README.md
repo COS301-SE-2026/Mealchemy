@@ -8,7 +8,7 @@
 
 An intelligent recipe management and discovery ecosystem, built by Team PUL5E.
 
-[![Watch the Demo](https://img.shields.io/badge/▶%20%20WATCH%20THE%20DEMO-D4AF37?style=for-the-badge&labelColor=570013)]([PLACEHOLDER_DEMO_VIDEO_URL])
+[![Watch the Demo](https://img.shields.io/badge/▶%20%20WATCH%20THE%20DEMO-D4AF37?style=for-the-badge&labelColor=570013)](https://youtu.be/P83dsDzIkEM)
 [![Android App](https://img.shields.io/badge/📱%20%20ANDROID%20APP-A8003A?style=for-the-badge&labelColor=570013)](https://appdistribution.firebase.dev/i/3d354d60d11cde9b)
 [![Landing Page](https://img.shields.io/badge/🌐%20%20LANDING%20PAGE-5C0018?style=for-the-badge&labelColor=570013)](https://mealchemy-firebase.web.app/)
 [![Wiki](https://img.shields.io/badge/📖%20%20WIKI-1D1C17?style=for-the-badge&labelColor=570013)](https://github.com/COS301-SE-2026/Mealchemy/wiki)
