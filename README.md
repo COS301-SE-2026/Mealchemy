@@ -1,6 +1,7 @@
 <div align="center">
 
 <img src="docs/photo_documentation/logo-full-primary.png" alt="Mealchemy logo" width="320"/>
+<img src="docs/photo_documentation/EPI-USE-Labs-logo.jpg" alt="EPI-USE Labs logo" width="320"/>
 
 # Mealchemy
 
@@ -8,7 +9,7 @@
 
 An intelligent recipe management and discovery ecosystem, built by Team PUL5E.
 
-[![Watch the Demo](https://img.shields.io/badge/▶%20%20WATCH%20THE%20DEMO-D4AF37?style=for-the-badge&labelColor=570013)]([PLACEHOLDER_DEMO_VIDEO_URL])
+[![Watch the Demo](https://img.shields.io/badge/▶%20%20WATCH%20THE%20DEMO-D4AF37?style=for-the-badge&labelColor=570013)](https://youtu.be/P83dsDzIkEM)
 [![Android App](https://img.shields.io/badge/📱%20%20ANDROID%20APP-A8003A?style=for-the-badge&labelColor=570013)](https://appdistribution.firebase.dev/i/3d354d60d11cde9b)
 [![Landing Page](https://img.shields.io/badge/🌐%20%20LANDING%20PAGE-5C0018?style=for-the-badge&labelColor=570013)](https://mealchemy-firebase.web.app/)
 [![Wiki](https://img.shields.io/badge/📖%20%20WIKI-1D1C17?style=for-the-badge&labelColor=570013)](https://github.com/COS301-SE-2026/Mealchemy/wiki)
@@ -96,25 +97,13 @@ More detail: [Architectural Requirements](https://github.com/COS301-SE-2026/Meal
 
 <br/>
 
-## Quality and testing
-
-| Practice | Where to look |
-|:---|:---|
-| CI/CD with separate CI, CD, frontend-delivery, landing-page and design-spec workflows | [`.github/workflows`](.github/workflows) |
-| Code coverage split into backend and frontend flags | [Codecov](https://codecov.io/gh/COS301-SE-2026/Mealchemy) |
-| Static analysis | [`sonar-project.properties`](sonar-project.properties) |
-| Performance and resilience: k6 load, resilience and comparison tests | [`nfr-tests/performance`](nfr-tests/performance) |
-| Security: authorization matrix and OWASP ZAP tooling | [`nfr-tests/security`](nfr-tests/security) |
-| End-to-end mobile flows with Maestro | [`e2e/`](e2e) |
-| Live production uptime monitoring | [Status page](https://stats.uptimerobot.com/wnmHUXyJfN) |
-
-<br/>
-
 ## Quick Links
+
+### General
 
 | Resource | Link |
 |:---|:---|
-| Demo video | [Watch]([PLACEHOLDER_DEMO_VIDEO_URL]) |
+| Demo video | [Watch](https://youtu.be/P83dsDzIkEM) |
 | GitHub Project Board | [Project Board](https://github.com/orgs/COS301-SE-2026/projects/67) |
 | Wiki (all documentation) | [Wiki Home](https://github.com/COS301-SE-2026/Mealchemy/wiki) |
 | Backend (production) | [mealchemy-backend-prod](https://mealchemy-backend-prod-otygypdv7a-ey.a.run.app) |
@@ -125,6 +114,19 @@ More detail: [Architectural Requirements](https://github.com/COS301-SE-2026/Meal
 | Brand style guide | [Brand Guide](https://cos301-se-2026.github.io/Mealchemy/) |
 | Service contracts | [OpenAPI / Swagger](https://mealchemy-backend-staging-otygypdv7a-ey.a.run.app/swagger-ui/index.html#/vault-controller/getVault) |
 | Team email | [pulsefive@gmail.com](mailto:pulsefive@gmail.com) |
+
+### Quality and testing
+| Practice | Where to look |
+|:---|:---|
+| CI/CD with separate CI, CD, frontend-delivery, landing-page and design-spec workflows | [`.github/workflows`](.github/workflows) |
+| Code coverage split into backend and frontend flags | [`Codecov`](https://codecov.io/gh/COS301-SE-2026/Mealchemy) |
+| Static analysis | [`sonar-project.properties`](sonar-project.properties) |
+| Performance and resilience: k6 load, resilience and comparison tests | [`nfr-tests/performance`](nfr-tests/performance) |
+| Security: authorization matrix and OWASP ZAP tooling | [`nfr-tests/security`](nfr-tests/security) |
+| End-to-end mobile flows with Maestro | [`e2e/`](e2e) |
+| Live production uptime monitoring | [`Status page`](https://stats.uptimerobot.com/wnmHUXyJfN) |
+
+<small>_Please note Backend links are not accessible to the public. To view our app, please go through the Landing page_ <small>
 
 <br/>
 
@@ -286,24 +288,6 @@ Verify the backend is up:
 curl http://localhost:8080/actuator/health
 # -> {"status":"UP"}
 ```
-
-<details>
-<summary><b>Setup guides</b></summary>
-
-<br/>
-
-| Guide | Link |
-|:---|:---|
-| Docker | [docker_setup.MD](docs/docker_setup.MD) |
-| CI | [ci_setup.MD](docs/ci_setup.MD) |
-| Act | [act_setup.MD](docs/act_setup.MD) |
-| pgAdmin | [pgAdmin_setup.MD](docs/pgAdmin_setup.MD) |
-| Render | [render_setup.MD](docs/render_setup.MD) |
-| Security | [security_setup.MD](docs/security_setup.MD) |
-| Design spec deployment | [design_spec_deployment_setup.MD](docs/design_spec_deployment_setup.MD) |
-| Wiki submodule | [wiki_submodule_setup.MD](docs/wiki_submodule_setup.MD) |
-
-</details>
 
 <details>
 <summary><b>Repository structure</b></summary>
