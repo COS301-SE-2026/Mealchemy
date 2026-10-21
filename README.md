@@ -114,7 +114,7 @@ More detail: [Architectural Requirements](https://github.com/COS301-SE-2026/Meal
 
 | Resource | Link |
 |:---|:---|
-| Demo video | [Watch]([PLACEHOLDER_DEMO_VIDEO_URL]) |
+| Demo video | [Watch](https://youtu.be/P83dsDzIkEM) |
 | GitHub Project Board | [Project Board](https://github.com/orgs/COS301-SE-2026/projects/67) |
 | Wiki (all documentation) | [Wiki Home](https://github.com/COS301-SE-2026/Mealchemy/wiki) |
 | Backend (production) | [mealchemy-backend-prod](https://mealchemy-backend-prod-otygypdv7a-ey.a.run.app) |
