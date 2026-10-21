@@ -170,6 +170,41 @@ All documentation is contained within the [Wiki](https://github.com/COS301-SE-20
 </details>
 
 <details>
+  <summary>Demo 4 - Click to expand</summary>
+
+### Software Requirements Specifications (SRS)
+
+| Page | Description |
+|------|-------------|
+| [Introduction](https://github.com/COS301-SE-2026/Mealchemy/wiki/SRS-Introduction-Demo-4) | Project background, motivation, and scope |
+| [User Stories](https://github.com/COS301-SE-2026/Mealchemy/wiki/User-Stories-and-Characteristics-Demo-4) | Intended users and how they interact with the system |
+| [Use Cases](https://github.com/COS301-SE-2026/Mealchemy/wiki/Use-Cases-Demo-4) | High-level use case diagrams and descriptions |
+| [Functional Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Functional-Requirements-Demo-4) | Feature breakdown by subsystem |
+| [Non-Functional Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Non‐Functional-Requirements-Demo-4) | Feature breakdown by subsystem |
+| [Domain Model](https://github.com/COS301-SE-2026/Mealchemy/wiki/Domain-Model-Demo-4) | UML class diagram |
+
+### Software Architecture Specifications (SAS)
+
+| Page | Description |
+|------|-------------|
+| [Introduction](https://github.com/COS301-SE-2026/Mealchemy/wiki/SAS-Introduction-Demo-4) | Project background, motivation, and scope |
+| [Architectural Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Architectural-Requirements-Demo-4) | Intended users and how they interact with the system |
+| [Technology Requirements](https://github.com/COS301-SE-2026/Mealchemy/wiki/Technology-Requirements-Demo-4) | Technology Requirements |
+| [API Service Contracts](https://mealchemy-backend-staging-otygypdv7a-ey.a.run.app/swagger-ui/index.html#/vault-controller/getVault) | API Contracts - OpenAPI Swagger Schema |
+| [Deployment](https://github.com/COS301-SE-2026/Mealchemy/wiki/Deployment-Demo-4) | Deployment |
+
+### Other Documents
+
+| Page | Description |
+|------|-------------|
+| [Coding Standards Document](https://github.com/COS301-SE-2026/Mealchemy/wiki/Coding-Standards-Document-Demo-4) | Code style conventions and repository structure guidelines |
+| [User Manual](https://github.com/COS301-SE-2026/Mealchemy/wiki/User-Manual-Document-Demo-4) | How to use the app - screenshots and feature walkthroughs |
+| [Testing Policy Document](https://github.com/COS301-SE-2026/Mealchemy/wiki/Testing-Policy-Document-Demo-4) | Testing standards, types, tools, and responsibilities |
+| [Changelog](https://github.com/COS301-SE-2026/Mealchemy/wiki/Changelog-Demo-4) | Version history and what changed each demo |
+
+</details>
+
+<details>
   <summary>Demo 3 - Click to expand</summary>
 
 ### Software Requirements Specifications (SRS)
