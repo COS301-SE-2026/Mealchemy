@@ -102,12 +102,12 @@ More detail: [Architectural Requirements](https://github.com/COS301-SE-2026/Meal
 | Practice | Where to look |
 |:---|:---|
 | CI/CD with separate CI, CD, frontend-delivery, landing-page and design-spec workflows | [`.github/workflows`](.github/workflows) |
-| Code coverage split into backend and frontend flags | [Codecov](https://codecov.io/gh/COS301-SE-2026/Mealchemy) |
+| Code coverage split into backend and frontend flags | [`Codecov`](https://codecov.io/gh/COS301-SE-2026/Mealchemy) |
 | Static analysis | [`sonar-project.properties`](sonar-project.properties) |
 | Performance and resilience: k6 load, resilience and comparison tests | [`nfr-tests/performance`](nfr-tests/performance) |
 | Security: authorization matrix and OWASP ZAP tooling | [`nfr-tests/security`](nfr-tests/security) |
 | End-to-end mobile flows with Maestro | [`e2e/`](e2e) |
-| Live production uptime monitoring | [Status page](https://stats.uptimerobot.com/wnmHUXyJfN) |
+| Live production uptime monitoring | [`Status page`](https://stats.uptimerobot.com/wnmHUXyJfN) |
 
 <br/>
 
