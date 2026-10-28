@@ -35,12 +35,23 @@
 
 		<!-- gcp photo storage -->
 		<google-cloud-storage.version>2.69.0</google-cloud-storage.version>
+		<guava.version>33.7.2-jre</guava.version>
 
 		<micrometer.version>1.15.12</micrometer.version>
 		<spring-data-bom.version>2025.0.12</spring-data-bom.version>
 
 		<spring-framework.version>6.2.19</spring-framework.version>
 	</properties>
+	<dependencyManagement>
+		<dependencies>
+			<!-- Override Google Cloud Storage's transitive Guava to fix CVE -->
+			<dependency>
+				<groupId>com.google.guava</groupId>
+				<artifactId>guava</artifactId>
+				<version>${guava.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
