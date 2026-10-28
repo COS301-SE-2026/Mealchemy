@@ -162,6 +162,29 @@ a {
   box-shadow: 0 10px 24px rgba(212, 175, 55, 0.24);
 }
 
+.link-tree {
+  min-height: 44px;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
+  white-space: nowrap;
+}
+
+.link-tree svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.link-tree:active {
+  filter: brightness(1.12);
+}
+
 .section-shell {
   width: var(--max);
   margin: 0 auto;

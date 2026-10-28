@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mealchemy | Links</title>
+  <meta name="description" content="Download the Mealchemy app, visit the website, explore the brand guide, view the code on GitHub or email Team PUL5E.">
+  <meta name="theme-color" content="#fef9f1">
+  <link rel="icon" href="logo-mark.png">
+  <style>
+    :root{
+      --primary:#5c0018; --primary-dark:#570013; --primary-light:#70172a; --gradient-end:#a8003a;
+      --accent:#d4af37; --accent-muted:#755b00; --cream:#fef9f1; --surface:#f8f3eb; --ink:#1d1c17;
+      --muted:#6b7280; --white:#fff; --line:rgba(92,0,24,.13);
+      --display:"Newsreader","CMU Serif",Georgia,serif;
+      --body:"Plus Jakarta Sans",Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+    *{box-sizing:border-box;margin:0}
+    html{-webkit-text-size-adjust:100%;overflow-x:hidden;overflow-x:clip}
+    body{
+      min-height:100vh;color:var(--ink);font-family:var(--body);line-height:1.55;overflow-x:hidden;overflow-x:clip;
+      background:
+        radial-gradient(circle at 8% 4%,rgba(212,175,55,.16),transparent 18rem),
+        radial-gradient(circle at 92% 0%,rgba(168,0,58,.11),transparent 26rem),
+        linear-gradient(180deg,var(--cream),#fffaf3 42%,#f7ebdc);
+    }
+    a{color:inherit;-webkit-tap-highlight-color:transparent}
+    :focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+    .page{position:relative;width:min(460px,calc(100% - 32px));margin:0 auto;padding:14px 0 36px}
+    .page::before{
+      content:"";position:absolute;left:50%;top:56%;width:118%;height:76%;border-radius:999px;z-index:0;
+      background:linear-gradient(135deg,rgba(87,0,19,.09),rgba(212,175,55,.13));
+      transform:translate(-50%,-50%) rotate(-4deg);pointer-events:none;
+    }
+    .page>*{position:relative;z-index:1}
+    .site-header{
+      min-height:68px;padding:10px 12px;display:flex;align-items:center;justify-content:center;
+      border:1px solid rgba(212,175,55,.22);border-radius:999px;color:var(--surface);
+      background:rgba(87,0,19,.78);box-shadow:0 18px 50px rgba(87,0,19,.18);backdrop-filter:blur(22px);
+    }
+    .brand{display:inline-flex;align-items:center;gap:10px;color:var(--surface);font-family:var(--display);font-size:1.3rem;font-weight:800;text-decoration:none}
+    .brand img{width:42px;height:42px;border:1px solid rgba(212,175,55,.7);border-radius:13px;object-fit:contain}
+    .hero{padding:clamp(36px,9vw,54px) 0 0;text-align:center}
+    .eyebrow{display:inline-flex;align-items:center;gap:10px;margin:0 0 16px;color:var(--accent-muted);font-size:.78rem;font-weight:950;letter-spacing:.11em;text-transform:uppercase}
+    .eyebrow::before,.eyebrow::after{content:"";width:30px;height:2px;border-radius:999px;background:linear-gradient(90deg,var(--primary),var(--accent))}
+    .eyebrow::before{transform:scaleX(-1)}
+    h1{color:var(--primary-dark);font-family:var(--display);font-weight:700;font-size:clamp(2.7rem,12.5vw,3.5rem);line-height:1;letter-spacing:-.045em;text-wrap:balance}
+    .lede{margin:20px auto 0;max-width:380px;color:#463537;font-size:1.05rem;font-weight:650}
+    .links{display:grid;gap:12px;margin-top:32px}
+    .button{
+      position:relative;isolation:isolate;overflow:hidden;
+      min-height:60px;display:flex;align-items:center;justify-content:flex-start;gap:16px;padding:10px 24px;border-radius:16px;
+      text-decoration:none;text-align:left;font-weight:950;
+      transition:translate 180ms ease,scale 180ms ease,box-shadow 180ms ease,filter 180ms ease;animation:rise .6s ease both;
+    }
+    .button::before{
+      content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+      background:linear-gradient(110deg,transparent 15%,rgba(255,255,255,.38) 45%,transparent 75%);
+      opacity:0;transform:translateX(-120%);
+      transition:transform 650ms ease,opacity 180ms ease;
+    }
+    .button:nth-child(1){animation-delay:.1s}.button:nth-child(2){animation-delay:.18s}
+    .button:nth-child(3){animation-delay:.26s}.button:nth-child(4){animation-delay:.34s}
+    .button:nth-child(5){animation-delay:.42s}
+    .button-primary{color:var(--white);background:linear-gradient(135deg,var(--primary-dark),var(--gradient-end));box-shadow:0 16px 36px rgba(92,0,24,.27)}
+    .button-android{color:var(--primary-dark);background:linear-gradient(135deg,rgba(212,175,55,.95),rgba(248,243,235,.92));border:1px solid rgba(117,91,0,.24);box-shadow:0 16px 34px rgba(117,91,0,.16)}
+    .button-ghost{color:var(--primary-dark);background:rgba(255,255,255,.66);border:1px solid var(--line)}
+    @media (hover:hover) and (pointer:fine){
+      .button:hover{
+        translate:0 -3px;filter:brightness(1.08);
+        box-shadow:0 0 0 2px rgba(212,175,55,.7),0 0 24px rgba(212,175,55,.3),0 16px 36px rgba(92,0,24,.22);
+      }
+      .button:hover::before{opacity:1;transform:translateX(120%)}
+    }
+    .button:focus-visible,.button:active{
+      filter:brightness(1.1);
+      box-shadow:0 0 0 2px rgba(212,175,55,.85),0 0 24px rgba(212,175,55,.35),0 10px 26px rgba(92,0,24,.2);
+    }
+    .button:focus-visible::before,.button:active::before{opacity:1;transform:translateX(0);transition-duration:120ms}
+    .button:active{translate:0 1px;scale:.985}
+    .button svg{flex:0 0 auto;width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+    .button svg.filled{fill:currentColor;stroke:none}
+    .button span{display:block;min-width:0}
+    .button strong{display:block;font-size:1rem;line-height:1.2;font-weight:950}
+    .button small{display:block;margin-top:1px;font-size:.78rem;font-weight:750;opacity:.72;overflow-wrap:anywhere}
+    footer{margin-top:34px;text-align:center;color:#6b5559;font-size:.78rem;font-weight:780;line-height:1.6}
+    footer b{color:var(--primary-dark)}
+    @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+    @media (prefers-reduced-motion:reduce){
+      *,*::before,*::after{animation:none!important;transition-duration:.001ms!important}
+      .button:hover,.button:active{translate:none;scale:none}
+      .button:hover::before{transform:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="site-header">
+      <div class="brand"><img src="logo-mark.png" alt="" width="42" height="42"><span>Mealchemy</span></div>
+    </header>
+
+    <main class="hero">
+      <p class="eyebrow">Find us</p>
+      <h1>Turn your pantry into personalised meals.</h1>
+      <p class="lede">An intelligent recipe management and discovery ecosystem.</p>
+
+      <nav class="links" aria-label="Mealchemy links">
+      <a class="button button-android" href="https://appdistribution.firebase.dev/i/3d354d60d11cde9b" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 19h16"/></svg><span><strong>Download the app</strong><small>Android</small></span></a>
+      <a class="button button-primary" href="https://mealchemy-firebase.web.app/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg><span><strong>Visit our website</strong><small>mealchemy-firebase.web.app</small></span></a>
+      <a class="button button-ghost" href="https://github.com/COS301-SE-2026/Mealchemy" target="_blank" rel="noopener"><svg class="filled" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg><span><strong>View GitHub repository</strong><small>COS301-SE-2026/Mealchemy</small></span></a>
+      <a class="button button-ghost" href="design-spec/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c-3-2-6-2-9-1v15c3-1 6-1 9 1 3-2 6-2 9-1V4c-3-1-6-1-9 1zM12 5v15"/></svg><span><strong>Explore our brand guide</strong><small>Colours, typography and design system</small></span></a>
+      <a class="button button-ghost" href="mailto:pulsefive@gmail.com"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span><strong>Email the team</strong><small>pulsefive@gmail.com</small></span></a>
+      </nav>
+    </main>
+
+    <footer><b>Team PUL5E</b><br>COS301 Software Engineering &middot; University of Pretoria</footer>
+  </div>
+</body>
+</html>

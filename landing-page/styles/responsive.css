@@ -10,14 +10,24 @@
 
   .brand { padding-left: 0; }
   .site-header > .nav-cta { display: none; }
+  .site-header > .link-tree {
+    display: inline-flex;
+    order: 1;
+    width: 44px;
+    padding: 0;
+    margin-left: auto;
+    margin-right: 10px;
+  }
+  .link-tree span { display: none; }
 
   .nav-toggle {
+    order: 2;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
     min-height: 44px;
-    margin-left: auto;
+    margin-left: 0;
     padding: 0 14px;
     border: 1px solid rgba(212, 175, 55, 0.45);
     border-radius: 16px;
@@ -43,6 +53,7 @@
   .nav-toggle[aria-expanded="true"] .nav-toggle-icon::after { top: 0; transform: rotate(90deg); }
 
   .nav {
+    order: 3;
     flex: 0 0 100%;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
