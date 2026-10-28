@@ -1,4 +1,4 @@
-name: Deploy Design Spec
+name: Deploy GitHub Pages
 
 # notes
 # uses sha tags
@@ -26,7 +26,9 @@ on:
       - main
       - dev
     paths:
+      - 'links/**'
       - 'design-spec/**'
+      - '.github/workflows/deploy-design-spec.yml'
   workflow_dispatch:
 
 permissions:
@@ -53,10 +55,16 @@ jobs:
       - name: Setup GitHub Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # actions/configure-pages@v5.0.0
 
-      - name: Upload design-spec folder as Pages artifact
+      - name: Assemble link tree and brand guide
+        run: |
+          mkdir -p _site
+          cp -R links/. _site/
+          cp -R design-spec _site/design-spec
+
+      - name: Upload combined Pages artifact
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # actions/upload-pages-artifact@v3.0.1
         with:
-          path: design-spec/
+          path: _site/
 
       - name: Deploy to GitHub Pages
         id: deployment
