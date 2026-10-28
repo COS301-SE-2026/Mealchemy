@@ -23,7 +23,7 @@ An intelligent recipe management and discovery ecosystem, built by Team PUL5E.
 [![CD](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/cd.yml/badge.svg)](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/cd.yml)
 [![Frontend Delivery](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/frontend-delivery.yml/badge.svg)](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/frontend-delivery.yml)
 [![Deploy Landing Page](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/deploy-landing-page.yml/badge.svg?branch=main)](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/deploy-landing-page.yml)
-[![Deploy Design Spec](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/deploy-design-spec.yml/badge.svg)](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/deploy-design-spec.yml)
+[![Deploy GitHub Pages](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/deploy-design-spec.yml/badge.svg)](https://github.com/COS301-SE-2026/Mealchemy/actions/workflows/deploy-design-spec.yml)
 [![API uptime](https://img.shields.io/website?url=https%3A%2F%2Fmealchemy-backend-prod-otygypdv7a-ey.a.run.app%2Factuator%2Fhealth&label=API%20uptime)](https://stats.uptimerobot.com/wnmHUXyJfN)
 [![Issues](https://img.shields.io/github/issues/COS301-SE-2026/Mealchemy)](https://github.com/COS301-SE-2026/Mealchemy/issues)
 
@@ -111,7 +111,8 @@ More detail: [Architectural Requirements](https://github.com/COS301-SE-2026/Meal
 | Uptime status page | [Production monitor](https://stats.uptimerobot.com/wnmHUXyJfN) |
 | Landing page | [mealchemy-firebase.web.app](https://mealchemy-firebase.web.app/) |
 | Android app | [Download](https://appdistribution.firebase.dev/i/3d354d60d11cde9b) |
-| Brand style guide | [Brand Guide](https://cos301-se-2026.github.io/Mealchemy/) |
+| Link tree | [Mealchemy links](https://cos301-se-2026.github.io/Mealchemy/) |
+| Brand style guide | [Brand Guide](https://cos301-se-2026.github.io/Mealchemy/design-spec/) |
 | Service contracts | [OpenAPI / Swagger](https://mealchemy-backend-staging-otygypdv7a-ey.a.run.app/swagger-ui/index.html#/vault-controller/getVault) |
 | Team email | [pulsefive@gmail.com](mailto:pulsefive@gmail.com) |
 
@@ -347,6 +348,7 @@ Mealchemy/
 ├── frontend/                  ← Flutter mobile application
 ├── infrastructure/            ← Dockerfiles, Docker Compose, and cloud provisioning
 ├── landing-page/              ← Static landing page deployed to Firebase Hosting
+├── links/                     ← Link tree deployed to the GitHub Pages root
 ├── nfr-tests/                 ← Executable non-functional test harness
 │   ├── config/                ← Shared k6 environment and sanitized-summary helpers
 │   ├── performance/           ← k6 load, resilience, and comparison tests
